@@ -2,33 +2,36 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using AnFake.Api;
 using AnFake.Core.Tests;
+using Common.Logging;
 
 namespace AnFake.Core
 {
 	public static class MsTest
 	{
+		private static readonly ILog Log = LogManager.GetLogger(typeof(MsTest).FullName);
+
 		public sealed class Params
 		{
 			public string Category;
 			public FileSystemPath ResultsDirectory;
-			public FileSystemPath TestMetadataPath;
 			public FileSystemPath TestSettingsPath;
-			public FileSystemPath WorkingDirectory;      
+			public FileSystemPath WorkingDirectory;
 			public TimeSpan Timeout;
 			public FileSystemPath ToolPath;
 			public bool NoIsolation;
+			public ITestPostProcessor PostProcessor;
 
 			public Params()
-			{
-				WorkingDirectory = "".AsPath();
+			{				
 				Timeout = TimeSpan.MaxValue;
+				PostProcessor = new MsTestPostProcessor();
+				ToolPath = "C:/Program Files (x86)/Microsoft Visual Studio 12.0/Common7/IDE/MsTest.exe".AsPath();
 			}
 
 			public Params Clone()
 			{
-				return (Params)MemberwiseClone();
+				return (Params) MemberwiseClone();
 			}
 		}
 
@@ -39,7 +42,12 @@ namespace AnFake.Core
 			Defaults = new Params();
 		}
 
-		public static TestExecutionResult Run(Action<Params> setParams, IEnumerable<FileItem> assemblies)
+		public static TestExecutionResult RunMsTest(this IEnumerable<FileItem> assemblies)
+		{
+			return RunMsTest(assemblies, p => { });
+		}
+
+		public static TestExecutionResult RunMsTest(this IEnumerable<FileItem> assemblies, Action<Params> setParams)
 		{
 			var assembliesArray = assemblies.ToArray();
 			if (assembliesArray.Length == 0)
@@ -48,41 +56,43 @@ namespace AnFake.Core
 			var parameters = Defaults.Clone();
 			setParams(parameters);
 
-			/*if (parameters.WorkingDirectory == null)
-				throw new ArgumentException("MsTest.Params.WorkingDirectory must not be null");
-
-			var suites = new List<TestSuiteResult>();
-			var errors = 0;
+			//if (parameters.WorkingDirectory == null)
+			//	throw new ArgumentException("MsTest.Params.WorkingDirectory must not be null");
 
 			Logger.DebugFormat("MsTest =>\n  {0}", String.Join("\n  ", assembliesArray.Select(x => x.RelPath)));
-			
+
+			var tests = new List<TestResult>();
+
 			foreach (var assembly in assembliesArray)
-			{			
-				var resultPath = (parameters.ResultsDirectory ?? parameters.WorkingDirectory) / assembly.NameWithoutExt.AsUnique(".trx");
+			{
+				Logger.DebugFormat("{0}...", assembly.RelPath);
+
+				var workDir = parameters.WorkingDirectory ?? assembly.Folder;
+				var resultPath = (parameters.ResultsDirectory ?? workDir)/assembly.NameWithoutExt.MakeUnique(".trx");
 
 				var args = Process.Args("/", ":")
 					.Option("testcontainer", assembly.Path)
 					.Option("category", parameters.Category)
-					.Option("testmetadata", parameters.TestMetadataPath.AsFullPath())
-					.Option("testsettings", parameters.TestSettingsPath.AsFullPath())
-					.Option("resultsfile", resultPath.AsFullPath())
+					.Option("testsettings", parameters.TestSettingsPath)
+					.Option("resultsfile", resultPath)
 					.Option("noisolation", parameters.NoIsolation)
-					.ToString();				
+					.ToString();
 
 				var result = Process.Run(p =>
 				{
 					p.FileName = parameters.ToolPath;
-					p.WorkingDirectory = parameters.WorkingDirectory;
+					p.WorkingDirectory = workDir;
 					p.Timeout = parameters.Timeout;
 					p.Arguments = args;
+					p.Logger = Log;
 				});
 
-				if (File.Exists(resultPath))
+				if (parameters.PostProcessor != null && File.Exists(resultPath.Full))
 				{
-					var suite = ParseResults(assembly, resultPath);
-					TraceResults(suite, ref errors);					
-
-					suites.Add(suite);
+					tests.AddRange(
+						parameters.PostProcessor
+							.PostProcess(resultPath)
+							.Trace());
 				}
 				else if (result.ExitCode != 0)
 				{
@@ -90,22 +100,10 @@ namespace AnFake.Core
 				}
 			}
 
-			if (errors > 0)
-				throw new TerminateTargetException("Target terminated due to test failures.");*/
+			var testResult = tests.TraceSummary();
+			testResult.FailIfAnyError("Target terminated due to test failures.");
 
-			//return new TestExecutionResult(errors, suites);
-
-			return null;
-		}
-
-		private static TestSuiteResult ParseResults(FileItem assembly, string resultPath)
-		{
-			throw new NotImplementedException();
-		}
-
-		private static void TraceResults(TestSuiteResult suite, ref int errors)
-		{
-			throw new NotImplementedException();
+			return testResult;
 		}
 	}
 }

@@ -59,6 +59,7 @@
   </Choose>
   <ItemGroup>
     <Compile Include="FilesTest.cs" />
+    <Compile Include="MsTestTest.cs" />
     <Compile Include="TargetTest.cs" />
     <Compile Include="FoldersTest.cs" />
     <Compile Include="ProcessTest.cs" />
@@ -80,6 +81,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Data\mstest-01.trx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

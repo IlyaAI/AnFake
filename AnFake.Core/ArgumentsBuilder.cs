@@ -17,11 +17,27 @@ namespace AnFake.Core
 
 		public ArgumentsBuilder Command(string name)
 		{
+			if (_args.Length > 0)
+			{
+				_args.Append(" ");
+			}
+			_args.Append(name);
+
 			return this;
 		}
 
 		public ArgumentsBuilder Param(string value)
 		{
+			if (String.IsNullOrEmpty(value))
+				return this;
+
+			if (_args.Length > 0)
+			{
+				_args.Append(" ");
+			}
+			
+			_args.Append("\"").Append(value.Replace("\"", "\"\"")).Append("\"");
+
 			return this;
 		}
 
@@ -30,8 +46,13 @@ namespace AnFake.Core
 			if (String.IsNullOrEmpty(value))
 				return this;
 
-			// TODO: escape it
-			_args.Append(_optionMarker).Append(name).Append(_nameValueMarker).Append(value);
+			if (_args.Length > 0)
+			{
+				_args.Append(" ");
+			}
+			
+			_args.Append(_optionMarker).Append(name).Append(_nameValueMarker);
+			_args.Append("\"").Append(value.Replace("\"","\"\"")).Append("\"");
 			
 			return this;
 		}
@@ -40,6 +61,10 @@ namespace AnFake.Core
 		{
 			if (value)
 			{
+				if (_args.Length > 0)
+				{
+					_args.Append(" ");
+				}
 				_args.Append(_optionMarker).Append(name);
 			}
 

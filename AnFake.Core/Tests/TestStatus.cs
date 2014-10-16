@@ -2,8 +2,9 @@ namespace AnFake.Core.Tests
 {
 	public enum TestStatus
 	{
-		Skipped,
-		Succeeded,
+		Unknown,
+		Passed,
+		Skipped,		
 		Failed
 	}
 }

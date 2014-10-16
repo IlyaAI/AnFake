@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using AnFake.Api;
 using AnFake.Core.Tests;
 
@@ -7,13 +6,15 @@ namespace AnFake.Core
 {
 	public sealed class TestExecutionResult : IToolExecutionResult
 	{
-		private readonly IList<TestSuiteResult> _suites;
+		private readonly TestResult[] _tests;
 		private readonly int _errorsCount;
+		private readonly int _warningsCount;
 
-		public TestExecutionResult(int errorsCount, IList<TestSuiteResult> suites)
+		public TestExecutionResult(int errorsCount, int warningsCount, TestResult[] tests)
 		{
 			_errorsCount = errorsCount;
-			_suites = suites;
+			_warningsCount = warningsCount;
+			_tests = tests;
 		}
 
 		public int ErrorsCount
@@ -23,12 +24,12 @@ namespace AnFake.Core
 
 		public int WarningsCount
 		{
-			get { return 0; }
+			get { return _warningsCount; }
 		}
 
-		public IList<TestSuiteResult> Suites
+		public IEnumerable<TestResult> Tests
 		{
-			get { return new ReadOnlyCollection<TestSuiteResult>(_suites); }
+			get { return _tests; }
 		}
 	}
 }

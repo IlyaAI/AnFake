@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using AnFake.Api;
-using Common.Logging;
 
 namespace AnFake.Core
 {
 	public sealed class Target
-	{
-		private static readonly ILog Log = LogManager.GetLogger<Target>();
+	{		
 		private static readonly IDictionary<string, Target> Targets = new Dictionary<string, Target>();
 
 		private readonly TraceMessageCollector _messages = new TraceMessageCollector();
@@ -111,9 +109,9 @@ namespace AnFake.Core
 		
 		public void Run()
 		{
-			Log.Info("Targets execution order:");
+			Logger.Debug("Targets execution order:");
 			DoValidate(1);
-			Log.Info("");
+			Logger.Debug("");
 
 			var executedTargets = new List<Target>();
 			try
@@ -134,7 +132,7 @@ namespace AnFake.Core
 
 			if (_state == TargetState.PreQueued)
 			{
-				Log.ErrorFormat("{0}{1} => CYCLING DEPENDENCY DETECTED", ident, _name);
+				Logger.ErrorFormat("{0}{1} => CYCLING DEPENDENCY DETECTED", ident, _name);
 
 				throw new InvalidOperationException(String.Format("Target '{0}' has cycling dependencies.", _name));
 			}
@@ -142,11 +140,11 @@ namespace AnFake.Core
 			if (_state == TargetState.Queued)
 				return;
 			
-			_state = TargetState.PreQueued;			
-			Log.InfoFormat("{0}{1} =>", ident, _name);
+			_state = TargetState.PreQueued;
+			Logger.DebugFormat("{0}{1} =>", ident, _name);
 			if (_onFailure != null || _finally != null)
 			{
-				Log.InfoFormat("{0}TRY", ident);				
+				Logger.DebugFormat("{0}TRY", ident);				
 			}			
 
 			foreach (var dependency in _dependencies)
@@ -156,19 +154,19 @@ namespace AnFake.Core
 
 			if (_do != null)
 			{
-				Log.InfoFormat("{0}  {1}.Do", ident, _name);
+				Logger.DebugFormat("{0}  {1}.Do", ident, _name);
 			}
 
 			if (_onFailure != null)
 			{
-				Log.InfoFormat("{0}CATCH", ident);
-				Log.InfoFormat("{0}  {1}.OnFailure", ident, _name);
+				Logger.DebugFormat("{0}CATCH", ident);
+				Logger.DebugFormat("{0}  {1}.OnFailure", ident, _name);
 			}
 
 			if (_finally != null)
 			{
-				Log.InfoFormat("{0}FINALLY", ident);
-				Log.InfoFormat("{0}  {1}.Finally", ident, _name);
+				Logger.DebugFormat("{0}FINALLY", ident);
+				Logger.DebugFormat("{0}  {1}.Finally", ident, _name);
 			}			
 				
 			_state = TargetState.Queued;			
@@ -182,7 +180,7 @@ namespace AnFake.Core
 			if (_state == TargetState.Failed)
 				throw new InvalidOperationException(String.Format("Inconsistence in build oreder: trying to re-run failed target '{0}'.", _name));
 
-			Log.InfoFormat("TARGET START >> {0}", _name);
+			Logger.DebugFormat("TARGET START >> {0}", _name);
 
 			_state = TargetState.Started;
 			try
@@ -214,23 +212,23 @@ namespace AnFake.Core
 					}					
 				}
 
-				Log.InfoFormat("TARGET END   >> {0}", _name);
+				Logger.DebugFormat("TARGET END   >> {0}", _name);
 			}
 		}
 
 		private static void LogSummary(IEnumerable<Target> executedTargets)
 		{
-			Log.Info("");
-			Log.Info("================ BUILD SYMMARY ================");
+			Logger.Debug("");
+			Logger.Debug("================ BUILD SYMMARY ================");
 			foreach (var target in executedTargets)
 			{
-				var targetSummary = String.Format("=> {0}: {1} error(s) {2} warning(s)",
+				var targetSummary = String.Format("TARGET {0}: {1} error(s) {2} warning(s)",
 					target._name, target._messages.ErrorsCount, target._messages.WarningsCount);
 
 				switch (target._state)
 				{
 					case TargetState.Succeeded:
-						Log.Info(targetSummary);
+						Logger.Info(targetSummary);
 						break;
 					case TargetState.PartiallySucceeded:
 						Logger.Warn(targetSummary);
@@ -281,8 +279,8 @@ namespace AnFake.Core
 				return false;
 			}
 			catch (Exception e)
-			{				
-				Log.ErrorFormat("{0}.{1} has failed.", e, _name, phase);
+			{
+				Logger.ErrorFormat("{0}.{1} has failed.", e, _name, phase);
 				Tracer.Write(new TraceMessage(TraceMessageLevel.Error, e.Message) { Details = e.StackTrace });
 
 				if (!skipErrors)

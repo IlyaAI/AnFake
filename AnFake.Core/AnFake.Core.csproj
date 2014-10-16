@@ -49,9 +49,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ArgumentsBuilder.cs" />
+    <Compile Include="ArgumentsBuilderExtension.cs" />
     <Compile Include="FolderItem.cs" />
     <Compile Include="FileSystemPath.cs" />
     <Compile Include="MsTest.cs" />
+    <Compile Include="MsTestPostProcessor.cs" />
     <Compile Include="Target.cs" />
     <Compile Include="TargetState.cs" />
     <Compile Include="TerminateTargetException.cs" />
@@ -67,10 +69,13 @@
     <Compile Include="ProcessExecutionResult.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Targets.cs" />
+    <Compile Include="Tests\ITestPostProcessor.cs" />
+    <Compile Include="Tests\TestPostProcessExtension.cs" />
     <Compile Include="Tests\TestResult.cs" />
     <Compile Include="Tests\TestStatus.cs" />
-    <Compile Include="Tests\TestSuiteResult.cs" />
     <Compile Include="ToolExecutionResultExtension.cs" />
+    <Compile Include="Utils\EnumerableAdapter.cs" />
+    <Compile Include="Xml\XmlExtension.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AnFake.Api\AnFake.Api.csproj">

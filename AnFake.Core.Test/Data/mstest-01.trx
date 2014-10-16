@@ -1,0 +1,97 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<TestRun id="3cbe46be-1b7a-4e24-8bdb-86e5df111142" name="Ivanov_I@IVANOV-I 2014-10-15 17:33:14" runUser="KL\Ivanov_I" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <TestSettings name="TestSettings" id="4169238d-e018-4ec7-b0c2-5dc11902fc3f">
+    <Description>These are default test settings for a local test run.</Description>
+    <Deployment userDeploymentRoot="C:\Projects\Compliance\dev2\.out\test" useDefaultDeploymentRoot="false" enabled="false" runDeploymentRoot="Ivanov_I_IVANOV-I 2014-10-15 17_33_14" />
+    <Execution hostProcessPlatform="MSIL">
+      <Timeouts testTimeout="0" />
+      <TestTypeSpecific>
+        <UnitTestRunConfig testTypeId="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b">
+          <AssemblyResolution>
+            <TestDirectory useLoadContext="true" />
+          </AssemblyResolution>
+        </UnitTestRunConfig>
+        <WebTestRunConfiguration testTypeId="4e7599fa-5ecb-43e9-a887-cd63cf72d207">
+          <Browser name="Internet Explorer 9.0" MaxConnections="6">
+            <Headers>
+              <Header name="User-Agent" value="Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)" />
+              <Header name="Accept" value="*/*" />
+              <Header name="Accept-Language" value="{{$IEAcceptLanguage}}" />
+              <Header name="Accept-Encoding" value="GZIP" />
+            </Headers>
+          </Browser>
+        </WebTestRunConfiguration>
+      </TestTypeSpecific>
+      <AgentRule name="LocalMachineDefaultRole">
+      </AgentRule>
+    </Execution>
+    <Properties />
+  </TestSettings>
+  <Times creation="2014-10-15T17:33:14.0170486+07:00" queuing="2014-10-15T17:33:16.2902759+07:00" start="2014-10-15T17:33:16.8363305+07:00" finish="2014-10-15T17:33:38.1874654+07:00" />
+  <ResultSummary outcome="Failed">
+    <Counters total="2" executed="2" error="0" failed="2" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" passed="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <DebugTrace>AllInOne: Shutdown()
+</DebugTrace>
+    </Output>
+  </ResultSummary>
+  <TestDefinitions>
+    <UnitTest name="TestDataNegativeTest" storage=".out\pkg\allinone\allinone.dll" id="b0d5cfd2-e822-325d-c434-14d04893e64b">
+      <TestCategory>
+        <TestCategoryItem TestCategory="Fast" />
+      </TestCategory>
+      <Execution id="3989ed8f-c65f-4cf0-b2ea-48114add52e7" />
+      <TestMethod codeBase="C:/Projects/Compliance/dev2/.out/pkg/AllInOne/AllInOne.DLL" adapterTypeName="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestAdapter, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.Adapter, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" className="AllInOne.TestDataTestSuite, AllInOne, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" name="TestDataNegativeTest" />
+    </UnitTest>
+    <UnitTest name="TestDataPositiveTest" storage=".out\pkg\allinone\allinone.dll" id="e8cc9dcc-291c-604d-ecb2-2c380fbe831c">
+      <TestCategory>
+        <TestCategoryItem TestCategory="Fast" />
+      </TestCategory>
+      <Execution id="6fbe5668-a8f5-4dcc-8e87-f68dffb2f3ef" />
+      <TestMethod codeBase="C:/Projects/Compliance/dev2/.out/pkg/AllInOne/AllInOne.DLL" adapterTypeName="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestAdapter, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.Adapter, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" className="AllInOne.TestDataTestSuite, AllInOne, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" name="TestDataPositiveTest" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <TestEntries>
+    <TestEntry testId="b0d5cfd2-e822-325d-c434-14d04893e64b" executionId="3989ed8f-c65f-4cf0-b2ea-48114add52e7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e8cc9dcc-291c-604d-ecb2-2c380fbe831c" executionId="6fbe5668-a8f5-4dcc-8e87-f68dffb2f3ef" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <Results>
+    <UnitTestResult executionId="3989ed8f-c65f-4cf0-b2ea-48114add52e7" testId="b0d5cfd2-e822-325d-c434-14d04893e64b" testName="TestDataNegativeTest" computerName="IVANOV-I" duration="00:00:00.7088514" startTime="2014-10-15T17:33:17.1383607+07:00" endTime="2014-10-15T17:33:36.0892556+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3989ed8f-c65f-4cf0-b2ea-48114add52e7">
+      <Output>
+        <ErrorInfo>
+          <Message>Test method AllInOne.TestDataTestSuite.TestDataNegativeTest threw exception: 
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Projects\Compliance\dev2\Documents_Russia\TestData'.</Message>
+          <StackTrace>    at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileSystemEnumerableIterator`1.CommonInit()
+   at System.IO.FileSystemEnumerableIterator`1..ctor(String path, String originalUserPath, String searchPattern, SearchOption searchOption, SearchResultHandler`1 resultHandler, Boolean checkHost)
+   at System.IO.Directory.EnumerateFiles(String path, String searchPattern)
+   at AllInOne.TestDataBuilder.GetCategoriesTestData(String target) in c:\Projects\Compliance\dev2\AllInOne\TestDataBuilder.cs:line 54
+   at AllInOne.TestDataTestSuite.TestDataNegativeTest() in c:\Projects\Compliance\dev2\AllInOne\TestDataTestSuite.cs:line 48
+</StackTrace>
+        </ErrorInfo>
+      </Output>
+      <ResultFiles>
+        <ResultFile path="IVANOV-I\AllInOne.log" />
+      </ResultFiles>
+    </UnitTestResult>
+    <UnitTestResult executionId="6fbe5668-a8f5-4dcc-8e87-f68dffb2f3ef" testId="e8cc9dcc-291c-604d-ecb2-2c380fbe831c" testName="TestDataPositiveTest" computerName="IVANOV-I" duration="00:00:00.0034172" startTime="2014-10-15T17:33:36.0902557+07:00" endTime="2014-10-15T17:33:36.1162583+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6fbe5668-a8f5-4dcc-8e87-f68dffb2f3ef">
+      <Output>
+        <ErrorInfo>
+          <Message>Test method AllInOne.TestDataTestSuite.TestDataPositiveTest threw exception: 
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Projects\Compliance\dev2\Documents_Russia\TestData'.</Message>
+          <StackTrace>    at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileSystemEnumerableIterator`1.CommonInit()
+   at System.IO.FileSystemEnumerableIterator`1..ctor(String path, String originalUserPath, String searchPattern, SearchOption searchOption, SearchResultHandler`1 resultHandler, Boolean checkHost)
+   at System.IO.Directory.EnumerateFiles(String path, String searchPattern)
+   at AllInOne.TestDataBuilder.GetCategoriesTestData(String target) in c:\Projects\Compliance\dev2\AllInOne\TestDataBuilder.cs:line 54
+   at AllInOne.TestDataTestSuite.TestDataPositiveTest() in c:\Projects\Compliance\dev2\AllInOne\TestDataTestSuite.cs:line 36
+</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+</TestRun>

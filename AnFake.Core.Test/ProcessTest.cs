@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading;
 using AnFake.Api;
 using Common.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -7,6 +6,7 @@ using Rhino.Mocks;
 
 namespace AnFake.Core.Test
 {
+	[DeploymentItem("AnFake.Process.Test.exe")]
 	[TestClass]
 	public class ProcessTest
 	{

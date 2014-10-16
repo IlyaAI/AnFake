@@ -263,6 +263,11 @@ namespace AnFake.Core
 			Directory.CreateDirectory(folder.Path.Full);
 		}
 
+		public static string MakeUnique(this string name, string ext)
+		{
+			return String.Format("{0}.{1:yyyyMMdd.HHmmss.ff}{2}", name, DateTime.Now, ext);
+		}
+
 		internal static IEnumerable<FileSystemPath> MatchFiles(FileSystemPath basePath, FileSystemPath wildcardedPath)
 		{
 			return Match(basePath, wildcardedPath, Directory.EnumerateFiles);

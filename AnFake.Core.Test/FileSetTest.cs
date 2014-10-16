@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AnFake.Core.Test
 {
+	[DeploymentItem("Data/FileSet", "Data/FileSet")]
 	[TestClass]
 	public class FileSetTest
 	{

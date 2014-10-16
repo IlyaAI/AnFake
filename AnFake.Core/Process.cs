@@ -18,21 +18,18 @@ namespace AnFake.Core
 
 			public TimeSpan Timeout;
 
+			public ILog Logger;
+
 			public Params()
 			{
 				WorkingDirectory = "".AsPath();
 				Timeout = TimeSpan.MaxValue;
+				Logger = Log;
 			}
 
 			public Params Clone()
 			{
-				return new Params
-				{
-					FileName = FileName,
-					Arguments = Arguments,
-					WorkingDirectory = WorkingDirectory,					
-					Timeout = Timeout
-				};
+				return (Params)MemberwiseClone();
 			}
 		}
 
@@ -51,7 +48,12 @@ namespace AnFake.Core
 			var prms = Defaults.Clone();
 			setParams(prms);
 
-			// TODO: check parameters
+			if (prms.FileName == null)
+				throw new ArgumentException("Process.Params.FileName: must not be null");
+			if (prms.WorkingDirectory == null)
+				throw new ArgumentException("Process.Params.WorkingDirectory: must not be null");
+			if (prms.Logger == null)
+				throw new ArgumentException("Process.Params.Logger: must not be null");
 
 			var process = new System.Diagnostics.Process
 			{
@@ -70,11 +72,11 @@ namespace AnFake.Core
 				process.StartInfo.Arguments = prms.Arguments;
 			}
 
-			Log.DebugFormat("Starting process\n  Executable: {0}\n  Arguments: {1}\n  WorkingDirectory: {2}", 
+			Log.DebugFormat("Starting process...\n  Executable: {0}\n  Arguments: {1}\n  WorkingDirectory: {2}", 
 				process.StartInfo.FileName, process.StartInfo.Arguments, process.StartInfo.WorkingDirectory);
 
-			process.OutputDataReceived += (sender, evt) => { if (!String.IsNullOrWhiteSpace(evt.Data)) Log.Debug(evt.Data); };
-			process.ErrorDataReceived += (sender, evt) => { if (!String.IsNullOrWhiteSpace(evt.Data)) Log.Error(evt.Data); };
+			process.OutputDataReceived += (sender, evt) => { if (!String.IsNullOrWhiteSpace(evt.Data)) prms.Logger.Debug(evt.Data); };
+			process.ErrorDataReceived += (sender, evt) => { if (!String.IsNullOrWhiteSpace(evt.Data)) prms.Logger.Error(evt.Data); };
 
 			IToolExecutionResult external;
 			Tracer.StartTrackExternal();
@@ -106,9 +108,9 @@ namespace AnFake.Core
 			return new ProcessExecutionResult(process.ExitCode, external.ErrorsCount, external.WarningsCount);
 		}		
 
-		public static ArgumentsBuilder Args(string switchMarker, string nameValueMarker)
+		public static ArgumentsBuilder Args(string optionMarker, string nameValueMarker)
 		{
-			throw new NotImplementedException();
+			return new ArgumentsBuilder(optionMarker, nameValueMarker);
 		}
 	}
 }
