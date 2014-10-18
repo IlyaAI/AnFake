@@ -1,4 +1,6 @@
-﻿using Common.Logging;
+﻿using System;
+using AnFake.Api;
+using Common.Logging;
 
 namespace AnFake.Core
 {
@@ -44,6 +46,33 @@ namespace AnFake.Core
 		public static void ErrorFormat(string format, params object[] args)
 		{
 			Log.ErrorFormat(format, args);
+		}
+
+		[Obsolete]
+		public static void TraceMessage(TraceMessage message)
+		{
+			switch (message.Level)
+			{
+				case TraceMessageLevel.Error:
+					Log.Error(message.Message);
+					break;
+
+				case TraceMessageLevel.Warning:
+					Log.Warn(message.Message);
+					break;
+
+				case TraceMessageLevel.Info:
+					Log.Debug(message.Message);					
+					break;
+
+				default:
+					return;
+			}
+
+			if (String.IsNullOrWhiteSpace(message.Details))
+			{
+				Log.Debug(message.Details);
+			}
 		}
 	}
 }

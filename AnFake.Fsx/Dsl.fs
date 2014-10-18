@@ -5,6 +5,7 @@ open System
 open System.IO
 open System.Collections.Generic
 open AnFake.Core
+open System.Runtime.CompilerServices
 
 let inline (~~) (path: string) = FileSystem.AsPath(path)
 
@@ -22,5 +23,9 @@ let inline (|=>) (target: Target) (action: unit -> unit) = target.Finally(fun _ 
 
 let inline (<==) target (dependencies: IEnumerable<string>) = Targets.AsTarget(target).DependsOn(dependencies)
 
-
-
+[<Extension>]
+type FsxHelper () =
+    [<Extension>]
+    static member inline Set(props: IDictionary<System.String, System.String>, nameValue: (string * string) list) = 
+        for (name, value) in nameValue do
+            props.Item(name) <- value

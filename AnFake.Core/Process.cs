@@ -79,7 +79,8 @@ namespace AnFake.Core
 			process.ErrorDataReceived += (sender, evt) => { if (!String.IsNullOrWhiteSpace(evt.Data)) prms.Logger.Error(evt.Data); };
 
 			IToolExecutionResult external;
-			Tracer.StartTrackExternal();
+			Tracer.MessageReceived += OnTraceMessage;
+			Tracer.StartTrackExternal();			
 			try
 			{
 				process.Start();
@@ -100,6 +101,7 @@ namespace AnFake.Core
 			finally
 			{
 				external = Tracer.StopTrackExternal();
+				Tracer.MessageReceived -= OnTraceMessage;
 			}
 
 			Log.DebugFormat("Process finished. ExitCode = {0} Errors = {1} Warnings = {2} Time = {3}", 
@@ -111,6 +113,11 @@ namespace AnFake.Core
 		public static ArgumentsBuilder Args(string optionMarker, string nameValueMarker)
 		{
 			return new ArgumentsBuilder(optionMarker, nameValueMarker);
+		}
+
+		private static void OnTraceMessage(object sender, TraceMessage message)
+		{
+			Logger.TraceMessage(message);
 		}
 	}
 }

@@ -11,7 +11,7 @@ namespace AnFake.Core
 
 			public Params()
 			{
-				Tracer = new JsonFileTracer("build.log.jsx", false);
+				Tracer = new JsonFileTracer("build.log.jsx".AsPath().Full, false);
 			}
 		}
 

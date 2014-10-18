@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 namespace AnFake.Api
 {
@@ -45,6 +46,18 @@ namespace AnFake.Api
 		{
 			add { Instance.MessageReceived += value; }
 			remove { Instance.MessageReceived -= value; }
-		}		
+		}
+
+		public static ITracer Create(Uri uri, bool append)
+		{
+			if (!uri.IsFile)
+				throw new NotSupportedException("Only file based tracer supported now.");
+
+			var logPath = uri.LocalPath.TrimEnd('/', '\\');
+			if (!".jsx".Equals(Path.GetExtension(logPath), StringComparison.InvariantCultureIgnoreCase))
+				throw new NotSupportedException("Only JSON file tracer supported now.");
+
+			return new JsonFileTracer(logPath, append);
+		}
 	}
 }

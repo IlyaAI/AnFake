@@ -36,9 +36,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Common.Logging.2.0.0\lib\2.0\Common.Logging.dll</HintPath>
     </Reference>
-    <Reference Include="FSharp.Compiler.Service">
-      <HintPath>..\packages\FSharp.Compiler.Service.0.0.62\lib\net45\FSharp.Compiler.Service.dll</HintPath>
-    </Reference>
+    <Reference Include="Microsoft.Build.Framework" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -52,6 +50,7 @@
     <Compile Include="ArgumentsBuilderExtension.cs" />
     <Compile Include="FolderItem.cs" />
     <Compile Include="FileSystemPath.cs" />
+    <Compile Include="MsBuild.cs" />
     <Compile Include="MsTest.cs" />
     <Compile Include="MsTestPostProcessor.cs" />
     <Compile Include="Target.cs" />
@@ -81,6 +80,10 @@
     <ProjectReference Include="..\AnFake.Api\AnFake.Api.csproj">
       <Project>{E08FA8A9-33D4-4F27-B29E-C9388A291C45}</Project>
       <Name>AnFake.Api</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\AnFake.Integration.MsBuild\AnFake.Integration.MsBuild.csproj">
+      <Project>{6aa209ff-e1b6-4bfd-9a56-6a9adada0565}</Project>
+      <Name>AnFake.Integration.MsBuild</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
