@@ -53,6 +53,7 @@
     <Compile Include="MsBuild.cs" />
     <Compile Include="MsTest.cs" />
     <Compile Include="MsTestPostProcessor.cs" />
+    <Compile Include="MsTools.cs" />
     <Compile Include="Target.cs" />
     <Compile Include="TargetState.cs" />
     <Compile Include="TerminateTargetException.cs" />

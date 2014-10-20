@@ -59,6 +59,16 @@ namespace AnFake.Core
 			get { return _path.LastNameWithoutExt; }
 		}
 
+		public string Ext
+		{
+			get { return _path.Ext; }
+		}
+
+		public bool Exists()
+		{
+			return File.Exists(_path.Full);
+		}
+
 		public override string ToString()
 		{
 			return _path.ToString();

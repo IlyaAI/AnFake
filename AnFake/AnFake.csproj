@@ -67,6 +67,9 @@
   <ItemGroup>
     <None Include="experimental.fsx" />
     <None Include="experimental.cs" />
+    <Compile Include="CSharpEvaluator.cs" />
+    <Compile Include="FSharpEvaluator.cs" />
+    <Compile Include="IScriptEvaluator.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <None Include="Scripting.cs" />

@@ -60,43 +60,7 @@ namespace AnFake.Core
 			_args.Append(_optionMarker).Append(name);
 
 			return this;
-		}
-
-		public ArgumentsBuilder Command(string name)
-		{
-			return Space().NonQuotedValue(name);
-		}
-
-		public ArgumentsBuilder Param(string value)
-		{
-			return Space().QuotedValue(value);
-		}
-
-		public ArgumentsBuilder Option(string name, string value)
-		{
-			if (String.IsNullOrEmpty(value))
-				return this;
-
-			return Space().ValuedOption(name).QuotedValue(value);			
-		}
-
-		public ArgumentsBuilder Option(string name, bool value)
-		{
-			if (!value)
-				return this;
-			
-			return Space().Option(name);			
-		}
-
-		public ArgumentsBuilder Option(string name, int value)
-		{
-			return Space().ValuedOption(name).NonQuotedValue(value.ToString(CultureInfo.InvariantCulture));
-		}
-
-		public ArgumentsBuilder Option(string name, Enum value)
-		{
-			return Space().ValuedOption(name).NonQuotedValue(value.ToString());
-		}
+		}		
 
 		public override string ToString()
 		{

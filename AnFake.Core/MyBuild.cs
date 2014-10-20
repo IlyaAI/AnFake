@@ -22,8 +22,10 @@ namespace AnFake.Core
 			Defaults = new Params();
 		}
 
-		public static void Configure()
+		public static void Configure(FileSystemPath basePath)
 		{
+			FileSystemPath.Base = basePath;
+
 			Tracer.Instance = Defaults.Tracer;
 		}
 

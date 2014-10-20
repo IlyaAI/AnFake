@@ -1,40 +1,58 @@
 ﻿using System;
+using System.Collections.Generic;
 using AnFake.Core;
-using CSScriptLibrary;
-using Microsoft.FSharp.Compiler.Interactive;
-using Microsoft.FSharp.Core;
 
 namespace AnFake
 {
 	internal class Program
 	{
-		private static void Main(string[] args)
+		private static readonly IDictionary<string, IScriptEvaluator> SupportedScripts =
+			new Dictionary<string, IScriptEvaluator>(StringComparer.InvariantCultureIgnoreCase)
+			{
+				{".fsx", new FSharpEvaluator()},
+				{".csx", new CSharpEvaluator()}
+			};
+
+		private static int Main(string[] args)
 		{
-			MyBuild.Configure();
+			if (args.Length < 2)
+			{
+				Logger.Debug("TODO: place help here");
+				return 0;
+			}
 
-			RunFsx(args);
-			//RunCsx(args);
-		}
+			var script = args[0].AsFile();
+			if (!script.Exists())
+			{
+				Logger.ErrorFormat("Build script doesn't exist: {0}", script.Path.Full);
+				return -1;
+			}
 
-		private static void RunFsx(string[] args)
-		{
-			var cfg = Shell.FsiEvaluationSession.GetDefaultConfiguration();
+			IScriptEvaluator evaluator;
+			if (!SupportedScripts.TryGetValue(script.Ext, out evaluator))
+			{
+				Logger.ErrorFormat("Unsupported scripting language: {0}", script.Ext);
+				return -1;
+			}
 
-			var fsx = Shell.FsiEvaluationSession.Create(
-				cfg,
-				new[] { "experimental.fsx" },
-				Console.In,
-				Console.Out,
-				Console.Error,
-				FSharpOption<bool>.None);
+			var target = args[1];
 
-			fsx.EvalScript("../../experimental.fsx");
-		}
+			try
+			{
+				Logger.Debug("Configuring build...");
+				MyBuild.Configure(script.Folder);
+				evaluator.Evaluate(script);
 
-		private static void RunCsx(string[] args)
-		{
-			var csx = (BuildScriptSkeleton) CSScript.LoadCodeFrom("../../experimental.cs").CreateObject("BuildScript");
-			csx.Run();
+				Logger.DebugFormat("Starting target: {0}", target);
+				target.AsTarget().Run();
+			}
+			catch (Exception e)
+			{
+				Logger.Error(e);
+				return 1;
+			}
+
+			return 0;
 		}
 	}
 }

@@ -51,6 +51,11 @@ namespace AnFake.Core
 			get { return Path.GetFileNameWithoutExtension(_value); }
 		}
 
+		public string Ext
+		{
+			get { return Path.GetExtension(_value); }
+		}
+
 		public FileSystemPath Parent
 		{
 			get { return new FileSystemPath(Path.GetDirectoryName(_value), true); }
