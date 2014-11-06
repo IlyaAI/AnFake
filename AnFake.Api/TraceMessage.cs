@@ -17,7 +17,10 @@ namespace AnFake.Api
 		[DataMember]
 		public string Message { get; private set; }
 
-		[DataMember]
+		[DataMember(EmitDefaultValue = false)]
 		public string Details { get; set; }
+
+		[DataMember(EmitDefaultValue = false)]
+		public string Target { get; set; }
 	}
 }

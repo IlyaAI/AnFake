@@ -48,7 +48,7 @@ namespace AnFake.Core
 			Log.ErrorFormat(format, args);
 		}
 
-		[Obsolete]
+		[Obsolete("For test purpose to see a compilation warning")]
 		public static void TraceMessage(TraceMessage message)
 		{
 			switch (message.Level)

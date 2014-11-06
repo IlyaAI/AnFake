@@ -11,7 +11,7 @@ namespace AnFake
 
 			// TODO: check for null
 
-			csx.Run();
+			csx.Configure();
 		}
 	}
 }

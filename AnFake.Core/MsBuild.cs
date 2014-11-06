@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using AnFake.Api;
 using Common.Logging;
 using Microsoft.Build.Framework;
@@ -9,6 +10,11 @@ namespace AnFake.Core
 	public static class MsBuild
 	{
 		private static readonly ILog Log = LogManager.GetLogger(typeof (MsBuild).FullName);
+
+		private static readonly string[] Locations =
+		{
+			"[ProgramFilesx86]/MSBuild/12.0/Bin/MsBuild.exe"
+		};
 
 		public sealed class Params
 		{
@@ -20,12 +26,12 @@ namespace AnFake.Core
 			public TimeSpan Timeout;
 			public FileSystemPath ToolPath;
 
-			public Params()
+			internal Params()
 			{
 				Targets = new[] {"Build"};
 				Verbosity = LoggerVerbosity.Normal;
-				Timeout = TimeSpan.MaxValue;
-				ToolPath = "C:/Program Files (x86)/MSBuild/12.0/Bin/MsBuild.exe".AsPath();
+				Timeout = TimeSpan.MaxValue;				
+				ToolPath = Locations.AsFileSet().Select(x => x.Path).FirstOrDefault();
 			}
 
 			public Params Clone()
@@ -54,7 +60,12 @@ namespace AnFake.Core
 			var parameters = Defaults.Clone();
 			setParams(parameters);
 
-			// TODO: check parameters
+			if (parameters.ToolPath == null)
+				throw new ArgumentException(
+					String.Format(
+						"MsBuild.Params.ToolPath must not be null.\nHint: probably, MsBuild.exe not found.\nSearch path:\n  {0}",
+						String.Join("\n  ", Locations)));
+			// TODO: check other parameters
 
 			Logger.DebugFormat("MsBuild =>  {0}", solution.RelPath);
 

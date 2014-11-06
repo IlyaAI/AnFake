@@ -17,9 +17,9 @@ let inline (!!!) (wildcardedPath: string) = FileSystem.AsFolderSet(wildcardedPat
 
 let inline (=>) target (action: unit -> unit) = Targets.AsTarget(target).Do(fun _ -> action ())
 
-let inline (&=>) (target: Target) (action: unit -> unit) = target.OnFailure(fun _ -> action ())
+let inline (&=>) (target: Target) (action: unit -> unit) = target.OnFailure(action)
 
-let inline (|=>) (target: Target) (action: unit -> unit) = target.Finally(fun _ -> action ())
+let inline (|=>) (target: Target) (action: unit -> unit) = target.Finally(action)
 
 let inline (<==) target (dependencies: IEnumerable<string>) = Targets.AsTarget(target).DependsOn(dependencies)
 

@@ -94,7 +94,7 @@ namespace AnFake.Core.Test
 
 		[TestCategory("Functional")]
 		[TestMethod]
-		public void TargetRun_should_execute_final_target_on_success()
+		public void TargetRun_should_execute_final_action_on_success()
 		{
 			// arrange
 			var sb = new StringBuilder();
@@ -112,7 +112,7 @@ namespace AnFake.Core.Test
 
 		[TestCategory("Functional")]
 		[TestMethod]
-		public void TargetRun_should_execute_final_target_on_failure()
+		public void TargetRun_should_execute_final_action_on_failure()
 		{
 			// arrange
 			var sb = new StringBuilder();
@@ -133,7 +133,7 @@ namespace AnFake.Core.Test
 
 		[TestCategory("Functional")]
 		[TestMethod]
-		public void TargetRun_should_execute_failure_target_on_failure()
+		public void TargetRun_should_execute_failure_action_on_failure()
 		{
 			// arrange
 			var sb = new StringBuilder();

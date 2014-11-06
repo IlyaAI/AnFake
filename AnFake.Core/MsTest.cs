@@ -11,6 +11,11 @@ namespace AnFake.Core
 	{
 		private static readonly ILog Log = LogManager.GetLogger(typeof(MsTest).FullName);
 
+		private static readonly string[] Locations =
+		{
+			"[ProgramFilesx86]/Microsoft Visual Studio 12.0/Common7/IDE/MsTest.exe"
+		};
+
 		public sealed class Params
 		{
 			public string Category;
@@ -22,11 +27,11 @@ namespace AnFake.Core
 			public bool NoIsolation;
 			public ITestPostProcessor PostProcessor;
 
-			public Params()
+			internal Params()
 			{				
 				Timeout = TimeSpan.MaxValue;
 				PostProcessor = new MsTestPostProcessor();
-				ToolPath = "C:/Program Files (x86)/Microsoft Visual Studio 12.0/Common7/IDE/MsTest.exe".AsPath();
+				ToolPath = Locations.AsFileSet().Select(x => x.Path).FirstOrDefault();
 			}
 
 			public Params Clone()
@@ -42,12 +47,12 @@ namespace AnFake.Core
 			Defaults = new Params();
 		}
 
-		public static TestExecutionResult RunMsTest(this IEnumerable<FileItem> assemblies)
+		public static TestExecutionResult Run(IEnumerable<FileItem> assemblies)
 		{
-			return RunMsTest(assemblies, p => { });
+			return Run(assemblies, p => { });
 		}
 
-		public static TestExecutionResult RunMsTest(this IEnumerable<FileItem> assemblies, Action<Params> setParams)
+		public static TestExecutionResult Run(IEnumerable<FileItem> assemblies, Action<Params> setParams)
 		{
 			var assembliesArray = assemblies.ToArray();
 			if (assembliesArray.Length == 0)
@@ -55,6 +60,14 @@ namespace AnFake.Core
 
 			var parameters = Defaults.Clone();
 			setParams(parameters);
+
+			if (parameters.ToolPath == null)
+				throw new ArgumentException(
+					String.Format(
+						"MsTest.Params.ToolPath must not be null.\nHint: probably, MsTest.exe not found.\nSearch path:\n  {0}",
+						String.Join("\n  ", Locations)));
+
+			// TODO: check other parameters
 
 			//if (parameters.WorkingDirectory == null)
 			//	throw new ArgumentException("MsTest.Params.WorkingDirectory must not be null");

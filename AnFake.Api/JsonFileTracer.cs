@@ -66,8 +66,16 @@ namespace AnFake.Api
 
 		public void Write(TraceMessage message)
 		{
+			if (message == null)
+				throw new ArgumentNullException("message", "Tracer.Write(message): message must not be null");
+
 			if (_tracker != null)
 				throw new InvalidOperationException("Tracking of external messages is active. Hint: check parity of Start/StopTrackExternal methods.");
+
+			if (MessageReceiving != null)
+			{
+				MessageReceiving.Invoke(this, message);
+			}
 
 			using (var log = OpenLog(FileMode.Append, FileAccess.Write, _maxRetries))
 			{
@@ -178,6 +186,8 @@ namespace AnFake.Api
 
 			return new TrackingResult(_externalErrors, _externalWarnings);
 		}
+
+		public event EventHandler<TraceMessage> MessageReceiving;
 
 		public event EventHandler<TraceMessage> MessageReceived;
 

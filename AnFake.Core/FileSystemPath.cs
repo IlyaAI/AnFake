@@ -16,9 +16,10 @@ namespace AnFake.Core
 
 		internal FileSystemPath(string value, bool normalized)
 		{
-			_value = normalized 
-				? value 
-				: Normalize(value);
+			_value = ExpandWellknownFolders(
+				normalized 
+					? value 
+					: Normalize(value));
 		}
 
 		public bool IsWildcarded
@@ -58,7 +59,7 @@ namespace AnFake.Core
 
 		public FileSystemPath Parent
 		{
-			get { return new FileSystemPath(Path.GetDirectoryName(_value), true); }
+			get { return new FileSystemPath(Path.GetDirectoryName(Full), true); }
 		}
 
 		public FileSystemPath ToRelative(FileSystemPath basePath)
@@ -103,12 +104,7 @@ namespace AnFake.Core
 		public override string ToString()
 		{
 			return _value;
-		}		
-
-		/*public static implicit operator String(FilePath path)
-		{
-			return path._value;
-		}*/
+		}
 
 		public static bool operator ==(FileSystemPath left, FileSystemPath right)
 		{
@@ -133,6 +129,24 @@ namespace AnFake.Core
 		private static string Normalize(string path)
 		{
 			return path.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+		}
+
+		private static string ExpandWellknownFolders(string path)
+		{
+			if (!path.StartsWith("[", StringComparison.InvariantCulture))
+				return path;
+
+			var end = path.IndexOf("]", StringComparison.InvariantCulture);
+			if (end < 0)
+				return path;
+
+			var macro = path.Substring(1, end - 1);
+
+			Environment.SpecialFolder specialFolder;
+			if (!Enum.TryParse(macro, true, out specialFolder))
+				return path;
+
+			return Environment.GetFolderPath(specialFolder) + path.Substring(end + 1);
 		}
 	}
 }

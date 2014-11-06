@@ -42,6 +42,12 @@ namespace AnFake.Api
 			return Instance.StopTrackExternal();
 		}
 
+		public static event EventHandler<TraceMessage> MessageReceiving
+		{
+			add { Instance.MessageReceiving += value; }
+			remove { Instance.MessageReceiving -= value; }
+		}
+
 		public static event EventHandler<TraceMessage> MessageReceived
 		{
 			add { Instance.MessageReceived += value; }

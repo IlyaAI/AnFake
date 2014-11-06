@@ -12,6 +12,8 @@ namespace AnFake.Api
 
 		IToolExecutionResult StopTrackExternal();
 
+		event EventHandler<TraceMessage> MessageReceiving;
+
 		event EventHandler<TraceMessage> MessageReceived;
 	}
 }

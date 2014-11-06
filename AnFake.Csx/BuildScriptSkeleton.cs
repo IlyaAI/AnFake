@@ -2,7 +2,7 @@
 // ReSharper disable CheckNamespace
 public abstract class BuildScriptSkeleton
 {
-	public abstract void Run();	
+	public abstract void Configure();	
 }
 // ReSharper restore CheckNamespace
 // ReSharper restore InconsistentNaming

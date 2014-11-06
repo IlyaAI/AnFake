@@ -20,7 +20,7 @@ namespace AnFake.Core
 
 			public ILog Logger;
 
-			public Params()
+			internal Params()
 			{
 				WorkingDirectory = "".AsPath();
 				Timeout = TimeSpan.MaxValue;
@@ -45,38 +45,38 @@ namespace AnFake.Core
 			if (setParams == null)
 				throw new ArgumentNullException("setParams", "Process.Run(setParams): setParams must not be null");
 
-			var prms = Defaults.Clone();
-			setParams(prms);
+			var parameters = Defaults.Clone();
+			setParams(parameters);
 
-			if (prms.FileName == null)
+			if (parameters.FileName == null)
 				throw new ArgumentException("Process.Params.FileName: must not be null");
-			if (prms.WorkingDirectory == null)
+			if (parameters.WorkingDirectory == null)
 				throw new ArgumentException("Process.Params.WorkingDirectory: must not be null");
-			if (prms.Logger == null)
+			if (parameters.Logger == null)
 				throw new ArgumentException("Process.Params.Logger: must not be null");
 
 			var process = new System.Diagnostics.Process
 			{
 				StartInfo =
 				{
-					FileName = prms.FileName.Full,
-					WorkingDirectory = prms.WorkingDirectory.Full,
+					FileName = parameters.FileName.Full,
+					WorkingDirectory = parameters.WorkingDirectory.Full,
 					UseShellExecute = false,
 					RedirectStandardOutput = true,
 					RedirectStandardError = true
 				}
 			};
 
-			if (!String.IsNullOrEmpty(prms.Arguments))
+			if (!String.IsNullOrEmpty(parameters.Arguments))
 			{
-				process.StartInfo.Arguments = prms.Arguments;
+				process.StartInfo.Arguments = parameters.Arguments;
 			}
 
 			Log.DebugFormat("Starting process...\n  Executable: {0}\n  Arguments: {1}\n  WorkingDirectory: {2}", 
 				process.StartInfo.FileName, process.StartInfo.Arguments, process.StartInfo.WorkingDirectory);
 
-			process.OutputDataReceived += (sender, evt) => { if (!String.IsNullOrWhiteSpace(evt.Data)) prms.Logger.Debug(evt.Data); };
-			process.ErrorDataReceived += (sender, evt) => { if (!String.IsNullOrWhiteSpace(evt.Data)) prms.Logger.Error(evt.Data); };
+			process.OutputDataReceived += (sender, evt) => { if (!String.IsNullOrWhiteSpace(evt.Data)) parameters.Logger.Debug(evt.Data); };
+			process.ErrorDataReceived += (sender, evt) => { if (!String.IsNullOrWhiteSpace(evt.Data)) parameters.Logger.Error(evt.Data); };
 
 			IToolExecutionResult external;
 			Tracer.MessageReceived += OnTraceMessage;
@@ -88,14 +88,14 @@ namespace AnFake.Core
 				process.BeginOutputReadLine();
 				process.BeginErrorReadLine();
 
-				if (prms.Timeout == TimeSpan.MaxValue)
+				if (parameters.Timeout == TimeSpan.MaxValue)
 				{
 					process.WaitForExit();
 				}
-				else if (!process.WaitForExit((int) prms.Timeout.TotalMilliseconds))
+				else if (!process.WaitForExit((int) parameters.Timeout.TotalMilliseconds))
 				{
 					process.Kill();
-					throw new TimeoutException(String.Format("Process isn't completed in specified time.\n  Executable: {0}\n  Timeout: {1}", process.StartInfo.FileName, prms.Timeout));
+					throw new TimeoutException(String.Format("Process isn't completed in specified time.\n  Executable: {0}\n  Timeout: {1}", process.StartInfo.FileName, parameters.Timeout));
 				}
 			}
 			finally

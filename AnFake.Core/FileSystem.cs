@@ -72,9 +72,37 @@ namespace AnFake.Core
 			return new FileSet().Include(wildcardedPath);
 		}
 
+		public static FileSet AsFileSet(this FileSystemPath[] wildcardedPathes)
+		{
+			if (wildcardedPathes == null)
+				throw new ArgumentNullException("wildcardedPathes", "FileSystem.AsFileSet(wildcardedPathes): wildcardedPathes must not be null");
+
+			var fs = new FileSet();
+			foreach (var path in wildcardedPathes)
+			{
+				fs.Include(path);
+			}
+
+			return fs;
+		}
+
 		public static FileSet AsFileSet(this string wildcardedPath)
 		{
 			return AsFileSet(wildcardedPath.AsPath());
+		}
+
+		public static FileSet AsFileSet(this string[] wildcardedPathes)
+		{
+			if (wildcardedPathes == null)
+				throw new ArgumentNullException("wildcardedPathes", "FileSystem.AsFileSet(wildcardedPathes): wildcardedPathes must not be null");
+
+			var fs = new FileSet();
+			foreach (var path in wildcardedPathes)
+			{
+				fs.Include(path);
+			}
+
+			return fs;
 		}
 
 		public static FileSet AsFileSetFrom(this FileSystemPath wildcardedPath, FileSystemPath basePath)

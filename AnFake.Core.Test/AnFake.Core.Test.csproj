@@ -58,6 +58,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="FileSystemPathTest.cs" />
     <Compile Include="FilesTest.cs" />
     <Compile Include="MsTestTest.cs" />
     <Compile Include="TargetTest.cs" />

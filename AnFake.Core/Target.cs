@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using AnFake.Api;
 
 namespace AnFake.Core
@@ -8,12 +9,24 @@ namespace AnFake.Core
 	{		
 		private static readonly IDictionary<string, Target> Targets = new Dictionary<string, Target>();
 
+		public sealed class ExecutionReason
+		{
+			public readonly bool IsRunFailed;
+			public readonly bool IsTargetFailed;
+
+			internal ExecutionReason(bool isRunFailed, bool isTargetFailed)
+			{
+				IsRunFailed = isRunFailed;
+				IsTargetFailed = isTargetFailed;
+			}
+		}
+
 		private readonly TraceMessageCollector _messages = new TraceMessageCollector();
 		private readonly ISet<Target> _dependencies = new HashSet<Target>();
 		private readonly string _name;
 		private Action _do;
-		private Action _onFailure;
-		private Action _finally;
+		private Action<ExecutionReason> _onFailure;
+		private Action<ExecutionReason> _finally;
 		private TargetState _state;
 
 		private Target(string name)
@@ -21,7 +34,7 @@ namespace AnFake.Core
 			_name = name;
 
 			if (Targets.ContainsKey(name))
-				throw new InvalidOperationException();
+				throw new InvalidOperationException(String.Format("Target '{0}' already exists.", name));
 
 			Targets.Add(name, this);
 		}
@@ -34,6 +47,11 @@ namespace AnFake.Core
 		public IEnumerable<Target> Dependencies
 		{
 			get { return _dependencies; }
+		}
+
+		public bool HasBody
+		{
+			get { return _do != null; }
 		}
 
 		public Target Do(Action action)
@@ -49,7 +67,7 @@ namespace AnFake.Core
 			return this;
 		}
 
-		public Target OnFailure(Action action)
+		public Target OnFailure(Action<ExecutionReason> action)
 		{
 			if (action == null)
 				throw new ArgumentNullException("action");
@@ -62,7 +80,15 @@ namespace AnFake.Core
 			return this;
 		}
 
-		public Target Finally(Action action)
+		public Target OnFailure(Action action)
+		{
+			if (action == null)
+				throw new ArgumentNullException("action");
+
+			return OnFailure(x => action.Invoke());
+		}
+
+		public Target Finally(Action<ExecutionReason> action)
 		{
 			if (action == null)
 				throw new ArgumentNullException("action");
@@ -73,6 +99,14 @@ namespace AnFake.Core
 			_finally = action;
 
 			return this;
+		}
+
+		public Target Finally(Action action)
+		{
+			if (action == null)
+				throw new ArgumentNullException("action");
+
+			return Finally(x => action.Invoke());
 		}
 
 		public Target DependsOn(params string[] names)
@@ -107,112 +141,124 @@ namespace AnFake.Core
 			return _name.GetHashCode();
 		}
 		
-		public void Run()
+		internal void Run()
 		{
-			Logger.Debug("Targets execution order:");
-			DoValidate(1);
+			var orderedTargets = new List<Target>();
+			ResolveDependencies(orderedTargets);
+
+			Logger.Debug("Targets execution order:");			
+			foreach (var target in orderedTargets)
+			{
+				Logger.DebugFormat("  {0}", target.Name);
+			}
 			Logger.Debug("");
 
-			var executedTargets = new List<Target>();
+			var lastExecutedTarget = -1;
+			var lastError = (Exception) null;
 			try
 			{
-				DoRun(executedTargets);
+				for (var i = 0; i < orderedTargets.Count; i++)
+				{
+					lastExecutedTarget = i;
+					orderedTargets[i].DoMain();
+				}
 			}
-			catch (TerminateTargetException)
+			catch (Exception e)
 			{
-				// do nothing
+				lastError = e;
 			}
 
-			LogSummary(executedTargets);
+			for (var i = lastExecutedTarget; i >= 0; i--)
+			{
+				if (lastError != null)
+				{
+					orderedTargets[i].DoOnFailure(new ExecutionReason(true, i == lastExecutedTarget));
+				}
+
+				orderedTargets[i].DoFinally(new ExecutionReason(lastError != null, i == lastExecutedTarget));
+			}			
+
+			LogSummary(orderedTargets.Take(lastExecutedTarget + 1));
+
+			if (lastError != null && !(lastError is TerminateTargetException))
+				throw lastError;
 		}
 
-		private void DoValidate(int depth)
+		private void ResolveDependencies(ICollection<Target> orderedTargets)
 		{
-			var ident = new String(' ', depth * 2);			
-
-			if (_state == TargetState.PreQueued)
-			{
-				Logger.ErrorFormat("{0}{1} => CYCLING DEPENDENCY DETECTED", ident, _name);
-
-				throw new InvalidOperationException(String.Format("Target '{0}' has cycling dependencies.", _name));
-			}
+			if (_state == TargetState.PreQueued)			
+				throw new InvalidOperationException(String.Format("Target '{0}' has cycle dependency.", _name));
 
 			if (_state == TargetState.Queued)
 				return;
-			
-			_state = TargetState.PreQueued;
-			Logger.DebugFormat("{0}{1} =>", ident, _name);
-			if (_onFailure != null || _finally != null)
-			{
-				Logger.DebugFormat("{0}TRY", ident);				
-			}			
 
-			foreach (var dependency in _dependencies)
+			_state = TargetState.PreQueued;			
+			foreach (var dependent in _dependencies)
 			{
-				dependency.DoValidate(depth + 1);
+				dependent.ResolveDependencies(orderedTargets);
 			}
 
-			if (_do != null)
-			{
-				Logger.DebugFormat("{0}  {1}.Do", ident, _name);
-			}
+			orderedTargets.Add(this);
 
-			if (_onFailure != null)
-			{
-				Logger.DebugFormat("{0}CATCH", ident);
-				Logger.DebugFormat("{0}  {1}.OnFailure", ident, _name);
-			}
-
-			if (_finally != null)
-			{
-				Logger.DebugFormat("{0}FINALLY", ident);
-				Logger.DebugFormat("{0}  {1}.Finally", ident, _name);
-			}			
-				
-			_state = TargetState.Queued;			
-		}		
-
-		private void DoRun(ICollection<Target> executedTargets)
+			_state = TargetState.Queued;
+		}
+		
+		private void DoMain()
 		{
 			if (_state == TargetState.Succeeded || _state == TargetState.PartiallySucceeded)
 				return;
 
 			if (_state == TargetState.Failed)
-				throw new InvalidOperationException(String.Format("Inconsistence in build oreder: trying to re-run failed target '{0}'.", _name));
-
-			Logger.DebugFormat("TARGET START >> {0}", _name);
-
+				throw new InvalidOperationException(String.Format("Inconsistence in build order: trying to re-run failed target '{0}'.", _name));						
+			
 			_state = TargetState.Started;
 			try
 			{
-				foreach (var dependency in _dependencies)
+				if (_do != null)
 				{
-					dependency.DoRun(executedTargets);					
-				}
+					Logger.DebugFormat("TARGET DO >> {0}", _name);
 
-				executedTargets.Add(this);
-				Invoke("Do", _do, false);
+					Invoke("Do", _do, false);
+				}				
 
 				_state = TargetState.PartiallySucceeded;
 			}
 			catch (Exception)
-			{
-				Invoke("OnFailure", _onFailure, true);
+			{				
 				_state = TargetState.Failed;
-
 				throw;
-			}
-			finally
-			{
-				if (Invoke("Finally", _finally, true))
-				{
-					if (_state == TargetState.PartiallySucceeded)
-					{
-						_state = TargetState.Succeeded;
-					}					
-				}
+			}			
+		}
 
-				Logger.DebugFormat("TARGET END   >> {0}", _name);
+		private void DoOnFailure(ExecutionReason reason)
+		{
+			if (_state != TargetState.Failed && _state != TargetState.Succeeded && _state != TargetState.PartiallySucceeded)
+				throw new InvalidOperationException(String.Format("Inconsistence in build order: trying to run OnFailure action for non-failed or non-executed target '{0}'.", _name));
+
+			if (_onFailure != null)
+			{
+				Logger.DebugFormat("TARGET ON-FAILURE >> {0}", _name);
+
+				Invoke("OnFailure", () => _onFailure(reason), true);
+			}			
+		}
+
+		private void DoFinally(ExecutionReason reason)
+		{
+			if (_state != TargetState.PartiallySucceeded && _state != TargetState.Failed)
+				throw new InvalidOperationException(String.Format("Inconsistence in build order: trying to run Finally action for non-executed target '{0}'.", _name));
+
+			if (_finally != null)
+			{
+				Logger.DebugFormat("TARGET FINALLY >> {0}", _name);
+
+				if (!Invoke("Finally", () => _finally(reason), true))
+					return;				
+			}
+
+			if (_state == TargetState.PartiallySucceeded)
+			{
+				_state = TargetState.Succeeded;
 			}
 		}
 
@@ -222,7 +268,10 @@ namespace AnFake.Core
 			Logger.Debug("================ BUILD SYMMARY ================");
 			foreach (var target in executedTargets)
 			{
-				var targetSummary = String.Format("TARGET {0}: {1} error(s) {2} warning(s)",
+				if (!target.HasBody)
+					continue;
+
+				var targetSummary = String.Format("{0}: {1} error(s) {2} warning(s)",
 					target._name, target._messages.ErrorsCount, target._messages.WarningsCount);
 
 				switch (target._state)
@@ -261,6 +310,9 @@ namespace AnFake.Core
 			if (action == null)
 				return true;
 
+			var setTarget = new EventHandler<TraceMessage>((s, m) => m.Target = Name);
+
+			Tracer.MessageReceiving += setTarget;
 			Tracer.MessageReceived += _messages.OnMessage;
 			try
 			{
@@ -291,6 +343,7 @@ namespace AnFake.Core
 			finally
 			{
 				Tracer.MessageReceived -= _messages.OnMessage;
+				Tracer.MessageReceiving -= setTarget;
 			}
 
 			return true;
