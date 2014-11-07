@@ -17,7 +17,7 @@ namespace AnFake.Core.Test
 			Directory.CreateDirectory("Data/Folders/new-a");
 
 			// act
-			"Data/Folders/new-a".AsFolder().Create();
+			Folders.Create("Data/Folders/new-a");
 
 			// assert
 			Assert.IsTrue(Directory.Exists("Data/Folders/new-a"));
@@ -34,7 +34,7 @@ namespace AnFake.Core.Test
 			}				
 
 			// act
-			"Data/Folders/new-a/new-b".AsFolder().Create();
+			Folders.Create("Data/Folders/new-a/new-b");
 
 			// assert
 			Assert.IsTrue(Directory.Exists("Data/Folders/new-a"));
@@ -54,7 +54,7 @@ namespace AnFake.Core.Test
 			fi.Attributes |= FileAttributes.Hidden|FileAttributes.ReadOnly;
 			
 			// act
-			"Data/Folders/del-a".AsFolder().Delete();
+			Folders.Delete("Data/Folders/del-a");
 
 			// assert
 			Assert.IsFalse(Directory.Exists("Data/Folders/del-a"));
@@ -79,7 +79,7 @@ namespace AnFake.Core.Test
 			}).Start();
 
 			// act
-			"Data/Folders/del-a".AsFolder().Delete();
+			Folders.Delete("Data/Folders/del-a");
 
 			// assert
 			Assert.IsFalse(Directory.Exists("Data/Folders/del-a"));			
@@ -92,7 +92,7 @@ namespace AnFake.Core.Test
 			// arrange
 			
 			// act
-			"Data/Folders/del-e".AsFolder().Delete();
+			Folders.Delete("Data/Folders/del-e");
 
 			// assert
 			Assert.IsFalse(Directory.Exists("Data/Folders/del-e"));			

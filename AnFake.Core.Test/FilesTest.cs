@@ -25,7 +25,7 @@ namespace AnFake.Core.Test
 			}).Start();
 
 			// act
-			"Data/Files/file-1.txt".AsFile().Delete();
+			Files.Delete("Data/Files/file-1.txt");
 
 			// assert
 			Assert.IsFalse(File.Exists("Data/Files/file-1.txt"));
@@ -42,7 +42,7 @@ namespace AnFake.Core.Test
 			}			
 			
 			// act
-			"Data/Files/file-1.txt".AsFile().Delete();
+			Files.Delete("Data/Files/file-1.txt");
 
 			// assert
 			Assert.IsFalse(File.Exists("Data/Files/file-1.txt"));			

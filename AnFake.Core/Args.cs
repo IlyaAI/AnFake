@@ -1,22 +1,21 @@
 ﻿using System;
-using System.Globalization;
 using System.Text;
 
 namespace AnFake.Core
 {
-	public sealed class ArgumentsBuilder
+	public sealed class Args
 	{
 		private readonly StringBuilder _args = new StringBuilder();
 		private readonly string _optionMarker;
 		private readonly string _nameValueMarker;
 
-		public ArgumentsBuilder(string optionMarker, string nameValueMarker)
+		public Args(string optionMarker, string nameValueMarker)
 		{
 			_optionMarker = optionMarker;
 			_nameValueMarker = nameValueMarker;
 		}
 
-		public ArgumentsBuilder NonQuotedValue(string value)
+		public Args NonQuotedValue(string value)
 		{
 			if (String.IsNullOrEmpty(value))
 				return this;
@@ -26,7 +25,7 @@ namespace AnFake.Core
 			return this;
 		}
 
-		public ArgumentsBuilder QuotedValue(string value)
+		public Args QuotedValue(string value)
 		{
 			if (String.IsNullOrEmpty(value))
 				return this;
@@ -36,7 +35,7 @@ namespace AnFake.Core
 			return this;
 		}
 
-		public ArgumentsBuilder Space()
+		public Args Space()
 		{
 			if (_args.Length > 0 && !Char.IsWhiteSpace(_args[_args.Length - 1]))
 			{
@@ -46,14 +45,14 @@ namespace AnFake.Core
 			return this;
 		}
 
-		public ArgumentsBuilder ValuedOption(string name)
+		public Args ValuedOption(string name)
 		{
 			_args.Append(_optionMarker).Append(name).Append(_nameValueMarker);			
 
 			return this;
 		}
 
-		public ArgumentsBuilder Option(string name)
+		public Args Option(string name)
 		{
 			Space();
 

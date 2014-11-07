@@ -146,151 +146,7 @@ namespace AnFake.Core
 		{
 			return AsFolderSet(wildcardedPath.AsPath());
 		}
-
-		public static void CopyTo(this IEnumerable<FileItem> files, FileSystemPath targetPath)
-		{
-			if (files == null)
-				throw new ArgumentNullException("files", "FileSystem.CopyTo(files, targetPath): files must not be null");
-			if (targetPath == null)
-				throw new ArgumentNullException("targetPath", "FileSystem.CopyTo(files, targetPath): targetPath must not be null");
-
-			CopyTo(files, targetPath, false);
-		}
-
-		public static void CopyTo(this IEnumerable<FileItem> files, FileSystemPath targetPath, bool overwrite)
-		{
-			if (files == null)
-				throw new ArgumentNullException("files", "FileSystem.CopyTo(files, targetPath, overwrite): files must not be null");
-			if (targetPath == null)
-				throw new ArgumentNullException("targetPath", "FileSystem.Copy(files, targetPath, overwrite): targetPath must not be null");			
-
-			var filesToCopy = files
-				.Select(x => new Tuple<FileSystemPath, FileSystemPath>(x.Path, targetPath / x.RelPath))
-				.ToArray();
-
-			if (overwrite)
-			{
-				Log.DebugFormat("COPY: overwrite enabled => cleaning destination\n  TargetPath: {0}", targetPath);
-				DeleteFiles(filesToCopy.Select(x => x.Item2));
-			}
-
-			foreach (var folder in filesToCopy.Select(x => x.Item2.Parent).Distinct())
-			{
-				Log.DebugFormat("COPY: creating destination folders\n  TargetPath: {0}", folder);
-				Directory.CreateDirectory(folder.Full);
-			}
-
-			foreach (var file in filesToCopy)
-			{
-				Log.DebugFormat("COPY:\n  From: {0}\n    To: {1}", file.Item1, file.Item2);
-				File.Copy(file.Item1.Full, file.Item2.Full);
-			}
-
-			Log.DebugFormat("COPY: total {0} files", filesToCopy.Length);
-		}
-
-		public static void CopyTo(this FileItem file, FileSystemPath targetPath)
-		{
-			if (file == null)
-				throw new ArgumentNullException("file", "FileSystem.CopyTo(file, targetPath): file must not be null");
-			if (targetPath == null)
-				throw new ArgumentNullException("targetPath", "FileSystem.CopyTo(file, targetPath): targetPath must not be null");
-
-			CopyTo(file, targetPath, false);
-		}
-
-		public static void CopyTo(FileItem file, FileSystemPath targetPath, bool overwrite)
-		{
-			if (file == null)
-				throw new ArgumentNullException("file", "FileSystem.CopyTo(file, targetPath, overwrite): file must not be null");
-			if (targetPath == null)
-				throw new ArgumentNullException("targetPath", "FileSystem.CopyTo(file, targetPath, overwrite): targetPath must not be null");
-			
-			if (overwrite)
-			{
-				Log.DebugFormat("COPY: overwrite enabled => cleaning destination\n  TargetPath: {0}", targetPath);
-				DeleteFile(targetPath);
-			}
-
-			var targetFolder = targetPath.Parent;
-			Log.DebugFormat("COPY: creating destination folder\n  TargetPath: {0}", targetFolder);			
-			Directory.CreateDirectory(targetFolder.Full);
-
-			Log.DebugFormat("COPY:\n  From: {0}\n    To: {1}", file, targetPath);
-			File.Copy(file.Path.Full, targetPath.Full);
-
-			Log.Debug("COPY: total 1 file");
-		}
-
-		public static void Delete(this IEnumerable<FileItem> files)
-		{
-			if (files == null)
-				throw new ArgumentNullException("files", "FileSystem.Delete(files): files must not be null");
-
-			DeleteFiles(files.Select(x => x.Path));
-		}
-
-		public static void Delete(this FileItem file)
-		{
-			if (file == null)
-				throw new ArgumentNullException("file", "FileSystem.Delete(file): file must not be null");
-
-			DeleteFile(file.Path);
-		}
-
-		public static void Create(this FolderItem folder)
-		{
-			if (folder == null)
-				throw new ArgumentNullException("folder", "FileSystem.Create(folder): folder must not be null");
-
-			Directory.CreateDirectory(folder.Path.Full);
-		}
-
-		public static void Delete(this IEnumerable<FolderItem> folders)
-		{
-			if (folders == null)
-				throw new ArgumentNullException("folders", "FileSystem.Delete(folders): folders must not be null");
-
-			DeleteFolders(folders.Select(x => x.Path));
-		}
-
-		public static void Delete(this FolderItem folder)
-		{
-			if (folder == null)
-				throw new ArgumentNullException("folder", "FileSystem.Delete(folder): folder must not be null");
-
-			DeleteFolder(folder.Path);
-		}
-
-		public static void Clean(this IEnumerable<FolderItem> folders)
-		{
-			if (folders == null)
-				throw new ArgumentNullException("folders", "FileSystem.Clean(folders): folders must not be null");
-
-			var foldersToClean = folders.ToArray();
-
-			Log.DebugFormat("CLEAN: deleting folders");
-			DeleteFolders(foldersToClean.Select(x => x.Path));
-
-			foreach (var folder in foldersToClean)
-			{
-				Log.DebugFormat("CLEAN: re-creating folder\n  TargetPath: {0}", folder);
-				Directory.CreateDirectory(folder.Path.Full);
-			}
-		}
-
-		public static void Clean(this FolderItem folder)
-		{
-			if (folder == null)
-				throw new ArgumentNullException("folder", "FileSystem.Clean(folder): folder must not be null");
-
-			Log.DebugFormat("CLEAN: deleting folder\n  TargetPath: {0}", folder);
-			DeleteFolder(folder.Path);
-
-			Log.DebugFormat("CLEAN: re-creating folder\n  TargetPath: {0}", folder);
-			Directory.CreateDirectory(folder.Path.Full);
-		}
-
+		
 		public static string MakeUnique(this string name, string ext)
 		{
 			return String.Format("{0}.{1:yyyyMMdd.HHmmss.ff}{2}", name, DateTime.Now, ext);
@@ -306,22 +162,22 @@ namespace AnFake.Core
 			return Match(FileSystemPath.Base, wildcardedPath, Directory.EnumerateDirectories);
 		}
 
-		private static void DeleteFiles(IEnumerable<FileSystemPath> files)
+		internal static void DeleteFiles(IEnumerable<FileSystemPath> files)
 		{
 			Delete(files, FileEraser);
 		}
 
-		private static void DeleteFile(FileSystemPath file)
+		internal static void DeleteFile(FileSystemPath file)
 		{
 			Delete(new[] {file}, FileEraser);
 		}
 
-		private static void DeleteFolders(IEnumerable<FileSystemPath> folders)
+		internal static void DeleteFolders(IEnumerable<FileSystemPath> folders)
 		{
 			Delete(folders, FolderEraser);
 		}
 
-		private static void DeleteFolder(FileSystemPath folder)
+		internal static void DeleteFolder(FileSystemPath folder)
 		{
 			Delete(new[] {folder}, FolderEraser);
 		}

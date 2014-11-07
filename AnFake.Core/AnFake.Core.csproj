@@ -46,8 +46,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ArgumentsBuilder.cs" />
-    <Compile Include="ArgumentsBuilderExtension.cs" />
+    <Compile Include="Args.cs" />
+    <Compile Include="ArgsExtension.cs" />
+    <Compile Include="Folders.cs" />
+    <Compile Include="Files.cs" />
     <Compile Include="FolderItem.cs" />
     <Compile Include="FileSystemPath.cs" />
     <Compile Include="MsBuild.cs" />
