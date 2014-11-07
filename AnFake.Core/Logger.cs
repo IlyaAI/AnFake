@@ -69,7 +69,7 @@ namespace AnFake.Core
 					return;
 			}
 
-			if (String.IsNullOrWhiteSpace(message.Details))
+			if (!String.IsNullOrWhiteSpace(message.Details))
 			{
 				Log.Debug(message.Details);
 			}

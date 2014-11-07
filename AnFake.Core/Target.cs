@@ -21,6 +21,8 @@ namespace AnFake.Core
 			}
 		}
 
+		public static string Current { get; private set; }
+
 		private readonly TraceMessageCollector _messages = new TraceMessageCollector();
 		private readonly ISet<Target> _dependencies = new HashSet<Target>();
 		private readonly string _name;
@@ -28,6 +30,7 @@ namespace AnFake.Core
 		private Action<ExecutionReason> _onFailure;
 		private Action<ExecutionReason> _finally;
 		private TargetState _state;
+		private bool _skipErrors;
 
 		private Target(string name)
 		{
@@ -47,11 +50,6 @@ namespace AnFake.Core
 		public IEnumerable<Target> Dependencies
 		{
 			get { return _dependencies; }
-		}
-
-		public bool HasBody
-		{
-			get { return _do != null; }
 		}
 
 		public Target Do(Action action)
@@ -109,6 +107,13 @@ namespace AnFake.Core
 			return Finally(x => action.Invoke());
 		}
 
+		public Target SkipErrors()
+		{
+			_skipErrors = true;
+
+			return this;
+		}
+
 		public Target DependsOn(params string[] names)
 		{
 			return DependsOn((IEnumerable<string>)names);
@@ -143,18 +148,16 @@ namespace AnFake.Core
 		
 		internal void Run()
 		{
+			// Prepare
 			var orderedTargets = new List<Target>();
 			ResolveDependencies(orderedTargets);
 
-			Logger.Debug("Targets execution order:");			
-			foreach (var target in orderedTargets)
-			{
-				Logger.DebugFormat("  {0}", target.Name);
-			}
 			Logger.Debug("");
+			Logger.DebugFormat("'{0}' execution order:\n  {1}\n", _name, String.Join("\n  ", orderedTargets.Select(x => x.Name)));
 
+			// Target.Do
 			var lastExecutedTarget = -1;
-			var lastError = (Exception) null;
+			var error = (Exception) null;
 			try
 			{
 				for (var i = 0; i < orderedTargets.Count; i++)
@@ -165,23 +168,33 @@ namespace AnFake.Core
 			}
 			catch (Exception e)
 			{
-				lastError = e;
+				error = e;
 			}
-
+			
+			// Target.OnFailure
 			for (var i = lastExecutedTarget; i >= 0; i--)
 			{
-				if (lastError != null)
-				{
-					orderedTargets[i].DoOnFailure(new ExecutionReason(true, i == lastExecutedTarget));
-				}
+				var executedTarget = orderedTargets[i];
+				var reason = new ExecutionReason(error != null, executedTarget._state == TargetState.Failed);
+				if (!reason.IsRunFailed && !reason.IsTargetFailed)
+					continue;
 
-				orderedTargets[i].DoFinally(new ExecutionReason(lastError != null, i == lastExecutedTarget));
+				executedTarget.DoOnFailure(reason);
+			}
+
+			// Target.Finally
+			for (var i = lastExecutedTarget; i >= 0; i--)
+			{
+				var executedTarget = orderedTargets[i];
+				executedTarget.DoFinally(new ExecutionReason(error != null, executedTarget._state == TargetState.Failed));
 			}			
 
+			// Summarize
 			LogSummary(orderedTargets.Take(lastExecutedTarget + 1));
 
-			if (lastError != null && !(lastError is TerminateTargetException))
-				throw lastError;
+			// Re-throw
+			if (error != null)
+				throw error;
 		}
 
 		private void ResolveDependencies(ICollection<Target> orderedTargets)
@@ -216,8 +229,6 @@ namespace AnFake.Core
 			{
 				if (_do != null)
 				{
-					Logger.DebugFormat("TARGET DO >> {0}", _name);
-
 					Invoke("Do", _do, false);
 				}				
 
@@ -226,7 +237,8 @@ namespace AnFake.Core
 			catch (Exception)
 			{				
 				_state = TargetState.Failed;
-				throw;
+				if (!_skipErrors)
+					throw;
 			}			
 		}
 
@@ -237,8 +249,6 @@ namespace AnFake.Core
 
 			if (_onFailure != null)
 			{
-				Logger.DebugFormat("TARGET ON-FAILURE >> {0}", _name);
-
 				Invoke("OnFailure", () => _onFailure(reason), true);
 			}			
 		}
@@ -250,8 +260,6 @@ namespace AnFake.Core
 
 			if (_finally != null)
 			{
-				Logger.DebugFormat("TARGET FINALLY >> {0}", _name);
-
 				if (!Invoke("Finally", () => _finally(reason), true))
 					return;				
 			}
@@ -262,13 +270,16 @@ namespace AnFake.Core
 			}
 		}
 
-		private static void LogSummary(IEnumerable<Target> executedTargets)
+		private void LogSummary(IEnumerable<Target> executedTargets)
 		{
+			var finalState = TargetState.Succeeded;
+
 			Logger.Debug("");
-			Logger.Debug("================ BUILD SYMMARY ================");
+			Logger.DebugFormat("================ '{0}' Summary ================", _name);
+
 			foreach (var target in executedTargets)
 			{
-				if (!target.HasBody)
+				if (target._do == null)
 					continue;
 
 				var targetSummary = String.Format("{0}: {1} error(s) {2} warning(s)",
@@ -281,9 +292,11 @@ namespace AnFake.Core
 						break;
 					case TargetState.PartiallySucceeded:
 						Logger.Warn(targetSummary);
+						finalState = TargetState.PartiallySucceeded;
 						break;
 					case TargetState.Failed:
 						Logger.Error(targetSummary);
+						finalState = TargetState.PartiallySucceeded;
 						break;
 				}
 
@@ -303,6 +316,26 @@ namespace AnFake.Core
 					}
 				}
 			}
+
+			if (_state == TargetState.Queued || _state == TargetState.Failed)
+			{
+				finalState = TargetState.Failed;
+			}
+
+			Logger.Debug("----------------");
+			switch (finalState)
+			{
+				case TargetState.Succeeded:
+					Logger.InfoFormat("'{0}' Succeeded", _name);
+					break;
+				case TargetState.PartiallySucceeded:
+					Logger.WarnFormat("'{0}' Partially Succeeded", _name);
+					break;
+				case TargetState.Failed:
+					Logger.ErrorFormat("'{0}' Failed", _name);
+					break;
+			}
+			Logger.Debug("");
 		}
 
 		private bool Invoke(string phase, Action action, bool skipErrors)
@@ -311,6 +344,11 @@ namespace AnFake.Core
 				return true;
 
 			var setTarget = new EventHandler<TraceMessage>((s, m) => m.Target = Name);
+
+			Current = _name;
+
+			Logger.Debug("");
+			Logger.DebugFormat("START {0}.{1}", _name, phase);
 
 			Tracer.MessageReceiving += setTarget;
 			Tracer.MessageReceived += _messages.OnMessage;
@@ -343,7 +381,11 @@ namespace AnFake.Core
 			finally
 			{
 				Tracer.MessageReceived -= _messages.OnMessage;
-				Tracer.MessageReceiving -= setTarget;
+				Tracer.MessageReceiving -= setTarget;				
+
+				Logger.DebugFormat("END   {0}.{1}", _name, phase);
+
+				Current = null;
 			}
 
 			return true;

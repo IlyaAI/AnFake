@@ -60,7 +60,14 @@ namespace AnFake.Core.Test
 			"c".AsTarget().DependsOn("d");
 
 			// act
-			"b".AsTarget().Run();
+			try
+			{
+				"b".AsTarget().Run();
+			}
+			catch (TerminateTargetException)
+			{
+				// it's ok
+			}			
 
 			// assert
 			Assert.AreEqual("a", sb.ToString());
@@ -122,7 +129,14 @@ namespace AnFake.Core.Test
 				.Finally(() => sb.Append("c"));
 
 			// act
-			"a".AsTarget().Run();
+			try
+			{
+				"a".AsTarget().Run();
+			}
+			catch (TerminateTargetException)
+			{
+				// it's ok
+			}			
 			
 			// assert
 			Assert.AreEqual("c", sb.ToString());
@@ -143,7 +157,14 @@ namespace AnFake.Core.Test
 				.OnFailure(() => sb.Append("c"));
 
 			// act
-			"a".AsTarget().Run();
+			try
+			{
+				"a".AsTarget().Run();
+			}
+			catch (TerminateTargetException)
+			{
+				// it's ok
+			}			
 			
 			// assert
 			Assert.AreEqual("c", sb.ToString());

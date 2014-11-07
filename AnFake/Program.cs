@@ -24,9 +24,32 @@ namespace AnFake
 
 		public static int Main(string[] args)
 		{
+			Console.SetWindowSize((int)(Console.LargestWindowWidth * 0.75), (int)(Console.LargestWindowHeight * 0.75));
+
 			if (args.Length == 0)
 			{
-				Logger.Debug("TODO: place help here");
+				Logger.Debug("Usage: AnFake.exe [<script>] [<target>] ... [<name>=<value>] ...");
+				Logger.Debug("  <script>       Path to build script. Optional. Default 'build.fsx'");
+				Logger.Debug("                 Script must have either .fsx (F#) or .csx (C#) extension.");
+				Logger.Debug("                 If relative path is specified it's evaluated against current directory.");
+				Logger.Debug("  <target>       Target to run. Optional. Multiple. Default 'Build'");
+				Logger.Debug("                 Multiple targets might be specified via space separator.");
+				Logger.Debug("");
+				Logger.Debug("  <name>=<value> Additional build parameters. Optional. Multiple.");
+				Logger.Debug("                 Multiple pairs might be specified via space separator.");
+				Logger.Debug("");
+				Logger.Debug("All arguments are optional but at least one must be specified.");
+				Logger.Debug("");
+				Logger.Debug("Example:");
+				Logger.Debug("  AnFake.exe Compile");
+				Logger.Debug("    runs target 'Compile' defined in 'build.fsx' script with no additional parameters");
+				Logger.Debug("");
+				Logger.Debug("  AnFake.exe build.csx");
+				Logger.Debug("    runs target 'Build' defined in 'build.csx' script with no additional parameters");
+				Logger.Debug("");
+				Logger.Debug("  AnFake.exe build.csx Compile configuration=Debug");
+				Logger.Debug("    runs target 'Compile' defined in 'build.csx' script with additional parameter 'configuration' set to 'Debug'");
+
 				return 0;
 			}
 
@@ -62,8 +85,12 @@ namespace AnFake
 				foreach (var target in options.Targets)
 				{
 					target.AsTarget().Run();
-				}				
-			}				
+				}
+			}
+			catch (TerminateTargetException)
+			{
+				// just skip, its already processed
+			}
 			catch (Exception e)
 			{
 				Logger.Error(e);

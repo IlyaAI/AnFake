@@ -7,14 +7,37 @@ namespace AnFake.Integration.MsBuild
 {
 	public sealed class Logger : ILogger
 	{
+		private string _parameters;
+
 		public LoggerVerbosity Verbosity { get; set; }
 
-		public string Parameters { get; set; }
-
-		public Uri TracerUri
+		public string Parameters
 		{
-			get { return new Uri(Parameters); }
+			get { return _parameters; }
+			set
+			{
+				if (_parameters == value)
+					return;
+
+				_parameters = value;
+
+				if (!String.IsNullOrEmpty(value))
+				{
+					var components = value.Split('#');
+					TracerUri = new Uri(components[0]);
+					AnFakeTarget = components.Length > 1 ? components[1] : null;
+				}
+				else
+				{
+					TracerUri = null;
+					AnFakeTarget = null;
+				}				
+			}
 		}
+
+		public Uri TracerUri { get; private set; }
+
+		public string AnFakeTarget { get; private set; }		
 
 		public void Initialize(IEventSource eventSource)
 		{
@@ -60,7 +83,7 @@ namespace AnFake.Integration.MsBuild
 			Trace(TraceMessageLevel.Error, e.ProjectFile, e.File, e.LineNumber, e.ColumnNumber, e.Code, e.Message);
 		}
 
-		private static void Trace(TraceMessageLevel level, string project, string file, int line, int col, string code, string message)
+		private void Trace(TraceMessageLevel level, string project, string file, int line, int col, string code, string message)
 		{
 			var formattedMsg = new StringBuilder();
 
@@ -83,7 +106,7 @@ namespace AnFake.Integration.MsBuild
 					.Append("    ").AppendLine(project);
 			}
 
-			Tracer.Write(new TraceMessage(level, formattedMsg.ToString()));
+			Tracer.Write(new TraceMessage(level, formattedMsg.ToString()) { Target = AnFakeTarget });
 		}
 	}
 }
