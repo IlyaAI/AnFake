@@ -39,6 +39,7 @@
     <Reference Include="Microsoft.Build.Framework" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -55,6 +56,12 @@
     <Compile Include="MsBuild.cs" />
     <Compile Include="MsTest.cs" />
     <Compile Include="MsTestPostProcessor.cs" />
+    <Compile Include="NuGet.cs" />
+    <Compile Include="NuSpec\v25\Package.cs" />
+    <Compile Include="NuSpec\v25\Metadata.cs" />
+    <Compile Include="NuSpec\v25\ReferenceGroup.cs" />
+    <Compile Include="NuSpec\v25\Reference.cs" />
+    <Compile Include="NuSpec\v25\Framework.cs" />
     <Compile Include="Target.cs" />
     <Compile Include="TargetState.cs" />
     <Compile Include="TerminateTargetException.cs" />
