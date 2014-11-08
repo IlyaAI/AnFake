@@ -1,6 +1,6 @@
-﻿#r "AnFake/bin/Debug/AnFake.Api.dll"
-#r "AnFake/bin/Debug/AnFake.Core.dll"
-#r "AnFake/bin/Debug/AnFake.Fsx.dll"
+﻿#r ".AnFake/Bin/AnFake.Api.dll"
+#r ".AnFake/Bin/AnFake.Core.dll"
+#r ".AnFake/Bin/AnFake.Fsx.dll"
 
 open System.Linq
 open AnFake.Core
@@ -8,39 +8,43 @@ open AnFake.Fsx.Dsl
 
 let solution = "AnFake.sln".AsFile()
 let out = ".out".AsPath()
+let outBin = out / "bin"
+let outPkg = out / "pkg"
 
-let tests = 
-    !!"AnFake.Api.Test/bin/Debug/AnFake.Api.Test.dll" 
-    + "AnFake.Core.Test/bin/Debug/AnFake.Core.Test.dll"
+let tests = outBin.Spec %% "*.Test.dll"
 
-//let fileset = !!"path/*.doc" + "*.txt"
-//let folderset = !!!"path/**"
-//let filesetWithBase = "path" %% "*.txt"
+"Clean" => (fun _ ->    
+    let obj = !!!"*/obj"
+    let bin = !!!"*/bin" - ".AnFake/Bin"
+
+    Folders.Clean obj
+    Folders.Clean bin
+    Folders.Clean out
+)
 
 "Compile" => (fun _ ->    
     MsBuild.Build(solution, (fun p -> 
         p.Properties.Set
             [
                 "Configuration", "Debug"
-                "Platform", "Any CPU"        
+                "Platform", "Any CPU"
+                "OutDir", outBin.Full                
             ]
         )) 
     |> ignore
 )
 
 "Test.Unit" => (fun _ -> 
-    for t in tests do
-        Logger.Debug t.RelPath
-
     MsTest.Run(tests, fun p -> p.NoIsolation <- true) 
         |> ignore
 )
 
 "Package" => (fun _ -> 
     let bins = 
-        "AnFake/bin/Debug" %% "*.exe"
-        + "*.dll"
-        + "*.xml"
+        out.Spec %% "bin/AnFake.exe"
+        + "bin/AnFake.exe.config"
+        + "bin/*.dll"
+        + "bin/*.xml"
 
     let nuspec = NuGet.Spec25(fun meta -> 
         meta.Id <- "AnFake"
@@ -50,10 +54,10 @@ let tests =
     )
 
     nuspec.Files <- bins
-        .Select(fun f -> new NuSpec.v25.File(f.Path.Full, "Bin"))
-        .ToArray();    
+        .Select(fun f -> new NuSpec.v25.File(f.RelPath.Spec, "Bin"))
+        .ToArray()
 
-    NuGet.Pack(nuspec, out.AsFolder(), fun p -> p.NoPackageAnalysis <- true)
+    NuGet.Pack(nuspec, out.AsFolder(), outPkg.AsFolder(), fun p -> p.NoPackageAnalysis <- true)
         |> ignore
 )
 

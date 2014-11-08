@@ -17,7 +17,7 @@ namespace AnFake.Core.Test
 			// arrange
 			var logFactory = MockRepository.GenerateMock<ILoggerFactoryAdapter>();
 			var log = MockRepository.GenerateMock<ILog>();
-			logFactory.Stub(x => x.GetLogger("AnFake.Core.Process")).Return(log);
+			logFactory.Stub(x => x.GetLogger("AnFake.Process")).Return(log);
 
 			var tracer = MockRepository.GenerateMock<ITracer>();
 			var result = MockRepository.GenerateMock<IToolExecutionResult>();
@@ -62,7 +62,8 @@ namespace AnFake.Core.Test
 				var result = Process.Run(def =>
 				{
 					def.FileName = "AnFake.Process.Test.exe".AsPath();
-					def.Arguments = "--log 1 warning --log 2 error";
+					def.Arguments = "--log 2 warning --log 3 error";
+					def.TrackExternalMessages = true;
 				});
 
 				// assert

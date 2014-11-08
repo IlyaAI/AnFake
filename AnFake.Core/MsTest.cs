@@ -9,7 +9,7 @@ namespace AnFake.Core
 {
 	public static class MsTest
 	{
-		private static readonly ILog Log = LogManager.GetLogger(typeof(MsTest).FullName);
+		private static readonly ILog Log = LogManager.GetLogger("AnFake.Process.MsTest");
 
 		private static readonly string[] Locations =
 		{

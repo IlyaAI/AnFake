@@ -9,7 +9,7 @@ namespace AnFake.Core
 {
 	public static class MsBuild
 	{
-		private static readonly ILog Log = LogManager.GetLogger(typeof (MsBuild).FullName);
+		private static readonly ILog Log = LogManager.GetLogger("AnFake.Process.MsBuild");
 
 		private static readonly string[] Locations =
 		{
@@ -99,10 +99,11 @@ namespace AnFake.Core
 				p.Timeout = parameters.Timeout;
 				p.Arguments = args.ToString();
 				p.Logger = Log;
+				p.TrackExternalMessages = true;
 			});
 
 			result
-				.FailIfExitCodeNonZero(String.Format("MsBuild failed with exit code {0}.\n  Solution: {1}", result.ExitCode, solution.Path))
+				.FailIfExitCodeNonZero(String.Format("MsBuild failed with exit code {0}. Solution: {1}", result.ExitCode, solution.Path))
 				.FailIfAnyError("Target terminated due to MsBuild errors.");
 
 			return result;

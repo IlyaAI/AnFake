@@ -116,6 +116,16 @@ namespace AnFake.Core
 				.Include(wildcardedPath);
 		}
 
+		public static FileSet AsFileSetFrom(this FileSystemPath wildcardedPath, string basePath)
+		{
+			return AsFileSetFrom(wildcardedPath, basePath.AsPath());
+		}
+
+		public static FileSet AsFileSetFrom(this string wildcardedPath, FileSystemPath basePath)
+		{
+			return AsFileSetFrom(wildcardedPath.AsPath(), basePath);
+		}
+
 		public static FileSet AsFileSetFrom(this string wildcardedPath, string basePath)
 		{
 			return AsFileSetFrom(wildcardedPath.AsPath(), basePath.AsPath());

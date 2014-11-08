@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using AnFake.Core;
 using Microsoft.FSharp.Compiler.Interactive;
 using Microsoft.FSharp.Core;
@@ -14,7 +15,7 @@ namespace AnFake
 			var fsx = Shell.FsiEvaluationSession.Create(
 				cfg,
 				new[] {script.Name},
-				Console.In,
+				new StreamReader(Stream.Null),
 				Console.Out,
 				Console.Error,
 				FSharpOption<bool>.None);

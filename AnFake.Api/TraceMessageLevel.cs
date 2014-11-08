@@ -6,6 +6,9 @@ namespace AnFake.Api
 	public enum TraceMessageLevel
 	{
 		[EnumMember]
+		Debug,
+
+		[EnumMember]
 		Info,
 
 		[EnumMember]

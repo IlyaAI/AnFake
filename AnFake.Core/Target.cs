@@ -351,9 +351,10 @@ namespace AnFake.Core
 
 			Logger.Debug("");
 			Logger.DebugFormat("START {0}.{1}", _name, phase);
-
+			
 			Tracer.MessageReceiving += setTarget;
 			Tracer.MessageReceived += _messages.OnMessage;
+			Tracer.InfoFormat("START {0}.{1}", _name, phase);
 			try
 			{
 				var existingErrors = _messages.ErrorsCount;
@@ -395,10 +396,10 @@ namespace AnFake.Core
 				}
 				else
 				{
-					Logger.ErrorFormat("ERROR {0}.{1}", e, _name, phase);					
+					Logger.ErrorFormat("", e, _name, phase);					
 				}
 				
-				Tracer.Write(new TraceMessage(TraceMessageLevel.Error, e.Message + location) { Details = e.StackTrace });
+				Tracer.ErrorFormat("{0}{1}", e, e.Message, location);
 
 				if (!skipErrors)
 					throw new TerminateTargetException(String.Format("Target terminated due to errors in {0}.{1}", _name, phase), e);
@@ -407,6 +408,7 @@ namespace AnFake.Core
 			}
 			finally
 			{
+				Tracer.InfoFormat("END   {0}.{1}", _name, phase);
 				Tracer.MessageReceived -= _messages.OnMessage;
 				Tracer.MessageReceiving -= setTarget;				
 

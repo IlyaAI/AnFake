@@ -6,19 +6,16 @@ namespace AnFake.Core
 {
 	public static class Process
 	{
-		private static readonly ILog Log = LogManager.GetLogger(typeof (Process).FullName);
+		private static readonly ILog Log = LogManager.GetLogger("AnFake.Process");
 
 		public sealed class Params
 		{
 			public FileSystemPath FileName;
-
 			public string Arguments;
-
 			public FileSystemPath WorkingDirectory;
-
 			public TimeSpan Timeout;
-
-			public ILog Logger;
+			public ILog Logger;			
+			public bool TrackExternalMessages;
 
 			internal Params()
 			{
@@ -72,15 +69,37 @@ namespace AnFake.Core
 				process.StartInfo.Arguments = parameters.Arguments;
 			}
 
+			Tracer.InfoFormat("{0} {1}", process.StartInfo.FileName, process.StartInfo.Arguments);
 			Log.DebugFormat("Starting process...\n  Executable: {0}\n  Arguments: {1}\n  WorkingDirectory: {2}", 
 				process.StartInfo.FileName, process.StartInfo.Arguments, process.StartInfo.WorkingDirectory);
 
-			process.OutputDataReceived += (sender, evt) => { if (!String.IsNullOrWhiteSpace(evt.Data)) parameters.Logger.Debug(evt.Data); };
-			process.ErrorDataReceived += (sender, evt) => { if (!String.IsNullOrWhiteSpace(evt.Data)) parameters.Logger.Error(evt.Data); };
+			var external = new TraceMessageCollector();
+			Tracer.MessageReceived += external.OnMessage;
 
-			IToolExecutionResult external;
-			Tracer.MessageReceived += OnTraceMessage;
-			Tracer.StartTrackExternal();			
+			if (parameters.TrackExternalMessages)
+			{
+				Tracer.MessageReceived += OnTraceMessage;
+				Tracer.StartTrackExternal();
+			}
+			else
+			{
+				process.OutputDataReceived += (sender, evt) =>
+				{
+					if (String.IsNullOrWhiteSpace(evt.Data))
+						return;
+					
+					Tracer.Debug(evt.Data);
+					parameters.Logger.Debug(evt.Data);
+				};
+				process.ErrorDataReceived += (sender, evt) =>
+				{
+					if (String.IsNullOrWhiteSpace(evt.Data))
+						return;
+
+					Tracer.Error(evt.Data);
+					parameters.Logger.Error(evt.Data);
+				};
+			}
 			try
 			{
 				process.Start();
@@ -100,10 +119,16 @@ namespace AnFake.Core
 			}
 			finally
 			{
-				external = Tracer.StopTrackExternal();
-				Tracer.MessageReceived -= OnTraceMessage;
+				if (parameters.TrackExternalMessages)
+				{
+					Tracer.StopTrackExternal();
+					Tracer.MessageReceived -= OnTraceMessage;
+				}
+
+				Tracer.MessageReceived -= external.OnMessage;
 			}
 
+			Tracer.InfoFormat("Finished. ExitCode = {0}", process.ExitCode);
 			Log.DebugFormat("Process finished. ExitCode = {0} Errors = {1} Warnings = {2} Time = {3}", 
 				process.ExitCode, external.ErrorsCount, external.WarningsCount, process.ExitTime - process.StartTime);
 

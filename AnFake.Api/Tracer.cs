@@ -32,6 +32,51 @@ namespace AnFake.Api
 			Instance.Write(message);
 		}
 
+		public static void Debug(string message)
+		{
+			Instance.Write(new TraceMessage(TraceMessageLevel.Debug, message));
+		}
+
+		public static void DebugFormat(string format, params object[] args)
+		{
+			Instance.Write(new TraceMessage(TraceMessageLevel.Debug, String.Format(format, args)));
+		}
+
+		public static void Info(string message)
+		{
+			Instance.Write(new TraceMessage(TraceMessageLevel.Info, message));
+		}
+
+		public static void InfoFormat(string format, params object[] args)
+		{
+			Instance.Write(new TraceMessage(TraceMessageLevel.Info, String.Format(format, args)));
+		}
+
+		public static void Warn(string message)
+		{
+			Instance.Write(new TraceMessage(TraceMessageLevel.Warning, message));
+		}
+
+		public static void WarnFormat(string format, params object[] args)
+		{
+			Instance.Write(new TraceMessage(TraceMessageLevel.Warning, String.Format(format, args)));
+		}
+
+		public static void Error(string message)
+		{
+			Instance.Write(new TraceMessage(TraceMessageLevel.Error, message));
+		}
+
+		public static void ErrorFormat(string format, params object[] args)
+		{
+			Instance.Write(new TraceMessage(TraceMessageLevel.Error, String.Format(format, args)));
+		}
+
+		public static void ErrorFormat(string format, Exception e, params object[] args)
+		{
+			Instance.Write(new TraceMessage(TraceMessageLevel.Error, String.Format(format, args)) { Details = e.StackTrace });
+		}
+
 		public static void StartTrackExternal()
 		{
 			Instance.StartTrackExternal();

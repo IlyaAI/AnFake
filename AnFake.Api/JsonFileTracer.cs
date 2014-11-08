@@ -13,6 +13,7 @@ namespace AnFake.Api
 
 		private readonly string _logFile;
 		private readonly XmlObjectSerializer _serializer;
+		private TraceMessageLevel _threshold = TraceMessageLevel.Info;
 		private TimeSpan _trackingInterval = TimeSpan.FromSeconds(15);
 		private TimeSpan _retryInterval = TimeSpan.FromMilliseconds(10);
 		private int _maxRetries = 10;
@@ -46,6 +47,12 @@ namespace AnFake.Api
 			get { return new Uri("file://" + _logFile); }
 		}
 
+		public TraceMessageLevel Threshold
+		{
+			get { return _threshold; }
+			set { _threshold = value; }
+		}
+
 		public TimeSpan TrackingInterval
 		{
 			get { return _trackingInterval; }
@@ -71,6 +78,9 @@ namespace AnFake.Api
 
 			if (_tracker != null)
 				throw new InvalidOperationException("Tracking of external messages is active. Hint: check parity of Start/StopTrackExternal methods.");
+
+			if (message.Level < _threshold)
+				return;
 
 			if (MessageReceiving != null)
 			{

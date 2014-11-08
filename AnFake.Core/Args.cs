@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Text;
 
 namespace AnFake.Core
@@ -31,7 +32,7 @@ namespace AnFake.Core
 				return this;
 
 			_args.Append("\"").Append(value.Replace("\"", "\"\"")).Append("\"");
-
+			
 			return this;
 		}
 

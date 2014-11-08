@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
@@ -10,7 +9,7 @@ namespace AnFake.Core
 {
 	public static class NuGet
 	{
-		private static readonly ILog Log = LogManager.GetLogger(typeof (NuGet).FullName);
+		private static readonly ILog Log = LogManager.GetLogger("AnFake.Process.NuGet");
 
 		private static readonly string[] Locations =
 		{
@@ -111,6 +110,8 @@ namespace AnFake.Core
 				.Option("OutputDirectory", dstFolder.Path)
 				.Option("NoPackageAnalysis", parameters.NoPackageAnalysis)
 				.Option("IncludeReferencedProjects", parameters.IncludeReferencedProjects);
+
+			Folders.Create(dstFolder);
 
 			var result = Process.Run(p =>
 			{
