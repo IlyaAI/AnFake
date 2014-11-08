@@ -8,6 +8,10 @@ namespace AnFake.Core.NuSpec.v25
 	public sealed class Package
 	{
 		[XmlElement(ElementName = "metadata", IsNullable = false)]
-		public Metadata Metadata { get; set; }		
+		public Metadata Metadata { get; set; }
+
+		[XmlArray("files")]
+		[XmlArrayItem("file")]
+		public File[] Files { get; set; }
 	}
 }

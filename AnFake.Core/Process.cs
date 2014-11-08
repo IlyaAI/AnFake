@@ -110,11 +110,6 @@ namespace AnFake.Core
 			return new ProcessExecutionResult(process.ExitCode, external.ErrorsCount, external.WarningsCount);
 		}		
 
-		public static Args Args(string optionMarker, string nameValueMarker)
-		{
-			return new Args(optionMarker, nameValueMarker);
-		}
-
 		private static void OnTraceMessage(object sender, TraceMessage message)
 		{
 			Logger.TraceMessage(message);

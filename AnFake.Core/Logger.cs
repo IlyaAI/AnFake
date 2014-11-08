@@ -48,6 +48,11 @@ namespace AnFake.Core
 			Log.ErrorFormat(format, args);
 		}
 
+		public static void ErrorFormat(string format, Exception exception, params object[] args)
+		{
+			Log.ErrorFormat(format, exception, args);
+		}
+
 		[Obsolete("For test purpose to see a compilation warning")]
 		public static void TraceMessage(TraceMessage message)
 		{

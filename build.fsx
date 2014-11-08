@@ -2,10 +2,12 @@
 #r "AnFake/bin/Debug/AnFake.Core.dll"
 #r "AnFake/bin/Debug/AnFake.Fsx.dll"
 
+open System.Linq
 open AnFake.Core
 open AnFake.Fsx.Dsl
 
 let solution = "AnFake.sln".AsFile()
+let out = ".out".AsPath()
 
 let tests = 
     !!"AnFake.Api.Test/bin/Debug/AnFake.Api.Test.dll" 
@@ -31,6 +33,27 @@ let tests =
         Logger.Debug t.RelPath
 
     MsTest.Run(tests, fun p -> p.NoIsolation <- true) 
+        |> ignore
+)
+
+"Package" => (fun _ -> 
+    let bins = 
+        "AnFake/bin/Debug" %% "*.exe"
+        + "*.dll"
+        + "*.xml"
+
+    let nuspec = NuGet.Spec25(fun meta -> 
+        meta.Id <- "AnFake"
+        meta.Version <- "1.0.0.0"
+        meta.Authors <- "Ilya A. Ivanov"
+        meta.Description <- "AnFake (Another F# Make) ..."
+    )
+
+    nuspec.Files <- bins
+        .Select(fun f -> new NuSpec.v25.File(f.Path.Full, "Bin"))
+        .ToArray();    
+
+    NuGet.Pack(nuspec, out.AsFolder(), fun p -> p.NoPackageAnalysis <- true)
         |> ignore
 )
 

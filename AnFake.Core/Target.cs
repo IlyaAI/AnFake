@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using AnFake.Api;
 
@@ -273,6 +274,7 @@ namespace AnFake.Core
 		private void LogSummary(IEnumerable<Target> executedTargets)
 		{
 			var finalState = TargetState.Succeeded;
+			var index = 0;
 
 			Logger.Debug("");
 			Logger.DebugFormat("================ '{0}' Summary ================", _name);
@@ -305,13 +307,13 @@ namespace AnFake.Core
 					switch (message.Level)
 					{
 						case TraceMessageLevel.Error:
-							Logger.ErrorFormat("  {0}", message.Message);
+							Logger.ErrorFormat("[{0,4}] {1}", ++index, message.Message);
 							break;
 						case TraceMessageLevel.Warning:
-							Logger.WarnFormat("  {0}", message.Message);
+							Logger.WarnFormat("[{0,4}] {1}", ++index, message.Message);
 							break;
 						default:
-							Logger.InfoFormat("  {0}", message.Message);
+							Logger.InfoFormat("[{0,4}] {1}", ++index, message.Message);
 							break;
 					}
 				}
@@ -322,7 +324,7 @@ namespace AnFake.Core
 				finalState = TargetState.Failed;
 			}
 
-			Logger.Debug("----------------");
+			Logger.Debug("------------------------");
 			switch (finalState)
 			{
 				case TargetState.Succeeded:
@@ -370,8 +372,33 @@ namespace AnFake.Core
 			}
 			catch (Exception e)
 			{
-				Logger.ErrorFormat("{0}.{1} has failed.", e, _name, phase);
-				Tracer.Write(new TraceMessage(TraceMessageLevel.Error, e.Message) { Details = e.StackTrace });
+				var location = "";
+
+				if (e is TargetFailureException || e is ArgumentException)
+				{					
+					var frames = new StackTrace(e, true).GetFrames();
+					if (frames != null)
+					{
+						var scriptName = MyBuild.Defaults.Script.Name;
+						var scriptFrame = frames.FirstOrDefault(f =>
+						{
+							var file = f.GetFileName();
+							return file != null && file.EndsWith(scriptName, StringComparison.InvariantCultureIgnoreCase);
+						});
+						if (scriptFrame != null)
+						{
+							location = String.Format(" @@ {0} {1}", scriptName, scriptFrame.GetFileLineNumber());
+						}						
+					}
+
+					Logger.ErrorFormat("{0}{1}", e.Message, location);
+				}
+				else
+				{
+					Logger.ErrorFormat("ERROR {0}.{1}", e, _name, phase);					
+				}
+				
+				Tracer.Write(new TraceMessage(TraceMessageLevel.Error, e.Message + location) { Details = e.StackTrace });
 
 				if (!skipErrors)
 					throw new TerminateTargetException(String.Format("Target terminated due to errors in {0}.{1}", _name, phase), e);

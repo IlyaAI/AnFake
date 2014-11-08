@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using AnFake.Api;
 
 namespace AnFake.Core
@@ -7,26 +9,53 @@ namespace AnFake.Core
 	{
 		public sealed class Params
 		{
+			public readonly IDictionary<string, string> Properties;
+			public readonly string[] Targets;
+			public readonly FileItem Script;
 			public ITracer Tracer;
 
-			public Params()
+			public Params(IDictionary<string, string> properties, string[] targets, FileItem script)
 			{
+				Properties = new ReadOnlyDictionary<string, string>(properties);
+				Targets = targets;
+				Script = script;
+
 				Tracer = new JsonFileTracer("build.log.jsx".AsPath().Full, false);
 			}
 		}
 
-		public static Params Defaults { get; private set; }
+		public static Params Defaults { get; private set; }		
 
-		static MyBuild()
+		private static bool _isInitialized;
+		private static event EventHandler<Params> InitializedHandlers;
+
+		internal static void Initialize(FileSystemPath basePath, Params @params)
 		{
-			Defaults = new Params();
+			if (_isInitialized)
+				throw new InvalidOperationException("MyBuild already initialized.");
+
+			Defaults = @params;
+			FileSystemPath.Base = basePath;			
+			Tracer.Instance = Defaults.Tracer;
+
+			_isInitialized = true;
+			if (InitializedHandlers != null)
+			{
+				InitializedHandlers.Invoke(null, Defaults);
+			}
 		}
 
-		public static void Configure(FileSystemPath basePath)
+		public static event EventHandler<Params> Initialized
 		{
-			FileSystemPath.Base = basePath;
-
-			Tracer.Instance = Defaults.Tracer;
+			add
+			{
+				InitializedHandlers += value;
+				if (_isInitialized)
+				{
+					value.Invoke(null, Defaults);
+				}
+			}
+			remove { InitializedHandlers -= value; }
 		}
 
 		public static void Info(string message)

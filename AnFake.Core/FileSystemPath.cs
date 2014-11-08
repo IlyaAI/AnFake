@@ -5,11 +5,12 @@ namespace AnFake.Core
 {
 	public sealed class FileSystemPath : IComparable<FileSystemPath>
 	{
-		public static FileSystemPath Base { get; internal set; }
+		private static FileSystemPath _basePath = new FileSystemPath(Directory.GetCurrentDirectory(), true);
 
-		static FileSystemPath()
+		public static FileSystemPath Base
 		{
-			Base = new FileSystemPath(Directory.GetCurrentDirectory(), true);			
+			get { return _basePath; }
+			internal set { _basePath = _basePath/value; }
 		}
 
 		private readonly string _value;
@@ -59,7 +60,7 @@ namespace AnFake.Core
 
 		public FileSystemPath Parent
 		{
-			get { return new FileSystemPath(Path.GetDirectoryName(Full), true); }
+			get { return new FileSystemPath(Path.GetDirectoryName(_value), true); }
 		}
 
 		public FileSystemPath ToRelative(FileSystemPath basePath)

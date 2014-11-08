@@ -83,7 +83,7 @@ namespace AnFake.Core
 				var workDir = parameters.WorkingDirectory ?? assembly.Folder;
 				var resultPath = (parameters.ResultsDirectory ?? workDir)/assembly.NameWithoutExt.MakeUnique(".trx");
 
-				var args = Process.Args("/", ":")
+				var args = new Args("/", ":")
 					.Option("testcontainer", assembly.Path)
 					.Option("category", parameters.Category)
 					.Option("testsettings", parameters.TestSettingsPath)

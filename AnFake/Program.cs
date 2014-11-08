@@ -17,7 +17,7 @@ namespace AnFake
 
 		class BuildOptions
 		{
-			public readonly IDictionary<string, string> Parameters = new Dictionary<string, string>();
+			public readonly IDictionary<string, string> Properties = new Dictionary<string, string>();
 			public readonly IList<string> Targets = new List<string>();
 			public string Script = "build.fsx";			
 		}
@@ -69,16 +69,17 @@ namespace AnFake
 				return -1;
 			}
 
-			Logger.DebugFormat("Script    : {0}", script.Path.Full);
-			Logger.DebugFormat("BasePath  : {0}", script.Folder);
+			Logger.DebugFormat("Script    : {0}", script.Path.Full);			
 			Logger.DebugFormat("Evaluator : {0}", evaluator.GetType().FullName);
 			Logger.DebugFormat("Targets   : {0}", String.Join(" ", options.Targets));
-			Logger.DebugFormat("Parameters: {0}", String.Join(" ", options.Parameters.Select(x => x.Key + " = " + x.Value)));
+			Logger.DebugFormat("Parameters: {0}", String.Join(" ", options.Properties.Select(x => x.Key + " = " + x.Value)));
 
 			try
-			{
+			{				
+				MyBuild.Initialize(script.Folder, new MyBuild.Params(options.Properties, options.Targets.ToArray(), script));
+				Logger.DebugFormat("BasePath  : {0}", FileSystemPath.Base);
+
 				Logger.Debug("Configuring build...");
-				MyBuild.Configure(script.Folder);
 				evaluator.Evaluate(script);
 
 				Logger.Debug("Running targets...");
@@ -116,7 +117,7 @@ namespace AnFake
 				{
 					var index = arg.IndexOf("=", StringComparison.InvariantCulture);
 
-					options.Parameters.Add(arg.Substring(0, index).Trim(), arg.Substring(index + 1).Trim());
+					options.Properties.Add(arg.Substring(0, index).Trim(), arg.Substring(index + 1).Trim());
 					continue;
 				}
 

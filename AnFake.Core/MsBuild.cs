@@ -69,14 +69,14 @@ namespace AnFake.Core
 
 			Logger.DebugFormat("MsBuild =>  {0}", solution.RelPath);
 
-			var args = Process.Args("/", ":")
+			var args = new Args("/", ":")
 				.Param(solution.Path.Full)
 				.Option("t", parameters.Targets, ";")
 				.Option("m", parameters.MaxCpuCount)
 				.Option("nodeReuse", parameters.NodeReuse)
 				.Option("v", parameters.Verbosity);
 
-			var propArgs = Process.Args("/", "=");
+			var propArgs = new Args("/", "=");
 			foreach (var prop in parameters.Properties)
 			{
 				propArgs.Option(String.Format("p:{0}", prop.Key), prop.Value);
