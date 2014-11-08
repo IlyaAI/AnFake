@@ -125,7 +125,17 @@ namespace AnFake.Core
 		public static FileSystemPath operator /(FileSystemPath basePath, FileSystemPath subPath)
 		{
 			return new FileSystemPath(Path.Combine(basePath._value, subPath._value), true);
-		}		
+		}
+
+		public static FileSet operator %(FileSystemPath basePath, FileSystemPath wildcardedPath)
+		{
+			return new FileSet().From(basePath).Include(wildcardedPath);
+		}
+
+		public static FileSet operator %(FileSystemPath basePath, string wildcardedPath)
+		{
+			return new FileSet().From(basePath).Include(wildcardedPath);
+		}
 
 		private static string Normalize(string path)
 		{

@@ -11,7 +11,7 @@ let out = ".out".AsPath()
 let outBin = out / "bin"
 let outPkg = out / "pkg"
 
-let tests = outBin.Spec %% "*.Test.dll"
+let tests = outBin % "*.Test.dll"
 
 "Clean" => (fun _ ->    
     let obj = !!!"*/obj"
@@ -41,7 +41,7 @@ let tests = outBin.Spec %% "*.Test.dll"
 
 "Package" => (fun _ -> 
     let bins = 
-        out.Spec %% "bin/AnFake.exe"
+        out % "bin/AnFake.exe"
         + "bin/AnFake.exe.config"
         + "bin/*.dll"
         + "bin/*.xml"
