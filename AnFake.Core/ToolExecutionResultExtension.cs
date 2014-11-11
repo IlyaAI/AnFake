@@ -5,7 +5,8 @@ namespace AnFake.Core
 {
 	public static class ToolExecutionResultExtension
 	{
-		public static IToolExecutionResult FailIf(this IToolExecutionResult result, Predicate<IToolExecutionResult> predicate, string message)
+		public static T FailIf<T>(this T result, Predicate<T> predicate, string message)
+			where T : IToolExecutionResult
 		{
 			if (predicate(result))
 				throw new TargetFailureException(message);
@@ -13,7 +14,8 @@ namespace AnFake.Core
 			return result;
 		}
 
-		public static IToolExecutionResult FailIfAnyError(this IToolExecutionResult result, string message)
+		public static T FailIfAnyError<T>(this T result, string message)
+			where T : IToolExecutionResult
 		{
 			if (result.ErrorsCount > 0)
 				throw new TerminateTargetException(message);
@@ -21,7 +23,8 @@ namespace AnFake.Core
 			return result;
 		}
 
-		public static IToolExecutionResult FailIfAnyErrorOrWarning(this IToolExecutionResult result, string message)
+		public static T FailIfAnyErrorOrWarning<T>(this T result, string message)
+			where T : IToolExecutionResult
 		{
 			if (result.WarningsCount > 0 || result.ErrorsCount > 0)
 				throw new TerminateTargetException(message);

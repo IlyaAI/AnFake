@@ -20,8 +20,10 @@ namespace AnFake.Core
 		{
 			public bool IncludeReferencedProjects;
 			public bool NoPackageAnalysis;
+			public bool NoDefaultExcludes;
 			public TimeSpan Timeout;
 			public FileSystemPath ToolPath;
+			public string ToolArguments;
 
 			internal Params()
 			{
@@ -109,7 +111,13 @@ namespace AnFake.Core
 				.Param(nuspecFile.Path.Full)
 				.Option("OutputDirectory", dstFolder.Path)
 				.Option("NoPackageAnalysis", parameters.NoPackageAnalysis)
+				.Option("NoDefaultExcludes", parameters.NoDefaultExcludes)
 				.Option("IncludeReferencedProjects", parameters.IncludeReferencedProjects);
+
+			if (!String.IsNullOrWhiteSpace(parameters.ToolArguments))
+			{
+				args.Space().NonQuotedValue(parameters.ToolArguments);
+			}			
 
 			Folders.Create(dstFolder);
 
@@ -122,6 +130,7 @@ namespace AnFake.Core
 			});
 
 			result
+				.FailIfAnyError("Target terminated due to NuGet errors.")
 				.FailIfExitCodeNonZero(String.Format("NuGet failed with exit code {0}. Package: {1}", result.ExitCode, nuspecFile));
 
 			return result;

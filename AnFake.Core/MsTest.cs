@@ -72,7 +72,7 @@ namespace AnFake.Core
 			//if (parameters.WorkingDirectory == null)
 			//	throw new ArgumentException("MsTest.Params.WorkingDirectory must not be null");
 
-			Logger.DebugFormat("MsTest =>\n  {0}", String.Join("\n  ", assembliesArray.Select(x => x.RelPath)));
+			Logger.DebugFormat("MsTest\n => {0}", String.Join("\n => ", assembliesArray.Select(x => x.RelPath)));
 
 			var tests = new List<TestResult>();
 

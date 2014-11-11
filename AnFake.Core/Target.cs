@@ -276,8 +276,9 @@ namespace AnFake.Core
 			var finalState = TargetState.Succeeded;
 			var index = 0;
 
+			var caption = String.Format("================ '{0}' Summary ================", _name);
 			Logger.Debug("");
-			Logger.DebugFormat("================ '{0}' Summary ================", _name);
+			Logger.Debug(caption);
 
 			foreach (var target in executedTargets)
 			{
@@ -324,7 +325,7 @@ namespace AnFake.Core
 				finalState = TargetState.Failed;
 			}
 
-			Logger.Debug("------------------------");
+			Logger.Debug(new String('-', caption.Length));
 			switch (finalState)
 			{
 				case TargetState.Succeeded:

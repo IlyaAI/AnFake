@@ -188,13 +188,13 @@ namespace AnFake.Api
 		public IToolExecutionResult StopTrackExternal()
 		{
 			if (_tracker == null)
-				return new TrackingResult();
+				return new ToolExecutionResult();
 
 			_tracker.Interrupt();
 			_tracker.Join(1000);
 			_tracker = null;			
 
-			return new TrackingResult(_externalErrors, _externalWarnings);
+			return new ToolExecutionResult(_externalErrors, _externalWarnings);
 		}
 
 		public event EventHandler<TraceMessage> MessageReceiving;

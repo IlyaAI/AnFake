@@ -30,7 +30,7 @@ namespace AnFake.Core
 			{
 				Targets = new[] {"Build"};
 				Verbosity = LoggerVerbosity.Normal;
-				Timeout = TimeSpan.MaxValue;				
+				Timeout = TimeSpan.MaxValue;
 				ToolPath = Locations.AsFileSet().Select(x => x.Path).FirstOrDefault();
 			}
 
@@ -45,17 +45,121 @@ namespace AnFake.Core
 		static MsBuild()
 		{
 			Defaults = new Params();
+
+			MyBuild.Initialized += (s, p) =>
+			{
+				foreach (var property in p.Properties)
+				{
+					if (!property.Key.StartsWith("MsBuild.", StringComparison.InvariantCulture))
+						continue;
+
+					if (property.Key.Equals("MsBuild.Verbosity", StringComparison.InvariantCulture))
+					{
+						Defaults.Verbosity = (LoggerVerbosity) Enum.Parse(typeof (LoggerVerbosity), property.Value);
+						continue;
+					}
+
+					Defaults.Properties[property.Key.Substring(8)] = property.Value;
+				}
+			};
 		}
 
-		public static ProcessExecutionResult Build(FileItem solution)
-		{
-			return Build(solution, p => { });
-		}
-
-		public static ProcessExecutionResult Build(FileItem solution, Action<Params> setParams)
+		public static IToolExecutionResult BuildDebug(FileItem solution)
 		{
 			if (solution == null)
-				throw new ArgumentException("MsBuild.Build(solution, setParams): solution must not be null");
+				throw new ArgumentNullException("solution", "MsBuild.BuildDebug(solution): solution must not be null");
+
+			return BuildDebug(new[] {solution});
+		}
+
+		public static IToolExecutionResult BuildDebug(IEnumerable<FileItem> projects)
+		{
+			if (projects == null)
+				throw new ArgumentNullException("projects", "MsBuild.BuildDebug(projects): projects must not be null");
+
+			return Build(projects, p => { p.Properties["Configuration"] = "Debug"; });
+		}
+
+		public static IToolExecutionResult BuildDebug(IEnumerable<FileItem> projects, FileSystemPath output)
+		{
+			if (projects == null)
+				throw new ArgumentNullException("projects", "MsBuild.BuildDebug(projects, output): projects must not be null");
+			if (output == null)
+				throw new ArgumentNullException("output", "MsBuild.BuildDebug(projects, output): output must not be null");
+
+			return Build(projects, p =>
+			{
+				p.Properties["Configuration"] = "Debug";
+				p.Properties["OutDir"] = output.Full;
+			});
+		}
+
+		public static IToolExecutionResult BuildRelease(FileItem solution)
+		{
+			if (solution == null)
+				throw new ArgumentNullException("solution", "MsBuild.BuildRelease(solution): solution must not be null");
+
+			return BuildRelease(new[] {solution});
+		}
+
+		public static IToolExecutionResult BuildRelease(IEnumerable<FileItem> projects)
+		{
+			if (projects == null)
+				throw new ArgumentNullException("projects", "MsBuild.BuildRelease(projects): projects must not be null");
+
+			return Build(projects, p => { p.Properties["Configuration"] = "Release"; });
+		}
+
+		public static IToolExecutionResult BuildRelease(IEnumerable<FileItem> projects, FileSystemPath output)
+		{
+			if (projects == null)
+				throw new ArgumentNullException("projects", "MsBuild.BuildRelease(projects, output): projects must not be null");
+			if (output == null)
+				throw new ArgumentNullException("output", "MsBuild.BuildRelease(projects, output): output must not be null");
+
+			return Build(projects, p =>
+			{
+				p.Properties["Configuration"] = "Release";
+				p.Properties["OutDir"] = output.Full;
+			});
+		}
+
+		public static IToolExecutionResult Build(FileItem solution)
+		{
+			if (solution == null)
+				throw new ArgumentNullException("solution", "MsBuild.Build(solution): solution must not be null");
+
+			return Build(new[] {solution}, p => { });
+		}
+
+		public static IToolExecutionResult Build(IEnumerable<FileItem> projects)
+		{
+			if (projects == null)
+				throw new ArgumentNullException("projects", "MsBuild.Build(projects): projects must not be null");
+
+			return Build(projects, p => { });
+		}
+
+		public static IToolExecutionResult Build(FileItem solution, Action<Params> setParams)
+		{
+			if (solution == null)
+				throw new ArgumentNullException("solution", "MsBuild.Build(solution, setParams): solution must not be null");
+			if (setParams == null)
+				throw new ArgumentNullException("setParams", "MsBuild.Build(solution, setParams): setParams must not be null");
+
+			return Build(new[] {solution}, setParams);
+		}
+
+		public static IToolExecutionResult Build(IEnumerable<FileItem> projects, Action<Params> setParams)
+		{
+			if (projects == null)
+				throw new ArgumentNullException("projects", "MsBuild.Build(projects, setParams): projects must not be null");
+			if (setParams == null)
+				throw new ArgumentNullException("setParams", "MsBuild.Build(projects, setParams): setParams must not be null");
+
+			var projArray = projects.ToArray();
+			if (projArray.Length == 0)
+				throw new ArgumentException("MsBuild.Build(projects, setParams): projects set must not be empty");
 
 			var parameters = Defaults.Clone();
 			setParams(parameters);
@@ -67,46 +171,52 @@ namespace AnFake.Core
 						String.Join("\n  ", Locations)));
 			// TODO: check other parameters
 
-			Logger.DebugFormat("MsBuild =>  {0}", solution.RelPath);
+			Logger.DebugFormat("MsBuild\n => {0}", String.Join("\n => ", projArray.Select(x => x.RelPath)));
 
-			var args = new Args("/", ":")
-				.Param(solution.Path.Full)
-				.Option("t", parameters.Targets, ";")
-				.Option("m", parameters.MaxCpuCount)
-				.Option("nodeReuse", parameters.NodeReuse)
-				.Option("v", parameters.Verbosity);
-
-			var propArgs = new Args("/", "=");
-			foreach (var prop in parameters.Properties)
+			var summary = new ToolExecutionResult();
+			foreach (var proj in projArray)
 			{
-				propArgs.Option(String.Format("p:{0}", prop.Key), prop.Value);
+				var args = new Args("/", ":")
+					.Param(proj.Path.Full)
+					.Option("t", parameters.Targets, ";")
+					.Option("m", parameters.MaxCpuCount)
+					.Option("nodeReuse", parameters.NodeReuse)
+					.Option("v", parameters.Verbosity);
+
+				var propArgs = new Args("/", "=");
+				foreach (var prop in parameters.Properties)
+				{
+					propArgs.Option(String.Format("p:{0}", prop.Key), prop.Value);
+				}
+
+				args.Space().NonQuotedValue(propArgs.ToString());
+
+				var loggerT = typeof (Integration.MsBuild.Logger);
+				args.Space()
+					.ValuedOption("logger")
+					.NonQuotedValue(loggerT.FullName)
+					.NonQuotedValue(",")
+					.QuotedValue(loggerT.Assembly.Location)
+					.NonQuotedValue(";")
+					.QuotedValue(Tracer.Uri + "#" + Target.Current);
+
+				var result = Process.Run(p =>
+				{
+					p.FileName = parameters.ToolPath;
+					p.Timeout = parameters.Timeout;
+					p.Arguments = args.ToString();
+					p.Logger = Log;
+					p.TrackExternalMessages = true;
+				});
+
+				result
+					.FailIfAnyError("Target terminated due to MsBuild errors.")
+					.FailIfExitCodeNonZero(String.Format("MsBuild failed with exit code {0}. Solution: {1}", result.ExitCode, proj));
+
+				summary += result;
 			}
 
-			args.Space().NonQuotedValue(propArgs.ToString());
-
-			var loggerT = typeof (Integration.MsBuild.Logger);
-			args.Space()
-				.ValuedOption("logger")
-				.NonQuotedValue(loggerT.FullName)
-				.NonQuotedValue(",")
-				.QuotedValue(loggerT.Assembly.Location)
-				.NonQuotedValue(";")
-				.QuotedValue(Tracer.Uri + "#" + Target.Current);
-
-			var result = Process.Run(p =>
-			{
-				p.FileName = parameters.ToolPath;
-				p.Timeout = parameters.Timeout;
-				p.Arguments = args.ToString();
-				p.Logger = Log;
-				p.TrackExternalMessages = true;
-			});
-
-			result
-				.FailIfExitCodeNonZero(String.Format("MsBuild failed with exit code {0}. Solution: {1}", result.ExitCode, solution.Path))
-				.FailIfAnyError("Target terminated due to MsBuild errors.");
-
-			return result;
+			return summary;
 		}
 	}
 }

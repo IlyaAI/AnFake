@@ -6,12 +6,11 @@ open System.Linq
 open AnFake.Core
 open AnFake.Fsx.Dsl
 
-let solution = "AnFake.sln".AsFile()
-let out = ".out".AsPath()
-let outBin = out / "bin"
-let outPkg = out / "pkg"
-
-let tests = outBin % "*.Test.dll"
+let out = ~~".out"
+let productOut = out / "product"
+let testsOut = out / "tests"
+let product = !!"AnFake/AnFake.csproj"
+let tests = !!"*/*.Test.csproj"
 
 "Clean" => (fun _ ->    
     let obj = !!!"*/obj"
@@ -23,28 +22,24 @@ let tests = outBin % "*.Test.dll"
 )
 
 "Compile" => (fun _ ->    
-    MsBuild.Build(solution, (fun p -> 
-        p.Properties.Set
-            [
-                "Configuration", "Debug"
-                "Platform", "Any CPU"
-                "OutDir", outBin.Full                
-            ]
-        )) 
-    |> ignore
+    MsBuild.BuildRelease(product, productOut) |> ignore
+
+    MsBuild.BuildRelease(tests, testsOut) |> ignore
 )
 
 "Test.Unit" => (fun _ -> 
-    MsTest.Run(tests, fun p -> p.NoIsolation <- true) 
+    MsTest.Run(
+        testsOut % "*.Test.dll",
+        fun p -> p.NoIsolation <- true) 
         |> ignore
-)
+) |> skipErrors
 
 "Package" => (fun _ -> 
     let bins = 
-        out % "bin/AnFake.exe"
-        + "bin/AnFake.exe.config"
-        + "bin/*.dll"
-        + "bin/*.xml"
+        productOut % "AnFake.exe"
+        + "AnFake.exe.config"
+        + "*.dll"
+        + "*.xml"
 
     let nuspec = NuGet.Spec25(fun meta -> 
         meta.Id <- "AnFake"
@@ -54,10 +49,12 @@ let tests = outBin % "*.Test.dll"
     )
 
     nuspec.Files <- bins
-        .Select(fun f -> new NuSpec.v25.File(f.RelPath.Spec, "Bin"))
+        .Select(fun f -> new NuSpec.v25.File(f.Path.Full, "Bin"))
         .ToArray()
 
-    NuGet.Pack(nuspec, out.AsFolder(), outPkg.AsFolder(), fun p -> p.NoPackageAnalysis <- true)
+    NuGet.Pack(nuspec, out.AsFolder(), out.AsFolder(), fun p -> 
+        p.NoPackageAnalysis <- true
+        p.NoDefaultExcludes <- true)
         |> ignore
 )
 
@@ -70,5 +67,3 @@ let tests = outBin % "*.Test.dll"
 //)
 
 "Build" <== ["Compile"; "Test.Unit"]
-
-//"Compile".AsTarget().Run();

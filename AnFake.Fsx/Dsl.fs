@@ -23,6 +23,8 @@ let inline (|=>) (target: Target) (action: unit -> unit) = target.Finally(action
 
 let inline (<==) target (dependencies: IEnumerable<string>) = Targets.AsTarget(target).DependsOn(dependencies)
 
+let skipErrors (target: Target) = target.SkipErrors()
+
 [<Extension>]
 type FsxHelper () =
     [<Extension>]
