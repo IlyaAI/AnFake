@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Linq;
 using System.Text;
 
-namespace AnFake.Core
+namespace AnFake.Api
 {
 	public sealed class Args
 	{

@@ -25,6 +25,7 @@ namespace AnFake.Core
 			public LoggerVerbosity Verbosity;
 			public TimeSpan Timeout;
 			public FileSystemPath ToolPath;
+			public string ToolArguments;
 
 			internal Params()
 			{
@@ -48,16 +49,12 @@ namespace AnFake.Core
 
 			MyBuild.Initialized += (s, p) =>
 			{
+				Defaults.Verbosity = p.Verbosity;
+
 				foreach (var property in p.Properties)
 				{
 					if (!property.Key.StartsWith("MsBuild.", StringComparison.InvariantCulture))
-						continue;
-
-					if (property.Key.Equals("MsBuild.Verbosity", StringComparison.InvariantCulture))
-					{
-						Defaults.Verbosity = (LoggerVerbosity) Enum.Parse(typeof (LoggerVerbosity), property.Value);
-						continue;
-					}
+						continue;					
 
 					Defaults.Properties[property.Key.Substring(8)] = property.Value;
 				}
@@ -181,7 +178,8 @@ namespace AnFake.Core
 					.Option("t", parameters.Targets, ";")
 					.Option("m", parameters.MaxCpuCount)
 					.Option("nodeReuse", parameters.NodeReuse)
-					.Option("v", parameters.Verbosity);
+					.Option("v", parameters.Verbosity)
+					.Other(parameters.ToolArguments);
 
 				var propArgs = new Args("/", "=");
 				foreach (var prop in parameters.Properties)

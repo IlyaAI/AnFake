@@ -20,7 +20,7 @@ namespace AnFake.Core.Tests
 		{
 			foreach (var test in tests)
 			{
-				var report = String.Format("{0} {1,-8} {2} :: {3}",
+				var report = String.Format("{0} {1,-8} {2,-80} @ {3}",
 					test.RunTime, test.Status.ToString().ToUpperInvariant(), test.Name, test.Suite);
 				
 				switch (test.Status)

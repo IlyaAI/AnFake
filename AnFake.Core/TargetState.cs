@@ -1,6 +1,6 @@
 namespace AnFake.Core
 {
-	internal enum TargetState
+	public enum TargetState
 	{
 		None,
 		PreQueued,

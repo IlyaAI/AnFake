@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using AnFake.Api;
 using Common.Logging;
 
@@ -8,8 +9,10 @@ namespace AnFake.Core
 	{
 		private static readonly ILog Log = LogManager.GetLogger("AnFake.Build");
 
+		public static FileItem LogFile { get; internal set; }
+
 		public static void Debug(object message)
-		{
+		{			
 			Log.Debug(message);
 		}
 
@@ -59,24 +62,66 @@ namespace AnFake.Core
 			switch (message.Level)
 			{
 				case TraceMessageLevel.Error:
-					Log.Error(message.Message);
+					Log.Error(message.ToString());
 					break;
 
 				case TraceMessageLevel.Warning:
-					Log.Warn(message.Message);
-					break;
-
-				case TraceMessageLevel.Info:
-					Log.Debug(message.Message);					
+					Log.Warn(message.ToString());
 					break;
 
 				default:
-					return;
-			}
+					Log.Debug(message.ToString());					
+					break;
+			}			
+		}
 
-			if (!String.IsNullOrWhiteSpace(message.Details))
+		public static void TraceMessageFormat(TraceMessageLevel level, string format, params object[] args)
+		{
+			switch (level)
 			{
-				Log.Debug(message.Details);
+				case TraceMessageLevel.Error:
+					Log.ErrorFormat(format, args);
+					break;
+
+				case TraceMessageLevel.Warning:
+					Log.WarnFormat(format, args);
+					break;
+
+				default:
+					Log.DebugFormat(format, args);
+					break;
+			}
+		}
+
+		public static void TargetState(TargetState state, string message)
+		{
+			switch (state)
+			{
+				case Core.TargetState.Succeeded:
+					Log.Info(message);
+					break;
+				case Core.TargetState.PartiallySucceeded:
+					Log.Warn(message);
+					break;
+				case Core.TargetState.Failed:
+					Log.Error(message);
+					break;
+			}
+		}
+
+		public static void TargetStateFormat(TargetState state, string format, params object[] args)
+		{
+			switch (state)
+			{
+				case Core.TargetState.Succeeded:
+					Log.InfoFormat(format, args);
+					break;
+				case Core.TargetState.PartiallySucceeded:
+					Log.WarnFormat(format, args);
+					break;
+				case Core.TargetState.Failed:
+					Log.ErrorFormat(format, args);
+					break;
 			}
 		}
 	}

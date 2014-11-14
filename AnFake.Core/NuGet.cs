@@ -112,12 +112,8 @@ namespace AnFake.Core
 				.Option("OutputDirectory", dstFolder.Path)
 				.Option("NoPackageAnalysis", parameters.NoPackageAnalysis)
 				.Option("NoDefaultExcludes", parameters.NoDefaultExcludes)
-				.Option("IncludeReferencedProjects", parameters.IncludeReferencedProjects);
-
-			if (!String.IsNullOrWhiteSpace(parameters.ToolArguments))
-			{
-				args.Space().NonQuotedValue(parameters.ToolArguments);
-			}			
+				.Option("IncludeReferencedProjects", parameters.IncludeReferencedProjects)
+				.Other(parameters.ToolArguments);
 
 			Folders.Create(dstFolder);
 

@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
 using AnFake.Api;
+using Microsoft.Build.Framework;
 
 namespace AnFake.Core
 {
@@ -10,32 +13,61 @@ namespace AnFake.Core
 		public sealed class Params
 		{
 			public readonly IDictionary<string, string> Properties;
+			public readonly FileSystemPath Path;
+			public readonly FileItem LogFile;
+			public readonly FileItem ScriptFile;
 			public readonly string[] Targets;
-			public readonly FileItem Script;
 			public ITracer Tracer;
+			public LoggerVerbosity Verbosity;
 
-			public Params(IDictionary<string, string> properties, string[] targets, FileItem script)
+			internal Params(FileSystemPath path, FileItem logFile, FileItem scriptFile,
+				string[] targets, IDictionary<string, string> properties)
 			{
-				Properties = new ReadOnlyDictionary<string, string>(properties);
+				Path = path;
+				LogFile = logFile;
+				ScriptFile = scriptFile;
 				Targets = targets;
-				Script = script;
+				Properties = new ReadOnlyDictionary<string, string>(properties);
+				Verbosity = LoggerVerbosity.Normal;
 
-				Tracer = new JsonFileTracer("build.log.jsx".AsPath().Full, false);
+				ParseWellknownProperties(properties);
+
+				Tracer = new JsonFileTracer("trace.jsx".AsPath().Full, false)
+				{
+					Threshold = Verbosity > LoggerVerbosity.Normal
+						? TraceMessageLevel.Debug
+						: TraceMessageLevel.Info
+				};
+			}
+
+			private void ParseWellknownProperties(IDictionary<string, string> properties)
+			{
+				string value;
+
+				if (properties.TryGetValue("Verbosity", out value))
+				{
+					Verbosity = (LoggerVerbosity) Enum.Parse(typeof (LoggerVerbosity), value, true);
+					properties.Remove("Verbosity");
+				}
 			}
 		}
 
-		public static Params Defaults { get; private set; }		
+		public static Params Defaults { get; private set; }
 
 		private static bool _isInitialized;
 		private static event EventHandler<Params> InitializedHandlers;
 
-		internal static void Initialize(FileSystemPath basePath, Params @params)
+		internal static void Initialize(Params @params)
 		{
 			if (_isInitialized)
 				throw new InvalidOperationException("MyBuild already initialized.");
 
+			Debug.Assert(Path.IsPathRooted(@params.LogFile.Path.Spec), "LogFile must have absolute path.");
+			Debug.Assert(Path.IsPathRooted(@params.ScriptFile.Path.Spec), "ScriptFile must have absolute path.");
+
 			Defaults = @params;
-			FileSystemPath.Base = basePath;			
+			FileSystemPath.Base = @params.ScriptFile.Folder;
+			Logger.LogFile = @params.LogFile;
 			Tracer.Instance = Defaults.Tracer;
 
 			_isInitialized = true;

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using AnFake.Api;
 using AnFake.Core.Tests;
 using Common.Logging;
 
@@ -22,10 +23,11 @@ namespace AnFake.Core
 			public FileSystemPath ResultsDirectory;
 			public FileSystemPath TestSettingsPath;
 			public FileSystemPath WorkingDirectory;
-			public TimeSpan Timeout;
-			public FileSystemPath ToolPath;
+			public TimeSpan Timeout;			
 			public bool NoIsolation;
 			public ITestPostProcessor PostProcessor;
+			public FileSystemPath ToolPath;
+			public string ToolArguments;
 
 			internal Params()
 			{				
@@ -75,6 +77,7 @@ namespace AnFake.Core
 			Logger.DebugFormat("MsTest\n => {0}", String.Join("\n => ", assembliesArray.Select(x => x.RelPath)));
 
 			var tests = new List<TestResult>();
+			var summary = "";
 
 			foreach (var assembly in assembliesArray)
 			{
@@ -84,11 +87,12 @@ namespace AnFake.Core
 				var resultPath = (parameters.ResultsDirectory ?? workDir)/assembly.NameWithoutExt.MakeUnique(".trx");
 
 				var args = new Args("/", ":")
-					.Option("testcontainer", assembly.Path)
+					.Option("testcontainer", assembly.Path.Full)
 					.Option("category", parameters.Category)
 					.Option("testsettings", parameters.TestSettingsPath)
-					.Option("resultsfile", resultPath)
+					.Option("resultsfile", resultPath.Full)
 					.Option("noisolation", parameters.NoIsolation)
+					.Other(parameters.ToolArguments)
 					.ToString();
 
 				var result = Process.Run(p =>
@@ -102,16 +106,35 @@ namespace AnFake.Core
 
 				if (parameters.PostProcessor != null && File.Exists(resultPath.Full))
 				{
-					tests.AddRange(
-						parameters.PostProcessor
-							.PostProcess(resultPath)
-							.Trace());
+					var currentTests = parameters.PostProcessor
+						.PostProcess(resultPath)
+						.Trace()
+						.ToArray();
+
+					summary = String.Format("{0}: {1} passed / {2} total tests",
+						assembly.Name,
+						currentTests.Count(x => x.Status == TestStatus.Passed),
+						currentTests.Length);
+
+					Tracer.Write(
+						new TraceMessage(TraceMessageLevel.Summary, summary)
+							{
+								LinkLabel = "Trace",
+								LinkHref = resultPath.ToRelative(MyBuild.Defaults.Path).Spec
+							});
+
+					tests.AddRange(currentTests);
 				}
 				else if (result.ExitCode != 0)
 				{
 					throw new TargetFailureException(String.Format("MsTest failed with exit code {0}.\n  Assembly: {1}", result.ExitCode, assembly.Path));
 				}
 			}
+
+			summary = String.Format("Overall: {0} passed / {1} total tests",
+						tests.Count(x => x.Status == TestStatus.Passed),
+						tests.Count);
+			Tracer.Write(new TraceMessage(TraceMessageLevel.Summary, summary));
 
 			var testResult = tests.TraceSummary();
 			testResult.FailIfAnyError("Target terminated due to test failures.");

@@ -7,7 +7,7 @@ namespace AnFake.Core.Test
 	[DeploymentItem("Data/FileSet", "Data/FileSet")]
 	[TestClass]
 	public class FileSetTest
-	{
+	{		
 		[TestCategory("Functional")]
 		[TestMethod]
 		public void FileSet_should_include_exact_file()

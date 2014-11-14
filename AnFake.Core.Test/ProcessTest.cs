@@ -62,7 +62,7 @@ namespace AnFake.Core.Test
 				var result = Process.Run(def =>
 				{
 					def.FileName = "AnFake.Process.Test.exe".AsPath();
-					def.Arguments = "--log 2 warning --log 3 error";
+					def.Arguments = "--log 3 warning --log 4 error";
 					def.TrackExternalMessages = true;
 				});
 

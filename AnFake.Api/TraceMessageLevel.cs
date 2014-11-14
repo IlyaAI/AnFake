@@ -12,6 +12,9 @@ namespace AnFake.Api
 		Info,
 
 		[EnumMember]
+		Summary,
+
+		[EnumMember]
 		Warning,
 
 		[EnumMember]

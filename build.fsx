@@ -1,10 +1,15 @@
 ﻿#r ".AnFake/Bin/AnFake.Api.dll"
 #r ".AnFake/Bin/AnFake.Core.dll"
 #r ".AnFake/Bin/AnFake.Fsx.dll"
+#r ".AnFake/Plugins/AnFake.Plugins.Tfs2012.dll"
 
 open System.Linq
 open AnFake.Core
 open AnFake.Fsx.Dsl
+open AnFake.Plugins.Tfs2012
+open AnFake.Api
+
+Tfs.UseIt()
 
 let out = ~~".out"
 let productOut = out / "product"
@@ -22,6 +27,8 @@ let tests = !!"*/*.Test.csproj"
 )
 
 "Compile" => (fun _ ->    
+    Tracer.Info "some info"
+
     MsBuild.BuildRelease(product, productOut) |> ignore
 
     MsBuild.BuildRelease(tests, testsOut) |> ignore

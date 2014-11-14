@@ -22,6 +22,18 @@ namespace AnFake.Core
 			}
 		}
 
+		public sealed class RunFinishedEventArgs : EventArgs
+		{
+			public readonly TargetState FinalState;
+			public readonly Target[] ExecutedTargets;
+
+			public RunFinishedEventArgs(TargetState finalState, Target[] executedTargets)
+			{
+				FinalState = finalState;
+				ExecutedTargets = executedTargets;
+			}
+		}
+
 		public static string Current { get; private set; }
 
 		private readonly TraceMessageCollector _messages = new TraceMessageCollector();
@@ -43,6 +55,8 @@ namespace AnFake.Core
 			Targets.Add(name, this);
 		}
 
+		public static event EventHandler<RunFinishedEventArgs> RunFinished;
+
 		public string Name
 		{
 			get { return _name; }
@@ -51,6 +65,21 @@ namespace AnFake.Core
 		public IEnumerable<Target> Dependencies
 		{
 			get { return _dependencies; }
+		}
+
+		public TargetState State
+		{
+			get { return _state; }
+		}
+
+		public bool HasBody
+		{
+			get { return _do != null; }
+		}
+
+		public TraceMessageCollector Messages
+		{
+			get { return _messages; }
 		}
 
 		public Target Do(Action action)
@@ -152,9 +181,8 @@ namespace AnFake.Core
 			// Prepare
 			var orderedTargets = new List<Target>();
 			ResolveDependencies(orderedTargets);
-
-			Logger.Debug("");
-			Logger.DebugFormat("'{0}' execution order:\n  {1}\n", _name, String.Join("\n  ", orderedTargets.Select(x => x.Name)));
+			
+			Logger.DebugFormat("'{0}' execution order:\n  {1}", _name, String.Join("\n  ", orderedTargets.Select(x => x.Name)));
 
 			// Target.Do
 			var lastExecutedTarget = -1;
@@ -191,7 +219,18 @@ namespace AnFake.Core
 			}			
 
 			// Summarize
-			LogSummary(orderedTargets.Take(lastExecutedTarget + 1));
+			var executedTargets = orderedTargets
+				.Take(lastExecutedTarget + 1)
+				.Where(x => x.HasBody)
+				.ToArray();
+			var finalState = GetFinalState(executedTargets);
+
+			LogSummary(finalState, executedTargets);
+
+			if (RunFinished != null)
+			{
+				RunFinished.Invoke(this, new RunFinishedEventArgs(finalState, executedTargets));
+			}
 
 			// Re-throw
 			if (error != null)
@@ -271,9 +310,18 @@ namespace AnFake.Core
 			}
 		}
 
-		private void LogSummary(IEnumerable<Target> executedTargets)
+		private TargetState GetFinalState(IEnumerable<Target> executedTargets)
 		{
-			var finalState = TargetState.Succeeded;
+			if (_state == TargetState.Queued || _state == TargetState.Failed)
+				return TargetState.Failed;
+
+			return executedTargets.Any(x => x.State != TargetState.Succeeded)
+				? TargetState.PartiallySucceeded
+				: TargetState.Succeeded;			
+		}
+
+		private void LogSummary(TargetState finalState, IEnumerable<Target> executedTargets)
+		{			
 			var index = 0;
 
 			var caption = String.Format("================ '{0}' Summary ================", _name);
@@ -282,62 +330,17 @@ namespace AnFake.Core
 
 			foreach (var target in executedTargets)
 			{
-				if (target._do == null)
-					continue;
-
-				var targetSummary = String.Format("{0}: {1} error(s) {2} warning(s)",
-					target._name, target._messages.ErrorsCount, target._messages.WarningsCount);
-
-				switch (target._state)
+				Logger.TargetStateFormat(target.State, "{0}: {1} error(s) {2} warning(s) {3} message(s)", 
+					target.Name, target.Messages.ErrorsCount, target.Messages.WarningsCount, target.Messages.SummariesCount);
+				
+				foreach (var message in target.Messages)
 				{
-					case TargetState.Succeeded:
-						Logger.Info(targetSummary);
-						break;
-					case TargetState.PartiallySucceeded:
-						Logger.Warn(targetSummary);
-						finalState = TargetState.PartiallySucceeded;
-						break;
-					case TargetState.Failed:
-						Logger.Error(targetSummary);
-						finalState = TargetState.PartiallySucceeded;
-						break;
+					Logger.TraceMessageFormat(message.Level, "[{0,4}] {1}", ++index, message.Message);					
 				}
-
-				foreach (var message in target._messages)
-				{
-					switch (message.Level)
-					{
-						case TraceMessageLevel.Error:
-							Logger.ErrorFormat("[{0,4}] {1}", ++index, message.Message);
-							break;
-						case TraceMessageLevel.Warning:
-							Logger.WarnFormat("[{0,4}] {1}", ++index, message.Message);
-							break;
-						default:
-							Logger.InfoFormat("[{0,4}] {1}", ++index, message.Message);
-							break;
-					}
-				}
-			}
-
-			if (_state == TargetState.Queued || _state == TargetState.Failed)
-			{
-				finalState = TargetState.Failed;
 			}
 
 			Logger.Debug(new String('-', caption.Length));
-			switch (finalState)
-			{
-				case TargetState.Succeeded:
-					Logger.InfoFormat("'{0}' Succeeded", _name);
-					break;
-				case TargetState.PartiallySucceeded:
-					Logger.WarnFormat("'{0}' Partially Succeeded", _name);
-					break;
-				case TargetState.Failed:
-					Logger.ErrorFormat("'{0}' Failed", _name);
-					break;
-			}
+			Logger.TargetStateFormat(finalState, "'{0}' {1}", _name, finalState.ToHumanReadable());
 			Logger.Debug("");
 		}
 
@@ -381,7 +384,7 @@ namespace AnFake.Core
 					var frames = new StackTrace(e, true).GetFrames();
 					if (frames != null)
 					{
-						var scriptName = MyBuild.Defaults.Script.Name;
+						var scriptName = MyBuild.Defaults.ScriptFile.Name;
 						var scriptFrame = frames.FirstOrDefault(f =>
 						{
 							var file = f.GetFileName();

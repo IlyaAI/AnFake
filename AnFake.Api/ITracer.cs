@@ -6,6 +6,8 @@ namespace AnFake.Api
 	{
 		Uri Uri { get; }
 
+		TraceMessageLevel Threshold { get; set; }		
+
 		void Write(TraceMessage message);
 
 		void StartTrackExternal();

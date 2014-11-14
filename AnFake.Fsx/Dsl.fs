@@ -15,13 +15,13 @@ let inline (%%) (basePath: string, wildcardedPath: string) = FileSystem.AsFileSe
 
 let inline (!!!) (wildcardedPath: string) = FileSystem.AsFolderSet(wildcardedPath)
 
-let inline (=>) target (action: unit -> unit) = Targets.AsTarget(target).Do(fun _ -> action ())
+let inline (=>) target (action: unit -> unit) = TargetExtension.AsTarget(target).Do(fun _ -> action ())
 
 let inline (&=>) (target: Target) (action: unit -> unit) = target.OnFailure(action)
 
 let inline (|=>) (target: Target) (action: unit -> unit) = target.Finally(action)
 
-let inline (<==) target (dependencies: IEnumerable<string>) = Targets.AsTarget(target).DependsOn(dependencies)
+let inline (<==) target (dependencies: IEnumerable<string>) = TargetExtension.AsTarget(target).DependsOn(dependencies)
 
 let skipErrors (target: Target) = target.SkipErrors()
 

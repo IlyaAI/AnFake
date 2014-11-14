@@ -5,14 +5,23 @@ namespace AnFake.Core
 {
 	public sealed class FileSystemPath : IComparable<FileSystemPath>
 	{
-		private static FileSystemPath _basePath = new FileSystemPath(Directory.GetCurrentDirectory(), true);
+		private static FileSystemPath _basePath = Directory.GetCurrentDirectory().AsPath();
 
 		public static FileSystemPath Base
 		{
 			get { return _basePath; }
-			internal set { _basePath = _basePath/value; }
-		}
+			internal set
+			{
+				if (value == null)
+					throw new ArgumentNullException("value", "FileSystemPath.Base must not be null");
 
+				if (!Path.IsPathRooted(value.Spec))
+					throw new InvalidOperationException("FileSystemPath.Base must be absolute path");
+
+				_basePath = value;
+			}
+		}
+		
 		private readonly string _value;
 
 		internal FileSystemPath(string value, bool normalized)
@@ -105,7 +114,7 @@ namespace AnFake.Core
 		public override string ToString()
 		{
 			return _value;
-		}
+		}		
 
 		public static bool operator ==(FileSystemPath left, FileSystemPath right)
 		{

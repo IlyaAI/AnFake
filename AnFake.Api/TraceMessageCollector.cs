@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace AnFake.Api
@@ -6,8 +7,14 @@ namespace AnFake.Api
 	public sealed class TraceMessageCollector : IEnumerable<TraceMessage>
 	{
 		private readonly IList<TraceMessage> _messages = new List<TraceMessage>();
+		private int _summariesCount;
 		private int _warningsCount;
 		private int _errorsCount;
+
+		public int SummariesCount
+		{
+			get { return _summariesCount; }
+		}
 
 		public int WarningsCount
 		{
@@ -23,6 +30,10 @@ namespace AnFake.Api
 		{
 			switch (msg.Level)
 			{
+				case TraceMessageLevel.Summary:
+					_messages.Add(msg);
+					_summariesCount++;
+					break;
 				case TraceMessageLevel.Warning:
 					_messages.Add(msg);
 					_warningsCount++;

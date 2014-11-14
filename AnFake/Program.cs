@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using AnFake.Api;
 using AnFake.Core;
+using AnFake.log4net;
 
 namespace AnFake
 {
@@ -13,7 +15,7 @@ namespace AnFake
 			{
 				{".fsx", new FSharpEvaluator()},
 				{".csx", new CSharpEvaluator()}
-			};
+			};		
 
 		class BuildOptions
 		{
@@ -24,6 +26,12 @@ namespace AnFake
 
 		public static int Main(string[] args)
 		{
+			// It's impossible to use cool domain model here because it references ILog
+			// so for log initialization the plain API is used
+			var currentDir = Directory.GetCurrentDirectory();
+			BuildLogPattern.LogFile = Path.Combine(currentDir, "build.log");
+			///////////////////////////////////////////////////////////////////////////
+
 			Console.SetWindowSize((int)(Console.LargestWindowWidth * 0.75), (int)(Console.LargestWindowHeight * 0.75));
 
 			if (args.Length == 0)
@@ -47,40 +55,52 @@ namespace AnFake
 				Logger.Debug("  AnFake.exe build.csx");
 				Logger.Debug("    runs target 'Build' defined in 'build.csx' script with no additional parameters");
 				Logger.Debug("");
-				Logger.Debug("  AnFake.exe build.csx Compile configuration=Debug");
-				Logger.Debug("    runs target 'Compile' defined in 'build.csx' script with additional parameter 'configuration' set to 'Debug'");
+				Logger.Debug("  AnFake.exe build.csx Compile MsBuild.Configuration=Debug");
+				Logger.Debug("    runs target 'Compile' defined in 'build.csx' script with additional parameter 'MsBuild.Configuration' set to 'Debug'");
 
 				return 0;
 			}
 
-			var options = ParseOptions(args);			
+			var buildPath = currentDir.AsPath();
+			var logFile = new FileItem(BuildLogPattern.LogFile.AsPath(), buildPath);
 
-			var script = options.Script.AsFile();
-			if (!script.Exists())
+			var options = ParseOptions(args);			
+			
+			var scriptFile = new FileItem(buildPath / options.Script, buildPath);
+			if (!scriptFile.Exists())
 			{
-				Logger.ErrorFormat("Build script doesn't exist: {0}", script.Path.Spec);
+				Logger.ErrorFormat("Build script doesn't exist: {0}", scriptFile.RelPath);
 				return -1;
 			}
 
 			IScriptEvaluator evaluator;
-			if (!SupportedScripts.TryGetValue(script.Ext, out evaluator))
+			if (!SupportedScripts.TryGetValue(scriptFile.Ext, out evaluator))
 			{
-				Logger.ErrorFormat("Unsupported scripting language: {0}", script.Ext);
+				Logger.ErrorFormat("Unsupported scripting language: {0}", scriptFile.Ext);
 				return -1;
 			}
 
-			Logger.DebugFormat("Script    : {0}", script.Path.Full);			
+			Logger.DebugFormat("BuildPath : {0}", buildPath);
+			Logger.DebugFormat("LogFile   : {0}", logFile);
+			Logger.DebugFormat("ScriptFile: {0}", scriptFile);
 			Logger.DebugFormat("Evaluator : {0}", evaluator.GetType().FullName);
 			Logger.DebugFormat("Targets   : {0}", String.Join(" ", options.Targets));
-			Logger.DebugFormat("Parameters: {0}", String.Join(" ", options.Properties.Select(x => x.Key + " = " + x.Value)));
+			Logger.DebugFormat("Parameters:\n  {0}", String.Join("\n  ", options.Properties.Select(x => x.Key + " = " + x.Value)));
 
 			try
-			{				
-				MyBuild.Initialize(script.Folder, new MyBuild.Params(options.Properties, options.Targets.ToArray(), script));
+			{
+				MyBuild.Initialize(
+					new MyBuild.Params(
+						buildPath,
+						logFile,
+						scriptFile,
+						options.Targets.ToArray(),
+						options.Properties));
 				Logger.DebugFormat("BasePath  : {0}", FileSystemPath.Base);
 
 				Logger.Debug("Configuring build...");
-				evaluator.Evaluate(script);
+				evaluator.Evaluate(scriptFile);
+				ConfigurePlugins();
 
 				Logger.Debug("Running targets...");
 				foreach (var target in options.Targets)
@@ -95,6 +115,21 @@ namespace AnFake
 			catch (Exception e)
 			{
 				Logger.Error(e);
+
+				// Do best efforts to notify observers via Tracer
+				if (Tracer.Instance != null)
+				{
+					try
+					{
+						Tracer.Instance.Write(new TraceMessage(TraceMessageLevel.Error, e.Message) {Details = e.StackTrace});
+					}
+					// ReSharper disable once EmptyGeneralCatchClause
+					catch (Exception)
+					{
+						// ignore
+					}
+				}
+
 				return 1;
 			}
 
@@ -130,6 +165,27 @@ namespace AnFake
 			}
 
 			return options;
+		}
+
+		private static void ConfigurePlugins()
+		{
+			var pluginType = typeof (IPlugin);
+			var loadedPlugins = AppDomain.CurrentDomain
+				.GetAssemblies()
+				.SelectMany(x => x.GetTypes())
+				.Where(x => pluginType.IsAssignableFrom(x) && x.IsClass && !x.IsAbstract)
+				.ToArray();
+
+			if (loadedPlugins.Length == 0)
+				return;
+
+			Logger.DebugFormat("Plugins:\n  {0}", String.Join("\n  ", loadedPlugins.Select(x => x.FullName)));
+
+			foreach (var type in loadedPlugins)
+			{				
+				((IPlugin) Activator.CreateInstance(type))
+					.Configure(MyBuild.Defaults);
+			}			
 		}
 	}
 }

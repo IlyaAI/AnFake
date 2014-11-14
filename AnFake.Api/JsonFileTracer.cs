@@ -87,16 +87,21 @@ namespace AnFake.Api
 				MessageReceiving.Invoke(this, message);
 			}
 
-			using (var log = OpenLog(FileMode.Append, FileAccess.Write, _maxRetries))
+			var log = OpenLog(FileMode.Append, FileAccess.Write, _maxRetries);
+			try
 			{
 				_serializer.WriteObject(log, message);
 
 				log.WriteByte(0x0A);
 			}
-
-			if (MessageReceived != null)
+			finally
 			{
-				MessageReceived.Invoke(this, message);
+				log.Close();
+
+				if (MessageReceived != null)
+				{
+					MessageReceived.Invoke(this, message);
+				}
 			}
 		}		
 
@@ -130,7 +135,7 @@ namespace AnFake.Api
 						{
 							interrupted = true;
 						}
-
+						
 						var log = interrupted 
 							? OpenLog(FileMode.Open, FileAccess.ReadWrite, MaxRetries)
 							: TryOpenLog(FileMode.Open, FileAccess.ReadWrite);
@@ -191,7 +196,7 @@ namespace AnFake.Api
 				return new ToolExecutionResult();
 
 			_tracker.Interrupt();
-			_tracker.Join(1000);
+			_tracker.Join(3000);
 			_tracker = null;			
 
 			return new ToolExecutionResult(_externalErrors, _externalWarnings);
@@ -242,7 +247,14 @@ namespace AnFake.Api
 				if (log != null)
 					return log;
 
-				Thread.Sleep(_retryInterval);
+				try
+				{
+					Thread.Sleep(_retryInterval);
+				}
+				catch (ThreadInterruptedException)
+				{
+					// ignore
+				}				
 			}
 
 			throw new IOException(String.Format("Log file is locked: {0}", _logFile));
