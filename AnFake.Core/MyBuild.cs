@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using AnFake.Api;
+using AnFake.Core.Exceptions;
 using Microsoft.Build.Framework;
 
 namespace AnFake.Core
@@ -60,14 +62,13 @@ namespace AnFake.Core
 		internal static void Initialize(Params @params)
 		{
 			if (_isInitialized)
-				throw new InvalidOperationException("MyBuild already initialized.");
+				throw new InvalidConfigurationException("MyBuild already initialized.");
 
 			Debug.Assert(Path.IsPathRooted(@params.LogFile.Path.Spec), "LogFile must have absolute path.");
 			Debug.Assert(Path.IsPathRooted(@params.ScriptFile.Path.Spec), "ScriptFile must have absolute path.");
 
 			Defaults = @params;
-			FileSystemPath.Base = @params.ScriptFile.Folder;
-			Logger.LogFile = @params.LogFile;
+			FileSystemPath.Base = @params.ScriptFile.Folder;			
 			Tracer.Instance = Defaults.Tracer;
 
 			_isInitialized = true;
@@ -127,6 +128,6 @@ namespace AnFake.Core
 			var message = String.Format(format, args);
 			Logger.Error(message);
 			Tracer.Write(new TraceMessage(TraceMessageLevel.Error, message));
-		}
+		}		
 	}
 }

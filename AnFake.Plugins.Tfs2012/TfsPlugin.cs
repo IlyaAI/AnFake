@@ -2,6 +2,7 @@
 using System.Linq;
 using AnFake.Api;
 using AnFake.Core;
+using AnFake.Core.Exceptions;
 using Common.Logging;
 using Microsoft.TeamFoundation.Build.Client;
 using Microsoft.TeamFoundation.Client;
@@ -15,10 +16,10 @@ namespace AnFake.Plugins.Tfs2012
 		private const string SectionKey = "AnFake";
 		private const string SectionHeader = "AnFake Summary";
 
-		private IBuildDetail _build;
-		private IBuildInformation _tracker;
+		private readonly IBuildDetail _build;
+		private readonly IBuildInformation _tracker;
 
-		public void Configure(MyBuild.Params parameters)
+		public TfsPlugin(MyBuild.Params parameters)
 		{
 			string tfsUri;
 			string buildUri;
@@ -27,7 +28,7 @@ namespace AnFake.Plugins.Tfs2012
 			if (!parameters.Properties.TryGetValue("Tfs.Uri", out tfsUri) ||
 				!parameters.Properties.TryGetValue("Tfs.BuildUri", out buildUri) ||
 				!parameters.Properties.TryGetValue("Tfs.ActivityInstanceId", out activityInstanceId))
-				throw new InvalidOperationException("TFS plugin requires 'Tfs.Uri', 'Tfs.BuildUri' and 'Tfs.ActivityInstanceId' to be specified in build properties.");
+				throw new InvalidConfigurationException("TFS plugin requires 'Tfs.Uri', 'Tfs.BuildUri' and 'Tfs.ActivityInstanceId' to be specified in build properties.");
 
 			var teamProjectCollection = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(new Uri(tfsUri));
 			var buildServer = (IBuildServer) teamProjectCollection.GetService(typeof (IBuildServer));
@@ -38,7 +39,7 @@ namespace AnFake.Plugins.Tfs2012
 				QueryOptions.None).Single();
 
 			if (_build == null)
-				throw new InvalidOperationException(String.Format("TFS plugin unable to find build '{0}'", buildUri));		
+				throw new InvalidConfigurationException(String.Format("TFS plugin unable to find build '{0}'", buildUri));		
 
 			var activity = InformationNodeConverters.GetActivityTracking(_build, activityInstanceId);
 			if (activity != null)
@@ -50,14 +51,16 @@ namespace AnFake.Plugins.Tfs2012
 				_tracker = _build.Information;
 
 				Log.WarnFormat("Activity with InstanceId='{0}' not found. Using root build information for message tracking.");
-			}
-
-			Tfs.Uri = teamProjectCollection.Uri;
-			Tfs.BuildDetail = _build;
+			}			
 
 			parameters.Tracer.MessageReceived += OnMessage;
 			Target.RunFinished += OnRunFinished;
-		}		
+		}
+
+		public IBuildDetail Build
+		{
+			get { return _build; }
+		}
 
 		private void OnMessage(object sender, TraceMessage message)
 		{
@@ -120,7 +123,7 @@ namespace AnFake.Plugins.Tfs2012
 			summary = String.Format("'{0}' {1}", currentTarget.Name, evt.FinalState.ToHumanReadable().ToUpperInvariant());
 			if (!String.IsNullOrEmpty(_build.DropLocation))
 			{
-				summary += String.Format("  [build.log]({0})", _build.DropLocation.AsPath() / Logger.LogFile.RelPath);
+				summary += String.Format("  [build.log]({0})", _build.DropLocation.AsPath() / MyBuild.Defaults.LogFile.RelPath);
 			}
 
 			_build.Information

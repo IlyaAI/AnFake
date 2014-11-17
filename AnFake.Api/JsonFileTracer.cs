@@ -169,10 +169,13 @@ namespace AnFake.Api
 										break;
 								}
 
-								if (MessageReceived != null)
+								if (message.Level >= _threshold)
 								{
-									MessageReceived.Invoke(this, message);
-								}								
+									if (MessageReceived != null)
+									{
+										MessageReceived.Invoke(this, message);
+									}
+								}																
 							}							
 
 							processedLength = log.Length;							
@@ -210,7 +213,7 @@ namespace AnFake.Api
 		{
 			return new DataContractJsonSerializer(
 				typeof(TraceMessage),
-				new DataContractJsonSerializerSettings { EmitTypeInformation = EmitTypeInformation.Always });
+				new DataContractJsonSerializerSettings { EmitTypeInformation = EmitTypeInformation.AsNeeded });
 		}
 
 		private static string InitLog(string logFile, bool append)

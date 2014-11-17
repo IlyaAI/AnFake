@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using AnFake.Api;
+using AnFake.Core.Exceptions;
 using AnFake.Core.Tests;
 using Common.Logging;
 
@@ -58,13 +59,13 @@ namespace AnFake.Core
 		{
 			var assembliesArray = assemblies.ToArray();
 			if (assembliesArray.Length == 0)
-				throw new ArgumentException("MsTest.Run(setParams, assemblies): assemblies must not be an empty list");
+				throw new AnFakeArgumentException("MsTest.Run(setParams, assemblies): assemblies must not be an empty list");
 
 			var parameters = Defaults.Clone();
 			setParams(parameters);
 
 			if (parameters.ToolPath == null)
-				throw new ArgumentException(
+				throw new AnFakeArgumentException(
 					String.Format(
 						"MsTest.Params.ToolPath must not be null.\nHint: probably, MsTest.exe not found.\nSearch path:\n  {0}",
 						String.Join("\n  ", Locations)));
@@ -72,13 +73,12 @@ namespace AnFake.Core
 			// TODO: check other parameters
 
 			//if (parameters.WorkingDirectory == null)
-			//	throw new ArgumentException("MsTest.Params.WorkingDirectory must not be null");
+			//	throw new AnFakeArgumentException("MsTest.Params.WorkingDirectory must not be null");
 
 			Logger.DebugFormat("MsTest\n => {0}", String.Join("\n => ", assembliesArray.Select(x => x.RelPath)));
 
 			var tests = new List<TestResult>();
-			var summary = "";
-
+			
 			foreach (var assembly in assembliesArray)
 			{
 				Logger.DebugFormat("{0}...", assembly.RelPath);
@@ -111,7 +111,7 @@ namespace AnFake.Core
 						.Trace()
 						.ToArray();
 
-					summary = String.Format("{0}: {1} passed / {2} total tests",
+					var summary = String.Format("{0}: {1} passed / {2} total tests",
 						assembly.Name,
 						currentTests.Count(x => x.Status == TestStatus.Passed),
 						currentTests.Length);
@@ -129,12 +129,7 @@ namespace AnFake.Core
 				{
 					throw new TargetFailureException(String.Format("MsTest failed with exit code {0}.\n  Assembly: {1}", result.ExitCode, assembly.Path));
 				}
-			}
-
-			summary = String.Format("Overall: {0} passed / {1} total tests",
-						tests.Count(x => x.Status == TestStatus.Passed),
-						tests.Count);
-			Tracer.Write(new TraceMessage(TraceMessageLevel.Summary, summary));
+			}			
 
 			var testResult = tests.TraceSummary();
 			testResult.FailIfAnyError("Target terminated due to test failures.");

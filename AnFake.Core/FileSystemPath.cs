@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using AnFake.Core.Exceptions;
 
 namespace AnFake.Core
 {
@@ -13,10 +14,10 @@ namespace AnFake.Core
 			internal set
 			{
 				if (value == null)
-					throw new ArgumentNullException("value", "FileSystemPath.Base must not be null");
+					throw new AnFakeArgumentException("FileSystemPath.Base must not be null");
 
 				if (!Path.IsPathRooted(value.Spec))
-					throw new InvalidOperationException("FileSystemPath.Base must be absolute path");
+					throw new AnFakeArgumentException("FileSystemPath.Base must be absolute path");
 
 				_basePath = value;
 			}

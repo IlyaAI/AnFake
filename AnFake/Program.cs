@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using AnFake.Api;
 using AnFake.Core;
+using AnFake.Core.Exceptions;
 using AnFake.log4net;
 
 namespace AnFake
@@ -15,13 +16,13 @@ namespace AnFake
 			{
 				{".fsx", new FSharpEvaluator()},
 				{".csx", new CSharpEvaluator()}
-			};		
+			};
 
-		class BuildOptions
+		private class BuildOptions
 		{
 			public readonly IDictionary<string, string> Properties = new Dictionary<string, string>();
 			public readonly IList<string> Targets = new List<string>();
-			public string Script = "build.fsx";			
+			public string Script = "build.fsx";
 		}
 
 		public static int Main(string[] args)
@@ -32,7 +33,7 @@ namespace AnFake
 			BuildLogPattern.LogFile = Path.Combine(currentDir, "build.log");
 			///////////////////////////////////////////////////////////////////////////
 
-			Console.SetWindowSize((int)(Console.LargestWindowWidth * 0.75), (int)(Console.LargestWindowHeight * 0.75));
+			Console.SetWindowSize((int) (Console.LargestWindowWidth*0.75), (int) (Console.LargestWindowHeight*0.75));
 
 			if (args.Length == 0)
 			{
@@ -64,9 +65,9 @@ namespace AnFake
 			var buildPath = currentDir.AsPath();
 			var logFile = new FileItem(BuildLogPattern.LogFile.AsPath(), buildPath);
 
-			var options = ParseOptions(args);			
-			
-			var scriptFile = new FileItem(buildPath / options.Script, buildPath);
+			var options = ParseOptions(args);
+
+			var scriptFile = new FileItem(buildPath/options.Script, buildPath);
 			if (!scriptFile.Exists())
 			{
 				Logger.ErrorFormat("Build script doesn't exist: {0}", scriptFile.RelPath);
@@ -100,7 +101,6 @@ namespace AnFake
 
 				Logger.Debug("Configuring build...");
 				evaluator.Evaluate(scriptFile);
-				ConfigurePlugins();
 
 				Logger.Debug("Running targets...");
 				foreach (var target in options.Targets)
@@ -112,18 +112,22 @@ namespace AnFake
 			{
 				// just skip, its already processed
 			}
+			catch (EvaluationAbortedException)
+			{
+				// just skip, its already processed
+			}
 			catch (Exception e)
 			{
 				Logger.Error(e);
 
-				// Do best efforts to notify observers via Tracer
+				// Do the best efforts to notify observers via Tracer
 				if (Tracer.Instance != null)
 				{
 					try
 					{
-						Tracer.Instance.Write(new TraceMessage(TraceMessageLevel.Error, e.Message) {Details = e.StackTrace});
+						Tracer.Error(e);
 					}
-					// ReSharper disable once EmptyGeneralCatchClause
+						// ReSharper disable once EmptyGeneralCatchClause
 					catch (Exception)
 					{
 						// ignore
@@ -167,25 +171,23 @@ namespace AnFake
 			return options;
 		}
 
-		private static void ConfigurePlugins()
+		/*private static void ConfigurePlugin(Assembly assembly)
 		{
-			var pluginType = typeof (IPlugin);
-			var loadedPlugins = AppDomain.CurrentDomain
-				.GetAssemblies()
-				.SelectMany(x => x.GetTypes())
-				.Where(x => pluginType.IsAssignableFrom(x) && x.IsClass && !x.IsAbstract)
+			var pluginIface = typeof (IPlugin);
+			var plugins = assembly.GetTypes()
+				.Where(x => pluginIface.IsAssignableFrom(x) && x.IsClass && !x.IsAbstract)
 				.ToArray();
 
-			if (loadedPlugins.Length == 0)
+			if (plugins.Length == 0)
 				return;
 
-			Logger.DebugFormat("Plugins:\n  {0}", String.Join("\n  ", loadedPlugins.Select(x => x.FullName)));
+			Logger.DebugFormat("Plugged-in: {0}\n  {1}", assembly.FullName, String.Join("\n  ", plugins.Select(x => x.FullName)));
 
-			foreach (var type in loadedPlugins)
+			foreach (var type in plugins)
 			{				
 				((IPlugin) Activator.CreateInstance(type))
 					.Configure(MyBuild.Defaults);
 			}			
-		}
+		}*/
 	}
 }

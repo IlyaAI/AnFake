@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace AnFake.Core
+namespace AnFake.Core.Exceptions
 {
-	public class TerminateTargetException : Exception
+	public class TerminateTargetException : AnFakeException
 	{
 		public TerminateTargetException(string message) 
 			: base(message)

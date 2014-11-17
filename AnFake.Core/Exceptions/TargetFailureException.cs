@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace AnFake.Core
+namespace AnFake.Core.Exceptions
 {
-	public class TargetFailureException : Exception
+	public class TargetFailureException : AnFakeException
 	{
 		public TargetFailureException(string message) 
 			: base(message)

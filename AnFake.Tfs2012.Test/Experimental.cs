@@ -84,6 +84,24 @@ namespace AnFake.Tfs2012.Test
 			//detail.Save();
 		}
 
+		[TestMethod]
+		public void Test3()
+		{
+			var teamProjectCollection = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(new Uri("https://nsk-tfs.avp.ru:8081/tfs/dlpr"));
+			var buildService = (IBuildServer)teamProjectCollection.GetService(typeof(IBuildServer));
+
+			var buildDefinition = buildService.GetBuildDefinition("DLP_PDK", "compliance-dev.fake");
+			var buildDetails = buildDefinition.QueryBuilds();
+
+			/*var buildDetail = buildService.QueryBuildsByUri(
+				new[] { new Uri("vstfs:///Build/Build/32764") },
+				new[] { "*" },
+				QueryOptions.All).Single();
+
+			buildDetail.FinalizeStatus(BuildStatus.Failed);
+			buildDetail.Delete(DeleteOptions.All & ~DeleteOptions.DropLocation);*/
+		}
+
 		private static IBuildInformationNode Find(IBuildInformationNode node, string fieldName, string fieldValue)
 		{
 			if (node.Fields.ContainsKey(fieldName) && node.Fields[fieldName].Contains(fieldValue))

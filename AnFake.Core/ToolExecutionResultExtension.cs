@@ -1,5 +1,6 @@
 ﻿using System;
 using AnFake.Api;
+using AnFake.Core.Exceptions;
 
 namespace AnFake.Core
 {

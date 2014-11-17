@@ -65,12 +65,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EvaluationAbortedException.cs" />
     <Compile Include="log4net\BuildLogPattern.cs" />
     <None Include="experimental-02.fsx" />
     <None Include="experimental.cs" />
     <Compile Include="CSharpEvaluator.cs" />
     <Compile Include="FSharpEvaluator.cs" />
     <Compile Include="IScriptEvaluator.cs" />
+    <Compile Include="LoggerErrorWriter.cs" />
+    <Compile Include="LoggerDebugWriter.cs" />
+    <Compile Include="LoggerWriter.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <None Include="Scripting.cs" />

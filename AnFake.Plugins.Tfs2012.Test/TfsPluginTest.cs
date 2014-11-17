@@ -63,8 +63,7 @@ namespace AnFake.Plugins.Tfs2012.Test
 					{"Tfs.ActivityInstanceId", "0001"}
 				});
 
-			var tfs = new TfsPlugin();
-			tfs.Configure(p);
+			var tfs = new TfsPlugin(p);			
 
 			// act
 			p.Tracer.Write(new TraceMessage(TraceMessageLevel.Debug, "Debug"));

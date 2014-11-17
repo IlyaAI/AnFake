@@ -72,11 +72,11 @@ namespace AnFake.Core.Tests
 				runTime += test.RunTime;
 			}
 
-			var summary = String.Format("Test Run Summary: {0} {1} failed, {2} skipped, {3} passed, {4} total.",
+			var summary = String.Format("Test Run Summary: {0}, {1} failed, {2} skipped, {3} passed, {4} total.",
 					runTime, errors, warnings, passed, array.Length);
 
 			Logger.Debug(summary);
-			Tracer.Write(new TraceMessage(TraceMessageLevel.Info, summary));
+			Tracer.Write(new TraceMessage(TraceMessageLevel.Summary, summary));
 
 			return new TestExecutionResult(errors, warnings, array);
 		}

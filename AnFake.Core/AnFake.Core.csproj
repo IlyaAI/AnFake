@@ -48,6 +48,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ArgsExtension.cs" />
+    <Compile Include="Exceptions\AnFakeArgumentException.cs" />
+    <Compile Include="Exceptions\AnFakeException.cs" />
+    <Compile Include="Exceptions\InvalidConfigurationException.cs" />
+    <Compile Include="Exceptions\TargetFailureException.cs" />
+    <Compile Include="Exceptions\TerminateTargetException.cs" />
     <Compile Include="Folders.cs" />
     <Compile Include="Files.cs" />
     <Compile Include="FolderItem.cs" />
@@ -64,11 +69,10 @@
     <Compile Include="NuSpec\v25\ReferenceGroup.cs" />
     <Compile Include="NuSpec\v25\Reference.cs" />
     <Compile Include="NuSpec\v25\Framework.cs" />
+    <Compile Include="Plugin.cs" />
     <Compile Include="Target.cs" />
     <Compile Include="TargetState.cs" />
-    <Compile Include="TerminateTargetException.cs" />
     <Compile Include="TestExecutionResult.cs" />
-    <Compile Include="TargetFailureException.cs" />
     <Compile Include="FileItem.cs" />
     <Compile Include="FileSystem.cs" />
     <Compile Include="FolderSet.cs" />
@@ -102,6 +106,7 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

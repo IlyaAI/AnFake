@@ -16,11 +16,18 @@ namespace AnFake
 				cfg,
 				new[] {script.Name},
 				new StreamReader(Stream.Null),
-				Console.Out,
-				Console.Error,
+				new LoggerDebugWriter(), 
+				new LoggerErrorWriter(),
 				FSharpOption<bool>.None);
 
-			fsx.EvalScript(script.Path.Full);
+			try
+			{
+				fsx.EvalScript(script.Path.Full);
+			}
+			catch (Exception e)
+			{				
+				throw new EvaluationAbortedException(e);
+			}			
 		}
 	}
 }

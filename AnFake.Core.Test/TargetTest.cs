@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Text;
 using AnFake.Api;
+using AnFake.Core.Exceptions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Rhino.Mocks;
 
@@ -93,7 +94,7 @@ namespace AnFake.Core.Test
 				// act
 				"a".AsTarget().Run();
 			}
-			catch (InvalidOperationException)
+			catch (InvalidConfigurationException)
 			{
 				// assert				
 			}

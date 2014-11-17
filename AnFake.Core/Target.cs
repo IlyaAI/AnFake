@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using AnFake.Api;
+using AnFake.Core.Exceptions;
 
 namespace AnFake.Core
 {
@@ -50,7 +50,7 @@ namespace AnFake.Core
 			_name = name;
 
 			if (Targets.ContainsKey(name))
-				throw new InvalidOperationException(String.Format("Target '{0}' already exists.", name));
+				throw new InvalidConfigurationException(String.Format("Target '{0}' already defined.", name));
 
 			Targets.Add(name, this);
 		}
@@ -85,10 +85,10 @@ namespace AnFake.Core
 		public Target Do(Action action)
 		{
 			if (action == null)
-				throw new ArgumentNullException("action");
+				throw new AnFakeArgumentException("Target.Do(action): action must not be null");
 
 			if (_do != null)
-				throw new InvalidOperationException();
+				throw new InvalidConfigurationException(String.Format("Target '{0}' already has a body.", _name));
 
 			_do = action;
 
@@ -98,10 +98,10 @@ namespace AnFake.Core
 		public Target OnFailure(Action<ExecutionReason> action)
 		{
 			if (action == null)
-				throw new ArgumentNullException("action");
+				throw new AnFakeArgumentException("Target.OnFailure(action): action must not be null");
 
 			if (_onFailure != null)
-				throw new InvalidOperationException();
+				throw new InvalidConfigurationException(String.Format("Target '{0}' already has on-failure handler.", _name));
 
 			_onFailure = action;
 
@@ -111,7 +111,7 @@ namespace AnFake.Core
 		public Target OnFailure(Action action)
 		{
 			if (action == null)
-				throw new ArgumentNullException("action");
+				throw new AnFakeArgumentException("Target.OnFailure(action): action must not be null");
 
 			return OnFailure(x => action.Invoke());
 		}
@@ -119,10 +119,10 @@ namespace AnFake.Core
 		public Target Finally(Action<ExecutionReason> action)
 		{
 			if (action == null)
-				throw new ArgumentNullException("action");
+				throw new AnFakeArgumentException("Target.Finally(action): action must not be null");
 
 			if (_finally != null)
-				throw new InvalidOperationException();
+				throw new InvalidConfigurationException(String.Format("Target '{0}' already has finally handler.", _name));
 
 			_finally = action;
 
@@ -132,7 +132,7 @@ namespace AnFake.Core
 		public Target Finally(Action action)
 		{
 			if (action == null)
-				throw new ArgumentNullException("action");
+				throw new AnFakeArgumentException("Target.Finally(action): action must not be null");
 
 			return Finally(x => action.Invoke());
 		}
@@ -240,7 +240,7 @@ namespace AnFake.Core
 		private void ResolveDependencies(ICollection<Target> orderedTargets)
 		{
 			if (_state == TargetState.PreQueued)			
-				throw new InvalidOperationException(String.Format("Target '{0}' has cycle dependency.", _name));
+				throw new InvalidConfigurationException(String.Format("Target '{0}' has cycle dependency.", _name));
 
 			if (_state == TargetState.Queued)
 				return;
@@ -377,33 +377,8 @@ namespace AnFake.Core
 			}
 			catch (Exception e)
 			{
-				var location = "";
-
-				if (e is TargetFailureException || e is ArgumentException)
-				{					
-					var frames = new StackTrace(e, true).GetFrames();
-					if (frames != null)
-					{
-						var scriptName = MyBuild.Defaults.ScriptFile.Name;
-						var scriptFrame = frames.FirstOrDefault(f =>
-						{
-							var file = f.GetFileName();
-							return file != null && file.EndsWith(scriptName, StringComparison.InvariantCultureIgnoreCase);
-						});
-						if (scriptFrame != null)
-						{
-							location = String.Format(" @@ {0} {1}", scriptName, scriptFrame.GetFileLineNumber());
-						}						
-					}
-
-					Logger.ErrorFormat("{0}{1}", e.Message, location);
-				}
-				else
-				{
-					Logger.ErrorFormat("", e, _name, phase);					
-				}
-				
-				Tracer.ErrorFormat("{0}{1}", e, e.Message, location);
+				Logger.Error(e);
+				Tracer.Error(e);
 
 				if (!skipErrors)
 					throw new TerminateTargetException(String.Format("Target terminated due to errors in {0}.{1}", _name, phase), e);
@@ -428,7 +403,7 @@ namespace AnFake.Core
 		{
 			Target target;
 			if (!Targets.TryGetValue(name, out target))
-				throw new InvalidOperationException(String.Format("Target '{0}' not defined.", name));
+				throw new InvalidConfigurationException(String.Format("Target '{0}' not defined.", name));
 
 			return target;
 		}
@@ -436,7 +411,7 @@ namespace AnFake.Core
 		internal static Target Create(string name)
 		{
 			if (Targets.ContainsKey(name))
-				throw new InvalidOperationException(String.Format("Target '{0}' already defined.", name));
+				throw new InvalidConfigurationException(String.Format("Target '{0}' already defined.", name));
 
 			return new Target(name);
 		}

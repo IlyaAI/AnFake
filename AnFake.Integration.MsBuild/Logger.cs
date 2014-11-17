@@ -41,7 +41,7 @@ namespace AnFake.Integration.MsBuild
 
 		public void Initialize(IEventSource eventSource)
 		{
-			Tracer.Instance = Tracer.Create(TracerUri, true);
+			Tracer.Instance = Tracer.Create(TracerUri);
 
 			eventSource.MessageRaised += OnMessage;
 			eventSource.WarningRaised += OnWarning;
@@ -54,23 +54,28 @@ namespace AnFake.Integration.MsBuild
 
 		private void OnMessage(object sender, BuildMessageEventArgs e)
 		{
+			var level = TraceMessageLevel.Debug;
+
 			switch (e.Importance)
 			{
-				case MessageImportance.Low:
-					if (Verbosity < LoggerVerbosity.Diagnostic)
-						return;
-					break;
-				case MessageImportance.Normal:
-					if (Verbosity < LoggerVerbosity.Detailed)
-						return;
-					break;
 				case MessageImportance.High:
 					if (Verbosity < LoggerVerbosity.Normal)
 						return;
+					level = TraceMessageLevel.Info;
+					break;
+
+				case MessageImportance.Normal:
+					if (Verbosity < LoggerVerbosity.Detailed)
+						return;					
+					break;
+				
+				default:
+					if (Verbosity < LoggerVerbosity.Diagnostic)
+						return;					
 					break;
 			}
 
-			Trace(TraceMessageLevel.Info, e.ProjectFile, e.File, e.LineNumber, e.ColumnNumber, e.Code, e.Message);
+			Trace(level, e.ProjectFile, e.File, e.LineNumber, e.ColumnNumber, e.Code, e.Message);
 		}
 
 		private void OnWarning(object sender, BuildWarningEventArgs e)
@@ -106,7 +111,15 @@ namespace AnFake.Integration.MsBuild
 					.Append("    ").AppendLine(project);
 			}
 
-			Tracer.Write(new TraceMessage(level, formattedMsg.ToString()) { Target = AnFakeTarget });
+			Tracer.Write(new TraceMessage(level, formattedMsg.ToString())
+			{
+				Code = code,
+				File = file,
+				Project = project,
+				Line = line,
+				Column = col,
+				Target = AnFakeTarget
+			});
 		}
 	}
 }

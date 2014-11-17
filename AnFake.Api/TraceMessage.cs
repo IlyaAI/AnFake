@@ -23,6 +23,21 @@ namespace AnFake.Api
 		public string Details { get; set; }
 
 		[DataMember(EmitDefaultValue = false)]
+		public string Code { get; set; }
+
+		[DataMember(EmitDefaultValue = false)]
+		public string File { get; set; }
+
+		[DataMember(EmitDefaultValue = false)]
+		public string Project { get; set; }
+
+		[DataMember(EmitDefaultValue = false)]
+		public int Line { get; set; }
+
+		[DataMember(EmitDefaultValue = false)]
+		public int Column { get; set; }
+
+		[DataMember(EmitDefaultValue = false)]
 		public string Target { get; set; }
 		
 		[DataMember(EmitDefaultValue = false)]

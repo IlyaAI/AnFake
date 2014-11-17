@@ -10,6 +10,7 @@ open AnFake.Plugins.Tfs2012
 open AnFake.Api
 
 Tfs.UseIt()
+//failwith "Error"
 
 let out = ~~".out"
 let productOut = out / "product"
@@ -27,8 +28,6 @@ let tests = !!"*/*.Test.csproj"
 )
 
 "Compile" => (fun _ ->    
-    Tracer.Info "some info"
-
     MsBuild.BuildRelease(product, productOut) |> ignore
 
     MsBuild.BuildRelease(tests, testsOut) |> ignore

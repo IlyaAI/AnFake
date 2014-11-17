@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using AnFake.Api;
 using Common.Logging;
 
@@ -7,11 +6,9 @@ namespace AnFake.Core
 {
 	public static class Logger
 	{
-		private static readonly ILog Log = LogManager.GetLogger("AnFake.Build");
+		private static readonly ILog Log = LogManager.GetLogger("AnFake.Build");		
 
-		public static FileItem LogFile { get; internal set; }
-
-		public static void Debug(object message)
+		public static void Debug(string message)
 		{			
 			Log.Debug(message);
 		}
@@ -21,7 +18,7 @@ namespace AnFake.Core
 			Log.DebugFormat(format, args);
 		}
 
-		public static void Info(object message)
+		public static void Info(string message)
 		{
 			Log.Info(message);
 		}
@@ -31,7 +28,7 @@ namespace AnFake.Core
 			Log.InfoFormat(format, args);
 		}
 
-		public static void Warn(object message)
+		public static void Warn(string message)
 		{
 			Log.Warn(message);
 		}
@@ -41,9 +38,14 @@ namespace AnFake.Core
 			Log.WarnFormat(format, args);
 		}
 
-		public static void Error(object message)
+		public static void Error(string message)
 		{
 			Log.Error(message);
+		}
+
+		public static void Error(Exception exception)
+		{
+			Log.Error("", exception);
 		}
 
 		public static void ErrorFormat(string format, params object[] args)

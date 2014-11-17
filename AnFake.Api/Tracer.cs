@@ -67,6 +67,11 @@ namespace AnFake.Api
 			Instance.Write(new TraceMessage(TraceMessageLevel.Error, message));
 		}
 
+		public static void Error(Exception exception)
+		{
+			Instance.Write(new TraceMessage(TraceMessageLevel.Error, exception.Message) { Details = exception.StackTrace });
+		}
+
 		public static void ErrorFormat(string format, params object[] args)
 		{
 			Instance.Write(new TraceMessage(TraceMessageLevel.Error, String.Format(format, args)));
@@ -99,7 +104,7 @@ namespace AnFake.Api
 			remove { Instance.MessageReceived -= value; }
 		}
 
-		public static ITracer Create(Uri uri, bool append)
+		public static ITracer Create(Uri uri)
 		{
 			if (!uri.IsFile)
 				throw new NotSupportedException("Only file based tracer supported now.");
@@ -108,7 +113,7 @@ namespace AnFake.Api
 			if (!".jsx".Equals(Path.GetExtension(logPath), StringComparison.InvariantCultureIgnoreCase))
 				throw new NotSupportedException("Only JSON file tracer supported now.");
 
-			return new JsonFileTracer(logPath, append);
+			return new JsonFileTracer(logPath, true);
 		}
 	}
 }

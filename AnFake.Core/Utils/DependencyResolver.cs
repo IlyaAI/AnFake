@@ -45,8 +45,9 @@ namespace AnFake.Core.Utils
 				DoResolve(dependent, resolving, resolved, ordered);
 			}
 
-			ordered.Add(current);
+			ordered.Add(current);			
 			resolved.Add(current);
+			resolving.Remove(current);
 		}
 	}
 }
