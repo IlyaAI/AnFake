@@ -9,6 +9,8 @@ open System.Runtime.CompilerServices
 
 let inline (~~) (path: string) = FileSystem.AsPath(path)
 
+let inline (~&) (path: string) = FileSystem.AsFile(path)
+
 let inline (!!) (wildcardedPath: string) = FileSystem.AsFileSet(wildcardedPath)
 
 let inline (%%) (basePath: string, wildcardedPath: string) = FileSystem.AsFileSetFrom(wildcardedPath, basePath)

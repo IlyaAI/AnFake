@@ -22,6 +22,8 @@ namespace AnFake.Core
 			public bool IncludeReferencedProjects;
 			public bool NoPackageAnalysis;
 			public bool NoDefaultExcludes;
+			public string AccessKey;
+			public string SourceUrl;
 			public TimeSpan Timeout;
 			public FileSystemPath ToolPath;
 			public string ToolArguments;
@@ -57,15 +59,15 @@ namespace AnFake.Core
 
 			return pkg;			
 		}
-		
+
 		public static IToolExecutionResult Pack(NuSpec.v25.Package nuspec, FolderItem dstFolder)
 		{
-			return Pack(nuspec, "".AsFolder(), dstFolder, p => { });
+			return Pack(nuspec, dstFolder, dstFolder, p => { });
 		}
 
 		public static IToolExecutionResult Pack(NuSpec.v25.Package nuspec, FolderItem dstFolder, Action<Params> setParams)
 		{
-			return Pack(nuspec, "".AsFolder(), dstFolder, setParams);
+			return Pack(nuspec, dstFolder, dstFolder, setParams);
 		}
 
 		public static IToolExecutionResult Pack(NuSpec.v25.Package nuspec, FolderItem srcFolder, FolderItem dstFolder)
@@ -96,11 +98,7 @@ namespace AnFake.Core
 			var parameters = Defaults.Clone();
 			setParams(parameters);
 
-			if (parameters.ToolPath == null)
-				throw new AnFakeArgumentException(
-					String.Format(
-						"NuGet.Params.ToolPath must not be null.\nHint: probably, NuGet.exe not found.\nSearch path:\n  {0}",
-						String.Join("\n  ", Locations)));
+			EnsureToolPath(parameters);
 			// TODO: check other parameters			
 
 			var nuspecFile = GenerateNuspecFile(nuspec, srcFolder);
@@ -128,9 +126,59 @@ namespace AnFake.Core
 
 			result
 				.FailIfAnyError("Target terminated due to NuGet errors.")
-				.FailIfExitCodeNonZero(String.Format("NuGet failed with exit code {0}. Package: {1}", result.ExitCode, nuspecFile));
+				.FailIfExitCodeNonZero(String.Format("NuGet.Pack failed with exit code {0}. Package: {1}", result.ExitCode, nuspecFile));
 
 			return result;
+		}
+
+		public static IToolExecutionResult Push(FileItem package, Action<Params> setParams)
+		{
+			if (package == null)
+				throw new AnFakeArgumentException("NuGet.Push(package, setParams): package must not be null");
+			if (setParams == null)
+				throw new AnFakeArgumentException("NuGet.Push(package, setParams): setParams must not be null");
+
+			var parameters = Defaults.Clone();
+			setParams(parameters);
+
+			EnsureToolPath(parameters);
+
+			if (String.IsNullOrEmpty(parameters.AccessKey))
+				throw new AnFakeArgumentException("NuGet.Params.AccessKey must not be null or empty");
+
+			// TODO: check other parameters
+
+			Logger.DebugFormat("NuGet.Push => {0}", package);
+
+			var args = new Args("-", " ")
+				.Command("push")
+				.Param(package.Path.Full)
+				.Param(parameters.AccessKey)
+				.Option("s", parameters.SourceUrl)
+				.Other(parameters.ToolArguments);
+
+			var result = Process.Run(p =>
+			{
+				p.FileName = parameters.ToolPath;
+				p.Timeout = parameters.Timeout;
+				p.Arguments = args.ToString();
+				p.Logger = Log;
+			});
+
+			result
+				.FailIfAnyError("Target terminated due to NuGet errors.")
+				.FailIfExitCodeNonZero(String.Format("NuGet.Push failed with exit code {0}. Package: {1}", result.ExitCode, package));
+
+			return result;
+		}
+
+		private static void EnsureToolPath(Params parameters)
+		{
+			if (parameters.ToolPath == null)
+				throw new AnFakeArgumentException(
+					String.Format(
+						"NuGet.Params.ToolPath must not be null.\nHint: probably, NuGet.exe not found.\nSearch path:\n  {0}",
+						String.Join("\n  ", Locations)));
 		}
 
 		private static FileItem GenerateNuspecFile(NuSpec.v25.Package nuspec, FolderItem srcFolder)

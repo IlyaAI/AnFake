@@ -6,6 +6,7 @@ namespace AnFake.Core.NuSpec.v25
 	[Serializable]
 	public enum Framework
 	{
-		[XmlEnum("net40")] Net40
+		[XmlEnum("net40")] Net40,
+		[XmlEnum("net45")] Net45
 	}
 }

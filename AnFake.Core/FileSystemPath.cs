@@ -147,6 +147,12 @@ namespace AnFake.Core
 			return new FileSet().From(basePath).Include(wildcardedPath);
 		}
 
+		public static FileSystemPath operator +(FileSystemPath basePath, string fileName)
+		{
+			// TODO: check fileName doesn't contain path separators
+			return new FileSystemPath(basePath._value + fileName, true);
+		}
+
 		private static string Normalize(string path)
 		{
 			return path.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);

@@ -64,6 +64,7 @@
     <Compile Include="MsTestPostProcessor.cs" />
     <Compile Include="MyBuildTesting.cs" />
     <Compile Include="NuGet.cs" />
+    <Compile Include="NuGetExtension.cs" />
     <Compile Include="NuSpec\v25\Package.cs" />
     <Compile Include="NuSpec\v25\Metadata.cs" />
     <Compile Include="NuSpec\v25\File.cs" />

@@ -106,7 +106,7 @@ namespace AnFake
 				Logger.Debug("Running targets...");
 				foreach (var target in options.Targets)
 				{
-					target.AsTarget().Run();
+					Target.Get(target).Run();
 				}
 			}
 			catch (TerminateTargetException)
