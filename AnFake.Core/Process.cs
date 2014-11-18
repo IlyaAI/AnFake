@@ -77,9 +77,11 @@ namespace AnFake.Core
 			var external = new TraceMessageCollector();
 			Tracer.MessageReceived += external.OnMessage;
 
+			var traceMessage = new EventHandler<TraceMessage>((s, m) => parameters.Logger.TraceMessage(m));
+
 			if (parameters.TrackExternalMessages)
 			{
-				Tracer.MessageReceived += OnTraceMessage;
+				Tracer.MessageReceived += traceMessage;
 				Tracer.StartTrackExternal();
 			}
 			else
@@ -123,7 +125,7 @@ namespace AnFake.Core
 				if (parameters.TrackExternalMessages)
 				{
 					Tracer.StopTrackExternal();
-					Tracer.MessageReceived -= OnTraceMessage;
+					Tracer.MessageReceived -= traceMessage;
 				}
 
 				Tracer.MessageReceived -= external.OnMessage;
@@ -134,11 +136,6 @@ namespace AnFake.Core
 				process.ExitCode, external.ErrorsCount, external.WarningsCount, process.ExitTime - process.StartTime);
 
 			return new ProcessExecutionResult(process.ExitCode, external.ErrorsCount, external.WarningsCount);
-		}		
-
-		private static void OnTraceMessage(object sender, TraceMessage message)
-		{
-			Logger.TraceMessage(message);
 		}
 	}
 }

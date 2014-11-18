@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Text;
+using System.IO;
 using AnFake.Api;
 using Microsoft.Build.Framework;
 
@@ -75,7 +75,7 @@ namespace AnFake.Integration.MsBuild
 					break;
 			}
 
-			Trace(level, e.ProjectFile, e.File, e.LineNumber, e.ColumnNumber, e.Code, e.Message);
+			Trace(level, null, null, 0, 0, e.Code, e.Message);
 		}
 
 		private void OnWarning(object sender, BuildWarningEventArgs e)
@@ -90,36 +90,23 @@ namespace AnFake.Integration.MsBuild
 
 		private void Trace(TraceMessageLevel level, string project, string file, int line, int col, string code, string message)
 		{
-			var formattedMsg = new StringBuilder();
-
-			if (!String.IsNullOrEmpty(code))
+			try
 			{
-				formattedMsg.Append(code).Append(": ");
+				Tracer.Write(new TraceMessage(level, message)
+				{
+					Code = code,
+					File = file,
+					Project = project,
+					Line = line,
+					Column = col,
+					Target = AnFakeTarget
+				});
 			}
-
-			formattedMsg.AppendLine(message);
-
-			if (!String.IsNullOrEmpty(file))
+			// ReSharper disable once EmptyGeneralCatchClause
+			catch (Exception)
 			{
-				formattedMsg
-					.Append("    ").Append(file).AppendFormat(" Ln: {0} Col: {1}", line, col).AppendLine();
-			}
-
-			if (!String.IsNullOrEmpty(project))
-			{
-				formattedMsg
-					.Append("    ").AppendLine(project);
-			}
-
-			Tracer.Write(new TraceMessage(level, formattedMsg.ToString())
-			{
-				Code = code,
-				File = file,
-				Project = project,
-				Line = line,
-				Column = col,
-				Target = AnFakeTarget
-			});
+				// skip
+			}			
 		}
 	}
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.IO;
 using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -33,6 +34,66 @@ namespace AnFake.Api.Test
 
 		[TestCategory("Functional")]
 		[TestMethod]
+		public void JsonTraceReader_should_read_all_messages_at_once()
+		{
+			// arrange
+			const int msgsCount = 1000;
+			int i;
+
+			var tracer = new JsonFileTracer("messages.jsx", false);
+			for (i = 0; i < msgsCount; i++)
+			{
+				tracer.Write(new TraceMessage(TraceMessageLevel.Info, i.ToString(CultureInfo.InvariantCulture)));
+			}						
+			
+			// act
+			var length = 0L;
+			var reader = new JsonTraceReader();
+			using (var log = new FileStream("messages.jsx", FileMode.Open, FileAccess.Read))
+			{
+				length = reader.ReadFrom(log, 0);
+			}
+
+			var msgs = new TraceMessage[msgsCount + 1];
+			for (i = 0; i <= msgsCount && (msgs[i] = reader.Next()) != null; i++) {}
+			
+			// assert
+			Assert.AreEqual(new FileInfo("messages.jsx").Length, length);
+
+			Assert.AreEqual("0", msgs[0].Message);
+			Assert.AreEqual((msgsCount - 1).ToString(CultureInfo.InvariantCulture), msgs[msgsCount - 1].Message);			
+			Assert.IsNull(msgs[msgsCount]);
+		}
+
+		[TestCategory("Functional")]
+		[TestMethod]
+		public void JsonTraceReader_should_read_messages_from_specified_position()
+		{
+			// arrange
+			var tracer = new JsonFileTracer("messages.jsx", false);
+			tracer.Write(new TraceMessage(TraceMessageLevel.Info, "A"));
+
+			var startPosition = new FileInfo("messages.jsx").Length;
+
+			tracer.Write(new TraceMessage(TraceMessageLevel.Info, "B"));			
+
+			// act			
+			var reader = new JsonTraceReader();
+			using (var log = new FileStream("messages.jsx", FileMode.Open, FileAccess.Read))
+			{
+				reader.ReadFrom(log, startPosition);
+			}
+
+			var msgB = reader.Next();
+			var eof = reader.Next();
+
+			// assert
+			Assert.AreEqual("B", msgB.Message);			
+			Assert.IsNull(eof);
+		}
+
+		[TestCategory("Functional")]
+		[TestMethod]
 		public void JsonFileTracer_should_work_in_concurrent_env()
 		{
 			// arrange
@@ -40,14 +101,14 @@ namespace AnFake.Api.Test
 			{
 				Count = 1000,
 				Message = "Message A",
-				Tracer = new JsonFileTracer("concurrent.log.jsx", false)
+				Tracer = new JsonFileTracer("concurrent.log.jsx", false) { RetryInterval = TimeSpan.FromMilliseconds(10) }
 			};
 
 			var writer2 = new MessageWriter
 			{
 				Count = 1000,
 				Message = "Message B",
-				Tracer = new JsonFileTracer("concurrent.log.jsx", true)
+				Tracer = new JsonFileTracer("concurrent.log.jsx", true) { RetryInterval = TimeSpan.FromMilliseconds(10) }
 			};
 
 			var th1 = new Thread(writer1.Run);
@@ -64,22 +125,23 @@ namespace AnFake.Api.Test
 			Assert.IsNull(writer1.LastError);
 			Assert.IsNull(writer2.LastError);
 
+			var reader = new JsonTraceReader();
 			using (var log = new FileStream("concurrent.log.jsx", FileMode.Open, FileAccess.Read))
 			{
-				var reader = new JsonTraceReader(log);
-
-				var count = 0;
-				TraceMessage msg;
-				while ((msg = reader.Read()) != null)
-				{
-					Assert.AreEqual(TraceMessageLevel.Info, msg.Level);
-					Assert.IsTrue(msg.Message == writer1.Message || msg.Message == writer2.Message);
-
-					count++;
-				}
-
-				Assert.AreEqual(writer1.Count + writer2.Count, count);
+				reader.ReadFrom(log, 0);
 			}
+			
+			var count = 0;
+			TraceMessage msg;
+			while ((msg = reader.Next()) != null)
+			{
+				Assert.AreEqual(TraceMessageLevel.Info, msg.Level);
+				Assert.IsTrue(msg.Message == writer1.Message || msg.Message == writer2.Message);
+
+				count++;
+			}
+
+			Assert.AreEqual(writer1.Count + writer2.Count, count);			
 		}
 
 		[TestCategory("Functional")]
@@ -91,7 +153,8 @@ namespace AnFake.Api.Test
 			var warnings = 0;
 			var tracer = new JsonFileTracer("external.log.jsx", false)
 			{
-				TrackingInterval = TimeSpan.FromMilliseconds(25)
+				TrackingInterval = TimeSpan.FromMilliseconds(25),
+				RetryInterval = TimeSpan.FromMilliseconds(10)
 			};
 			tracer.MessageReceived += (sender, message) =>
 			{
@@ -113,17 +176,10 @@ namespace AnFake.Api.Test
 			try
 			{
 				external.Write(new TraceMessage(TraceMessageLevel.Warning, "Warning"));
-				Thread.Sleep(50);
-				
-				Assert.AreEqual(1, warnings);
-
 				external.Write(new TraceMessage(TraceMessageLevel.Error, "Error"));
-				Thread.Sleep(50);
-				
-				Assert.AreEqual(1, errors);
-
 				external.Write(new TraceMessage(TraceMessageLevel.Info, "Info"));
-				Thread.Sleep(50);
+				
+				Thread.Sleep(200);
 
 				Assert.AreEqual(1, warnings);
 				Assert.AreEqual(1, errors);

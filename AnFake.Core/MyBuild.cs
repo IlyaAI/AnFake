@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using AnFake.Api;
 using AnFake.Core.Exceptions;
 using Microsoft.Build.Framework;
@@ -48,7 +47,13 @@ namespace AnFake.Core
 
 				if (properties.TryGetValue("Verbosity", out value))
 				{
-					Verbosity = (LoggerVerbosity) Enum.Parse(typeof (LoggerVerbosity), value, true);
+					if (!Enum.TryParse(value, true, out Verbosity))
+						throw new AnFakeArgumentException(
+							String.Format(
+								"Unrecognized value '{0}'. Verbosity = {{{1}}}", 
+								value, 
+								String.Join("|", Enum.GetNames(typeof(LoggerVerbosity)))));
+					
 					properties.Remove("Verbosity");
 				}
 			}

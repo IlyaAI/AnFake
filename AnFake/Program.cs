@@ -30,8 +30,9 @@ namespace AnFake
 			// It's impossible to use cool domain model here because it references ILog
 			// so for log initialization the plain API is used
 			var currentDir = Directory.GetCurrentDirectory();
-			BuildLogPattern.LogFile = Path.Combine(currentDir, "build.log");
+			//BuildLogPattern.LogFile = Path.Combine(currentDir, "build.log");
 			///////////////////////////////////////////////////////////////////////////
+			BuildLogPattern.Touch();
 
 			Console.SetWindowSize((int) (Console.LargestWindowWidth*0.75), (int) (Console.LargestWindowHeight*0.75));
 
@@ -121,7 +122,7 @@ namespace AnFake
 				Logger.Error(e);
 
 				// Do the best efforts to notify observers via Tracer
-				if (Tracer.Instance != null)
+				if (Tracer.IsInitialized)
 				{
 					try
 					{

@@ -25,6 +25,12 @@ let inline (<==) target (dependencies: IEnumerable<string>) = TargetExtension.As
 
 let skipErrors (target: Target) = target.SkipErrors()
 
+let noInt () = new Nullable<Int32>()
+
+let noLong () = new Nullable<Int64>()
+
+let noBool () = new Nullable<bool>()
+
 [<Extension>]
 type FsxHelper () =
     [<Extension>]

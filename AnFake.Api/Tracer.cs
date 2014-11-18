@@ -7,6 +7,11 @@ namespace AnFake.Api
 	{
 		private static ITracer _instance;
 
+		public static bool IsInitialized
+		{
+			get { return _instance != null; }
+		}
+
 		public static ITracer Instance
 		{
 			get
@@ -25,7 +30,7 @@ namespace AnFake.Api
 		public static Uri Uri
 		{
 			get { return Instance.Uri; }
-		}
+		}		
 
 		public static void Write(TraceMessage message)
 		{

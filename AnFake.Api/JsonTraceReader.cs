@@ -5,43 +5,62 @@ using System.Runtime.Serialization.Json;
 
 namespace AnFake.Api
 {
+	/// <summary>
+	/// Reads TraceMessage objects from extended JSON formatted stream.
+	/// Extended means stream can contain multiple objects separated by \x0A character.
+	/// </summary>
+	/// <remarks>
+	/// Messages are read all at once in ReadFrom method and then parsed separatedly by Next method.
+	/// Read once technique is used in order to prevent long-term usage (locking) of a stream.
+	/// </remarks>
 	public sealed class JsonTraceReader
-	{
-		private readonly Stream _stream;
-		private readonly XmlObjectSerializer _serializer;
-		private readonly byte[] _buffer;
-		private int _bufferOffset;
-		private bool _eof;
+	{		
+		private readonly XmlObjectSerializer _serializer;		
+		private byte[] _buffer;
+		private int _offset;		
 
-		public JsonTraceReader(Stream stream)
-		{
-			_stream = stream;
-			_serializer = new DataContractJsonSerializer(typeof (TraceMessage));
-			_buffer = new byte[100*1024];
-			_bufferOffset = 0;
-			_eof = false;
+		public JsonTraceReader()
+		{			
+			_serializer = new DataContractJsonSerializer(typeof(TraceMessage));			
 		}
 
-		public TraceMessage Read()
+		/// <summary>
+		/// Reads all available messages at once starting from specified position and returns position where read has finished.
+		/// </summary>
+		/// <remarks>
+		/// Given stream MUST support Position and Length properties.
+		/// </remarks>
+		/// <param name="stream">stream for reading from</param>
+		/// <param name="startPosition">position to start from</param>
+		/// <returns>position where read has finished</returns>
+		public long ReadFrom(Stream stream, long startPosition)
 		{
-			var read = 0;
-			if (!_eof)
-			{
-				read = _stream.Read(_buffer, _bufferOffset, _buffer.Length - _bufferOffset);
-				if (read <= 0)
-				{
-					read = 0;
-					_eof = true;
-				}
-			}
+			stream.Position = startPosition;
 
-			if (_bufferOffset + read == 0)
+			_buffer = new byte[stream.Length - startPosition];
+
+			var read = 0;
+			while (read < _buffer.Length)
+			{
+				read += stream.Read(_buffer, read, _buffer.Length - read);
+			}			
+
+			_offset = 0;
+
+			return stream.Position;
+		}
+
+		/// <summary>
+		/// Parses and returns the next TraceMessage instance or null if no one more.
+		/// </summary>
+		/// <returns>TraceMessage instance or null</returns>
+		public TraceMessage Next()
+		{
+			if (_offset >= _buffer.Length)
 				return null;
 
 			TraceMessage message;
-			var parsed = DoReadMessage(0, _bufferOffset + read, out message);
-			Array.Copy(_buffer, parsed, _buffer, 0, _bufferOffset + read - parsed);
-			_bufferOffset += read - parsed;
+			_offset = DoReadMessage(_offset, _buffer.Length - _offset, out message);
 
 			return message;
 		}
@@ -54,11 +73,11 @@ namespace AnFake.Api
 			while (index < end && _buffer[index] != '\x0A') index++;
 
 			if (index >= end)
-				throw new FormatException("Unable to locate end-of-object marker. Might be trace message too large.");
+				throw new FormatException("Inconsistency in trace stream: unable to locate end-of-object marker.");
 
 			using (var mem = new MemoryStream(_buffer, start, index - start, false))
 			{
-				message = (TraceMessage) _serializer.ReadObject(mem);
+				message = (TraceMessage)_serializer.ReadObject(mem);
 			}
 
 			return ++index;

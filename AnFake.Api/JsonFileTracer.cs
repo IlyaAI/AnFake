@@ -14,9 +14,9 @@ namespace AnFake.Api
 		private readonly string _logFile;
 		private readonly XmlObjectSerializer _serializer;
 		private TraceMessageLevel _threshold = TraceMessageLevel.Info;
-		private TimeSpan _trackingInterval = TimeSpan.FromSeconds(15);
-		private TimeSpan _retryInterval = TimeSpan.FromMilliseconds(10);
-		private int _maxRetries = 10;
+		private TimeSpan _trackingInterval = TimeSpan.FromSeconds(5);
+		private TimeSpan _retryInterval = TimeSpan.FromMilliseconds(50);
+		private int _maxRetries = 20;
 		private Thread _tracker;
 		private int _externalErrors;
 		private int _externalWarnings;
@@ -114,7 +114,7 @@ namespace AnFake.Api
 			_externalWarnings = 0;
 
 			long processedLength;
-			using (var log = OpenLog(FileMode.Append, FileAccess.Write, _maxRetries))
+			using (var log = OpenLog(FileMode.Append, FileAccess.Write, MaxRetries))
 			{
 				processedLength = log.Length;
 			}
@@ -146,40 +146,37 @@ namespace AnFake.Api
 							continue;
 						}
 
+						var reader = new JsonTraceReader();
 						using (log)
 						{
 							if (processedLength >= log.Length)
-								continue;							
+								continue;
 
-							log.Position = processedLength;
-
-							var reader = new JsonTraceReader(log);
-							
-							TraceMessage message;
-							while ((message = reader.Read()) != null)
-							{
-								switch (message.Level)
-								{
-									case TraceMessageLevel.Warning:
-										_externalWarnings++;
-										break;
-
-									case TraceMessageLevel.Error:
-										_externalErrors++;
-										break;
-								}
-
-								if (message.Level >= _threshold)
-								{
-									if (MessageReceived != null)
-									{
-										MessageReceived.Invoke(this, message);
-									}
-								}																
-							}							
-
-							processedLength = log.Length;							
+							processedLength = reader.ReadFrom(log, processedLength);
 						}
+
+						TraceMessage message;
+						while ((message = reader.Next()) != null)
+						{
+							switch (message.Level)
+							{
+								case TraceMessageLevel.Warning:
+									_externalWarnings++;
+									break;
+
+								case TraceMessageLevel.Error:
+									_externalErrors++;
+									break;
+							}
+
+							if (message.Level >= _threshold)
+							{
+								if (MessageReceived != null)
+								{
+									MessageReceived.Invoke(this, message);
+								}
+							}
+						}							
 
 						sleepTime = _trackingInterval;
 					}
@@ -234,9 +231,9 @@ namespace AnFake.Api
 			{
 				return new FileStream(_logFile, mode, access);
 			}
-			catch (IOException e)
+			catch (IOException)
 			{
-				Log.WarnFormat("Unable to open log file. {0}", e.Message);
+				// just ignore				
 			}			
 
 			return null;			

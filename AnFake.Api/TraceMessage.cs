@@ -48,8 +48,14 @@ namespace AnFake.Api
 
 		public override string ToString()
 		{
-			var sb = new StringBuilder()
-				.Append(Message);
+			var sb = new StringBuilder();
+
+			if (!String.IsNullOrEmpty(Code))
+			{
+				sb.Append(Code).Append(": ");
+			}
+				
+			sb.Append(Message);
 
 			if (!String.IsNullOrWhiteSpace(LinkHref))
 			{
@@ -62,6 +68,16 @@ namespace AnFake.Api
 				{
 					sb.Append(LinkHref);
 				}				
+			}
+			
+			if (!String.IsNullOrEmpty(File))
+			{
+				sb.AppendLine().Append("    ").Append(File).AppendFormat(" Ln: {0} Col: {1}", Line, Column);
+			}
+
+			if (!String.IsNullOrEmpty(Project))
+			{
+				sb.AppendLine().Append("    ").Append(Project);
 			}
 			
 			if (!String.IsNullOrWhiteSpace(Details))

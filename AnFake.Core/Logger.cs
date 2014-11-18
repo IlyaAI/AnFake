@@ -57,74 +57,25 @@ namespace AnFake.Core
 		{
 			Log.ErrorFormat(format, exception, args);
 		}
-
-		[Obsolete("For test purpose to see a compilation warning")]
+		
 		public static void TraceMessage(TraceMessage message)
 		{
-			switch (message.Level)
-			{
-				case TraceMessageLevel.Error:
-					Log.Error(message.ToString());
-					break;
-
-				case TraceMessageLevel.Warning:
-					Log.Warn(message.ToString());
-					break;
-
-				default:
-					Log.Debug(message.ToString());					
-					break;
-			}			
+			Log.TraceMessage(message);
 		}
 
 		public static void TraceMessageFormat(TraceMessageLevel level, string format, params object[] args)
 		{
-			switch (level)
-			{
-				case TraceMessageLevel.Error:
-					Log.ErrorFormat(format, args);
-					break;
-
-				case TraceMessageLevel.Warning:
-					Log.WarnFormat(format, args);
-					break;
-
-				default:
-					Log.DebugFormat(format, args);
-					break;
-			}
+			Log.TraceMessageFormat(level, format, args);
 		}
 
 		public static void TargetState(TargetState state, string message)
 		{
-			switch (state)
-			{
-				case Core.TargetState.Succeeded:
-					Log.Info(message);
-					break;
-				case Core.TargetState.PartiallySucceeded:
-					Log.Warn(message);
-					break;
-				case Core.TargetState.Failed:
-					Log.Error(message);
-					break;
-			}
+			Log.TargetState(state, message);
 		}
 
 		public static void TargetStateFormat(TargetState state, string format, params object[] args)
 		{
-			switch (state)
-			{
-				case Core.TargetState.Succeeded:
-					Log.InfoFormat(format, args);
-					break;
-				case Core.TargetState.PartiallySucceeded:
-					Log.WarnFormat(format, args);
-					break;
-				case Core.TargetState.Failed:
-					Log.ErrorFormat(format, args);
-					break;
-			}
+			Log.TargetStateFormat(state, format, args);
 		}
 	}
 }
