@@ -3,6 +3,7 @@
 #r ".AnFake/Bin/AnFake.Fsx.dll"
 #r ".AnFake/Plugins/AnFake.Plugins.Tfs2012.dll"
 
+open System
 open System.Linq
 open AnFake.Core
 open AnFake.Fsx.Dsl
@@ -28,24 +29,21 @@ let tests = !!"*/*.Test.csproj"
     Folders.Clean out
 )
 
-let mutable (result: AssemblyInfoExecutionResult) = null
-
 "Compile" => (fun _ ->
-    result <- AssemblyInfo.Embed(
+    AssemblyInfo.EmbedTemporary(
         !!"*/Properties/AssemblyInfo.cs",
         fun p -> 
+            p.Title <- "AnFake /Another F# Make/ runtime component"
             p.Product <- "AnFake"
             p.Description <- "AnFake: Another F# Make"
-            p.Copyright <- "Ilya A. Ivanov"
-        )
+            p.Copyright <- String.Format("Ilya A. Ivanov {0}", DateTime.Now.Year)
+        ) |> ignore
 
     MsBuild.BuildRelease(product, productOut) |> ignore
 
     MsBuild.BuildRelease(plugins, pluginsOut) |> ignore
 
     MsBuild.BuildRelease(tests, testsOut) |> ignore
-) |=> (fun _ ->
-    result.Revert()
 )
 
 "Test.Unit" => (fun _ -> 

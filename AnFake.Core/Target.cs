@@ -7,7 +7,7 @@ using AnFake.Core.Exceptions;
 namespace AnFake.Core
 {
 	public sealed class Target
-	{		
+	{
 		private static readonly IDictionary<string, Target> Targets = new Dictionary<string, Target>();
 
 		public sealed class ExecutionReason
@@ -34,7 +34,19 @@ namespace AnFake.Core
 			}
 		}
 
-		public static string Current { get; private set; }
+		private static Target _current;
+
+		public static Target Current
+		{
+			get
+			{
+				if (_current == null)
+					throw new InvalidConfigurationException(
+						"Target.Current is unavailable. Hint: this property available inside target body or on-failure/finally handlers only.");
+
+				return _current;
+			}
+		}
 
 		private readonly TraceMessageCollector _messages = new TraceMessageCollector();
 		private readonly ISet<Target> _dependencies = new HashSet<Target>();
@@ -44,6 +56,8 @@ namespace AnFake.Core
 		private Action<ExecutionReason> _finally;
 		private TargetState _state;
 		private bool _skipErrors;
+		private event EventHandler<ExecutionReason> Failed;
+		private event EventHandler<ExecutionReason> Finalized;
 
 		private Target(string name)
 		{
@@ -56,6 +70,18 @@ namespace AnFake.Core
 		}
 
 		public static event EventHandler<RunFinishedEventArgs> RunFinished;
+
+		public static event EventHandler<ExecutionReason> CurrentFailed
+		{
+			add { Current.Failed += value; }
+			remove { Current.Failed -= value; }
+		}
+
+		public static event EventHandler<ExecutionReason> CurrentFinalized
+		{
+			add { Current.Finalized += value; }
+			remove { Current.Finalized -= value; }
+		}
 
 		public string Name
 		{
@@ -80,7 +106,7 @@ namespace AnFake.Core
 		public TraceMessageCollector Messages
 		{
 			get { return _messages; }
-		}
+		}		
 
 		public Target Do(Action action)
 		{
@@ -103,7 +129,7 @@ namespace AnFake.Core
 			if (_onFailure != null)
 				throw new InvalidConfigurationException(String.Format("Target '{0}' already has on-failure handler.", _name));
 
-			_onFailure = action;
+			_onFailure = action;			
 
 			return this;
 		}
@@ -262,8 +288,11 @@ namespace AnFake.Core
 				return;
 
 			if (_state == TargetState.Failed)
-				throw new InvalidOperationException(String.Format("Inconsistence in build order: trying to re-run failed target '{0}'.", _name));						
-			
+				throw new InvalidOperationException(String.Format("Inconsistence in build order: trying to re-run failed target '{0}'.", _name));
+
+			Failed = null;
+			Finalized = null;
+
 			_state = TargetState.Started;
 			try
 			{
@@ -287,10 +316,20 @@ namespace AnFake.Core
 			if (_state != TargetState.Failed && _state != TargetState.Succeeded && _state != TargetState.PartiallySucceeded)
 				throw new InvalidOperationException(String.Format("Inconsistence in build order: trying to run OnFailure action for non-failed or non-executed target '{0}'.", _name));
 
-			if (_onFailure != null)
+			if (_onFailure != null || Failed != null)
 			{
-				Invoke("OnFailure", () => _onFailure(reason), true);
-			}			
+				Invoke(
+					"OnFailure",
+					() =>
+					{
+						if (_onFailure != null)
+							_onFailure.Invoke(reason);
+
+						if (Failed != null)
+							Failed.Invoke(this, reason);
+					},
+					true);
+			}
 		}
 
 		private void DoFinally(ExecutionReason reason)
@@ -298,9 +337,21 @@ namespace AnFake.Core
 			if (_state != TargetState.PartiallySucceeded && _state != TargetState.Failed)
 				throw new InvalidOperationException(String.Format("Inconsistence in build order: trying to run Finally action for non-executed target '{0}'.", _name));
 
-			if (_finally != null)
+			if (_finally != null || Finalized != null)
 			{
-				if (!Invoke("Finally", () => _finally(reason), true))
+				var ret = Invoke(
+					"Finally",
+					() =>
+					{
+						if (_finally != null)
+							_finally.Invoke(reason);
+
+						if (Finalized != null)
+							Finalized.Invoke(this, reason);
+					},
+					true);
+
+				if (!ret)
 					return;				
 			}
 
@@ -335,7 +386,7 @@ namespace AnFake.Core
 				
 				foreach (var message in target.Messages)
 				{
-					Logger.TraceMessageFormat(message.Level, "[{0,4}] {1}", ++index, message.Message);					
+					Logger.TraceMessageFormat(message.Level, "[{0,4}] {1}", ++index, message.ToString());
 				}
 			}
 
@@ -351,7 +402,7 @@ namespace AnFake.Core
 
 			var setTarget = new EventHandler<TraceMessage>((s, m) => m.Target = Name);
 
-			Current = _name;
+			_current = this;
 
 			Logger.Debug("");
 			Logger.DebugFormat("START {0}.{1}", _name, phase);
@@ -393,7 +444,7 @@ namespace AnFake.Core
 
 				Logger.DebugFormat("END   {0}.{1}", _name, phase);
 
-				Current = null;
+				_current = null;
 			}
 
 			return true;

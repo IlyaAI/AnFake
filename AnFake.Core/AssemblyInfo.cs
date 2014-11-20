@@ -73,6 +73,15 @@ namespace AnFake.Core
 			Defaults = new Params();
 		}
 
+		public static AssemblyInfoExecutionResult EmbedTemporary(IEnumerable<FileItem> files, Action<Params> setParams)
+		{
+			var result = Embed(files, setParams);
+
+			Target.CurrentFinalized += (s, r) => result.Revert();
+
+			return result;
+		}
+
 		public static AssemblyInfoExecutionResult Embed(IEnumerable<FileItem> files, Action<Params> setParams)
 		{
 			// TODO: check args
@@ -121,7 +130,7 @@ namespace AnFake.Core
 				snapshot.Revert();
 				throw;
 			}
-			
+
 			return new AssemblyInfoExecutionResult(snapshot, warnings);
 		}
 
@@ -133,7 +142,7 @@ namespace AnFake.Core
 			if (!match.Success)
 				throw new InvalidConfigurationException(
 					String.Format(
-						"AssemblyInfo: attribute '{0}' not found. Hint: Embed() substitutes values into existing attributes only," + 
+						"AssemblyInfo: attribute [{0}] not found. Hint: Embed() substitutes values into existing attributes only," + 
 						" so you should add [assembly: {0}(\"\")] line into your AssemblyInfo file.", attributeName));			
 
 			if (match.Groups.Count != 2)

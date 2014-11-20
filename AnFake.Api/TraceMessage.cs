@@ -72,7 +72,15 @@ namespace AnFake.Api
 			
 			if (!String.IsNullOrEmpty(File))
 			{
-				sb.AppendLine().Append("    ").Append(File).AppendFormat(" Ln: {0} Col: {1}", Line, Column);
+				sb.AppendLine().Append("    ").Append(File);
+				if (Line > 0)
+				{
+					sb.AppendFormat(" Ln: {0}", Line);
+				}
+				if (Column > 0)
+				{
+					sb.AppendFormat(" Col: {0}", Column);
+				}
 			}
 
 			if (!String.IsNullOrEmpty(Project))

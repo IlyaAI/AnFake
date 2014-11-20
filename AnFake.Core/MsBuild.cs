@@ -197,7 +197,7 @@ namespace AnFake.Core
 					.NonQuotedValue(",")
 					.QuotedValue(loggerT.Assembly.Location)
 					.NonQuotedValue(";")
-					.QuotedValue(Tracer.Uri + "#" + Target.Current);
+					.QuotedValue(Tracer.Uri + "#" + Target.Current.Name);
 
 				var result = Process.Run(p =>
 				{
