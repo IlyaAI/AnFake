@@ -83,13 +83,14 @@ namespace AnFake.Core
 		}
 
 		public static AssemblyInfoExecutionResult Embed(IEnumerable<FileItem> files, Action<Params> setParams)
-		{
-			// TODO: check args
+		{			
+			if (files == null)
+				throw new AnFakeArgumentException("AssemblyInfo.Embed(files, setParams): files must not be null");
+			if (setParams == null)
+				throw new AnFakeArgumentException("AssemblyInfo.Embed(files, setParams): setParams must not be null");
 
 			var parameters = Defaults.Clone();
 			setParams(parameters);
-
-			// TODO: check params
 
 			var snapshot = new Snapshot();
 			var warnings = 0;

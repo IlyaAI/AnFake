@@ -2,7 +2,7 @@
 using System.Xml.Serialization;
 
 namespace AnFake.Core.NuSpec.v25
-{
+{	
 	[Serializable]
 	public sealed class Metadata
 	{
@@ -19,9 +19,23 @@ namespace AnFake.Core.NuSpec.v25
 		/// <summary>
 		///     The version of the package, in a format like 1.2.3.
 		/// </summary>
-		/// <seealso cref="http://docs.nuget.org/docs/reference/nuspec-reference" />
+		/// <seealso cref="http://docs.nuget.org/docs/reference/nuspec-reference" />		
+		[XmlIgnore]
+		public Version Version { get; set; }
+
+		/// <summary>
+		///		String representation of Version property.
+		/// </summary>
+		/// <remarks>
+		///		This property typically used for serialization/deserialization only.
+		/// </remarks>
 		[XmlElement("version", IsNullable = false)]
-		public string Version { get; set; }
+		// ReSharper disable once InconsistentNaming
+		public string szVersion
+		{
+			get { return Version != null ? Version.ToString() : null; }
+			set { Version = new Version(value); }
+		}
 
 		/// <summary>
 		///     The human-friendly title of the package displayed in the Manage NuGet Packages dialog. If none is specified, the ID

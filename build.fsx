@@ -19,6 +19,7 @@ let testsOut = out / "tests"
 let product = !!"AnFake/*.csproj"
 let plugins = !!"AnFake.Plugins.Tfs2012/*.csproj"
 let tests = !!"*/*.Test.csproj"
+let version = "0.9".AsVersion()
 
 "Clean" => (fun _ ->    
     let obj = !!!"*/obj"
@@ -37,6 +38,7 @@ let tests = !!"*/*.Test.csproj"
             p.Product <- "AnFake"
             p.Description <- "AnFake: Another F# Make"
             p.Copyright <- String.Format("Ilya A. Ivanov {0}", DateTime.Now.Year)
+            p.Version <- version
         ) |> ignore
 
     MsBuild.BuildRelease(product, productOut) |> ignore
@@ -64,9 +66,9 @@ let tests = !!"*/*.Test.csproj"
 
     let nuspec = NuGet.Spec25(fun meta -> 
         meta.Id <- "AnFake"
-        meta.Version <- "1.0.0.0"
+        meta.Version <- version
         meta.Authors <- "Ilya A. Ivanov"
-        meta.Description <- "AnFake (Another F# Make) ..."
+        meta.Description <- "AnFake: Another F# Make"
     )
 
     nuspec.AddFiles(bins, "Bin")

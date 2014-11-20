@@ -60,22 +60,22 @@ namespace AnFake.Core
 			return pkg;			
 		}
 
-		public static IToolExecutionResult Pack(NuSpec.v25.Package nuspec, FileSystemPath dstFolder)
+		public static NuGetExecutionResult Pack(NuSpec.v25.Package nuspec, FileSystemPath dstFolder)
 		{
 			return Pack(nuspec, dstFolder, dstFolder, p => { });
 		}
 
-		public static IToolExecutionResult Pack(NuSpec.v25.Package nuspec, FileSystemPath dstFolder, Action<Params> setParams)
+		public static NuGetExecutionResult Pack(NuSpec.v25.Package nuspec, FileSystemPath dstFolder, Action<Params> setParams)
 		{
 			return Pack(nuspec, dstFolder, dstFolder, setParams);
 		}
 
-		public static IToolExecutionResult Pack(NuSpec.v25.Package nuspec, FileSystemPath srcFolder, FileSystemPath dstFolder)
+		public static NuGetExecutionResult Pack(NuSpec.v25.Package nuspec, FileSystemPath srcFolder, FileSystemPath dstFolder)
 		{
 			return Pack(nuspec, srcFolder, dstFolder, p => { });
 		}
 
-		public static IToolExecutionResult Pack(NuSpec.v25.Package nuspec, FileSystemPath srcFolder, FileSystemPath dstFolder, Action<Params> setParams)
+		public static NuGetExecutionResult Pack(NuSpec.v25.Package nuspec, FileSystemPath srcFolder, FileSystemPath dstFolder, Action<Params> setParams)
 		{
 			if (nuspec == null)
 				throw new AnFakeArgumentException("NuGet.Pack(nuspec, srcFolder, dstFolder, setParams): nuspec must not be null");
@@ -88,8 +88,8 @@ namespace AnFake.Core
 
 			if (String.IsNullOrEmpty(nuspec.Metadata.Id))
 				throw new AnFakeArgumentException("NuSpec.v25.Metadata.Id must not be null or empty");
-			if (String.IsNullOrEmpty(nuspec.Metadata.Version))
-				throw new AnFakeArgumentException("NuSpec.v25.Metadata.Version must not be null or empty");
+			if (nuspec.Metadata.Version == null)
+				throw new AnFakeArgumentException("NuSpec.v25.Metadata.Version must not be null");
 			if (String.IsNullOrEmpty(nuspec.Metadata.Authors))
 				throw new AnFakeArgumentException("NuSpec.v25.Metadata.Authors must not be null or empty");
 			if (String.IsNullOrEmpty(nuspec.Metadata.Description))
@@ -128,7 +128,9 @@ namespace AnFake.Core
 				.FailIfAnyError("Target terminated due to NuGet errors.")
 				.FailIfExitCodeNonZero(String.Format("NuGet.Pack failed with exit code {0}. Package: {1}", result.ExitCode, nuspecFile));
 
-			return result;
+			var pkgPath = dstFolder / String.Format("{0}.{1}.nupkg", nuspec.Metadata.Id, nuspec.Metadata.Version);
+
+			return new NuGetExecutionResult(result, pkgPath);
 		}
 
 		public static IToolExecutionResult Push(FileSystemPath package, Action<Params> setParams)

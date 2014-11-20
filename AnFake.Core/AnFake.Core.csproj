@@ -30,6 +30,8 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>
+    </DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Common.Logging, Version=2.0.0.0, Culture=neutral, PublicKeyToken=af08829b84f0328e, processorArchitecture=MSIL">
@@ -49,6 +51,7 @@
   <ItemGroup>
     <Compile Include="ArgsExtension.cs" />
     <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="NuGetExecutionResult.cs" />
     <Compile Include="AssemblyInfoExecutionResult.cs" />
     <Compile Include="Exceptions\AnFakeArgumentException.cs" />
     <Compile Include="Exceptions\AnFakeException.cs" />
@@ -96,7 +99,8 @@
     <Compile Include="Utils\CycleDependencyException.cs" />
     <Compile Include="Utils\DependencyResolver.cs" />
     <Compile Include="Utils\EnumerableAdapter.cs" />
-    <Compile Include="Xml\XmlExtension.cs" />
+    <Compile Include="VersionExtension.cs" />
+    <Compile Include="Xml.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AnFake.Api\AnFake.Api.csproj">

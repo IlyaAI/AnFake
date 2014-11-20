@@ -2,10 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Xml;
-using System.Xml.XPath;
 using AnFake.Core.Tests;
-using AnFake.Core.Xml;
 
 namespace AnFake.Core
 {
@@ -13,28 +10,23 @@ namespace AnFake.Core
 	{
 		public IEnumerable<TestResult> PostProcess(Stream stream)
 		{
-			var xdoc = new XPathDocument(stream);
-			var navigator = xdoc.CreateNavigator();
+			var xdoc = stream.AsXmlDoc();
+			xdoc.Ns("t", "http://microsoft.com/schemas/VisualStudio/TeamTest/2010");
 
-			// ReSharper disable once AssignNullToNotNullAttribute
-			var ns = new XmlNamespaceManager(navigator.NameTable);
-			ns.AddNamespace("t", "http://microsoft.com/schemas/VisualStudio/TeamTest/2010");
-
-			var defs = navigator.Select("/t:TestRun/t:TestDefinitions/t:UnitTest", ns)
-				.AsEnumerable().Select(x => new
+			var defs = xdoc.Select("/t:TestRun/t:TestDefinitions/t:UnitTest")
+				.Select(x => new
 				{
 					Id = x.Attr("id"),
 					Category = String.Join(",",
-						x.Select("t:TestCategory/t:TestCategoryItem", ns)
-							.AsEnumerable()
+						x.Select("t:TestCategory/t:TestCategoryItem")							
 							.Select(y => y.Attr("TestCategory"))),
-					Suite = x.Value("t:TestMethod/@className", ns)
+					Suite = x.ValueOf("t:TestMethod/@className")
 				}).ToDictionary(x => x.Id);
 
 			var tests = new List<TestResult>();
-			var results = navigator.Select("/t:TestRun/t:Results/t:UnitTestResult", ns);
+			var results = xdoc.Select("/t:TestRun/t:Results/t:UnitTestResult");
 
-			foreach (var result in results.AsEnumerable())
+			foreach (var result in results)
 			{
 				var test = new TestResult(
 					result.Attr("testName"),
@@ -44,12 +36,12 @@ namespace AnFake.Core
 				switch (test.Status)
 				{
 					case TestStatus.Skipped:
-						test.ErrorMessage = result.Value("t:Output/t:ErrorInfo/t:Message", ns);
+						test.ErrorMessage = result.ValueOf("t:Output/t:ErrorInfo/t:Message");
 						break;
 
 					case TestStatus.Failed:
-						test.ErrorMessage = result.Value("t:Output/t:ErrorInfo/t:Message", ns);
-						test.ErrorDetails = result.Value("t:Output/t:ErrorInfo/t:StackTrace", ns);
+						test.ErrorMessage = result.ValueOf("t:Output/t:ErrorInfo/t:Message");
+						test.ErrorDetails = result.ValueOf("t:Output/t:ErrorInfo/t:StackTrace");
 						break;
 				}
 

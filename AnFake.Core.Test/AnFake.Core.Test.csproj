@@ -61,6 +61,7 @@
   </Choose>
   <ItemGroup>
     <Compile Include="AssemblyInfoTest.cs" />
+    <Compile Include="XmlTest.cs" />
     <Content Include="Data\AssemblyInfo.test.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
