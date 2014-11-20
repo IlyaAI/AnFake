@@ -52,5 +52,10 @@ namespace AnFake.Core
 		{
 			return _path.CompareTo(other._path);
 		}
+
+		public static implicit operator FileSystemPath(FolderItem folder)
+		{
+			return folder._path;
+		}
 	}
 }

@@ -137,5 +137,27 @@ namespace AnFake.Core
 
 			Delete(path.AsFile());
 		}
+
+		public static Snapshot Snapshot(IEnumerable<FileItem> files)
+		{
+			if (files == null)
+				throw new AnFakeArgumentException("Files.Snapshot(files): files must not be null");
+
+			var snapshot = new Snapshot();			
+			try
+			{
+				foreach (var file in files)
+				{
+					snapshot.Save(file);
+				}
+			}
+			catch (Exception)
+			{
+				snapshot.Dispose();
+				throw;
+			}
+			
+			return snapshot;
+		}
 	}
 }

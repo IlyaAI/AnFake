@@ -60,22 +60,22 @@ namespace AnFake.Core
 			return pkg;			
 		}
 
-		public static IToolExecutionResult Pack(NuSpec.v25.Package nuspec, FolderItem dstFolder)
+		public static IToolExecutionResult Pack(NuSpec.v25.Package nuspec, FileSystemPath dstFolder)
 		{
 			return Pack(nuspec, dstFolder, dstFolder, p => { });
 		}
 
-		public static IToolExecutionResult Pack(NuSpec.v25.Package nuspec, FolderItem dstFolder, Action<Params> setParams)
+		public static IToolExecutionResult Pack(NuSpec.v25.Package nuspec, FileSystemPath dstFolder, Action<Params> setParams)
 		{
 			return Pack(nuspec, dstFolder, dstFolder, setParams);
 		}
 
-		public static IToolExecutionResult Pack(NuSpec.v25.Package nuspec, FolderItem srcFolder, FolderItem dstFolder)
+		public static IToolExecutionResult Pack(NuSpec.v25.Package nuspec, FileSystemPath srcFolder, FileSystemPath dstFolder)
 		{
 			return Pack(nuspec, srcFolder, dstFolder, p => { });
 		}
 
-		public static IToolExecutionResult Pack(NuSpec.v25.Package nuspec, FolderItem srcFolder, FolderItem dstFolder, Action<Params> setParams)
+		public static IToolExecutionResult Pack(NuSpec.v25.Package nuspec, FileSystemPath srcFolder, FileSystemPath dstFolder, Action<Params> setParams)
 		{
 			if (nuspec == null)
 				throw new AnFakeArgumentException("NuGet.Pack(nuspec, srcFolder, dstFolder, setParams): nuspec must not be null");
@@ -108,7 +108,7 @@ namespace AnFake.Core
 			var args = new Args("-", " ")
 				.Command("pack")
 				.Param(nuspecFile.Path.Full)
-				.Option("OutputDirectory", dstFolder.Path)
+				.Option("OutputDirectory", dstFolder)
 				.Option("NoPackageAnalysis", parameters.NoPackageAnalysis)
 				.Option("NoDefaultExcludes", parameters.NoDefaultExcludes)
 				.Option("IncludeReferencedProjects", parameters.IncludeReferencedProjects)
@@ -131,7 +131,7 @@ namespace AnFake.Core
 			return result;
 		}
 
-		public static IToolExecutionResult Push(FileItem package, Action<Params> setParams)
+		public static IToolExecutionResult Push(FileSystemPath package, Action<Params> setParams)
 		{
 			if (package == null)
 				throw new AnFakeArgumentException("NuGet.Push(package, setParams): package must not be null");
@@ -152,7 +152,7 @@ namespace AnFake.Core
 
 			var args = new Args("-", " ")
 				.Command("push")
-				.Param(package.Path.Full)
+				.Param(package.Full)
 				.Param(parameters.AccessKey)
 				.Option("s", parameters.SourceUrl)
 				.Other(parameters.ToolArguments);
@@ -181,9 +181,9 @@ namespace AnFake.Core
 						String.Join("\n  ", Locations)));
 		}
 
-		private static FileItem GenerateNuspecFile(NuSpec.v25.Package nuspec, FolderItem srcFolder)
+		private static FileItem GenerateNuspecFile(NuSpec.v25.Package nuspec, FileSystemPath srcFolder)
 		{
-			var nuspecFile = (srcFolder.Path / nuspec.Metadata.Id + ".nuspec").AsFile();
+			var nuspecFile = (srcFolder / nuspec.Metadata.Id + ".nuspec").AsFile();
 			
 			Folders.Create(nuspecFile.Folder);
 			using (var stm = new FileStream(nuspecFile.Path.Full, FileMode.Create, FileAccess.Write))

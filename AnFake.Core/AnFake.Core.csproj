@@ -48,6 +48,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ArgsExtension.cs" />
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="AssemblyInfoExecutionResult.cs" />
     <Compile Include="Exceptions\AnFakeArgumentException.cs" />
     <Compile Include="Exceptions\AnFakeException.cs" />
     <Compile Include="Exceptions\InvalidConfigurationException.cs" />
@@ -72,6 +74,7 @@
     <Compile Include="NuSpec\v25\Reference.cs" />
     <Compile Include="NuSpec\v25\Framework.cs" />
     <Compile Include="Plugin.cs" />
+    <Compile Include="Snapshot.cs" />
     <Compile Include="Target.cs" />
     <Compile Include="TargetState.cs" />
     <Compile Include="TestExecutionResult.cs" />

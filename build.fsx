@@ -13,8 +13,10 @@ open AnFake.Api
 
 let out = ~~".out"
 let productOut = out / "product"
+let pluginsOut = out / "plugins"
 let testsOut = out / "tests"
-let product = !!"AnFake/AnFake.csproj"
+let product = !!"AnFake/*.csproj"
+let plugins = !!"AnFake.Plugins.Tfs2012/*.csproj"
 let tests = !!"*/*.Test.csproj"
 
 "Clean" => (fun _ ->    
@@ -26,10 +28,24 @@ let tests = !!"*/*.Test.csproj"
     Folders.Clean out
 )
 
-"Compile" => (fun _ ->    
+let mutable (result: AssemblyInfoExecutionResult) = null
+
+"Compile" => (fun _ ->
+    result <- AssemblyInfo.Embed(
+        !!"*/Properties/AssemblyInfo.cs",
+        fun p -> 
+            p.Product <- "AnFake"
+            p.Description <- "AnFake: Another F# Make"
+            p.Copyright <- "Ilya A. Ivanov"
+        )
+
     MsBuild.BuildRelease(product, productOut) |> ignore
 
+    MsBuild.BuildRelease(plugins, pluginsOut) |> ignore
+
     MsBuild.BuildRelease(tests, testsOut) |> ignore
+) |=> (fun _ ->
+    result.Revert()
 )
 
 "Test.Unit" => (fun _ -> 
@@ -45,6 +61,8 @@ let tests = !!"*/*.Test.csproj"
         + "AnFake.exe.config"
         + "*.dll"
         + "*.xml"
+    let plugins = 
+        pluginsOut % "*.dll" + "*.xml"
 
     let nuspec = NuGet.Spec25(fun meta -> 
         meta.Id <- "AnFake"
@@ -53,11 +71,10 @@ let tests = !!"*/*.Test.csproj"
         meta.Description <- "AnFake (Another F# Make) ..."
     )
 
-    nuspec.Files <- bins
-        .Select(fun f -> new NuSpec.v25.File(f.Path.Full, "Bin"))
-        .ToArray()
+    nuspec.AddFiles(bins, "Bin")
+    nuspec.AddFiles(plugins, "Plugins")
 
-    NuGet.Pack(nuspec, out.AsFolder(), out.AsFolder(), fun p -> 
+    NuGet.Pack(nuspec, out, fun p -> 
         p.NoPackageAnalysis <- true
         p.NoDefaultExcludes <- true)
         |> ignore

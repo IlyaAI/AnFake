@@ -60,6 +60,13 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="AssemblyInfoTest.cs" />
+    <Content Include="Data\AssemblyInfo.test.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\AssemblyInfo.target.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Compile Include="FileSystemPathTest.cs" />
     <Compile Include="FilesTest.cs" />
     <Compile Include="MsTestTest.cs" />

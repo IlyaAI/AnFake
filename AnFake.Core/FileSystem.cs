@@ -163,6 +163,11 @@ namespace AnFake.Core
 			return String.Format("{0}.{1:yyyyMMdd.HHmmss.ff}{2}", name, DateTime.Now, ext);
 		}
 
+		public static string MakeUnique(this string name)
+		{
+			return MakeUnique(name, "");
+		}
+
 		internal static IEnumerable<FileSystemPath> MatchFiles(FileSystemPath basePath, FileSystemPath wildcardedPath)
 		{
 			return Match(basePath, wildcardedPath, Directory.EnumerateFiles);

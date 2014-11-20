@@ -95,5 +95,10 @@ namespace AnFake.Core
 		{
 			return _path.CompareTo(other._path);
 		}
+
+		public static implicit operator FileSystemPath(FileItem file)
+		{
+			return file._path;
+		}
 	}
 }
