@@ -37,8 +37,11 @@
     </Reference>
     <Reference Include="Microsoft.TeamFoundation.Build.Client, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.TeamFoundation.Client, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.TeamFoundation.Common, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.TeamFoundation.VersionControl.Client, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Security" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -46,7 +49,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ServerPath.cs" />
     <Compile Include="Tfs.cs" />
+    <Compile Include="TfsWorkspace.cs" />
     <Compile Include="TfsPlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -58,6 +63,10 @@
     <ProjectReference Include="..\AnFake.Core\AnFake.Core.csproj">
       <Project>{86C27076-A445-433B-BB89-E265EF9A74D8}</Project>
       <Name>AnFake.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\AnFake.Integration.Tfs2012\AnFake.Integration.Tfs2012.csproj">
+      <Project>{F01FCA16-6B92-4C23-8365-EDD614405267}</Project>
+      <Name>AnFake.Integration.Tfs2012</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

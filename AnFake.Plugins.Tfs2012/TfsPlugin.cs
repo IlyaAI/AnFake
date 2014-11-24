@@ -16,6 +16,8 @@ namespace AnFake.Plugins.Tfs2012
 		private const string SectionKey = "AnFake";
 		private const string SectionHeader = "AnFake Summary";
 
+		private readonly TfsTeamProjectCollection _teamProjectCollection;
+
 		private readonly IBuildDetail _build;
 		private readonly IBuildInformation _tracker;
 
@@ -25,41 +27,59 @@ namespace AnFake.Plugins.Tfs2012
 			string buildUri;
 			string activityInstanceId;
 
-			if (!parameters.Properties.TryGetValue("Tfs.Uri", out tfsUri) ||
-				!parameters.Properties.TryGetValue("Tfs.BuildUri", out buildUri) ||
-				!parameters.Properties.TryGetValue("Tfs.ActivityInstanceId", out activityInstanceId))
-				throw new InvalidConfigurationException("TFS plugin requires 'Tfs.Uri', 'Tfs.BuildUri' and 'Tfs.ActivityInstanceId' to be specified in build properties.");
+			if (!parameters.Properties.TryGetValue("Tfs.Uri", out tfsUri))
+				throw new InvalidConfigurationException("TFS plugin requires 'Tfs.Uri' to be specified in build properties.");
 
-			var teamProjectCollection = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(new Uri(tfsUri));
-			var buildServer = (IBuildServer) teamProjectCollection.GetService(typeof (IBuildServer));
+			parameters.Properties.TryGetValue("Tfs.BuildUri", out buildUri);
+			parameters.Properties.TryGetValue("Tfs.ActivityInstanceId", out activityInstanceId);
 
-			_build = buildServer.QueryBuildsByUri(
-				new[] {new Uri(buildUri)},
-				new[] {"ActivityTracking"},
-				QueryOptions.None).Single();
+			_teamProjectCollection = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(new Uri(tfsUri));
 
-			if (_build == null)
-				throw new InvalidConfigurationException(String.Format("TFS plugin unable to find build '{0}'", buildUri));		
-
-			var activity = InformationNodeConverters.GetActivityTracking(_build, activityInstanceId);
-			if (activity != null)
+			if (!String.IsNullOrEmpty(buildUri))
 			{
+				if (String.IsNullOrEmpty(activityInstanceId))
+					throw new InvalidConfigurationException("TFS plugin requires both 'Tfs.BuildUri' and 'Tfs.ActivityInstanceId' to be specified in build properties.");
+
+				var buildServer = (IBuildServer)_teamProjectCollection.GetService(typeof(IBuildServer));
+
+				_build = buildServer.QueryBuildsByUri(
+					new[] { new Uri(buildUri) },
+					new[] { "ActivityTracking" },
+					QueryOptions.None).Single();
+
+				if (_build == null)
+					throw new InvalidConfigurationException(String.Format("TFS plugin unable to find build '{0}'", buildUri));
+
+				var activity = InformationNodeConverters.GetActivityTracking(_build, activityInstanceId);
+				if (activity == null)
+					throw new InvalidConfigurationException(String.Format("TFS plugin unable to find Activity with InstanceId='{0}'", activityInstanceId));
+				
 				_tracker = activity.Node.Children;
+
+				parameters.Tracer.MessageReceived += OnMessage;
+				Target.RunFinished += OnRunFinished;
 			}
 			else
 			{
-				_tracker = _build.Information;
+				_build = null;
+				_tracker = null;
+			}
+		}
 
-				Log.WarnFormat("Activity with InstanceId='{0}' not found. Using root build information for message tracking.");
-			}			
-
-			parameters.Tracer.MessageReceived += OnMessage;
-			Target.RunFinished += OnRunFinished;
+		public TfsTeamProjectCollection TeamProjectCollection
+		{
+			get { return _teamProjectCollection; }
 		}
 
 		public IBuildDetail Build
 		{
-			get { return _build; }
+			get
+			{
+				if (_build == null)
+					throw new InvalidConfigurationException("Build details are unavailable. Hint: you should specify 'Tfs.BuildUri' and 'Tfs.ActivityInstanceId' in build properties.");
+
+				return _build;
+			}
 		}
 
 		private void OnMessage(object sender, TraceMessage message)

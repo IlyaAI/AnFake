@@ -51,6 +51,7 @@
   <ItemGroup>
     <Compile Include="ArgsExtension.cs" />
     <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="Exceptions\AnFakeWrapperException.cs" />
     <Compile Include="NuGetExecutionResult.cs" />
     <Compile Include="AssemblyInfoExecutionResult.cs" />
     <Compile Include="Exceptions\AnFakeArgumentException.cs" />

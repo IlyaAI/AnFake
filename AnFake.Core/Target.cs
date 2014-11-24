@@ -8,7 +8,7 @@ namespace AnFake.Core
 {
 	public sealed class Target
 	{
-		private static readonly IDictionary<string, Target> Targets = new Dictionary<string, Target>();
+		private static readonly IDictionary<string, Target> Targets = new Dictionary<string, Target>(StringComparer.InvariantCultureIgnoreCase);
 
 		public sealed class ExecutionReason
 		{
@@ -428,8 +428,10 @@ namespace AnFake.Core
 			}
 			catch (Exception e)
 			{
-				Logger.Error(e);
-				Tracer.Error(e);
+				var error = (e as AnFakeException) ?? new AnFakeWrapperException(e);
+
+				Logger.Error(error);
+				Tracer.Error(error);
 
 				if (!skipErrors)
 					throw new TerminateTargetException(String.Format("Target terminated due to errors in {0}.{1}", _name, phase), e);

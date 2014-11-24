@@ -119,14 +119,16 @@ namespace AnFake
 			}
 			catch (Exception e)
 			{
-				Logger.Error(e);
+				var error = (e as AnFakeException) ?? new AnFakeWrapperException(e);
+				
+				Logger.Error(error);
 
 				// Do the best efforts to notify observers via Tracer
 				if (Tracer.IsInitialized)
 				{
 					try
 					{
-						Tracer.Error(e);
+						Tracer.Error(error);
 					}
 						// ReSharper disable once EmptyGeneralCatchClause
 					catch (Exception)
@@ -170,25 +172,6 @@ namespace AnFake
 			}
 
 			return options;
-		}
-
-		/*private static void ConfigurePlugin(Assembly assembly)
-		{
-			var pluginIface = typeof (IPlugin);
-			var plugins = assembly.GetTypes()
-				.Where(x => pluginIface.IsAssignableFrom(x) && x.IsClass && !x.IsAbstract)
-				.ToArray();
-
-			if (plugins.Length == 0)
-				return;
-
-			Logger.DebugFormat("Plugged-in: {0}\n  {1}", assembly.FullName, String.Join("\n  ", plugins.Select(x => x.FullName)));
-
-			foreach (var type in plugins)
-			{				
-				((IPlugin) Activator.CreateInstance(type))
-					.Configure(MyBuild.Defaults);
-			}			
-		}*/
+		}		
 	}
 }

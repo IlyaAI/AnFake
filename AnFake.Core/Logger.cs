@@ -45,7 +45,7 @@ namespace AnFake.Core
 
 		public static void Error(Exception exception)
 		{
-			Log.Error("", exception);
+			Log.Error(exception);
 		}
 
 		public static void ErrorFormat(string format, params object[] args)

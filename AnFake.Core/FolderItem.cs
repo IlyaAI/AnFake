@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Linq;
 
 namespace AnFake.Core
 {
@@ -24,7 +26,20 @@ namespace AnFake.Core
 		public FileSystemPath Parent
 		{
 			get { return _path.Parent; }
-		}		
+		}
+
+		public bool Exists()
+		{
+			return Directory.Exists(_path.Full);
+		}
+
+		public bool IsEmpty()
+		{
+			var fullPath = _path.Full;
+			return 
+				!Directory.Exists(fullPath) || 
+				!Directory.EnumerateFileSystemEntries(fullPath).Any();
+		}
 
 		public override string ToString()
 		{

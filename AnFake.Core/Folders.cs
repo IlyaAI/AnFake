@@ -9,7 +9,12 @@ namespace AnFake.Core
 {
 	public static class Folders
 	{
-		private static readonly ILog Log = LogManager.GetLogger(typeof(Folders).FullName);		
+		private static readonly ILog Log = LogManager.GetLogger(typeof(Folders).FullName);
+
+		public static FolderItem Current
+		{
+			get { return Directory.GetCurrentDirectory().AsFolder(); }
+		}
 
 		public static void Create(FolderItem folder)
 		{

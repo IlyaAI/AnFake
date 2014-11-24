@@ -5,10 +5,10 @@
 
 open System
 open System.Linq
+open AnFake.Api
 open AnFake.Core
 open AnFake.Fsx.Dsl
 open AnFake.Plugins.Tfs2012
-open AnFake.Api
 
 //Tfs.UseIt()
 
@@ -60,7 +60,7 @@ let version = "0.9".AsVersion()
         productOut % "AnFake.exe"
         + "AnFake.exe.config"
         + "*.dll"
-        + "*.xml"
+        + "AnFake.*.xml"
     let plugins = 
         pluginsOut % "*.dll" + "*.xml"
 

@@ -1,23 +1,59 @@
-﻿#r ".AnFake/Bin/AnFake.Api.dll"
-#r ".AnFake/Bin/AnFake.Core.dll"
-#r ".AnFake/Bin/AnFake.Fsx.dll"
-#r ".AnFake/Plugins/AnFake.Plugins.Tfs2012.dll"
+﻿#r "../Bin/AnFake.Api.dll"
+#r "../Bin/AnFake.Core.dll"
+#r "../Bin/AnFake.Fsx.dll"
+#r "../Plugins/AnFake.Plugins.Tfs2012.dll"
 
+open System
 open AnFake.Api
 open AnFake.Core
 open AnFake.Fsx.Dsl
 open AnFake.Plugins.Tfs2012
 
+let curDir = Folders.Current.Path;
+let serviceNames = 
+    [
+        "release"
+        "releases"
+        "branch"
+        "branches"
+        "feature"
+        "features"
+    ]
+
 Tfs.UseIt()
 
-"dw" => (fun _ ->
-    let curDir = Folders.Current.Path;
+"co" => (fun _ ->
+    let serverPath = MyBuild.GetProp("Arg1").AsServerPath();
+    let branchName = serverPath.LastName
+    let productName = serverPath.Parent.LastName
+    
+    let localPath = 
+        if MyBuild.HasProp("Arg2") then
+            curDir / MyBuild.GetProp("Arg2")
+        else
+            curDir / productName / branchName
 
-    let serverPath = MyBuild.Defaults.Properties.Get("ServerPath");
-    let localPath = curDir / MyBuild.Defaults.Properties.Get("LocalPath");
-    let workspaceName = MyBuild.Defaults.Properties.Get("WorkspaceName")
+    let workspaceName = 
+        TfsWorkspace.GenerateUniqueName(
+            if MyBuild.HasProp("Arg3") then
+                MyBuild.GetProp("Arg3")
+            else
+                String.Format("{0}.{1}", productName, branchName)
+        )
 
-    TfsEx.DownloadWorkspace(serverPath, localPath, workspaceName) |> ignore
+    TfsWorkspace.Checkout(serverPath, localPath, workspaceName) |> ignore
 )
 
-"DownloadWorkspace" <== ["dw"]
+"Checkout" <== ["co"]
+
+"syncl" => (fun _ ->
+    let localPath = 
+        if MyBuild.HasProp("Arg1") then
+            curDir / MyBuild.GetProp("Arg1");
+        else
+            curDir
+    
+    TfsWorkspace.SyncLocal(localPath) |> ignore
+)
+
+"SyncLocal" <== ["syncl"]

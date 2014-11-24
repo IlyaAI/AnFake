@@ -14,10 +14,37 @@ namespace AnFake.Core.Test
 			// arrange
 			
 			// act
-			var path = "[ProgramFilesx86]/Microsoft".AsPath();
+			var path = "[ProgramFilesX86]/Microsoft".AsPath();
 
 			// assert
 			Assert.AreEqual(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Microsoft"), path.Full);
+		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void FileSystemPath_should_expand_wellknown_folders_before_combining()
+		{
+			// arrange
+			var basePath = "C:/System".AsPath();			
+
+			// act
+			var path = basePath / "[ProgramFilesX86]";
+
+			// assert
+			Assert.AreEqual(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), path.Full);
+		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void FileSystemPath_should_expand_temp_folder()
+		{
+			// arrange
+
+			// act
+			var path = "[Temp]/Microsoft".AsPath();
+
+			// assert
+			Assert.AreEqual(Path.Combine(Path.GetTempPath(), "Microsoft"), path.Full);
 		}
 
 		[TestCategory("Unit")]

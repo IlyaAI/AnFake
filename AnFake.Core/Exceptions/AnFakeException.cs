@@ -41,11 +41,11 @@ namespace AnFake.Core.Exceptions
 		{
 			if (_message != null)
 				return;
-			
-			var msgBuilder = new StringBuilder();
-			msgBuilder.Append(base.Message);
 
-			var stackTrace = new StackTrace(this, true);
+			var msgBuilder = new StringBuilder();
+			msgBuilder.Append(InnerException != null ? InnerException.Message : base.Message);
+
+			var stackTrace = new StackTrace(InnerException ?? this, true);
 			_insideScript = false;
 
 			if (MyBuild.Defaults != null && MyBuild.Defaults.ScriptFile != null)

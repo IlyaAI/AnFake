@@ -34,6 +34,7 @@
     <Reference Include="Microsoft.TeamFoundation.Build.Workflow, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <Private>False</Private>
     </Reference>
+    <Reference Include="Microsoft.TeamFoundation.VersionControl.Client, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="System" />
     <Reference Include="System.Activities" />
     <Reference Include="System.Core" />
@@ -46,6 +47,8 @@
   <ItemGroup>
     <Compile Include="InvokeAnFake.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ServerPathUtils.cs" />
+    <Compile Include="VcsMappings.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AnFake.Api\AnFake.Api.csproj">

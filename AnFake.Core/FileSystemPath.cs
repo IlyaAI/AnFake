@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Reflection;
 using AnFake.Core.Exceptions;
 
 namespace AnFake.Core
@@ -129,7 +130,7 @@ namespace AnFake.Core
 
 		public static FileSystemPath operator /(FileSystemPath basePath, string subPath)
 		{
-			return new FileSystemPath(Path.Combine(basePath._value, Normalize(subPath)), true);
+			return basePath / new FileSystemPath(subPath, false);
 		}
 
 		public static FileSystemPath operator /(FileSystemPath basePath, FileSystemPath subPath)
@@ -168,12 +169,35 @@ namespace AnFake.Core
 				return path;
 
 			var macro = path.Substring(1, end - 1);
+			var subPath = path.Substring(end + 1).TrimStart(Path.DirectorySeparatorChar);
+
+			if (macro == "Temp")
+				return Path.Combine(Path.GetTempPath(), subPath);
+
+			// ReSharper disable AssignNullToNotNullAttribute
+			if (macro == "AnFakeBin")
+				return Path.Combine(
+					Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), 
+					subPath);
+
+			if (macro == "AnFakePlugins")
+				return Path.Combine(
+					Path.GetDirectoryName(
+						Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)),
+					Path.Combine("Plugins", subPath));
+
+			if (macro == "AnFakeExtras")
+				return Path.Combine(
+					Path.GetDirectoryName(
+						Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)),
+					Path.Combine("Extras", subPath));
+			// ReSharper restore AssignNullToNotNullAttribute
 
 			Environment.SpecialFolder specialFolder;
-			if (!Enum.TryParse(macro, true, out specialFolder))
+			if (!Enum.TryParse(macro, false, out specialFolder))
 				return path;
 
-			return Environment.GetFolderPath(specialFolder) + path.Substring(end + 1);
+			return Path.Combine(Environment.GetFolderPath(specialFolder), subPath);
 		}
 	}
 }

@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Linq;
 using AnFake.Core;
+using AnFake.Core.Exceptions;
 using Microsoft.TeamFoundation.Build.Client;
+using Microsoft.TeamFoundation.VersionControl.Client;
 
 namespace AnFake.Plugins.Tfs2012
 {
@@ -20,6 +23,16 @@ namespace AnFake.Plugins.Tfs2012
 			{
 				get { return _build.Uri; }
 			}
+
+			public string SourceVersion
+			{
+				get { return _build.SourceGetVersion; }
+			}
+
+			public FileSystemPath DropLocation
+			{
+				get { return _build.DropLocation.AsPath(); }
+			}
 		}
 
 		private static BuildDetail _build;
@@ -29,9 +42,53 @@ namespace AnFake.Plugins.Tfs2012
 			get { return _build ?? (_build = new BuildDetail(Plugin.Get<TfsPlugin>().Build)); }
 		}
 
+		public static int LastChangeset()
+		{
+			return LastChangesetOf("".AsPath());
+		}
+
+		public static int LastChangesetOf(FileSystemPath path)
+		{
+			var vcs = Plugin.Get<TfsPlugin>()
+				.TeamProjectCollection
+				.GetService<VersionControlServer>();
+
+			try
+			{
+				var ws = vcs.GetWorkspace(path.Full);
+				var queryParams = new QueryHistoryParameters(path.Full, RecursionType.Full)
+				{					
+					VersionStart = new ChangesetVersionSpec(1),
+					VersionEnd = new WorkspaceVersionSpec(ws),
+					MaxResults = 1
+				};
+
+				var changeset = vcs.QueryHistory(queryParams).FirstOrDefault();
+				return changeset != null 
+					? changeset.ChangesetId 
+					: 0;
+			}
+			catch (AnFakeException)
+			{
+				throw;
+			}
+			catch (Exception e)
+			{
+				throw new AnFakeWrapperException(e);
+			}
+		}		
+
 		public static void UseIt()
 		{
 			Plugin.Register(new TfsPlugin(MyBuild.Defaults));
+		}
+
+		public static ServerPath AsServerPath(this string path)
+		{
+			if (path == null)
+				throw new AnFakeArgumentException("Tfs.AsServerPath(path): path must not be null");
+
+			return new ServerPath(path, false);
 		}
 	}
 }

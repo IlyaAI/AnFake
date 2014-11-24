@@ -37,3 +37,16 @@ type FsxHelper () =
     static member inline Set(props: IDictionary<System.String, System.String>, nameValue: (string * string) list) = 
         for (name, value) in nameValue do
             props.Item(name) <- value
+
+    [<Extension>]
+    static member inline Get(props: IDictionary<System.String, System.String>, name: string) = 
+        if not <| props.ContainsKey(name) then
+            failwithf "Required parameters '%s' is missed." name
+        props.Item(name)
+
+    [<Extension>]
+    static member inline Get(props: IDictionary<System.String, System.String>, name: string, defValue: string) = 
+        if not <| props.ContainsKey(name) then 
+            defValue
+        else
+            props.Item(name)

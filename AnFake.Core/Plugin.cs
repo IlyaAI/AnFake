@@ -33,6 +33,11 @@ namespace AnFake.Core
 			return (T) plugin;
 		}
 
+		public static void Reset()
+		{
+			PluginInstances.Clear();
+		}
+
 		private static string GetPluginName(this Type pluginType)
 		{
 			var beg = pluginType.Name.StartsWith("I") ? 1 : 0;

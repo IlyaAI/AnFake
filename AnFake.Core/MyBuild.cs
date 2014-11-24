@@ -96,6 +96,31 @@ namespace AnFake.Core
 			remove { InitializedHandlers -= value; }
 		}
 
+		public static bool HasProp(string name)
+		{
+			// TODO: check args
+			return Defaults.Properties.ContainsKey(name);
+		}
+
+		public static string GetProp(string name)
+		{
+			// TODO: check args
+			string value;
+			if (!Defaults.Properties.TryGetValue(name, out value))
+				throw new InvalidConfigurationException(String.Format("Property '{0}' is not specified.", name));
+
+			return value;
+		}
+
+		public static string GetProp(string name, string defaultValue)
+		{
+			// TODO: check args
+			string value;
+			return Defaults.Properties.TryGetValue(name, out value)
+				? value
+				: defaultValue;
+		}
+
 		public static void Info(string message)
 		{
 			Logger.Info(message);

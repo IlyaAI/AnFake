@@ -14,7 +14,7 @@ namespace AnFake.Core
 
 		public Snapshot()
 		{
-			_snapshotBasePath = Path.Combine(Path.GetTempPath(), "".MakeUnique());
+			_snapshotBasePath = Path.Combine(Path.GetTempPath(), "AnFake".MakeUnique());
 			Directory.CreateDirectory(_snapshotBasePath);
 		}
 
