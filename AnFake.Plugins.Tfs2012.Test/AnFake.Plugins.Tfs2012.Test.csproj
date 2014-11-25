@@ -78,9 +78,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Data\test.workspace">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    <Folder Include="Data\" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

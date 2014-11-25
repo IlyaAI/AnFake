@@ -53,29 +53,18 @@ namespace AnFake.Plugins.Tfs2012
 				.TeamProjectCollection
 				.GetService<VersionControlServer>();
 
-			try
-			{
-				var ws = vcs.GetWorkspace(path.Full);
-				var queryParams = new QueryHistoryParameters(path.Full, RecursionType.Full)
-				{					
-					VersionStart = new ChangesetVersionSpec(1),
-					VersionEnd = new WorkspaceVersionSpec(ws),
-					MaxResults = 1
-				};
+			var ws = vcs.GetWorkspace(path.Full);
+			var queryParams = new QueryHistoryParameters(path.Full, RecursionType.Full)
+			{					
+				VersionStart = new ChangesetVersionSpec(1),
+				VersionEnd = new WorkspaceVersionSpec(ws),
+				MaxResults = 1
+			};
 
-				var changeset = vcs.QueryHistory(queryParams).FirstOrDefault();
-				return changeset != null 
-					? changeset.ChangesetId 
-					: 0;
-			}
-			catch (AnFakeException)
-			{
-				throw;
-			}
-			catch (Exception e)
-			{
-				throw new AnFakeWrapperException(e);
-			}
+			var changeset = vcs.QueryHistory(queryParams).FirstOrDefault();
+			return changeset != null 
+				? changeset.ChangesetId 
+				: 0;			
 		}		
 
 		public static void UseIt()
