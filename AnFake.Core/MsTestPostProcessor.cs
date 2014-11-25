@@ -62,14 +62,14 @@ namespace AnFake.Core
 
 		private static TestStatus ParseTestStatus(string outcome)
 		{
-			if ("passed".Equals(outcome, StringComparison.InvariantCultureIgnoreCase))
+			if ("passed".Equals(outcome, StringComparison.OrdinalIgnoreCase))
 				return TestStatus.Passed;
 
-			if ("inconclusive".Equals(outcome, StringComparison.InvariantCultureIgnoreCase) ||
-				"ignored".Equals(outcome, StringComparison.InvariantCultureIgnoreCase))
+			if ("inconclusive".Equals(outcome, StringComparison.OrdinalIgnoreCase) ||
+				"ignored".Equals(outcome, StringComparison.OrdinalIgnoreCase))
 				return TestStatus.Skipped;
 
-			if ("failed".Equals(outcome, StringComparison.InvariantCultureIgnoreCase))
+			if ("failed".Equals(outcome, StringComparison.OrdinalIgnoreCase))
 				return TestStatus.Failed;
 
 			return TestStatus.Unknown;

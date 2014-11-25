@@ -81,7 +81,7 @@ namespace AnFake.Core
 			var myFull = Full;
 			var baseFull = basePath.Full;
 
-			return myFull.StartsWith(baseFull, StringComparison.InvariantCultureIgnoreCase)
+			return myFull.StartsWith(baseFull, StringComparison.OrdinalIgnoreCase)
 				? new FileSystemPath(myFull.Substring(baseFull.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar), true)
 				: this;
 		}
@@ -93,17 +93,17 @@ namespace AnFake.Core
 
 		public override int GetHashCode()
 		{
-			return StringComparer.InvariantCultureIgnoreCase.GetHashCode(_value);
+			return StringComparer.OrdinalIgnoreCase.GetHashCode(_value);
 		}
 
 		public int CompareTo(FileSystemPath other)
 		{
-			return StringComparer.InvariantCultureIgnoreCase.Compare(_value, other._value);
+			return StringComparer.OrdinalIgnoreCase.Compare(_value, other._value);
 		}
 
 		private bool Equals(FileSystemPath other)
 		{
-			return StringComparer.InvariantCultureIgnoreCase.Equals(_value, other._value);
+			return StringComparer.OrdinalIgnoreCase.Equals(_value, other._value);
 		}
 
 		public override bool Equals(object obj)

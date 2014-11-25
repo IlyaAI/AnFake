@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Linq;
 using AnFake.Api;
@@ -12,7 +13,7 @@ namespace AnFake
 	internal class Program
 	{
 		private static readonly IDictionary<string, IScriptEvaluator> SupportedScripts =
-			new Dictionary<string, IScriptEvaluator>(StringComparer.InvariantCultureIgnoreCase)
+			new Dictionary<string, IScriptEvaluator>(StringComparer.OrdinalIgnoreCase)
 			{
 				{".fsx", new FSharpEvaluator()},
 				{".csx", new CSharpEvaluator()}
@@ -66,7 +67,9 @@ namespace AnFake
 			var buildPath = currentDir.AsPath();
 			var logFile = new FileItem(BuildLogPattern.LogFile.AsPath(), buildPath);
 
-			var options = ParseOptions(args);
+			var options = new BuildOptions();
+			ParseConfig(options);
+			ParseCommandLine(args, options);
 
 			var scriptFile = new FileItem(buildPath/options.Script, buildPath);
 			if (!scriptFile.Exists())
@@ -143,10 +146,18 @@ namespace AnFake
 			return 0;
 		}
 
-		private static BuildOptions ParseOptions(IEnumerable<string> args)
+		private static void ParseConfig(BuildOptions options)
 		{
-			var options = new BuildOptions();
+			for (var i = 0; i < ConfigurationManager.AppSettings.Count; i++)
+			{
+				options.Properties.Add(
+					ConfigurationManager.AppSettings.GetKey(i),
+					ConfigurationManager.AppSettings.Get(i));
+			}			
+		}
 
+		private static void ParseCommandLine(IEnumerable<string> args, BuildOptions options)
+		{
 			foreach (var arg in args)
 			{
 				if (arg.Contains(".") && SupportedScripts.ContainsKey(Path.GetExtension(arg)))
@@ -169,9 +180,7 @@ namespace AnFake
 			if (options.Targets.Count == 0)
 			{
 				options.Targets.Add("Build");
-			}
-
-			return options;
+			}			
 		}		
 	}
 }

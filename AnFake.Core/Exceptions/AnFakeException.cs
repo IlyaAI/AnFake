@@ -57,7 +57,7 @@ namespace AnFake.Core.Exceptions
 					var scriptFrame = frames.FirstOrDefault(f =>
 					{
 						var file = f.GetFileName();
-						return file != null && file.EndsWith(scriptName, StringComparison.InvariantCultureIgnoreCase);
+						return file != null && file.EndsWith(scriptName, StringComparison.OrdinalIgnoreCase);
 					});
 
 					if (scriptFrame != null)

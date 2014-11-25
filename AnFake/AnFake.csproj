@@ -58,6 +58,7 @@
       <HintPath>..\packages\CS-Script.3.8.8.0\lib\net45\Mono.CSharp.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -69,20 +70,18 @@
     <Compile Include="EvaluationAbortedException.cs" />
     <Compile Include="log4net\BuildLogPattern.cs" />
     <None Include="experimental-02.fsx" />
-    <None Include="experimental.cs" />
     <Compile Include="CSharpEvaluator.cs" />
     <Compile Include="FSharpEvaluator.cs" />
     <Compile Include="IScriptEvaluator.cs" />
+    <Compile Include="LoggerTraceWriter.cs" />
     <Compile Include="LoggerErrorWriter.cs" />
     <Compile Include="LoggerDebugWriter.cs" />
     <Compile Include="LoggerWriter.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <None Include="Scripting.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="experimental-01.fsx" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

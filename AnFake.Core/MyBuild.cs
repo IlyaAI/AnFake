@@ -96,29 +96,62 @@ namespace AnFake.Core
 			remove { InitializedHandlers -= value; }
 		}
 
+		/// <summary>
+		/// Returns true if build property 'name' is specified and has non-empty value.
+		/// </summary>
+		/// <param name="name"></param>
+		/// <returns></returns>
 		public static bool HasProp(string name)
 		{
-			// TODO: check args
-			return Defaults.Properties.ContainsKey(name);
+			if (String.IsNullOrEmpty(name))
+				throw new AnFakeArgumentException("MyBuild.HasProp(name): name must not be null or empty");
+
+			string value;
+			return Defaults.Properties.TryGetValue(name, out value) && !String.IsNullOrEmpty(value);
 		}
 
+		/// <summary>
+		/// Returns non empty value of build property 'name'. If no such property specified or it has empty value then exception is thrown.
+		/// </summary>
+		/// <param name="name"></param>
+		/// <returns></returns>
 		public static string GetProp(string name)
 		{
-			// TODO: check args
+			if (String.IsNullOrEmpty(name))
+				throw new AnFakeArgumentException("MyBuild.GetProp(name): name must not be null or empty");
+			
 			string value;
 			if (!Defaults.Properties.TryGetValue(name, out value))
-				throw new InvalidConfigurationException(String.Format("Property '{0}' is not specified.", name));
+				throw new InvalidConfigurationException(String.Format("Build property '{0}' is not specified.", name));
+			if (String.IsNullOrEmpty(value))
+				throw new InvalidConfigurationException(String.Format("Build property '{0}' has empty value.", name));
 
 			return value;
-		}
+		}		
 
+		/// <summary>
+		/// Returns non empty value of build property 'name'. If no such property specified or it has empty value then 'defaultValue' is returned.
+		/// </summary>
+		/// <param name="name"></param>
+		/// <param name="defaultValue"></param>
+		/// <returns></returns>
 		public static string GetProp(string name, string defaultValue)
 		{
-			// TODO: check args
+			if (String.IsNullOrEmpty(name))
+				throw new AnFakeArgumentException("MyBuild.GetProp(name, defaultValue): name must not be null or empty");
+
 			string value;
-			return Defaults.Properties.TryGetValue(name, out value)
+			return Defaults.Properties.TryGetValue(name, out value) && !String.IsNullOrEmpty(value)
 				? value
 				: defaultValue;
+		}
+
+		public static void Failed(string message)
+		{
+			if (String.IsNullOrEmpty(message))
+				throw new AnFakeArgumentException("MyBuild.Failed(message): name must not be null or empty");
+
+			throw new TargetFailureException(message);
 		}
 
 		public static void Info(string message)

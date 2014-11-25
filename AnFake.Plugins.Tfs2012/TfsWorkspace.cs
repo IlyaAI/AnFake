@@ -22,7 +22,7 @@ namespace AnFake.Plugins.Tfs2012
 			internal Params()
 			{
 				WorkspaceFile = ".workspace";
-				NameGenerationFormat = "{0}.{1}";
+				NameGenerationFormat = "{0}@{1}";
 				MaxGeneratedNames = 10;
 			}
 
@@ -68,8 +68,8 @@ namespace AnFake.Plugins.Tfs2012
 			var parameters = Defaults.Clone();
 			setParams(parameters);
 
-			var index = 1;
-			while (index < parameters.MaxGeneratedNames)
+			var index = 2;
+			while (index <= parameters.MaxGeneratedNames)
 			{
 				var uniqueName = String.Format(parameters.NameGenerationFormat, workspaceName, index);
 				if (!usedNames.Contains(uniqueName))
@@ -89,22 +89,22 @@ namespace AnFake.Plugins.Tfs2012
 		public static Api.IToolExecutionResult Checkout(ServerPath serverPath, FileSystemPath localPath, string workspaceName, Action<Params> setParams)
 		{
 			if (serverPath == null)
-				throw new AnFakeArgumentException("TfsWorkspace.Checkout(serverPath, localPath, workspaceName, setParams): serverPath must not be null");
+				throw new AnFakeArgumentException("TfsWorkspace.Checkout(serverPath, localPath, workspaceName[, setParams]): serverPath must not be null");
 			if (!serverPath.IsRooted)
-				throw new AnFakeArgumentException("TfsWorkspace.Checkout(serverPath, localPath, workspaceName, setParams): serverPath must be an absolute path");
+				throw new AnFakeArgumentException("TfsWorkspace.Checkout(serverPath, localPath, workspaceName[, setParams]): serverPath must be an absolute path");
 
 			if (localPath == null)
-				throw new AnFakeArgumentException("TfsWorkspace.Checkout(serverPath, localPath, workspaceName, setParams): localPath must not be null");
+				throw new AnFakeArgumentException("TfsWorkspace.Checkout(serverPath, localPath, workspaceName[, setParams]): localPath must not be null");
 			if (!localPath.AsFolder().IsEmpty())
 				throw new InvalidConfigurationException(String.Format("TfsWorkspace.Checkout intended for initial downloading only but target directory '{0}' is not empty.", localPath));
 
 			if (String.IsNullOrEmpty(workspaceName))
-				throw new AnFakeArgumentException("TfsWorkspace.Checkout(serverPath, localPath, workspaceName, setParams): workspaceName must not be null or empty");
+				throw new AnFakeArgumentException("TfsWorkspace.Checkout(serverPath, localPath, workspaceName[, setParams]): workspaceName must not be null or empty");
 
 			if (setParams == null)
 				throw new AnFakeArgumentException("TfsWorkspace.Checkout(serverPath, localPath, workspaceName, setParams): setParams must not be null");
 
-			var ws = FindWorkspace(workspaceName);
+			var ws = FindWorkspace(workspaceName);			
 			if (ws != null)
 				throw new InvalidConfigurationException(String.Format("TfsWorkspace.Checkout intended for initial downloading only but workspace '{0}' already exists.", workspaceName));
 
@@ -126,24 +126,48 @@ namespace AnFake.Plugins.Tfs2012
 			ws = Vcs.CreateWorkspace(workspaceName, GetCurrentUser(), String.Format("AnFake: {0} => {1}", serverPath, localPath), mappings);
 			Logger.DebugFormat("Workspace '{0}' successfully created for '{1}'.", workspaceName, GetCurrentUser());
 
-			Logger.Debug("Downloading files...");
-			var status = ws.Get();
+			var result = UpdateFiles(ws);
 
-			var failures = status.GetFailures();
-			foreach (var failure in status.GetFailures())
-			{
-				var msg = failure.GetFormattedMessage();
+			return result;
+		}
 
-				Tracer.Warn(msg);
-				Logger.Warn(msg);
-			}
-
-			return new ToolExecutionResult(0, failures.Length);
+		public static Api.IToolExecutionResult Sync(FileSystemPath localPath)
+		{
+			return Sync(localPath, p => { });
 		}
 
 		public static Api.IToolExecutionResult Sync(FileSystemPath localPath, Action<Params> setParams)
 		{
-			return null;
+			if (localPath == null)
+				throw new AnFakeArgumentException("TfsWorkspace.Sync(localPath[, setParams]): localPath must not be null");
+			if (setParams == null)
+				throw new AnFakeArgumentException("TfsWorkspace.Sync(localPath, setParams): setParams must not be null");
+
+			var parameters = Defaults.Clone();
+			setParams(parameters);
+
+			EnsureWorkspaceFile(parameters);
+
+			var wsFile = LocateWorkspaceFile(localPath, parameters.WorkspaceFile);
+			localPath = wsFile.Folder;
+
+			Logger.DebugFormat("TfsWorkspace.Sync: {0}", localPath);
+
+			var ws = Vcs.GetWorkspace(wsFile.Path.Full);
+			var wsPath = ws.GetServerItemForLocalItem(wsFile.Path.Full).AsServerPath();
+
+			Logger.DebugFormat("Synchronizing workspace: {0} => {1}", wsPath, ws.Name);
+			var wsDesc = GetTextContent(wsPath);
+			var mappings = VcsMappings.Parse(wsDesc, wsPath.Parent.Full, localPath.Full);
+
+			LogMappings(mappings);
+
+			ws.Update(ws.Name, ws.Comment, mappings);
+			Logger.DebugFormat("Workspace '{0}' successfully updated.", ws.Name);
+
+			var result = UpdateFiles(ws);
+
+			return result;
 		}
 
 		public static Api.IToolExecutionResult SyncLocal(FileSystemPath localPath)
@@ -154,35 +178,24 @@ namespace AnFake.Plugins.Tfs2012
 		public static Api.IToolExecutionResult SyncLocal(FileSystemPath localPath, Action<Params> setParams)
 		{
 			if (localPath == null)
-				throw new AnFakeArgumentException("TfsWorkspace.SyncLocal(localPath, setParams): localPath must not be null");
+				throw new AnFakeArgumentException("TfsWorkspace.SyncLocal(localPath[, setParams]): localPath must not be null");
 			if (setParams == null)
-				throw new AnFakeArgumentException("TfsWorkspace.SyncLocal(localPath, setParams): setParams must not be null");			
+				throw new AnFakeArgumentException("TfsWorkspace.SyncLocal(localPath, setParams): setParams must not be null");
 
 			var parameters = Defaults.Clone();
 			setParams(parameters);
 
 			EnsureWorkspaceFile(parameters);
 
-			var wsFile = localPath.AsFile();
-			if (wsFile.Exists())
-			{
-				if (!wsFile.Name.Equals(parameters.WorkspaceFile, StringComparison.InvariantCultureIgnoreCase))
-					throw new InvalidConfigurationException(String.Format("Local path '{1}' should points to workspace definition file '{0}'.", parameters.WorkspaceFile, localPath));
+			var wsFile = LocateWorkspaceFile(localPath, parameters.WorkspaceFile);
+			localPath = wsFile.Folder;			
 
-				localPath = localPath.Parent;
-			}
-			else
-			{
-				wsFile = (localPath/parameters.WorkspaceFile).AsFile();
-				if (!wsFile.Exists())
-					throw new InvalidConfigurationException(String.Format("Unable to locate workspace definition file '{0}' in '{1}'", parameters.WorkspaceFile, localPath));
-			}
-
-			Logger.DebugFormat("TfsWorkspace.SyncLocal\n LocalPath: {0}", localPath);
+			Logger.DebugFormat("TfsWorkspace.SyncLocal: {0}", localPath);
 
 			var ws = Vcs.GetWorkspace(wsFile.Path.Full);
 			var serverPath = ws.GetServerItemForLocalItem(localPath.Full).AsServerPath();
 
+			Logger.DebugFormat("Synchronizing workspace: {0} => {1}", wsFile, ws.Name);
 			var wsDesc = GetTextContent(wsFile);
 			var mappings = VcsMappings.Parse(wsDesc, serverPath.Full, localPath.Full);
 
@@ -191,7 +204,9 @@ namespace AnFake.Plugins.Tfs2012
 			ws.Update(ws.Name, ws.Comment, mappings);
 			Logger.DebugFormat("Workspace '{0}' successfully updated.", ws.Name);
 
-			return new ToolExecutionResult(0, 0);
+			var result = UpdateFiles(ws);
+
+			return result;
 		}
 
 		public static Api.IToolExecutionResult Update(FileSystemPath localPath, Action<Params> setParams)
@@ -218,7 +233,10 @@ namespace AnFake.Plugins.Tfs2012
 		{
 			try
 			{
-				return Vcs.GetWorkspace(workspaceName, GetCurrentUser());
+				var ws = Vcs.GetWorkspace(workspaceName, GetCurrentUser());
+
+				if (!ws.IsDeleted && ws.MappingsAvailable)
+					return ws;
 			}
 			catch (WorkspaceNotFoundException)
 			{
@@ -255,6 +273,41 @@ namespace AnFake.Plugins.Tfs2012
 			{
 				return reader.ReadToEnd();
 			}
+		}
+
+		private static FileItem LocateWorkspaceFile(FileSystemPath localPath, string wsFileName)
+		{
+			var wsFile = localPath.AsFile();
+			if (wsFile.Exists())
+			{
+				if (!wsFile.Name.Equals(wsFileName, StringComparison.OrdinalIgnoreCase))
+					throw new InvalidConfigurationException(String.Format("Local path should points to workspace definition file '{0}' but really '{1}'", wsFileName, localPath));
+			}
+			else
+			{
+				wsFile = (localPath / wsFileName).AsFile();
+				if (!wsFile.Exists())
+					throw new InvalidConfigurationException(String.Format("Unable to locate workspace definition file '{0}' in '{1}'", wsFileName, localPath));
+			}
+
+			return wsFile;
+		}
+
+		private static Api.IToolExecutionResult UpdateFiles(Workspace ws)
+		{
+			Logger.Debug("Updating files...");
+			var status = ws.Get();
+
+			var failures = status.GetFailures();
+			foreach (var failure in status.GetFailures())
+			{
+				var msg = failure.GetFormattedMessage();
+
+				Tracer.Warn(msg);
+				Logger.Warn(msg);
+			}
+
+			return new ToolExecutionResult(0, failures.Length);
 		}
 	}
 }

@@ -115,7 +115,7 @@ namespace AnFake.Api
 				throw new NotSupportedException("Only file based tracer supported now.");
 
 			var logPath = uri.LocalPath.TrimEnd('/', '\\');
-			if (!".jsx".Equals(Path.GetExtension(logPath), StringComparison.InvariantCultureIgnoreCase))
+			if (!".jsx".Equals(Path.GetExtension(logPath), StringComparison.OrdinalIgnoreCase))
 				throw new NotSupportedException("Only JSON file tracer supported now.");
 
 			return new JsonFileTracer(logPath, true);

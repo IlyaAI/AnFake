@@ -8,7 +8,7 @@ namespace AnFake.Core
 {
 	public sealed class Target
 	{
-		private static readonly IDictionary<string, Target> Targets = new Dictionary<string, Target>(StringComparer.InvariantCultureIgnoreCase);
+		private static readonly IDictionary<string, Target> Targets = new Dictionary<string, Target>(StringComparer.OrdinalIgnoreCase);
 
 		public sealed class ExecutionReason
 		{

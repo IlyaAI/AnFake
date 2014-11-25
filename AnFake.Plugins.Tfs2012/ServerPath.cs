@@ -65,17 +65,17 @@ namespace AnFake.Plugins.Tfs2012
 
 		public override int GetHashCode()
 		{
-			return StringComparer.InvariantCultureIgnoreCase.GetHashCode(_value);
+			return StringComparer.OrdinalIgnoreCase.GetHashCode(_value);
 		}
 
 		public int CompareTo(ServerPath other)
 		{
-			return StringComparer.InvariantCultureIgnoreCase.Compare(_value, other._value);
+			return StringComparer.OrdinalIgnoreCase.Compare(_value, other._value);
 		}
 
 		private bool Equals(ServerPath other)
 		{
-			return StringComparer.InvariantCultureIgnoreCase.Equals(_value, other._value);
+			return StringComparer.OrdinalIgnoreCase.Equals(_value, other._value);
 		}
 
 		public override bool Equals(object obj)

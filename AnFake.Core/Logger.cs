@@ -6,7 +6,17 @@ namespace AnFake.Core
 {
 	public static class Logger
 	{
-		private static readonly ILog Log = LogManager.GetLogger("AnFake.Build");		
+		private static readonly ILog Log = LogManager.GetLogger("AnFake.Build");
+
+		public static void Trace(string message)
+		{
+			Log.Trace(message);
+		}
+
+		public static void TraceFormat(string format, params object[] args)
+		{
+			Log.TraceFormat(format, args);
+		}
 
 		public static void Debug(string message)
 		{			

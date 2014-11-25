@@ -16,7 +16,7 @@ namespace AnFake
 				cfg,
 				new[] {script.Name},
 				new StreamReader(Stream.Null),
-				new LoggerDebugWriter(), 
+				new LoggerTraceWriter(), 
 				new LoggerErrorWriter(),
 				FSharpOption<bool>.None);
 
