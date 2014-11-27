@@ -33,6 +33,15 @@ namespace AnFake.Core.Exceptions
 			get
 			{
 				DoFormat();				
+				return _insideScript ? null : _details;
+			}
+		}
+
+		public string OriginalStackTrace
+		{
+			get
+			{
+				DoFormat();
 				return _details;
 			}
 		}

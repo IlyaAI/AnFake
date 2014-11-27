@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using AnFake.Core;
+using AnFake.Core.Exceptions;
 using Microsoft.FSharp.Compiler.Interactive;
 using Microsoft.FSharp.Core;
 
@@ -26,7 +27,7 @@ namespace AnFake
 			}
 			catch (Exception e)
 			{				
-				throw new EvaluationAbortedException(e);
+				throw new TerminateTargetException("Evaluation aborted.", e);
 			}			
 		}
 	}

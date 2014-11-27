@@ -93,27 +93,9 @@
       <Variable x:TypeArguments="x:String" Name="DropLocation" />
     </Sequence.Variables>
     <mtbwa:GetBuildDetail DisplayName="Get the Build" sap2010:WorkflowViewState.IdRef="GetBuildDetail_1" mtbwt:BuildTrackingParticipant.Importance="Low" Result="[BuildDetail]" />
-    <Sequence DisplayName="Update Drop Location" sap2010:WorkflowViewState.IdRef="Sequence_3" mtbwt:BuildTrackingParticipant.Importance="Low">
-      <mtbwa:InvokeForReason DisplayName="Update Build Number for Triggered Builds" sap2010:WorkflowViewState.IdRef="InvokeForReason_1" Reason="Triggered">
-        <mtbwa:UpdateBuildNumber BuildNumberFormat="[BuildNumberFormat]" DisplayName="Update Build Number" sap2010:WorkflowViewState.IdRef="UpdateBuildNumber_1" />
-      </mtbwa:InvokeForReason>
-      <If Condition="[(Not String.IsNullOrEmpty(BuildDetail.DropLocationRoot)) AndAlso (BuildDetail.Reason And Microsoft.TeamFoundation.Build.Client.BuildReason.Triggered) = BuildDetail.Reason]" DisplayName="If Build Reason is Triggered" sap2010:WorkflowViewState.IdRef="If_1" mtbwt:BuildTrackingParticipant.Importance="Low">
-        <If.Then>
-          <Sequence sap2010:WorkflowViewState.IdRef="Sequence_1" mtbwt:BuildTrackingParticipant.Importance="None">
-            <Assign x:TypeArguments="x:String" sap2010:WorkflowViewState.IdRef="Assign`1_1" mtbwt:BuildTrackingParticipant.Importance="None" To="[DropLocation]" Value="[BuildDropProvider.CombinePaths(BuildDetail.DropLocationRoot, BuildDetail.BuildDefinition.Name, BuildDetail.BuildNumber)]" />
-            <mtbwa:SetBuildProperties DisplayName="Set Drop Location" DropLocation="[DropLocation]" sap2010:WorkflowViewState.IdRef="SetBuildProperties_1" mtbwt:BuildTrackingParticipant.Importance="Low" PropertiesToSet="DropLocation" />
-          </Sequence>
-        </If.Then>
-      </If>
-      <If Condition="[(Not String.IsNullOrEmpty(PrivateDropLocation)) AndAlso BuildDetail.Reason = Microsoft.TeamFoundation.Build.Client.BuildReason.ValidateShelveset]" DisplayName="If Build Reason is ValidateShelveset" sap2010:WorkflowViewState.IdRef="If_2" mtbwt:BuildTrackingParticipant.Importance="Low">
-        <If.Then>
-          <Sequence sap2010:WorkflowViewState.IdRef="Sequence_2" mtbwt:BuildTrackingParticipant.Importance="None">
-            <Assign x:TypeArguments="x:String" sap2010:WorkflowViewState.IdRef="Assign`1_2" mtbwt:BuildTrackingParticipant.Importance="None" To="[DropLocation]" Value="[BuildDropProvider.CombinePaths(PrivateDropLocation, BuildDetail.BuildDefinition.Name, BuildDetail.BuildNumber)]" />
-            <mtbwa:SetBuildProperties DisplayName="Set Drop Location for Private Build" DropLocation="[DropLocation]" sap2010:WorkflowViewState.IdRef="SetBuildProperties_2" mtbwt:BuildTrackingParticipant.Importance="Low" PropertiesToSet="DropLocation" />
-          </Sequence>
-        </If.Then>
-      </If>
-    </Sequence>
+    <mtbwa:InvokeForReason DisplayName="Update Build Number for Triggered Builds" sap2010:WorkflowViewState.IdRef="InvokeForReason_1" Reason="Triggered">
+      <mtbwa:UpdateBuildNumber BuildNumberFormat="[BuildNumberFormat]" DisplayName="Update Build Number" sap2010:WorkflowViewState.IdRef="UpdateBuildNumber_1" />
+    </mtbwa:InvokeForReason>
     <mtbwa:AgentScope DataToIgnore="" DisplayName="Run On Agent" sap2010:WorkflowViewState.IdRef="AgentScope_1" MaxExecutionTime="[AgentSettings.MaxExecutionTime]" MaxWaitTime="[AgentSettings.MaxWaitTime]" ReservationSpec="[AgentSettings.GetAgentReservationSpec()]" mva:VisualBasic.Settings="Assembly references and imported namespaces serialized as XML namespaces">
       <mtbwa:AgentScope.Variables>
         <Variable x:TypeArguments="mtbc:IBuildAgent" Name="BuildAgent" />
@@ -167,60 +149,18 @@
           </If.Then>
         </If>
       </Sequence>
-      <ait:InvokeAnFake BuildDetail="[BuildDetail]" BuildDirectory="[BuildDirectory]" Properties="[AnFakeProperties]" Script="[AnFakeScript]" Targets="[Targets]" ToolPath=".AnFake\Bin\AnFake.exe" Verbosity="[Verbosity]" sap2010:WorkflowViewState.IdRef="InvokeAnFake_1" />
+      <ait:InvokeAnFake BuildDetail="[BuildDetail]" BuildDirectory="[BuildDirectory]" sap2010:WorkflowViewState.IdRef="InvokeAnFake_1" PrivateDropLocation="[PrivateDropLocation]" Properties="[AnFakeProperties]" Script="[AnFakeScript]" Targets="[Targets]" ToolPath=".AnFake\Bin\AnFake.exe" Verbosity="[Verbosity]" />
     </mtbwa:AgentScope>
-    <sads:DebugSymbol.Symbol>d0pDOlxQcm9qZWN0c1xBbkZha2VcQW5GYWtlLkludGVncmF0aW9uLlRmczIwMTIuVGVtcGxhdGVcQW5GYWtlVGVtcGxhdGUueGFtbFgB/gUBhAYBCAHVBAGVBQEHAa0CAbwEAQYBpAYBswYBBQHCAQGQAgEEAc8GAdkGAQMBZQGkAQECWgOtAQ4CAQFfBV+zAQIBcmAFdBACAVl1BasBGAIBAl+hAV+wAQIBc2EHYx8CAW5kB2sMAgFkbAdzDAIBWnWxAXXOAQIBCXWCAXWkAQIBCHXfAXWKAgIBBno2elECAQV8NnxHAgEDfgeKARICAUSLAQepARICARiqAQeqAZACAgEKYglipAECAW9kFWTDAQIBZWYLaRYCAWZsFWypAQIBW24LcRYCAVx/CX+0AQIBVoABCYABygECAVOBAQmBAZYDAgFPggEJiQEOAgFFjAEJkAEOAgE+kQEJkQGfAgIBNJIBCZIBugECAS2TAQmcAR8CASCdAQmoAQ4CARmqAWKqAXYCARaqAX6qAY4BAgEUqgGsAaoBxAECAROqAc8BqgHcAQIBEaoBJaoBNAIBD6oBlwGqAaIBAgENqgFEqgFWAgELYjRiSQIBcGcNZ6YCAgFqaA1o7QECAWdvDW+dAgIBYHANcP8BAgFdf6MBf7EBAgFXgAG1AYABxwECAVSBAcwBgQGTAwIBUoEBtAGBAcUBAgFQggEXggGMAQIBRoQBDYcBGAIBR4wBF4wBRAIBP44BDY4B2gECAUCRAS+RAUECATyRAUqRAXkCATuRAesBkQH4AQIBOZEBigKRAZwCAgE3kQHSAZEB4wECATWSAbEBkgG3AQIBM5IBKpIBOQIBMZIBlAGSAaABAgEwkgF4kgGFAQIBLpMB4AGTAe4BAgEokwH5AZMBhgICASaZAQ+ZAaMCAgEhnQEXnQFJAgEanwENpgEWAgEbZ6gBZ6MCAgFtZ5EBZ6EBAgFraFRoZAIBaG+oAW+aAgIBY2+RAW+hAQIBYXBmcHYCAV6FAQ+FAfgDAgFMhgEPhgHeAgIBSI4BNY4BPQIBQ44BxgGOAdcBAgFBmQEtmQF8AgEkmQGOApkBoAICASOkATikAUwCAR6hATmhAUICARyFAZEBhQGRAwIBToYB2gGGAdsCAgFLhgHCAYYB0wECAUk=</sads:DebugSymbol.Symbol>
+    <sads:DebugSymbol.Symbol>d0pDOlxQcm9qZWN0c1xBbkZha2VcQW5GYWtlLkludGVncmF0aW9uLlRmczIwMTIuVGVtcGxhdGVcQW5GYWtlVGVtcGxhdGUueGFtbEgB/gUBhAYBCAHVBAGVBQEHAa0CAbwEAQYBpAYBswYBBQHCAQGQAgEEAc8GAdkGAQMBZQGkAQECWgObAQ4CAQFfBV+zAQIBX2AFYh0CAVtjBZkBGAIBAl+hAV+wAQIBYGEHYaIBAgFcY7EBY84BAgEJY4IBY6QBAgEIY98BY4oCAgEGaDZoUQIBBWo2akcCAQNsB3gSAgFGeQeXARICARqYAQeYAbwCAgEKYTJhRwIBXW0JbbQBAgFYbgluygECAVVvCW+WAwIBUXAJdw4CAUd6CX4OAgFAfwl/nwICATaAAQmAAboBAgEvgQEJigEfAgEiiwEJlgEOAgEbmAG/AZgB0wECARiYAdsBmAHrAQIBFpgBiQKYAaECAgEVmAGsApgBuQICAROYASWYATQCARGYAfQBmAH/AQIBD5gBRJgBVgIBDZgBnAGYAbMBAgELbaMBbbEBAgFZbrUBbscBAgFWb8wBb5MDAgFUb7QBb8UBAgFScBdwjAECAUhyDXUYAgFJehd6RAIBQXwNfNoBAgFCfy9/QQIBPn9Kf3kCAT1/6wF/+AECATt/igJ/nAICATl/0gF/4wECATeAAbEBgAG3AQIBNYABKoABOQIBM4ABlAGAAaABAgEygAF4gAGFAQIBMIEB4AGBAe4BAgEqgQH5AYEBhgICASiHAQ+HAaMCAgEjiwEXiwFJAgEcjQENlAEWAgEdcw9z+AMCAU50D3TeAgIBSnw1fD0CAUV8xgF81wECAUOHAS2HAXwCASaHAY4ChwGgAgIBJZIBOJIBTAIBII8BOY8BQgIBHnORAXORAwIBUHTaAXTbAgIBTXTCAXTTAQIBSw==</sads:DebugSymbol.Symbol>
   </Sequence>
   <sap2010:WorkflowViewState.ViewStateManager>
     <sap2010:ViewStateManager>
       <sap2010:ViewStateData Id="GetBuildDetail_1" sap:VirtualizedContainerService.HintSize="508,22" />
       <sap2010:ViewStateData Id="UpdateBuildNumber_1" sap:VirtualizedContainerService.HintSize="200,22" />
-      <sap2010:ViewStateData Id="InvokeForReason_1" sap:VirtualizedContainerService.HintSize="222,146">
+      <sap2010:ViewStateData Id="InvokeForReason_1" sap:VirtualizedContainerService.HintSize="508,146">
         <sap:WorkflowViewStateService.ViewState>
           <scg:Dictionary x:TypeArguments="x:String, x:Object">
             <x:Boolean x:Key="IsExpanded">True</x:Boolean>
-            <x:Boolean x:Key="IsPinned">False</x:Boolean>
-          </scg:Dictionary>
-        </sap:WorkflowViewStateService.ViewState>
-      </sap2010:ViewStateData>
-      <sap2010:ViewStateData Id="Assign`1_1" sap:VirtualizedContainerService.HintSize="200,22" />
-      <sap2010:ViewStateData Id="SetBuildProperties_1" sap:VirtualizedContainerService.HintSize="200,22" />
-      <sap2010:ViewStateData Id="Sequence_1" sap:VirtualizedContainerService.HintSize="222,208">
-        <sap:WorkflowViewStateService.ViewState>
-          <scg:Dictionary x:TypeArguments="x:String, x:Object">
-            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
-          </scg:Dictionary>
-        </sap:WorkflowViewStateService.ViewState>
-      </sap2010:ViewStateData>
-      <sap2010:ViewStateData Id="If_1" sap:VirtualizedContainerService.HintSize="222,51">
-        <sap:WorkflowViewStateService.ViewState>
-          <scg:Dictionary x:TypeArguments="x:String, x:Object">
-            <x:Boolean x:Key="IsExpanded">False</x:Boolean>
-            <x:Boolean x:Key="IsPinned">False</x:Boolean>
-          </scg:Dictionary>
-        </sap:WorkflowViewStateService.ViewState>
-      </sap2010:ViewStateData>
-      <sap2010:ViewStateData Id="Assign`1_2" sap:VirtualizedContainerService.HintSize="200,22" />
-      <sap2010:ViewStateData Id="SetBuildProperties_2" sap:VirtualizedContainerService.HintSize="200,22" />
-      <sap2010:ViewStateData Id="Sequence_2" sap:VirtualizedContainerService.HintSize="222,208">
-        <sap:WorkflowViewStateService.ViewState>
-          <scg:Dictionary x:TypeArguments="x:String, x:Object">
-            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
-          </scg:Dictionary>
-        </sap:WorkflowViewStateService.ViewState>
-      </sap2010:ViewStateData>
-      <sap2010:ViewStateData Id="If_2" sap:VirtualizedContainerService.HintSize="222,51">
-        <sap:WorkflowViewStateService.ViewState>
-          <scg:Dictionary x:TypeArguments="x:String, x:Object">
-            <x:Boolean x:Key="IsExpanded">False</x:Boolean>
-            <x:Boolean x:Key="IsPinned">False</x:Boolean>
-          </scg:Dictionary>
-        </sap:WorkflowViewStateService.ViewState>
-      </sap2010:ViewStateData>
-      <sap2010:ViewStateData Id="Sequence_3" sap:VirtualizedContainerService.HintSize="508,51">
-        <sap:WorkflowViewStateService.ViewState>
-          <scg:Dictionary x:TypeArguments="x:String, x:Object">
-            <x:Boolean x:Key="IsExpanded">False</x:Boolean>
             <x:Boolean x:Key="IsPinned">False</x:Boolean>
           </scg:Dictionary>
         </sap:WorkflowViewStateService.ViewState>
@@ -292,14 +232,14 @@
       </sap2010:ViewStateData>
       <sap2010:ViewStateData Id="InvokeAnFake_1" sap:VirtualizedContainerService.HintSize="486,22" />
       <sap2010:ViewStateData Id="AgentScope_1" sap:VirtualizedContainerService.HintSize="508,1225" />
-      <sap2010:ViewStateData Id="Sequence_16" sap:VirtualizedContainerService.HintSize="530,1502">
+      <sap2010:ViewStateData Id="Sequence_16" sap:VirtualizedContainerService.HintSize="530,1597">
         <sap:WorkflowViewStateService.ViewState>
           <scg:Dictionary x:TypeArguments="x:String, x:Object">
             <x:Boolean x:Key="IsExpanded">True</x:Boolean>
           </scg:Dictionary>
         </sap:WorkflowViewStateService.ViewState>
       </sap2010:ViewStateData>
-      <sap2010:ViewStateData Id="TfsBuild.Process_1" sap:VirtualizedContainerService.HintSize="570,1582" />
+      <sap2010:ViewStateData Id="TfsBuild.Process_1" sap:VirtualizedContainerService.HintSize="570,1677" />
     </sap2010:ViewStateManager>
   </sap2010:WorkflowViewState.ViewStateManager>
 </Activity>

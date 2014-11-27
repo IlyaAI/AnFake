@@ -52,6 +52,7 @@
     <Compile Include="ArgsExtension.cs" />
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="Exceptions\AnFakeWrapperException.cs" />
+    <Compile Include="NameGen.cs" />
     <Compile Include="NuGetExecutionResult.cs" />
     <Compile Include="AssemblyInfoExecutionResult.cs" />
     <Compile Include="Exceptions\AnFakeArgumentException.cs" />
@@ -78,6 +79,7 @@
     <Compile Include="NuSpec\v25\Reference.cs" />
     <Compile Include="NuSpec\v25\Framework.cs" />
     <Compile Include="Plugin.cs" />
+    <Compile Include="SafeOp.cs" />
     <Compile Include="Snapshot.cs" />
     <Compile Include="Target.cs" />
     <Compile Include="TargetState.cs" />

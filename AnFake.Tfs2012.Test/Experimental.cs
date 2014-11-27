@@ -6,7 +6,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AnFake.Tfs2012.Test
 {
-	[Ignore]
+	//[Ignore]
 	[TestClass]
 	public class Experimental
 	{
@@ -33,7 +33,7 @@ namespace AnFake.Tfs2012.Test
 			var buildServer = (IBuildServer)teamProjectCollection.GetService(typeof(IBuildServer));
 
 			var definition = buildServer.GetBuildDefinition("DLP_PDK", "FAKE-test");
-			var detail = definition.CreateManualBuild("0005", @"\\nsk-fs\Inbox\Ivanov Ilya");
+			var detail = definition.CreateManualBuild("0006", @"\\nsk-fs\Inbox\Ivanov Ilya");
 
 			detail.Information
 				.AddActivityTracking("0001", "Sequence", "General")/*.Node.Children

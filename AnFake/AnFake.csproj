@@ -67,7 +67,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="EvaluationAbortedException.cs" />
     <Compile Include="log4net\BuildLogPattern.cs" />
     <None Include="experimental-02.fsx" />
     <Compile Include="CSharpEvaluator.cs" />

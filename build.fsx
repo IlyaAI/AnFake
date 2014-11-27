@@ -10,7 +10,7 @@ open AnFake.Core
 open AnFake.Fsx.Dsl
 open AnFake.Plugins.Tfs2012
 
-//Tfs.UseIt()
+Tfs.UseIt()
 
 let out = ~~".out"
 let productOut = out / "product"

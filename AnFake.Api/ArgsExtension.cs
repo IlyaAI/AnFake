@@ -13,6 +13,17 @@ namespace AnFake.Api
 			return args.Space().NonQuotedValue(name);
 		}
 
+		public static Args CommandIf(this Args args, string name, bool condition)
+		{
+			if (String.IsNullOrEmpty(name))
+				throw new ArgumentException("Args.CommandIf(name, condition): name must not be null or empty");
+
+			if (!condition)
+				return args;
+
+			return args.Space().NonQuotedValue(name);
+		}
+
 		public static Args Param(this Args args, string value)
 		{
 			if (String.IsNullOrEmpty(value))
@@ -38,6 +49,17 @@ namespace AnFake.Api
 				return args;
 
 			return args.Space().ValuedOption(name).QuotedValue(value);
+		}
+
+		public static Args Option(this Args args, string name, Uri value)
+		{
+			if (String.IsNullOrEmpty(name))
+				throw new ArgumentException("Args.Option(name, value): name must not be null or empty");
+
+			if (value == null)
+				return args;
+
+			return args.Space().ValuedOption(name).QuotedValue(value.ToString());
 		}
 
 		public static Args Option(this Args args, string name, bool value)

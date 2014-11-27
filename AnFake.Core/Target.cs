@@ -456,7 +456,7 @@ namespace AnFake.Core
 		{
 			Target target;
 			if (!Targets.TryGetValue(name, out target))
-				throw new InvalidConfigurationException(String.Format("Target '{0}' not defined.", name));
+				throw new InvalidConfigurationException(String.Format("Target '{0}' not defined. Available targets are: {1}.", name, String.Join(", ", Targets.Keys)));
 
 			return target;
 		}

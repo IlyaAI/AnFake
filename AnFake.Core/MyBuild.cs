@@ -146,12 +146,12 @@ namespace AnFake.Core
 				: defaultValue;
 		}
 
-		public static void Failed(string message)
+		public static void Failed(string format, params object[] args)
 		{
-			if (String.IsNullOrEmpty(message))
-				throw new AnFakeArgumentException("MyBuild.Failed(message): name must not be null or empty");
+			if (String.IsNullOrEmpty(format))
+				throw new AnFakeArgumentException("MyBuild.Failed(format): format must not be null or empty");
 
-			throw new TargetFailureException(message);
+			throw new TargetFailureException(String.Format(format, args));
 		}
 
 		public static void Info(string message)

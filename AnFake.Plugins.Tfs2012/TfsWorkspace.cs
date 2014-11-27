@@ -21,9 +21,7 @@ namespace AnFake.Plugins.Tfs2012
 			
 			internal Params()
 			{
-				WorkspaceFile = ".workspace";
-				NameGenerationFormat = "{0}@{1}";
-				MaxGeneratedNames = 10;
+				WorkspaceFile = ".workspace";				
 			}
 
 			public Params Clone()
@@ -44,42 +42,18 @@ namespace AnFake.Plugins.Tfs2012
 		private static VersionControlServer Vcs
 		{
 			get { return _vcs ?? (_vcs = Plugin.Get<TfsPlugin>().TeamProjectCollection.GetService<VersionControlServer>()); }
-		}		
-
-		public static string GenerateUniqueName(string workspaceName)
-		{
-			return GenerateUniqueName(workspaceName, p => { });
 		}
 
-		public static string GenerateUniqueName(string workspaceName, Action<Params> setParams)
+		public static Predicate<string> UniqueName
 		{
-			if (String.IsNullOrEmpty(workspaceName))
-				throw new AnFakeArgumentException("TfsWorkspace.GenerateUniqueName(workspaceName, setParams): workspaceName must not be null or empty");
-
-			if (setParams == null)
-				throw new AnFakeArgumentException("TfsWorkspace.GenerateUniqueName(workspaceName, setParams): setParams must not be null");
-
-			var usedNames = Vcs.QueryWorkspaces(null, GetCurrentUser(), null)				
-				.ToLookup(x => x.Name);
-
-			if (!usedNames.Contains(workspaceName))
-				return workspaceName;
-
-			var parameters = Defaults.Clone();
-			setParams(parameters);
-
-			var index = 2;
-			while (index <= parameters.MaxGeneratedNames)
+			get
 			{
-				var uniqueName = String.Format(parameters.NameGenerationFormat, workspaceName, index);
-				if (!usedNames.Contains(uniqueName))
-					return uniqueName;
+				var usedNames = Vcs.QueryWorkspaces(null, GetCurrentUser(), null)
+					.ToLookup(x => x.Name);
 
-				index++;
+				return name => !usedNames.Contains(name);
 			}
-
-			throw new InvalidConfigurationException(String.Format("TfsWorkspace.GenerateUniqueName: too many ({0}+) workspaces based on the same name '{1}'", index, workspaceName));
-		}
+		}		
 
 		public static Api.IToolExecutionResult Checkout(ServerPath serverPath, FileSystemPath localPath, string workspaceName)
 		{
@@ -256,15 +230,11 @@ namespace AnFake.Plugins.Tfs2012
 
 		private static string GetTextContent(ServerPath serverPath)
 		{
-			/*var item = Vcs.GetItem(serverPath.Full);
+			var item = Vcs.GetItem(serverPath.Full);
 			using (var downstream = item.DownloadFile())
 			{
 				return new StreamReader(downstream).ReadToEnd();
-			}*/
-
-			return "$/DLPR_Internals/external/NuGet/2.7.0: .nuget\n" +
-				"$/DLPR_Internals/external/FAKE/3.5.4: .FAKE\n" +
-				"-$/DLPR_Internals/external/FAKE/3.5.4/FAKE.3.5.4.nupkg";
+			}
 		}
 
 		private static string GetTextContent(FileSystemPath localPath)

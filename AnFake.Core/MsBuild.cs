@@ -14,7 +14,7 @@ namespace AnFake.Core
 
 		private static readonly string[] Locations =
 		{
-			"[ProgramFilesx86]/MSBuild/12.0/Bin/MsBuild.exe"
+			"[ProgramFilesX86]/MSBuild/12.0/Bin/MsBuild.exe"
 		};
 
 		public sealed class Params

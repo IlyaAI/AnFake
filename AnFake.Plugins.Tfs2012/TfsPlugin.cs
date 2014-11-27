@@ -15,6 +15,7 @@ namespace AnFake.Plugins.Tfs2012
 
 		private const string SectionKey = "AnFake";
 		private const string SectionHeader = "AnFake Summary";
+		private const int SectionPriority = 199;
 
 		private readonly TfsTeamProjectCollection _teamProjectCollection;
 
@@ -26,12 +27,14 @@ namespace AnFake.Plugins.Tfs2012
 			string tfsUri;
 			string buildUri;
 			string activityInstanceId;
+			string privateDropLocation;
 
 			if (!parameters.Properties.TryGetValue("Tfs.Uri", out tfsUri))
 				throw new InvalidConfigurationException("TFS plugin requires 'Tfs.Uri' to be specified in build properties.");
 
 			parameters.Properties.TryGetValue("Tfs.BuildUri", out buildUri);
 			parameters.Properties.TryGetValue("Tfs.ActivityInstanceId", out activityInstanceId);
+			parameters.Properties.TryGetValue("Tfs.PrivateDropLocation", out privateDropLocation);
 
 			_teamProjectCollection = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(new Uri(tfsUri));
 
@@ -55,6 +58,24 @@ namespace AnFake.Plugins.Tfs2012
 					throw new InvalidConfigurationException(String.Format("TFS plugin unable to find Activity with InstanceId='{0}'", activityInstanceId));
 				
 				_tracker = activity.Node.Children;
+
+				if (String.IsNullOrEmpty(_build.DropLocation))
+				{
+					var dropLocationRoot = !String.IsNullOrEmpty(_build.DropLocationRoot)
+						? _build.DropLocationRoot
+						: !String.IsNullOrEmpty(privateDropLocation)
+							? privateDropLocation
+							: null;
+
+					if (dropLocationRoot != null)
+					{
+						if (!dropLocationRoot.StartsWith(@"\\"))
+							throw new InvalidConfigurationException(String.Format("Now UNC path only supported as DropLocation but provided '{0}'", dropLocationRoot));
+
+						_build.DropLocation = (dropLocationRoot.AsPath() / _build.BuildDefinition.Name / _build.BuildNumber).Spec;
+						_build.Save();
+					}
+				}
 
 				parameters.Tracer.MessageReceived += OnMessage;
 				Target.RunFinished += OnRunFinished;
@@ -112,9 +133,24 @@ namespace AnFake.Plugins.Tfs2012
 
 		private void OnRunFinished(object sender, Target.RunFinishedEventArgs evt)
 		{
+			var logsPath = (FileSystemPath) null;
+			if (!String.IsNullOrEmpty(_build.DropLocation))
+			{
+				logsPath = _build.DropLocation.AsPath()/".logs";
+				if (!SafeOp.Try(Folders.Clean, logsPath))
+				{
+					logsPath = null;
+
+					_build.Information.AddCustomSummaryInformation(
+						"Drop location is inaccessible, logs will be unavailable.", 
+						SectionKey, SectionHeader, SectionPriority);
+				}
+			}
+
 			string summary;
 			var hasErrorsOrWarns = false;
-			var currentTarget = (Target) sender;
+			var hasDropErrors = false;
+			var currentTarget = (Target) sender;			
 
 			foreach (var target in evt.ExecutedTargets)
 			{
@@ -123,16 +159,32 @@ namespace AnFake.Plugins.Tfs2012
 					target.State.ToHumanReadable().ToUpperInvariant());
 
 				_build.Information
-					.AddCustomSummaryInformation(summary, SectionKey, SectionHeader, 199);
+					.AddCustomSummaryInformation(summary, SectionKey, SectionHeader, SectionPriority);
 
 				foreach (var message in target.Messages.Where(x => x.Level == TraceMessageLevel.Summary))
 				{
-					summary = String.IsNullOrEmpty(message.LinkHref)
+					var href = (string) null;
+					if (!String.IsNullOrEmpty(message.LinkHref) && logsPath != null)
+					{
+						var srcPath = message.LinkHref.AsPath();
+						var dstPath = logsPath/srcPath.LastName;
+
+						if (SafeOp.Try(Files.Copy, srcPath, dstPath))
+						{
+							href = dstPath.Spec;
+						}
+						else
+						{
+							hasDropErrors = true;
+						}
+					}
+
+					summary = href == null
 						? String.Format("    {0}", message.Message)
-						: String.Format("    {0} [{1}]({2})", message.Message, message.LinkLabel ?? message.LinkHref, message.LinkHref);					
+						: String.Format("    {0} [{1}]({2})", message.Message, message.LinkLabel ?? href, href);					
 
 					_build.Information
-						.AddCustomSummaryInformation(summary, SectionKey, SectionHeader, 199);
+						.AddCustomSummaryInformation(summary, SectionKey, SectionHeader, SectionPriority);
 				}
 
 				hasErrorsOrWarns |= 
@@ -141,20 +193,50 @@ namespace AnFake.Plugins.Tfs2012
 			}
 
 			summary = String.Format("'{0}' {1}", currentTarget.Name, evt.FinalState.ToHumanReadable().ToUpperInvariant());
-			if (!String.IsNullOrEmpty(_build.DropLocation))
+			if (logsPath != null)
 			{
-				summary += String.Format("  [build.log]({0})", _build.DropLocation.AsPath() / MyBuild.Defaults.LogFile.RelPath);
+				var logFile = MyBuild.Defaults.LogFile;
+				var dstPath = logsPath / logFile.Name;
+
+				if (SafeOp.Try(Files.Copy, logFile.Path, dstPath))
+				{
+					_build.LogLocation = dstPath.Spec;
+					_build.Save();
+
+					summary += String.Format("  [build.log]({0})", dstPath.Spec);
+				}
+				else
+				{
+					hasDropErrors = true;
+				}
 			}
 
 			_build.Information
-				.AddCustomSummaryInformation(new string('=', 48), SectionKey, SectionHeader, 199);
+				.AddCustomSummaryInformation(new string('=', 48), SectionKey, SectionHeader, SectionPriority);
 			_build.Information
-				.AddCustomSummaryInformation(summary, SectionKey, SectionHeader, 199);
+				.AddCustomSummaryInformation(summary, SectionKey, SectionHeader, SectionPriority);
 
+			if (logsPath != null)
+			{
+				if (hasDropErrors)
+				{
+					_build.Information.AddCustomSummaryInformation(
+						"There are troubles accessing drop location, some logs are unavailable.",
+						SectionKey, SectionHeader, SectionPriority);
+				}
+			}
+			else
+			{
+				_build.Information.AddCustomSummaryInformation(
+					"Hint: set up drop location to get access to complete build logs.",
+					SectionKey, SectionHeader, SectionPriority);
+			}
+			
 			if (hasErrorsOrWarns)
 			{
-				_build.Information
-					.AddCustomSummaryInformation("See the section below for error/warning list.", SectionKey, SectionHeader, 199);
+				_build.Information.AddCustomSummaryInformation(
+					"See the section below for error/warning list.", 
+					SectionKey, SectionHeader, SectionPriority);
 			}			
 
 			_build.Information

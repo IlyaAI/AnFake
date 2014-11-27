@@ -26,6 +26,7 @@ namespace AnFake
 			public string Script = "build.fsx";
 		}
 
+		[STAThread]
 		public static int Main(string[] args)
 		{
 			// It's impossible to use cool domain model here because it references ILog
@@ -113,10 +114,6 @@ namespace AnFake
 				}
 			}
 			catch (TerminateTargetException)
-			{
-				// just skip, its already processed
-			}
-			catch (EvaluationAbortedException)
 			{
 				// just skip, its already processed
 			}
