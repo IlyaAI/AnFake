@@ -30,7 +30,45 @@ namespace AnFake.Api
 			if (String.IsNullOrEmpty(value))
 				return this;
 
-			_args.Append("\"").Append(value.Replace("\"", "\"\"")).Append("\"");
+			_args.Append("\"");
+
+			var start = 0;
+			for (var i = 0; i < value.Length; i++)
+			{
+				if (i < start)
+					continue;
+				
+				switch (value[i])
+				{
+					case '"':
+						_args.Append(value, start, i - start).Append("\\\"");
+						start = i + 1;
+						break;
+
+					case '\\':
+						if (i + 1 < value.Length)
+						{
+							if (value[i + 1] == '"')
+							{
+								_args.Append(value, start, i - start).Append("\\\\\\\"");
+								start = i + 2;
+							}
+						}
+						else
+						{
+							_args.Append(value, start, i - start).Append("\\\\");
+							start = i + 1;
+						}
+						break;
+				}
+			}
+
+			if (start < value.Length)
+			{
+				_args.Append(value, start, value.Length - start);
+			}
+
+			_args.Append("\"");
 			
 			return this;
 		}

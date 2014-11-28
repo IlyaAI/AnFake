@@ -58,6 +58,7 @@
   <ItemGroup>
     <Compile Include="JsonFileTracerTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ArgsTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AnFake.Api\AnFake.Api.csproj">

@@ -104,14 +104,14 @@ namespace AnFake.Core
 			FileSystem.DeleteFiles(files.Select(x => x.Path));
 		}
 
-		public static void Delete(FileSystemPath path)
+		public static void Delete(FileSystemPath filePath)
 		{
-			if (path == null)
-				throw new AnFakeArgumentException("Files.Delete(path): path must not be null");
+			if (filePath == null)
+				throw new AnFakeArgumentException("Files.Delete(filePath): filePath must not be null");
 
-			Delete(path.AsFile());
+			FileSystem.DeleteFile(filePath);
 		}
-
+		
 		public static void Delete(string path)
 		{
 			if (path == null)

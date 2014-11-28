@@ -143,7 +143,7 @@ namespace AnFake.Core
 			if (!match.Success)
 				throw new InvalidConfigurationException(
 					String.Format(
-						"AssemblyInfo: attribute [{0}] not found. Hint: Embed() substitutes values into existing attributes only," + 
+						"AssemblyInfo: attribute [{0}] not found.\nHint: Embed() substitutes values into existing attributes only," + 
 						" so you should add [assembly: {0}(\"\")] line into your AssemblyInfo file.", attributeName));			
 
 			if (match.Groups.Count != 2)
