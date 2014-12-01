@@ -65,7 +65,7 @@
     <Compile Include="FolderItem.cs" />
     <Compile Include="FileSystemPath.cs" />
     <Compile Include="IPlugin.cs" />
-    <Compile Include="LoggerExtension.cs" />
+    <Compile Include="TargetStateLogExtension.cs" />
     <Compile Include="MsBuild.cs" />
     <Compile Include="MsTest.cs" />
     <Compile Include="MsTestPostProcessor.cs" />
@@ -88,7 +88,6 @@
     <Compile Include="FileSystem.cs" />
     <Compile Include="FolderSet.cs" />
     <Compile Include="FileSet.cs" />
-    <Compile Include="Logger.cs" />
     <Compile Include="MyBuild.cs" />
     <Compile Include="Process.cs" />
     <Compile Include="ProcessExecutionResult.cs" />

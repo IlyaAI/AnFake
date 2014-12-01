@@ -89,7 +89,7 @@ namespace AnFake.Plugins.Tfs2012
 			
 			var wsPath = serverPath / parameters.WorkspaceFile;
 
-			Logger.DebugFormat("TfsWorkspace.Checkout\n ServerPath: {0}\n LocalPath: {1}\n Workspace: {2} (from '{3}')",
+			Trace.InfoFormat("TfsWorkspace.Checkout\n ServerPath: {0}\n LocalPath: {1}\n Workspace: {2} (from '{3}')",
 				serverPath, localPath, workspaceName, parameters.WorkspaceFile);
 
 			var wsDesc = GetTextContent(wsPath);
@@ -98,7 +98,7 @@ namespace AnFake.Plugins.Tfs2012
 			LogMappings(mappings);
 
 			ws = Vcs.CreateWorkspace(workspaceName, GetCurrentUser(), String.Format("AnFake: {0} => {1}", serverPath, localPath), mappings);
-			Logger.DebugFormat("Workspace '{0}' successfully created for '{1}'.", workspaceName, GetCurrentUser());
+			Trace.InfoFormat("Workspace '{0}' successfully created for '{1}'.", workspaceName, GetCurrentUser());
 
 			var result = UpdateFiles(ws);
 
@@ -125,19 +125,19 @@ namespace AnFake.Plugins.Tfs2012
 			var wsFile = LocateWorkspaceFile(localPath, parameters.WorkspaceFile);
 			localPath = wsFile.Folder;
 
-			Logger.DebugFormat("TfsWorkspace.Sync: {0}", localPath);
+			Trace.InfoFormat("TfsWorkspace.Sync: {0}", localPath);
 
 			var ws = Vcs.GetWorkspace(wsFile.Path.Full);
 			var wsPath = ws.GetServerItemForLocalItem(wsFile.Path.Full).AsServerPath();
 
-			Logger.DebugFormat("Synchronizing workspace: {0} => {1}", wsPath, ws.Name);
+			Trace.DebugFormat("Synchronizing workspace: {0} => {1}", wsPath, ws.Name);
 			var wsDesc = GetTextContent(wsPath);
 			var mappings = VcsMappings.Parse(wsDesc, wsPath.Parent.Full, localPath.Full);
 
 			LogMappings(mappings);
 
 			ws.Update(ws.Name, ws.Comment, mappings);
-			Logger.DebugFormat("Workspace '{0}' successfully updated.", ws.Name);
+			Trace.InfoFormat("Workspace '{0}' successfully updated.", ws.Name);
 
 			var result = UpdateFiles(ws);
 
@@ -164,19 +164,19 @@ namespace AnFake.Plugins.Tfs2012
 			var wsFile = LocateWorkspaceFile(localPath, parameters.WorkspaceFile);
 			localPath = wsFile.Folder;			
 
-			Logger.DebugFormat("TfsWorkspace.SyncLocal: {0}", localPath);
+			Trace.InfoFormat("TfsWorkspace.SyncLocal: {0}", localPath);
 
 			var ws = Vcs.GetWorkspace(wsFile.Path.Full);
 			var serverPath = ws.GetServerItemForLocalItem(localPath.Full).AsServerPath();
 
-			Logger.DebugFormat("Synchronizing workspace: {0} => {1}", wsFile, ws.Name);
+			Trace.DebugFormat("Synchronizing workspace: {0} => {1}", wsFile, ws.Name);
 			var wsDesc = GetTextContent(wsFile);
 			var mappings = VcsMappings.Parse(wsDesc, serverPath.Full, localPath.Full);
 
 			LogMappings(mappings);
 
 			ws.Update(ws.Name, ws.Comment, mappings);
-			Logger.DebugFormat("Workspace '{0}' successfully updated.", ws.Name);
+			Trace.InfoFormat("Workspace '{0}' successfully updated.", ws.Name);
 
 			var result = UpdateFiles(ws);
 
@@ -196,11 +196,13 @@ namespace AnFake.Plugins.Tfs2012
 
 		private static void LogMappings(IEnumerable<WorkingFolder> mappings)
 		{
-			Logger.Debug("Mappings:");
-			foreach (var mapping in mappings)
-			{
-				Logger.DebugFormat("  {0} => {1}", mapping.ServerItem, mapping.IsCloaked ? "(cloacked)" : mapping.LocalItem);
-			}
+			Trace.DebugFormat(
+				"Mappings:\n  {0}", 
+				String.Join("\n  ", 
+					mappings.Select(
+						m => String.Format("{0} => {1}", 
+							m.ServerItem, 
+							m.IsCloaked ? "(cloacked)" : m.LocalItem))));
 		}
 
 		private static Workspace FindWorkspace(string workspaceName)
@@ -265,7 +267,7 @@ namespace AnFake.Plugins.Tfs2012
 
 		private static Api.IToolExecutionResult UpdateFiles(Workspace ws)
 		{
-			Logger.Debug("Updating files...");
+			Trace.Info("Updating files...");
 			var status = ws.Get();
 
 			var failures = status.GetFailures();
@@ -273,9 +275,10 @@ namespace AnFake.Plugins.Tfs2012
 			{
 				var msg = failure.GetFormattedMessage();
 
-				Tracer.Warn(msg);
-				Logger.Warn(msg);
+				Trace.Warn(msg);				
 			}
+
+			Trace.InfoFormat("Files updated. {0} warning(s)", failures.Length);
 
 			return new ToolExecutionResult(0, failures.Length);
 		}

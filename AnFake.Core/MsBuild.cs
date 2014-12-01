@@ -4,14 +4,11 @@ using System.Linq;
 using AnFake.Api;
 using AnFake.Core.Exceptions;
 using Common.Logging;
-using Microsoft.Build.Framework;
 
 namespace AnFake.Core
 {
 	public static class MsBuild
 	{
-		private static readonly ILog Log = LogManager.GetLogger("AnFake.Process.MsBuild");
-
 		private static readonly string[] Locations =
 		{
 			"[ProgramFilesX86]/MSBuild/12.0/Bin/MsBuild.exe"
@@ -23,7 +20,7 @@ namespace AnFake.Core
 			public readonly IDictionary<string, string> Properties = new Dictionary<string, string>();
 			public int? MaxCpuCount;
 			public bool NodeReuse;
-			public LoggerVerbosity Verbosity;
+			public Verbosity Verbosity;
 			public TimeSpan Timeout;
 			public FileSystemPath ToolPath;
 			public string ToolArguments;
@@ -31,7 +28,7 @@ namespace AnFake.Core
 			internal Params()
 			{
 				Targets = new[] {"Build"};
-				Verbosity = LoggerVerbosity.Normal;
+				Verbosity = Verbosity.Normal;
 				Timeout = TimeSpan.MaxValue;
 				ToolPath = Locations.AsFileSet().Select(x => x.Path).FirstOrDefault();
 			}
@@ -169,7 +166,7 @@ namespace AnFake.Core
 						String.Join("\n  ", Locations)));
 			// TODO: check other parameters
 
-			Logger.DebugFormat("MsBuild\n => {0}", String.Join("\n => ", projArray.Select(x => x.RelPath)));
+			Trace.InfoFormat("MsBuild\n => {0}", String.Join("\n => ", projArray.Select(x => x.RelPath)));
 
 			var summary = new ToolExecutionResult();
 			foreach (var proj in projArray)
@@ -197,14 +194,13 @@ namespace AnFake.Core
 					.NonQuotedValue(",")
 					.QuotedValue(loggerT.Assembly.Location)
 					.NonQuotedValue(";")
-					.QuotedValue(Tracer.Uri + "#" + Target.Current.Name);
+					.QuotedValue(Trace.Uri + "#" + Target.Current.Name);
 
 				var result = Process.Run(p =>
 				{
 					p.FileName = parameters.ToolPath;
 					p.Timeout = parameters.Timeout;
-					p.Arguments = args.ToString();
-					p.Logger = Log;
+					p.Arguments = args.ToString();					
 					p.TrackExternalMessages = true;
 				});
 
@@ -213,7 +209,7 @@ namespace AnFake.Core
 					.FailIfExitCodeNonZero(String.Format("MsBuild failed with exit code {0}. Solution: {1}", result.ExitCode, proj));
 
 				summary += result;
-			}
+			}			
 
 			return summary;
 		}

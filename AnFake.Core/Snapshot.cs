@@ -1,14 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Common.Logging;
+using AnFake.Api;
 
 namespace AnFake.Core
 {
 	public sealed class Snapshot : IDisposable
 	{
-		private static readonly ILog Log = LogManager.GetLogger<Snapshot>();
-
 		private readonly IList<string> _originalPathes = new List<string>();
 		private readonly string _snapshotBasePath;		
 
@@ -23,7 +21,7 @@ namespace AnFake.Core
 			var fullPath = filePath.Full;
 			var snapshotPath = Path.Combine(_snapshotBasePath, String.Format("{0:X8}", _originalPathes.Count));
 
-			Log.DebugFormat("Save: {0} => {1}", fullPath, snapshotPath);
+			Trace.DebugFormat("Snapshot.Save: {0} => {1}", fullPath, snapshotPath);
 			File.Copy(fullPath, snapshotPath);
 
 			_originalPathes.Add(fullPath);
@@ -43,7 +41,7 @@ namespace AnFake.Core
 				}
 				catch (Exception e)
 				{
-					Log.Error("Revert FAILED.", e);
+					Trace.WarnFormat("Snapshot.Revert: {0}", e.Message);
 				}
 			}
 
@@ -68,7 +66,7 @@ namespace AnFake.Core
 			}
 			catch (Exception e)
 			{
-				Log.Error("Cleanup FAILED.", e);
+				Trace.WarnFormat("Snapshot.Cleanup: {0}", e.Message);
 			}
 		}
 	}

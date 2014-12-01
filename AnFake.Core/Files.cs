@@ -2,15 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using AnFake.Api;
 using AnFake.Core.Exceptions;
-using Common.Logging;
 
 namespace AnFake.Core
 {
 	public static class Files
-	{
-		private static readonly ILog Log = LogManager.GetLogger(typeof(Files).FullName);
-
+	{		
 		public static void Copy(IEnumerable<FileItem> files, FileSystemPath targetPath)
 		{
 			Copy(files, targetPath, false);
@@ -23,29 +21,31 @@ namespace AnFake.Core
 			if (targetPath == null)
 				throw new AnFakeArgumentException("Files.Copy(files, targetPath[, overwrite]): targetPath must not be null");
 
+			Trace.InfoFormat("Copying files to '{0}'...", targetPath);
+
 			var filesToCopy = files
 				.Select(x => new Tuple<FileSystemPath, FileSystemPath>(x.Path, targetPath / x.RelPath))
 				.ToArray();
 
 			if (overwrite)
 			{
-				Log.DebugFormat("COPY: overwrite enabled => cleaning destination\n  TargetPath: {0}", targetPath);
+				Trace.DebugFormat("Files.Copy: overwrite enabled => cleaning destination\n  TargetPath: {0}", targetPath);
 				FileSystem.DeleteFiles(filesToCopy.Select(x => x.Item2));
 			}
 
 			foreach (var folder in filesToCopy.Select(x => x.Item2.Parent).Distinct())
 			{
-				Log.DebugFormat("COPY: creating destination folders\n  TargetPath: {0}", folder);
+				Trace.DebugFormat("Files.Copy: creating destination folders\n  TargetPath: {0}", folder);
 				Directory.CreateDirectory(folder.Full);
 			}
 
 			foreach (var file in filesToCopy)
 			{
-				Log.DebugFormat("COPY:\n  From: {0}\n    To: {1}", file.Item1, file.Item2);
+				Trace.DebugFormat("Files.Copy:\n  From: {0}\n    To: {1}", file.Item1, file.Item2);
 				File.Copy(file.Item1.Full, file.Item2.Full);
 			}
 
-			Log.DebugFormat("COPY: total {0} files", filesToCopy.Length);
+			Trace.InfoFormat("{0} file(s) copied.", filesToCopy.Length);
 		}
 
 		public static void Copy(FileSystemPath filePath, FileSystemPath targetPath)
@@ -70,20 +70,20 @@ namespace AnFake.Core
 			if (targetPath == null)
 				throw new AnFakeArgumentException("Files.Copy(filePath, targetPath[, overwrite]): targetPath must not be null");
 
+			Trace.InfoFormat("Copying '{0}' to '{1}'...", filePath, targetPath);
+
 			if (overwrite)
 			{
-				Log.DebugFormat("COPY: overwrite enabled => cleaning destination\n  TargetPath: {0}", targetPath);
+				Trace.DebugFormat("Files.Copy: overwrite enabled => cleaning destination\n  TargetPath: {0}", targetPath);
 				FileSystem.DeleteFile(targetPath);
 			}
 
 			var targetFolder = targetPath.Parent;
-			Log.DebugFormat("COPY: creating destination folder\n  TargetPath: {0}", targetFolder);
+			Trace.DebugFormat("Files.Copy: creating destination folder\n  TargetPath: {0}", targetFolder);
 			Directory.CreateDirectory(targetFolder.Full);
 
-			Log.DebugFormat("COPY:\n  From: {0}\n    To: {1}", filePath, targetPath);
-			File.Copy(filePath.Full, targetPath.Full);
-
-			Log.Debug("COPY: total 1 file");
+			Trace.DebugFormat("Files.Copy:\n  From: {0}\n    To: {1}", filePath, targetPath);
+			File.Copy(filePath.Full, targetPath.Full);			
 		}
 
 		public static void Copy(string filePath, string targetPath, bool overwrite)
@@ -101,13 +101,23 @@ namespace AnFake.Core
 			if (files == null)
 				throw new AnFakeArgumentException("Files.Delete(files): files must not be null");
 
-			FileSystem.DeleteFiles(files.Select(x => x.Path));
+			Trace.Info("Deleting files...");
+
+			var filePathes = files
+				.Select(x => x.Path)
+				.ToArray();
+
+			FileSystem.DeleteFiles(filePathes);
+
+			Trace.InfoFormat("{0} file(s) deleted.");
 		}
 
 		public static void Delete(FileSystemPath filePath)
 		{
 			if (filePath == null)
 				throw new AnFakeArgumentException("Files.Delete(filePath): filePath must not be null");
+
+			Trace.InfoFormat("Deleting '{0}'...", filePath);
 
 			FileSystem.DeleteFile(filePath);
 		}

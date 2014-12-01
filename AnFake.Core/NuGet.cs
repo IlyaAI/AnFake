@@ -4,14 +4,11 @@ using System.Linq;
 using System.Xml.Serialization;
 using AnFake.Api;
 using AnFake.Core.Exceptions;
-using Common.Logging;
 
 namespace AnFake.Core
 {
 	public static class NuGet
 	{
-		private static readonly ILog Log = LogManager.GetLogger("AnFake.Process.NuGet");
-
 		private static readonly string[] Locations =
 		{
 			".nuget/NuGet.exe"
@@ -103,7 +100,7 @@ namespace AnFake.Core
 
 			var nuspecFile = GenerateNuspecFile(nuspec, srcFolder);
 
-			Logger.DebugFormat("NuGet.Pack => {0}", nuspecFile);
+			Trace.InfoFormat("NuGet.Pack => {0}", nuspecFile);
 
 			var args = new Args("-", " ")
 				.Command("pack")
@@ -120,8 +117,7 @@ namespace AnFake.Core
 			{
 				p.FileName = parameters.ToolPath;
 				p.Timeout = parameters.Timeout;
-				p.Arguments = args.ToString();
-				p.Logger = Log;
+				p.Arguments = args.ToString();				
 			});
 
 			result
@@ -150,7 +146,7 @@ namespace AnFake.Core
 
 			// TODO: check other parameters
 
-			Logger.DebugFormat("NuGet.Push => {0}", package);
+			Trace.InfoFormat("NuGet.Push => {0}", package);
 
 			var args = new Args("-", " ")
 				.Command("push")
@@ -163,8 +159,7 @@ namespace AnFake.Core
 			{
 				p.FileName = parameters.ToolPath;
 				p.Timeout = parameters.Timeout;
-				p.Arguments = args.ToString();
-				p.Logger = Log;
+				p.Arguments = args.ToString();				
 			});
 
 			result

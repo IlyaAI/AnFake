@@ -1,6 +1,6 @@
 ﻿using AnFake.Core;
 
-namespace AnFake
+namespace AnFake.Scripting
 {
 	internal interface IScriptEvaluator
 	{

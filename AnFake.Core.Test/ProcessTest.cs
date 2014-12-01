@@ -17,7 +17,7 @@ namespace AnFake.Core.Test
 			// arrange
 			var logFactory = MockRepository.GenerateMock<ILoggerFactoryAdapter>();
 			var log = MockRepository.GenerateMock<ILog>();
-			logFactory.Stub(x => x.GetLogger("AnFake.Process")).Return(log);
+			logFactory.Stub(x => x.GetLogger("AnFake.Trace")).Return(log);
 
 			var tracer = MockRepository.GenerateMock<ITracer>();
 			var result = MockRepository.GenerateMock<IToolExecutionResult>();
@@ -25,7 +25,7 @@ namespace AnFake.Core.Test
 
 			var prevFactory = LogManager.Adapter;
 			LogManager.Adapter = logFactory;
-			Tracer.Instance = tracer;
+			var prevTracer = Trace.Set(tracer);
 			try
 			{
 				// act
@@ -36,14 +36,14 @@ namespace AnFake.Core.Test
 				}).FailIfExitCodeNonZero("Unexpected exit code.");
 
 				// assert
-				log.AssertWasCalled(x => x.Debug("stdout A"));
+				log.AssertWasCalled(x => x.Trace("stdout A"));
 				log.AssertWasCalled(x => x.Error("stderr A"));
-				log.AssertWasCalled(x => x.Debug("stdout B"));
+				log.AssertWasCalled(x => x.Trace("stdout B"));
 				log.AssertWasCalled(x => x.Error("stderr B"));
 			}
 			finally
 			{
-				Tracer.Instance = null;
+				Trace.Set(prevTracer);
 				LogManager.Adapter = prevFactory;
 			}
 		}
@@ -55,7 +55,7 @@ namespace AnFake.Core.Test
 			// arrange
 			var tracer = new JsonFileTracer("process.log.jsx", false);
 			
-			Tracer.Instance = tracer;
+			var prevTracer = Trace.Set(tracer);
 			try
 			{
 				// act
@@ -73,7 +73,7 @@ namespace AnFake.Core.Test
 			}
 			finally
 			{
-				Tracer.Instance = null;				
+				Trace.Set(prevTracer);
 			}
 		}
 
@@ -86,7 +86,7 @@ namespace AnFake.Core.Test
 			var res = MockRepository.GenerateMock<IToolExecutionResult>();
 			tracer.Stub(x => x.StopTrackExternal()).Return(res);
 
-			Tracer.Instance = tracer;
+			var prevTracer = Trace.Set(tracer);
 			try
 			{
 				// act
@@ -101,7 +101,7 @@ namespace AnFake.Core.Test
 			}
 			finally
 			{
-				Tracer.Instance = null;
+				Trace.Set(prevTracer);
 			}
 		}
 
@@ -115,7 +115,7 @@ namespace AnFake.Core.Test
 			var res = MockRepository.GenerateMock<IToolExecutionResult>();
 			tracer.Stub(x => x.StopTrackExternal()).Return(res);
 
-			Tracer.Instance = tracer;
+			var prevTracer = Trace.Set(tracer);
 			try
 			{
 				// act
@@ -130,7 +130,7 @@ namespace AnFake.Core.Test
 			}
 			finally
 			{
-				Tracer.Instance = null;
+				Trace.Set(prevTracer);
 			}
 		}
 	}

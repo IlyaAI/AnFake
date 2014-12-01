@@ -1,9 +1,14 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 
 namespace AnFake.Api
 {
+	/// <summary>
+	///     Represents trace message collector.
+	/// </summary>
+	/// <remarks>
+	///     Collects important (Summary, Warning, Error) messages produced by some operation.
+	/// </remarks>
 	public sealed class TraceMessageCollector : IEnumerable<TraceMessage>
 	{
 		private readonly IList<TraceMessage> _messages = new List<TraceMessage>();

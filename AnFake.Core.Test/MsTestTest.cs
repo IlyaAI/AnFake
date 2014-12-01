@@ -11,17 +11,19 @@ namespace AnFake.Core.Test
 	[TestClass]
 	public class MsTestTest
 	{
+		public ITracer PrevTracer;		
+
 		[TestInitialize]
 		public void Initialize()
-		{
-			Tracer.Instance = MockRepository.GenerateMock<ITracer>();
+		{			
+			PrevTracer = Trace.Set(MockRepository.GenerateMock<ITracer>());
 		}
 
 		[TestCleanup]
 		public void Cleanup()
 		{
-			Tracer.Instance = null;
-		}
+			Trace.Set(PrevTracer);		
+		}		
 
 		[TestCategory("Functional")]
 		[TestMethod]

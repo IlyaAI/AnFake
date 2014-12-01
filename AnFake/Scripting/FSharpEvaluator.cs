@@ -2,13 +2,17 @@
 using System.IO;
 using AnFake.Core;
 using AnFake.Core.Exceptions;
+using AnFake.Logging;
+using Common.Logging;
 using Microsoft.FSharp.Compiler.Interactive;
 using Microsoft.FSharp.Core;
 
-namespace AnFake
+namespace AnFake.Scripting
 {
 	internal class FSharpEvaluator : IScriptEvaluator
 	{
+		private static readonly ILog Log = LogManager.GetLogger<FSharpEvaluator>();
+
 		public void Evaluate(FileItem script)
 		{
 			var cfg = Shell.FsiEvaluationSession.GetDefaultConfiguration();
@@ -17,8 +21,8 @@ namespace AnFake
 				cfg,
 				new[] {script.Name},
 				new StreamReader(Stream.Null),
-				new LoggerTraceWriter(), 
-				new LoggerErrorWriter(),
+				new LogTraceWriter(Log), 
+				new LogErrorWriter(Log),
 				FSharpOption<bool>.None);
 
 			try

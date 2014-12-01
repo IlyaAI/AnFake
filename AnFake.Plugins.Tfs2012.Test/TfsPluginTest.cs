@@ -19,11 +19,14 @@ namespace AnFake.Plugins.Tfs2012.Test
 		public const string BuildDefinition = "FAKE-test";
 		public const string DropLocation = @"\\nsk-fs\Inbox\Ivanov Ilya";
 
+		public ITracer PrevTracer;
 		public IBuildDetail Build;
 
 		[TestInitialize]
 		public void Initialize()
 		{
+			PrevTracer = Trace.Set(new BypassTracer());
+
 			var teamProjectCollection = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(new Uri(TfsUri));
 			var buildServer = (IBuildServer) teamProjectCollection.GetService(typeof (IBuildServer));
 
@@ -35,7 +38,9 @@ namespace AnFake.Plugins.Tfs2012.Test
 
 		[TestCleanup]
 		public void Cleanup()
-		{			
+		{
+			Trace.Set(PrevTracer);
+
 			if (Build != null)
 			{
 				Build.FinalizeStatus(BuildStatus.Failed);
@@ -48,7 +53,7 @@ namespace AnFake.Plugins.Tfs2012.Test
 		[TestMethod]
 		public void TfsPlugin_should_track_messages()
 		{
-			// arrange
+			// arrange			
 			Build.Information
 				.AddActivityTracking("0001", "Sequence", "General");
 			Build.Information
@@ -56,8 +61,7 @@ namespace AnFake.Plugins.Tfs2012.Test
 
 			var p = MyBuildTesting.CreateParams(
 				new Dictionary<string, string>
-				{
-					{"Verbosity", "Detailed"},
+				{					
 					{"Tfs.Uri", TfsUri},
 					{"Tfs.BuildUri", Build.Uri.ToString()},
 					{"Tfs.ActivityInstanceId", "0001"}
@@ -66,10 +70,10 @@ namespace AnFake.Plugins.Tfs2012.Test
 			var tfs = new TfsPlugin(p);			
 
 			// act
-			p.Tracer.Write(new TraceMessage(TraceMessageLevel.Debug, "Debug"));
-			p.Tracer.Write(new TraceMessage(TraceMessageLevel.Info, "Info"));
-			p.Tracer.Write(new TraceMessage(TraceMessageLevel.Warning, "Warning"));
-			p.Tracer.Write(new TraceMessage(TraceMessageLevel.Error, "Error"));
+			Trace.Message(new TraceMessage(TraceMessageLevel.Debug, "Debug"));
+			Trace.Message(new TraceMessage(TraceMessageLevel.Info, "Info"));
+			Trace.Message(new TraceMessage(TraceMessageLevel.Warning, "Warning"));
+			Trace.Message(new TraceMessage(TraceMessageLevel.Error, "Error"));
 
 			// assert
 			Build.Refresh(new[] {"*"}, QueryOptions.All);

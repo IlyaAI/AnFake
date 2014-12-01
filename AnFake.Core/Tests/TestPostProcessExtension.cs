@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using AnFake.Api;
 
 namespace AnFake.Core.Tests
@@ -20,24 +21,35 @@ namespace AnFake.Core.Tests
 		{
 			foreach (var test in tests)
 			{
-				var report = String.Format("{0} {1,-8} {2,-80} @ {3}",
+				var report = new StringBuilder();
+				report.AppendFormat("{0} {1,-8} {2,-80} @ {3}",
 					test.RunTime, test.Status.ToString().ToUpperInvariant(), test.Name, test.Suite);
 				
 				switch (test.Status)
 				{
 					case TestStatus.Passed:
-						Logger.Info(report);
+						Api.Trace.Info(report.ToString());
 						break;
+
 					case TestStatus.Unknown:
 					case TestStatus.Skipped:
-						Logger.Warn(report);
-						Logger.DebugFormat("  {0}", test.ErrorMessage);
-						Tracer.Write(new TraceMessage(TraceMessageLevel.Warning, String.Format("{0}: {1}", test.Name, test.ErrorMessage)));
+						report
+							.AppendLine()
+							.Append(test.ErrorMessage);
+
+						Api.Trace.Warn(report.ToString());
 						break;
+
 					case TestStatus.Failed:
-						Logger.Error(report);
-						Logger.DebugFormat("  {0}\n  {1}", test.ErrorMessage, test.ErrorDetails);
-						Tracer.Write(new TraceMessage(TraceMessageLevel.Error, String.Format("{0}: {1}", test.Name, test.ErrorMessage)) { Details = test.ErrorDetails });
+						report
+							.AppendLine()
+							.Append(test.ErrorMessage);
+
+						Api.Trace.Message(
+							new TraceMessage(TraceMessageLevel.Error, report.ToString())
+							{
+								Details = test.ErrorDetails
+							});						
 						break;
 				}
 
@@ -72,12 +84,9 @@ namespace AnFake.Core.Tests
 				runTime += test.RunTime;
 			}
 
-			var summary = String.Format("Test Run Summary: {0}, {1} failed, {2} skipped, {3} passed, {4} total.",
+			Api.Trace.SummaryFormat("Test Run Summary: {0}, {1} failed, {2} skipped, {3} passed, {4} total.",
 					runTime, errors, warnings, passed, array.Length);
-
-			Logger.Debug(summary);
-			Tracer.Write(new TraceMessage(TraceMessageLevel.Summary, summary));
-
+			
 			return new TestExecutionResult(errors, warnings, array);
 		}
 	}

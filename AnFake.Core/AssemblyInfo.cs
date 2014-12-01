@@ -92,6 +92,8 @@ namespace AnFake.Core
 			var parameters = Defaults.Clone();
 			setParams(parameters);
 
+			Trace.Info("Embeding assembly info...");
+
 			var snapshot = new Snapshot();
 			var warnings = 0;
 
@@ -112,10 +114,12 @@ namespace AnFake.Core
 							EmbedAttribute(file.Ext.ToLowerInvariant(), attribute.Name, value.ToString(), ref content);
 						}
 						catch (AnFakeException e)
-						{
-							var msg = new TraceMessage(TraceMessageLevel.Warning, e.Message) { File = file.RelPath.Spec };
-							Tracer.Write(msg);
-							Logger.TraceMessage(msg);
+						{							
+							Trace.Message(
+								new TraceMessage(TraceMessageLevel.Warning, e.Message)
+								{
+									File = file.RelPath.Spec
+								});
 
 							warnings++;
 						}
@@ -131,6 +135,8 @@ namespace AnFake.Core
 				snapshot.Revert();
 				throw;
 			}
+
+			Trace.InfoFormat("Assembly info embedded. {0} warning(s)", warnings);
 
 			return new AssemblyInfoExecutionResult(snapshot, warnings);
 		}

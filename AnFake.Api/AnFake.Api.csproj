@@ -49,6 +49,9 @@
     <Compile Include="ArgsExtension.cs" />
     <Compile Include="IToolExecutionResult.cs" />
     <Compile Include="ITracer.cs" />
+    <Compile Include="BypassTracer.cs" />
+    <Compile Include="TraceLogExtension.cs" />
+    <Compile Include="NoopTracer.cs" />
     <Compile Include="JsonFileTracer.cs" />
     <Compile Include="JsonTraceReader.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -56,7 +59,8 @@
     <Compile Include="TraceMessageLevel.cs" />
     <Compile Include="ToolExecutionResult.cs" />
     <Compile Include="TraceMessage.cs" />
-    <Compile Include="Tracer.cs" />
+    <Compile Include="Trace.cs" />
+    <Compile Include="Verbosity.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using AnFake.Api;
 using AnFake.Core.Exceptions;
 
 namespace AnFake.Core
@@ -18,7 +19,7 @@ namespace AnFake.Core
 
 			PluginInstances.Add(pluginType, plugin);
 
-			Logger.DebugFormat("Plugged-in: {0}, {1}", pluginType.FullName, pluginType.Assembly.FullName);
+			Trace.InfoFormat("Plugged-in: {0}, {1}", pluginType.FullName, pluginType.Assembly.FullName);
 		}
 
 		public static T Get<T>()

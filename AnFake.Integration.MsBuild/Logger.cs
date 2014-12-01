@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using AnFake.Api;
 using Microsoft.Build.Framework;
 
@@ -31,17 +30,17 @@ namespace AnFake.Integration.MsBuild
 				{
 					TracerUri = null;
 					AnFakeTarget = null;
-				}				
+				}
 			}
 		}
 
 		public Uri TracerUri { get; private set; }
 
-		public string AnFakeTarget { get; private set; }		
+		public string AnFakeTarget { get; private set; }
 
 		public void Initialize(IEventSource eventSource)
 		{
-			Tracer.Instance = Tracer.Create(TracerUri);
+			Trace.Set(Trace.NewTracer(TracerUri));
 
 			eventSource.MessageRaised += OnMessage;
 			eventSource.WarningRaised += OnWarning;
@@ -66,33 +65,33 @@ namespace AnFake.Integration.MsBuild
 
 				case MessageImportance.Normal:
 					if (Verbosity < LoggerVerbosity.Detailed)
-						return;					
+						return;
 					break;
-				
+
 				default:
 					if (Verbosity < LoggerVerbosity.Diagnostic)
-						return;					
+						return;
 					break;
 			}
 
-			Trace(level, null, null, 0, 0, e.Code, e.Message);
+			TraceMessage(level, null, null, 0, 0, e.Code, e.Message);
 		}
 
 		private void OnWarning(object sender, BuildWarningEventArgs e)
 		{
-			Trace(TraceMessageLevel.Warning, e.ProjectFile, e.File, e.LineNumber, e.ColumnNumber, e.Code, e.Message);
+			TraceMessage(TraceMessageLevel.Warning, e.ProjectFile, e.File, e.LineNumber, e.ColumnNumber, e.Code, e.Message);
 		}
 
 		private void OnError(object sender, BuildErrorEventArgs e)
 		{
-			Trace(TraceMessageLevel.Error, e.ProjectFile, e.File, e.LineNumber, e.ColumnNumber, e.Code, e.Message);
+			TraceMessage(TraceMessageLevel.Error, e.ProjectFile, e.File, e.LineNumber, e.ColumnNumber, e.Code, e.Message);
 		}
 
-		private void Trace(TraceMessageLevel level, string project, string file, int line, int col, string code, string message)
+		private void TraceMessage(TraceMessageLevel level, string project, string file, int line, int col, string code, string message)
 		{
 			try
 			{
-				Tracer.Write(new TraceMessage(level, message)
+				Trace.Message(new TraceMessage(level, message)
 				{
 					Code = code,
 					File = file,
@@ -102,11 +101,11 @@ namespace AnFake.Integration.MsBuild
 					Target = AnFakeTarget
 				});
 			}
-			// ReSharper disable once EmptyGeneralCatchClause
+				// ReSharper disable once EmptyGeneralCatchClause
 			catch (Exception)
 			{
 				// skip
-			}			
+			}
 		}
 	}
 }

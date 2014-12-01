@@ -74,7 +74,7 @@ namespace AnFake.Api
 		public void Write(TraceMessage message)
 		{
 			if (message == null)
-				throw new ArgumentNullException("message", "Tracer.Write(message): message must not be null");
+				throw new ArgumentException("ITracer.Write(message): message must not be null");
 
 			if (_tracker != null)
 				throw new InvalidOperationException("Tracking of external messages is active. Hint: check parity of Start/StopTrackExternal methods.");

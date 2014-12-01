@@ -4,15 +4,13 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using AnFake.Api;
 using AnFake.Core.Exceptions;
-using Common.Logging;
 
 namespace AnFake.Core
 {
 	public static class FileSystem
 	{
-		private static readonly ILog Log = LogManager.GetLogger(typeof (FileSystem).FullName);
-
 		private static readonly string DirectorySeparatorString = Path.DirectorySeparatorChar.ToString(CultureInfo.InvariantCulture);
 
 		public sealed class Params
@@ -278,12 +276,12 @@ namespace AnFake.Core
 				{
 					try
 					{
-						Log.DebugFormat("DEL: {0}", path);			
+						Trace.DebugFormat("FileSystem.Delete: {0}", path);
 						eraser(path.Full);
 					}
 					catch (IOException e)
 					{
-						Log.WarnFormat("DEL: Unable to delete file system entry. Operation deferred.\n  Path: {0}\n  Reason: {1}", path, e.Message);
+						Trace.DebugFormat("FileSystem.Delete: Unable to delete file system entry. Operation deferred.\n  Path: {0}\n  Reason: {1}", path, e.Message);
 
 						deferred.Add(path);
 					}

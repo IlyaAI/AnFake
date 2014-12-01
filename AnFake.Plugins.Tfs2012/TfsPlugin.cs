@@ -3,7 +3,6 @@ using System.Linq;
 using AnFake.Api;
 using AnFake.Core;
 using AnFake.Core.Exceptions;
-using Common.Logging;
 using Microsoft.TeamFoundation.Build.Client;
 using Microsoft.TeamFoundation.Client;
 
@@ -11,8 +10,6 @@ namespace AnFake.Plugins.Tfs2012
 {
 	internal sealed class TfsPlugin : IPlugin
 	{
-		private static readonly ILog Log = LogManager.GetLogger<TfsPlugin>();
-
 		private const string SectionKey = "AnFake";
 		private const string SectionHeader = "AnFake Summary";
 		private const int SectionPriority = 199;
@@ -77,7 +74,7 @@ namespace AnFake.Plugins.Tfs2012
 					}
 				}
 
-				parameters.Tracer.MessageReceived += OnMessage;
+				Trace.MessageReceived += OnMessage;
 				Target.RunFinished += OnRunFinished;
 			}
 			else

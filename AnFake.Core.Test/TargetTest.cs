@@ -9,17 +9,21 @@ namespace AnFake.Core.Test
 {
 	[TestClass]
 	public class TargetTest
-	{		
+	{
+		public ITracer PrevTracer;
+		public ITracer Tracer;
+
 		[TestInitialize]
 		public void Initialize()
 		{
-			Tracer.Instance = MockRepository.GenerateMock<ITracer>();
+			Tracer = MockRepository.GenerateMock<ITracer>();
+			PrevTracer = Trace.Set(Tracer);
 		}
 
 		[TestCleanup]
 		public void Cleanup()
 		{
-			Tracer.Instance = null;
+			Trace.Set(PrevTracer);
 			Target.Reset();
 		}
 
@@ -72,7 +76,7 @@ namespace AnFake.Core.Test
 
 			// assert
 			Assert.AreEqual("a", sb.ToString());
-			Tracer.Instance.AssertWasCalled(
+			Tracer.AssertWasCalled(
 				x => x.Write(
 					Arg<TraceMessage>.Matches(y => y.Level == TraceMessageLevel.Error && y.Message == "ERROR")));
 		}
@@ -141,7 +145,7 @@ namespace AnFake.Core.Test
 			
 			// assert
 			Assert.AreEqual("c", sb.ToString());
-			Tracer.Instance.AssertWasCalled(
+			Tracer.AssertWasCalled(
 				x => x.Write(
 					Arg<TraceMessage>.Matches(y => y.Level == TraceMessageLevel.Error && y.Message == "ERROR")));
 		}
@@ -169,7 +173,7 @@ namespace AnFake.Core.Test
 			
 			// assert
 			Assert.AreEqual("c", sb.ToString());
-			Tracer.Instance.AssertWasCalled(
+			Tracer.AssertWasCalled(
 				x => x.Write(
 					Arg<TraceMessage>.Matches(y => y.Level == TraceMessageLevel.Error && y.Message == "ERROR")));
 		}		

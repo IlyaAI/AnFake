@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.IO;
 using AnFake.Api;
 using AnFake.Core.Exceptions;
-using Microsoft.Build.Framework;
 
 namespace AnFake.Core
 {
@@ -17,46 +16,19 @@ namespace AnFake.Core
 			public readonly FileSystemPath Path;
 			public readonly FileItem LogFile;
 			public readonly FileItem ScriptFile;
-			public readonly string[] Targets;
-			public ITracer Tracer;
-			public LoggerVerbosity Verbosity;
+			public readonly string[] Targets;			
+			public readonly Verbosity Verbosity;
 
 			internal Params(FileSystemPath path, FileItem logFile, FileItem scriptFile,
-				string[] targets, IDictionary<string, string> properties)
+				Verbosity verbosity, string[] targets, IDictionary<string, string> properties)
 			{
 				Path = path;
 				LogFile = logFile;
 				ScriptFile = scriptFile;
 				Targets = targets;
 				Properties = new ReadOnlyDictionary<string, string>(properties);
-				Verbosity = LoggerVerbosity.Normal;
-
-				ParseWellknownProperties(properties);
-
-				Tracer = new JsonFileTracer("trace.jsx".AsPath().Full, false)
-				{
-					Threshold = Verbosity > LoggerVerbosity.Normal
-						? TraceMessageLevel.Debug
-						: TraceMessageLevel.Info
-				};
-			}
-
-			private void ParseWellknownProperties(IDictionary<string, string> properties)
-			{
-				string value;
-
-				if (properties.TryGetValue("Verbosity", out value))
-				{
-					if (!Enum.TryParse(value, true, out Verbosity))
-						throw new AnFakeArgumentException(
-							String.Format(
-								"Unrecognized value '{0}'. Verbosity = {{{1}}}", 
-								value, 
-								String.Join("|", Enum.GetNames(typeof(LoggerVerbosity)))));
-					
-					properties.Remove("Verbosity");
-				}
-			}
+				Verbosity = verbosity;								
+			}			
 		}
 
 		public static Params Defaults { get; private set; }
@@ -73,9 +45,7 @@ namespace AnFake.Core
 			Debug.Assert(Path.IsPathRooted(@params.ScriptFile.Path.Spec), "ScriptFile must have absolute path.");
 
 			Defaults = @params;
-			FileSystemPath.Base = @params.ScriptFile.Folder;			
-			Tracer.Instance = Defaults.Tracer;
-
+			
 			_isInitialized = true;
 			if (InitializedHandlers != null)
 			{
@@ -152,45 +122,6 @@ namespace AnFake.Core
 				throw new AnFakeArgumentException("MyBuild.Failed(format): format must not be null or empty");
 
 			throw new TargetFailureException(String.Format(format, args));
-		}
-
-		public static void Info(string message)
-		{
-			Logger.Info(message);
-			Tracer.Write(new TraceMessage(TraceMessageLevel.Info, message));
-		}
-
-		public static void InfoFormat(string format, params object[] args)
-		{
-			var message = String.Format(format, args);
-			Logger.Info(message);
-			Tracer.Write(new TraceMessage(TraceMessageLevel.Info, message));
-		}
-
-		public static void Warn(string message)
-		{
-			Logger.Warn(message);
-			Tracer.Write(new TraceMessage(TraceMessageLevel.Warning, message));
-		}
-
-		public static void WarnFormat(string format, params object[] args)
-		{
-			var message = String.Format(format, args);
-			Logger.Warn(message);
-			Tracer.Write(new TraceMessage(TraceMessageLevel.Warning, message));
-		}
-
-		public static void Error(string message)
-		{
-			Logger.Error(message);
-			Tracer.Write(new TraceMessage(TraceMessageLevel.Error, message));
-		}
-
-		public static void ErrorFormat(string format, params object[] args)
-		{
-			var message = String.Format(format, args);
-			Logger.Error(message);
-			Tracer.Write(new TraceMessage(TraceMessageLevel.Error, message));
-		}		
+		}				
 	}
 }

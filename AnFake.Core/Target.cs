@@ -3,12 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using AnFake.Api;
 using AnFake.Core.Exceptions;
+using Common.Logging;
 
 namespace AnFake.Core
 {
 	public sealed class Target
 	{
-		private static readonly IDictionary<string, Target> Targets = new Dictionary<string, Target>(StringComparer.OrdinalIgnoreCase);
+		// This logger has privileges in Level setup, DO NOT change name.
+		// See AnFake.Logging.LoggerFactoryAdapter
+		private static readonly ILog Log = LogManager.GetLogger("AnFake.Target");
+
+		private static readonly IDictionary<string, Target> Targets 
+			= new Dictionary<string, Target>(StringComparer.OrdinalIgnoreCase);
 
 		public sealed class ExecutionReason
 		{
@@ -208,7 +214,7 @@ namespace AnFake.Core
 			var orderedTargets = new List<Target>();
 			ResolveDependencies(orderedTargets);
 			
-			Logger.DebugFormat("'{0}' execution order:\n  {1}", _name, String.Join("\n  ", orderedTargets.Select(x => x.Name)));
+			Trace.InfoFormat("'{0}' execution order: {1}.", _name, String.Join(", ", orderedTargets.Select(x => x.Name)));
 
 			// Target.Do
 			var lastExecutedTarget = -1;
@@ -376,23 +382,23 @@ namespace AnFake.Core
 			var index = 0;
 
 			var caption = String.Format("================ '{0}' Summary ================", _name);
-			Logger.Debug("");
-			Logger.Debug(caption);
+			Log.Debug("");
+			Log.Debug(caption);
 
 			foreach (var target in executedTargets)
 			{
-				Logger.TargetStateFormat(target.State, "{0}: {1} error(s) {2} warning(s) {3} message(s)", 
+				Log.TargetStateFormat(target.State, "{0}: {1} error(s) {2} warning(s) {3} message(s)", 
 					target.Name, target.Messages.ErrorsCount, target.Messages.WarningsCount, target.Messages.SummariesCount);
 				
 				foreach (var message in target.Messages)
 				{
-					Logger.TraceMessageFormat(message.Level, "[{0,4}] {1}", ++index, message.ToString());
+					Log.TraceMessageFormat(message.Level, "[{0,4}] {1}", ++index, message.ToString());
 				}
 			}
 
-			Logger.Debug(new String('-', caption.Length));
-			Logger.TargetStateFormat(finalState, "'{0}' {1}", _name, finalState.ToHumanReadable());
-			Logger.Debug("");
+			Log.Debug(new String('-', caption.Length));
+			Log.TargetStateFormat(finalState, "'{0}' {1}", _name, finalState.ToHumanReadable());
+			Log.Debug("");
 		}
 
 		private bool Invoke(string phase, Action action, bool skipErrors)
@@ -403,13 +409,11 @@ namespace AnFake.Core
 			var setTarget = new EventHandler<TraceMessage>((s, m) => m.Target = Name);
 
 			_current = this;
-
-			Logger.Debug("");
-			Logger.DebugFormat("START {0}.{1}", _name, phase);
 			
-			Tracer.MessageReceiving += setTarget;
-			Tracer.MessageReceived += _messages.OnMessage;
-			Tracer.InfoFormat("START {0}.{1}", _name, phase);
+			Trace.InfoFormat(">>> '{0}.{1}' started.", _name, phase);
+			
+			Trace.MessageReceiving += setTarget;
+			Trace.MessageReceived += _messages.OnMessage;			
 			try
 			{
 				var existingErrors = _messages.ErrorsCount;
@@ -430,8 +434,7 @@ namespace AnFake.Core
 			{
 				var error = (e as AnFakeException) ?? new AnFakeWrapperException(e);
 
-				Logger.Error(error);
-				Tracer.Error(error);
+				Trace.Error(error);
 
 				if (!skipErrors)
 					throw new TerminateTargetException(String.Format("Target terminated due to errors in {0}.{1}", _name, phase), e);
@@ -440,11 +443,9 @@ namespace AnFake.Core
 			}
 			finally
 			{
-				Tracer.InfoFormat("END   {0}.{1}", _name, phase);
-				Tracer.MessageReceived -= _messages.OnMessage;
-				Tracer.MessageReceiving -= setTarget;				
-
-				Logger.DebugFormat("END   {0}.{1}", _name, phase);
+				Trace.InfoFormat("<<< '{0}.{1}' finished.", _name, phase);
+				Trace.MessageReceived -= _messages.OnMessage;
+				Trace.MessageReceiving -= setTarget;
 
 				_current = null;
 			}

@@ -1,33 +1,28 @@
 ﻿using System;
 using AnFake.Api;
 using AnFake.Core.Exceptions;
-using Common.Logging;
 
 namespace AnFake.Core
 {
 	public static class Process
 	{
-		private static readonly ILog Log = LogManager.GetLogger("AnFake.Process");
-
 		public sealed class Params
 		{
 			public FileSystemPath FileName;
 			public string Arguments;
 			public FileSystemPath WorkingDirectory;
 			public TimeSpan Timeout;
-			public ILog Logger;			
 			public bool TrackExternalMessages;
 
 			internal Params()
 			{
 				WorkingDirectory = "".AsPath();
 				Timeout = TimeSpan.MaxValue;
-				Logger = Log;
 			}
 
 			public Params Clone()
 			{
-				return (Params)MemberwiseClone();
+				return (Params) MemberwiseClone();
 			}
 		}
 
@@ -50,8 +45,6 @@ namespace AnFake.Core
 				throw new AnFakeArgumentException("Process.Params.FileName: must not be null");
 			if (parameters.WorkingDirectory == null)
 				throw new AnFakeArgumentException("Process.Params.WorkingDirectory: must not be null");
-			if (parameters.Logger == null)
-				throw new AnFakeArgumentException("Process.Params.Logger: must not be null");
 
 			var process = new System.Diagnostics.Process
 			{
@@ -70,19 +63,15 @@ namespace AnFake.Core
 				process.StartInfo.Arguments = parameters.Arguments;
 			}
 
-			Tracer.InfoFormat("{0} {1}", process.StartInfo.FileName, process.StartInfo.Arguments);
-			Log.DebugFormat("Starting process...\n  Executable: {0}\n  Arguments: {1}\n  WorkingDirectory: {2}", 
+			Trace.InfoFormat("Starting process...\n  Executable: {0}\n  Arguments: {1}\n  WorkingDirectory: {2}",
 				process.StartInfo.FileName, process.StartInfo.Arguments, process.StartInfo.WorkingDirectory);
 
 			var external = new TraceMessageCollector();
-			Tracer.MessageReceived += external.OnMessage;
-
-			var traceMessage = new EventHandler<TraceMessage>((s, m) => parameters.Logger.TraceMessage(m));
+			Trace.MessageReceived += external.OnMessage;
 
 			if (parameters.TrackExternalMessages)
 			{
-				Tracer.MessageReceived += traceMessage;
-				Tracer.StartTrackExternal();
+				Trace.StartTrackExternal();
 			}
 			else
 			{
@@ -90,17 +79,15 @@ namespace AnFake.Core
 				{
 					if (String.IsNullOrWhiteSpace(evt.Data))
 						return;
-					
-					Tracer.Debug(evt.Data);
-					parameters.Logger.Debug(evt.Data);
+
+					Trace.Debug(evt.Data);
 				};
 				process.ErrorDataReceived += (sender, evt) =>
 				{
 					if (String.IsNullOrWhiteSpace(evt.Data))
 						return;
 
-					Tracer.Error(evt.Data);
-					parameters.Logger.Error(evt.Data);
+					Trace.Error(evt.Data);
 				};
 			}
 			try
@@ -117,22 +104,21 @@ namespace AnFake.Core
 				else if (!process.WaitForExit((int) parameters.Timeout.TotalMilliseconds))
 				{
 					process.Kill();
-					throw new TimeoutException(String.Format("Process isn't completed in specified time.\n  Executable: {0}\n  Timeout: {1}", process.StartInfo.FileName, parameters.Timeout));
+					throw new TimeoutException(String.Format("Process isn't completed in specified time.\n  Executable: {0}\n  Timeout: {1}", process.StartInfo.FileName,
+						parameters.Timeout));
 				}
 			}
 			finally
 			{
 				if (parameters.TrackExternalMessages)
 				{
-					Tracer.StopTrackExternal();
-					Tracer.MessageReceived -= traceMessage;
+					Trace.StopTrackExternal();
 				}
 
-				Tracer.MessageReceived -= external.OnMessage;
+				Trace.MessageReceived -= external.OnMessage;
 			}
 
-			Tracer.InfoFormat("Finished. ExitCode = {0}", process.ExitCode);
-			Log.DebugFormat("Process finished. ExitCode = {0} Errors = {1} Warnings = {2} Time = {3}", 
+			Trace.InfoFormat("Process finished. ExitCode = {0} Errors = {1} Warnings = {2} Time = {3}",
 				process.ExitCode, external.ErrorsCount, external.WarningsCount, process.ExitTime - process.StartTime);
 
 			return new ProcessExecutionResult(process.ExitCode, external.ErrorsCount, external.WarningsCount);

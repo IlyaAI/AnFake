@@ -11,8 +11,6 @@ namespace AnFake.Core
 {
 	public static class MsTest
 	{
-		private static readonly ILog Log = LogManager.GetLogger("AnFake.Process.MsTest");
-
 		private static readonly string[] Locations =
 		{
 			"[ProgramFilesX86]/Microsoft Visual Studio 12.0/Common7/IDE/MsTest.exe"
@@ -75,13 +73,13 @@ namespace AnFake.Core
 			//if (parameters.WorkingDirectory == null)
 			//	throw new AnFakeArgumentException("MsTest.Params.WorkingDirectory must not be null");
 
-			Logger.DebugFormat("MsTest\n => {0}", String.Join("\n => ", assembliesArray.Select(x => x.RelPath)));
+			Trace.InfoFormat("MsTest\n => {0}", String.Join("\n => ", assembliesArray.Select(x => x.RelPath)));
 
 			var tests = new List<TestResult>();
 			
 			foreach (var assembly in assembliesArray)
 			{
-				Logger.DebugFormat("{0}...", assembly.RelPath);
+				Trace.DebugFormat("{0}...", assembly.RelPath);
 
 				var workDir = parameters.WorkingDirectory ?? assembly.Folder;
 				var resultPath = (parameters.ResultsDirectory ?? workDir)/assembly.NameWithoutExt.MakeUnique(".trx");
@@ -100,8 +98,7 @@ namespace AnFake.Core
 					p.FileName = parameters.ToolPath;
 					p.WorkingDirectory = workDir;
 					p.Timeout = parameters.Timeout;
-					p.Arguments = args;
-					p.Logger = Log;
+					p.Arguments = args;					
 				});
 
 				if (parameters.PostProcessor != null && File.Exists(resultPath.Full))
@@ -116,7 +113,7 @@ namespace AnFake.Core
 						currentTests.Count(x => x.Status == TestStatus.Passed),
 						currentTests.Length);
 
-					Tracer.Write(
+					Trace.Message(
 						new TraceMessage(TraceMessageLevel.Summary, summary)
 							{
 								LinkLabel = "Trace",

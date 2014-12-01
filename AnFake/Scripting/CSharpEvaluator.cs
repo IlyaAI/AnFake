@@ -1,7 +1,7 @@
 ﻿using AnFake.Core;
 using CSScriptLibrary;
 
-namespace AnFake
+namespace AnFake.Scripting
 {
 	internal class CSharpEvaluator : IScriptEvaluator
 	{
