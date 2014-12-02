@@ -1,6 +1,6 @@
-﻿#r ".AnFake/Bin/AnFake.Api.dll"
-#r ".AnFake/Bin/AnFake.Core.dll"
-#r ".AnFake/Bin/AnFake.Fsx.dll"
+﻿#r ".AnFake/AnFake.Api.dll"
+#r ".AnFake/AnFake.Core.dll"
+#r ".AnFake/AnFake.Fsx.dll"
 #r ".AnFake/Plugins/AnFake.Plugins.Tfs2012.dll"
 
 open System
@@ -14,16 +14,19 @@ Tfs.UseIt()
 
 let out = ~~".out"
 let productOut = out / "product"
-let pluginsOut = out / "plugins"
+let pluginsOut = productOut / "Plugins"
+let extrasOut = productOut / "Extras"
 let testsOut = out / "tests"
 let product = !!"AnFake/*.csproj"
 let plugins = !!"AnFake.Plugins.Tfs2012/*.csproj"
+let extras = ~~".AnFake/Extras" % "*"
+let cmds = ~~".AnFake" % "*.cmd"
 let tests = !!"*/*.Test.csproj"
 let version = "0.9".AsVersion()
 
 "Clean" => (fun _ ->    
     let obj = !!!"*/obj"
-    let bin = !!!"*/bin" - ".AnFake/Bin"
+    let bin = !!!"*/bin"
 
     Folders.Clean obj
     Folders.Clean bin
@@ -43,7 +46,11 @@ let version = "0.9".AsVersion()
 
     MsBuild.BuildRelease(product, productOut) |> ignore
 
+    Files.Copy(cmds, productOut, true)
+
     MsBuild.BuildRelease(plugins, pluginsOut) |> ignore
+
+    Files.Copy(extras, extrasOut, true)
 
     MsBuild.BuildRelease(tests, testsOut) |> ignore
 )
@@ -56,14 +63,16 @@ let version = "0.9".AsVersion()
 ) |> skipErrors
 
 "Package" => (fun _ -> 
-    let bins = 
+    let files = 
         productOut % "AnFake.exe"
         + "AnFake.exe.config"
+        + "*.cmd"
         + "*.dll"
         + "AnFake.*.xml"
-    let plugins = 
-        pluginsOut % "*.dll" + "*.xml"
-
+        + "Extras/*"
+        + "Plugins/AnFake.Integration.Tfs2012.dll"
+        + "Plugins/AnFake.Plugins.Tfs2012.dll"
+    
     let nuspec = NuGet.Spec25(fun meta -> 
         meta.Id <- "AnFake"
         meta.Version <- version
@@ -71,21 +80,12 @@ let version = "0.9".AsVersion()
         meta.Description <- "AnFake: Another F# Make"
     )
 
-    nuspec.AddFiles(bins, "Bin")
-    nuspec.AddFiles(plugins, "Plugins")
+    nuspec.AddFiles(files, "")
 
     NuGet.Pack(nuspec, out, fun p -> 
         p.NoPackageAnalysis <- true
         p.NoDefaultExcludes <- true)
         |> ignore
 )
-
-//"TargetC" => (fun _ ->
-//    Logger.Debug "Target C"
-//) &=> (fun _ ->
-//    Logger.Debug "Failure C"
-//) |=> (fun _ -> 
-//    Logger.Debug "Final C"
-//)
 
 "Build" <== ["Compile"; "Test.Unit"]

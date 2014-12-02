@@ -58,6 +58,7 @@
     <ProjectReference Include="..\AnFake.Api\AnFake.Api.csproj">
       <Project>{e08fa8a9-33d4-4f27-b29e-c9388a291c45}</Project>
       <Name>AnFake.Api</Name>
+      <Private>True</Private>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
