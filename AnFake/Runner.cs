@@ -136,7 +136,7 @@ namespace AnFake
 				options.Properties.Remove("Verbosity");
 			}
 
-			var logger = new Log4NetLogger(options.LogPath, Console.WindowWidth);
+			var logger = new Log4NetLogger(options.LogPath, Math.Min(Console.WindowWidth, 180));
 			switch (options.Verbosity)
 			{
 				case Verbosity.Quiet:

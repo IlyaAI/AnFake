@@ -22,6 +22,16 @@ let plugins = !!"AnFake.Plugins.Tfs2012/*.csproj"
 let extras = ~~".AnFake/Extras" % "*"
 let cmds = ~~".AnFake" % "*.cmd"
 let tests = !!"*/*.Test.csproj"
+let nugetFiles = 
+    productOut % "AnFake.exe"
+    + "AnFake.exe.config"
+    + "*.cmd"
+    + "*.dll"
+    + "AnFake.*.xml"
+    - "FSharp.Core.dll"
+    + "Extras/*"
+    + "Plugins/AnFake.Integration.Tfs2012.dll"
+    + "Plugins/AnFake.Plugins.Tfs2012.dll"
 let version = "0.9".AsVersion()
 
 "Clean" => (fun _ ->    
@@ -63,16 +73,6 @@ let version = "0.9".AsVersion()
 ) |> skipErrors
 
 "Package" => (fun _ -> 
-    let files = 
-        productOut % "AnFake.exe"
-        + "AnFake.exe.config"
-        + "*.cmd"
-        + "*.dll"
-        + "AnFake.*.xml"
-        + "Extras/*"
-        + "Plugins/AnFake.Integration.Tfs2012.dll"
-        + "Plugins/AnFake.Plugins.Tfs2012.dll"
-    
     let nuspec = NuGet.Spec25(fun meta -> 
         meta.Id <- "AnFake"
         meta.Version <- version
@@ -80,7 +80,7 @@ let version = "0.9".AsVersion()
         meta.Description <- "AnFake: Another F# Make"
     )
 
-    nuspec.AddFiles(files, "")
+    nuspec.AddFiles(nugetFiles, "")
 
     NuGet.Pack(nuspec, out, fun p -> 
         p.NoPackageAnalysis <- true

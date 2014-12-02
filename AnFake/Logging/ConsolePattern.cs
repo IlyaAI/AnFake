@@ -29,7 +29,7 @@ namespace AnFake.Logging
 				var index = msg.IndexOf('\n', start);
 				if (index < 0) index = msg.Length;
 
-				if (index - start >= _width - 4)
+				if (index - start >= _width - 4 && loggingEvent.Level < Level.Warn)
 				{
 					writer.Write(msg.Substring(start, _width - 4));
 					writer.WriteLine("...");

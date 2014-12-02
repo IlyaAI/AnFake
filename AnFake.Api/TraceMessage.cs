@@ -71,6 +71,7 @@ namespace AnFake.Api
 		/// <returns></returns>
 		public string ToString(string format, IFormatProvider formatProvider)
 		{
+			const int ident = 2;
 			var sb = new StringBuilder();
 
 			if (!String.IsNullOrEmpty(Code))
@@ -88,7 +89,7 @@ namespace AnFake.Api
 						if (String.IsNullOrWhiteSpace(LinkHref))
 							break;
 						
-						sb.AppendLine();
+						sb.AppendLine().Append(' ', ident);
 						if (!String.IsNullOrWhiteSpace(LinkLabel))
 						{
 							sb.Append('[').Append(LinkLabel).Append('|').Append(LinkHref).Append(']');
@@ -102,7 +103,7 @@ namespace AnFake.Api
 					case 'f':
 						if (!String.IsNullOrEmpty(File))
 						{
-							sb.AppendLine().Append("    ").Append(File);
+							sb.AppendLine().Append(' ', ident).Append(File);
 							if (Line > 0)
 							{
 								sb.AppendFormat(" Ln: {0}", Line);
@@ -115,7 +116,7 @@ namespace AnFake.Api
 
 						if (!String.IsNullOrEmpty(Project))
 						{
-							sb.AppendLine().Append("    ").Append(Project);
+							sb.AppendLine().Append(' ', ident).Append(Project);
 						}
 						break;
 

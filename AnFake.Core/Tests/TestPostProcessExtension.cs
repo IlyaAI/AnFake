@@ -19,6 +19,8 @@ namespace AnFake.Core.Tests
 
 		public static IEnumerable<TestResult> Trace(this IEnumerable<TestResult> tests)
 		{
+			const int ident = 2;
+
 			foreach (var test in tests)
 			{
 				var report = new StringBuilder();
@@ -34,7 +36,7 @@ namespace AnFake.Core.Tests
 					case TestStatus.Unknown:
 					case TestStatus.Skipped:
 						report
-							.AppendLine()
+							.AppendLine().Append(' ', ident)
 							.Append(test.ErrorMessage);
 
 						Api.Trace.Warn(report.ToString());
@@ -42,7 +44,7 @@ namespace AnFake.Core.Tests
 
 					case TestStatus.Failed:
 						report
-							.AppendLine()
+							.AppendLine().Append(' ', ident)
 							.Append(test.ErrorMessage);
 
 						Api.Trace.Message(

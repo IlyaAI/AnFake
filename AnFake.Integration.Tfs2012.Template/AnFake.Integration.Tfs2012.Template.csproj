@@ -30,6 +30,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AnFake.Api">
+      <HintPath>..\.AnFake\AnFake.Api.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="AnFake.Integration.Tfs2012">
       <HintPath>..\.AnFake\Plugins\AnFake.Integration.Tfs2012.dll</HintPath>
       <Private>False</Private>
