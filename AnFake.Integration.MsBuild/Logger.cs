@@ -4,7 +4,7 @@ using Microsoft.Build.Framework;
 
 namespace AnFake.Integration.MsBuild
 {
-	public sealed class Logger : ILogger
+	public sealed class Logger : Microsoft.Build.Framework.ILogger
 	{
 		private string _parameters;
 

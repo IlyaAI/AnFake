@@ -3,16 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using AnFake.Api;
 using AnFake.Core.Exceptions;
-using Common.Logging;
 
 namespace AnFake.Core
 {
 	public sealed class Target
 	{
-		// This logger has privileges in Level setup, DO NOT change name.
-		// See AnFake.Logging.LoggerFactoryAdapter
-		private static readonly ILog Log = LogManager.GetLogger("AnFake.Target");
-
 		private static readonly IDictionary<string, Target> Targets 
 			= new Dictionary<string, Target>(StringComparer.OrdinalIgnoreCase);
 
@@ -382,12 +377,12 @@ namespace AnFake.Core
 			var index = 0;
 
 			var caption = String.Format("================ '{0}' Summary ================", _name);
-			Log.Debug("");
-			Log.Debug(caption);
+			Log.Text("");
+			Log.Text(caption);
 
 			foreach (var target in executedTargets)
 			{
-				Log.TargetStateFormat(target.State, "{0}: {1} error(s) {2} warning(s) {3} message(s)", 
+				LogEx.TargetStateFormat(target.State, "{0}: {1} error(s) {2} warning(s) {3} message(s)", 
 					target.Name, target.Messages.ErrorsCount, target.Messages.WarningsCount, target.Messages.SummariesCount);
 				
 				foreach (var message in target.Messages)
@@ -396,9 +391,9 @@ namespace AnFake.Core
 				}
 			}
 
-			Log.Debug(new String('-', caption.Length));
-			Log.TargetStateFormat(finalState, "'{0}' {1}", _name, finalState.ToHumanReadable());
-			Log.Debug("");
+			Log.Text(new String('-', caption.Length));
+			LogEx.TargetStateFormat(finalState, "'{0}' {1}", _name, finalState.ToHumanReadable());
+			Log.Text("");
 		}
 
 		private bool Invoke(string phase, Action action, bool skipErrors)

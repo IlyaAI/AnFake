@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using AnFake.Api;
 using AnFake.Core.Exceptions;
-using Common.Logging;
 
 namespace AnFake.Core
 {
@@ -166,7 +165,7 @@ namespace AnFake.Core
 						String.Join("\n  ", Locations)));
 			// TODO: check other parameters
 
-			Trace.InfoFormat("MsBuild\n => {0}", String.Join("\n => ", projArray.Select(x => x.RelPath)));
+			Trace.InfoFormat("MsBuild.Build\n => {0}", String.Join("\n => ", projArray.Select(x => x.RelPath)));
 
 			var summary = new ToolExecutionResult();
 			foreach (var proj in projArray)

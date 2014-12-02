@@ -8,7 +8,6 @@ using AnFake.Core;
 using AnFake.Core.Exceptions;
 using AnFake.Logging;
 using AnFake.Scripting;
-using Common.Logging;
 
 namespace AnFake
 {
@@ -115,9 +114,6 @@ namespace AnFake
 
 		private static void ConfigureLogger(RunOptions options)
 		{
-			// triger Common.Logging initiation
-			LogManager.GetLogger("AnFake.Runner");
-
 			options.Verbosity = Verbosity.Normal;
 			options.LogPath = Path.Combine(options.BuildPath, "AnFake.log");
 
@@ -140,7 +136,25 @@ namespace AnFake
 				options.Properties.Remove("Verbosity");
 			}
 
-			LoggerFactoryAdapter.CurrentConfig.SetUp(options.LogPath, options.Verbosity);
+			var logger = new Log4NetLogger(options.LogPath, Console.WindowWidth);
+			switch (options.Verbosity)
+			{
+				case Verbosity.Quiet:
+					logger.Threshold = LogMessageLevel.Warning;
+					break;
+				case Verbosity.Minimal:
+					logger.Threshold = LogMessageLevel.Summary;
+					break;
+				case Verbosity.Detailed:
+				case Verbosity.Diagnostic:
+					logger.Threshold = LogMessageLevel.Debug;
+					break;
+				default:
+					logger.Threshold = LogMessageLevel.Info;
+					break;
+			}			
+
+			Log.Set(logger);
 		}
 
 		private static void ConfigureTracer(RunOptions options)

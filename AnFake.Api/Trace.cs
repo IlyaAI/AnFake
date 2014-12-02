@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using Common.Logging;
 
 namespace AnFake.Api
 {
@@ -18,10 +17,6 @@ namespace AnFake.Api
 	/// </remarks>
 	public static class Trace
 	{
-		// This logger has privileges in Level setup, DO NOT change name.
-		// See AnFake.Logging.LoggerFactoryAdapter
-		private static readonly ILog Log = LogManager.GetLogger("AnFake.Trace");
-
 		private static ITracer _tracer = new NoopTracer();
 
 		private static ITracer Tracer
@@ -32,7 +27,7 @@ namespace AnFake.Api
 		public static ITracer Set(ITracer tracer)
 		{
 			if (tracer == null)
-				throw new ArgumentException("Trace.Initialize(tracer): tracer must not be null.");
+				throw new ArgumentException("Trace.Set(tracer): tracer must not be null.");
 
 			var prevTracer = _tracer;
 			_tracer = tracer;

@@ -1,12 +1,10 @@
 ﻿using System;
-using Common.Logging;
+using AnFake.Api;
 
 namespace AnFake.Core
 {
 	public static class SafeOp
 	{
-		private static readonly ILog Log = LogManager.GetLogger(typeof (SafeOp).FullName);
-
 		public static bool Try<T1>(Action<T1> action, T1 arg1)
 		{
 			try
@@ -17,7 +15,7 @@ namespace AnFake.Core
 			}
 			catch (Exception e)
 			{
-				Log.Error(e);
+				Log.Error("SafeOp.Try: {0}", e);
 			}
 
 			return false;
@@ -33,7 +31,7 @@ namespace AnFake.Core
 			}
 			catch (Exception e)
 			{
-				Log.Error(e);
+				Log.Error("SafeOp.Try: {0}", e);
 			}
 
 			return false;

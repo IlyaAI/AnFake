@@ -3,14 +3,11 @@ using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
 using System.Threading;
-using Common.Logging;
 
 namespace AnFake.Api
 {
 	public sealed class JsonFileTracer : ITracer
 	{
-		private static readonly ILog Log = LogManager.GetLogger<JsonFileTracer>();		
-
 		private readonly string _logFile;
 		private readonly XmlObjectSerializer _serializer;
 		private TraceMessageLevel _threshold = TraceMessageLevel.Info;

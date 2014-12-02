@@ -1,18 +1,18 @@
 ﻿using System.IO;
 using System.Text;
-using Common.Logging;
+using AnFake.Api;
 
 namespace AnFake.Logging
 {
-	internal abstract class LogWriter : TextWriter
+	internal sealed class LogWriter : TextWriter
 	{		
 		private readonly StringBuilder _message = new StringBuilder(128);
-		private readonly ILog _log;
+		private readonly LogMessageLevel _level;
 
-		protected LogWriter(ILog log)
+		public LogWriter(LogMessageLevel level)
 		{
-			_log = log;
-		}		
+			_level = level;
+		}
 
 		public override Encoding Encoding
 		{
@@ -36,7 +36,7 @@ namespace AnFake.Logging
 
 				if (br < end && _message.Length > 0)
 				{
-					LogMessage(_log, _message.ToString());
+					Log.Message(_level, _message.ToString());
 					_message.Clear();
 				}
 
@@ -44,8 +44,6 @@ namespace AnFake.Logging
 
 				index = br;
 			}			
-		}
-
-		protected abstract void LogMessage(ILog log, string message);
+		}		
 	}
 }

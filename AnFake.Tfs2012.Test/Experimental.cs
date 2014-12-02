@@ -6,7 +6,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AnFake.Tfs2012.Test
 {
-	//[Ignore]
+	[Ignore]
 	[TestClass]
 	public class Experimental
 	{

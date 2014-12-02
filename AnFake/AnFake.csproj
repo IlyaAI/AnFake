@@ -35,10 +35,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Common.Logging, Version=2.0.0.0, Culture=neutral, PublicKeyToken=af08829b84f0328e, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Common.Logging.2.0.0\lib\2.0\Common.Logging.dll</HintPath>
-    </Reference>
     <Reference Include="CSScriptLibrary">
       <HintPath>..\packages\CS-Script.3.8.8.0\lib\net45\CSScriptLibrary.dll</HintPath>
     </Reference>
@@ -63,16 +59,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Logging\Log4NetFactoryAdapter.cs" />
-    <Compile Include="Logging\LoggerFactoryAdapter.cs" />
-    <Compile Include="Logging\ILogConfig.cs" />
+    <Compile Include="Logging\FilePattern.cs" />
+    <Compile Include="Logging\ConsolePattern.cs" />
+    <Compile Include="Logging\Log4NetLogger.cs" />
     <Compile Include="RunOptions.cs" />
     <None Include="experimental-02.fsx" />
     <Compile Include="Scripting\CSharpEvaluator.cs" />
     <Compile Include="Scripting\FSharpEvaluator.cs" />
     <Compile Include="Scripting\IScriptEvaluator.cs" />
-    <Compile Include="Logging\LogTraceWriter.cs" />
-    <Compile Include="Logging\LogErrorWriter.cs" />
     <Compile Include="Logging\LogWriter.cs" />
     <Compile Include="Runner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -5,7 +5,6 @@ using System.Linq;
 using AnFake.Api;
 using AnFake.Core.Exceptions;
 using AnFake.Core.Tests;
-using Common.Logging;
 
 namespace AnFake.Core
 {
@@ -73,7 +72,7 @@ namespace AnFake.Core
 			//if (parameters.WorkingDirectory == null)
 			//	throw new AnFakeArgumentException("MsTest.Params.WorkingDirectory must not be null");
 
-			Trace.InfoFormat("MsTest\n => {0}", String.Join("\n => ", assembliesArray.Select(x => x.RelPath)));
+			Trace.InfoFormat("MsTest.Run\n => {0}", String.Join("\n => ", assembliesArray.Select(x => x.RelPath)));
 
 			var tests = new List<TestResult>();
 			

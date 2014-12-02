@@ -91,11 +91,11 @@ namespace AnFake.Api
 						sb.AppendLine();
 						if (!String.IsNullOrWhiteSpace(LinkLabel))
 						{
-							sb.Append(LinkLabel).Append(" | ").Append(LinkHref);
+							sb.Append('[').Append(LinkLabel).Append('|').Append(LinkHref).Append(']');
 						}
 						else
 						{
-							sb.Append(LinkHref);
+							sb.Append('[').Append(LinkHref).Append(']');
 						}
 						break;
 

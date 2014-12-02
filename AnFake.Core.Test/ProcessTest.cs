@@ -1,6 +1,5 @@
 ﻿using System;
 using AnFake.Api;
-using Common.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Rhino.Mocks;
 
@@ -15,16 +14,12 @@ namespace AnFake.Core.Test
 		public void ProcessRun_should_redirect_to_log()
 		{
 			// arrange
-			var logFactory = MockRepository.GenerateMock<ILoggerFactoryAdapter>();
-			var log = MockRepository.GenerateMock<ILog>();
-			logFactory.Stub(x => x.GetLogger("AnFake.Trace")).Return(log);
-
+			var logger = MockRepository.GenerateMock<ILogger>();
 			var tracer = MockRepository.GenerateMock<ITracer>();
 			var result = MockRepository.GenerateMock<IToolExecutionResult>();
 			tracer.Stub(x => x.StopTrackExternal()).Return(result);
-
-			var prevFactory = LogManager.Adapter;
-			LogManager.Adapter = logFactory;
+			
+			var prevLogger = Log.Set(logger);
 			var prevTracer = Trace.Set(tracer);
 			try
 			{
@@ -36,15 +31,15 @@ namespace AnFake.Core.Test
 				}).FailIfExitCodeNonZero("Unexpected exit code.");
 
 				// assert
-				log.AssertWasCalled(x => x.Trace("stdout A"));
-				log.AssertWasCalled(x => x.Error("stderr A"));
-				log.AssertWasCalled(x => x.Trace("stdout B"));
-				log.AssertWasCalled(x => x.Error("stderr B"));
+				logger.AssertWasCalled(x => x.Write(LogMessageLevel.Debug, "stdout A"));
+				logger.AssertWasCalled(x => x.Write(LogMessageLevel.Error, "stderr A"));
+				logger.AssertWasCalled(x => x.Write(LogMessageLevel.Debug, "stdout B"));
+				logger.AssertWasCalled(x => x.Write(LogMessageLevel.Error, "stderr B"));
 			}
 			finally
 			{
 				Trace.Set(prevTracer);
-				LogManager.Adapter = prevFactory;
+				Log.Set(prevLogger);				
 			}
 		}
 
