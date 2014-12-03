@@ -7,8 +7,22 @@ namespace AnFake.Core
 {
 	public sealed class Snapshot : IDisposable
 	{
-		private readonly IList<string> _originalPathes = new List<string>();
-		private readonly string _snapshotBasePath;		
+		class SnapshotInfo
+		{
+			public readonly string Path;
+			public readonly DateTime LastModified;			
+			public readonly FileAttributes Attributes;
+
+			public SnapshotInfo(string path, DateTime lastModified, FileAttributes attributes)
+			{
+				Path = path;
+				LastModified = lastModified;				
+				Attributes = attributes;
+			}
+		}
+
+		private readonly IList<SnapshotInfo> _originalFiles = new List<SnapshotInfo>();
+		private readonly string _snapshotBasePath;
 
 		public Snapshot()
 		{
@@ -19,25 +33,32 @@ namespace AnFake.Core
 		public void Save(FileSystemPath filePath)
 		{			
 			var fullPath = filePath.Full;
-			var snapshotPath = Path.Combine(_snapshotBasePath, String.Format("{0:X8}", _originalPathes.Count));
+			var snapshotPath = Path.Combine(_snapshotBasePath, String.Format("{0:X8}", _originalFiles.Count));
+			var fi = new FileInfo(fullPath);
+			var lastModified = fi.LastWriteTimeUtc;			
+			var attributes = fi.Attributes;
 
 			Trace.DebugFormat("Snapshot.Save: {0} => {1}", fullPath, snapshotPath);
-			File.Copy(fullPath, snapshotPath);
+			fi.CopyTo(snapshotPath);			
 
-			_originalPathes.Add(fullPath);
+			_originalFiles.Add(new SnapshotInfo(fullPath, lastModified, attributes));
 		}
 
 		public void Revert()
 		{
-			for (var index = 0; index < _originalPathes.Count; index++)
+			for (var index = 0; index < _originalFiles.Count; index++)
 			{
 				try
 				{
-					var originalPath = _originalPathes[index];
+					var originalFile = _originalFiles[index];
 					var snapshotPath = Path.Combine(_snapshotBasePath, String.Format("{0:X8}", index));
 
-					FileSystem.DeleteFile(originalPath.AsPath());
-					File.Move(snapshotPath, originalPath);
+					FileSystem.DeleteFile(originalFile.Path.AsPath());
+					
+					var fi = new FileInfo(snapshotPath);
+					fi.MoveTo(originalFile.Path);					
+					fi.LastWriteTimeUtc = originalFile.LastModified;					
+					fi.Attributes = originalFile.Attributes;
 				}
 				catch (Exception e)
 				{
@@ -55,14 +76,14 @@ namespace AnFake.Core
 
 		private void Cleanup()
 		{
-			_originalPathes.Clear();
+			_originalFiles.Clear();
 
 			if (!Directory.Exists(_snapshotBasePath))
 				return;
 
 			try
 			{
-				Directory.Delete(_snapshotBasePath, true);
+				FileSystem.DeleteFolder(_snapshotBasePath.AsPath());
 			}
 			catch (Exception e)
 			{

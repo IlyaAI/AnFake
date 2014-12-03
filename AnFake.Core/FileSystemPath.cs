@@ -115,7 +115,7 @@ namespace AnFake.Core
 
 		public override string ToString()
 		{
-			return _value;
+			return _value == String.Empty ? "." : _value;
 		}		
 
 		public static bool operator ==(FileSystemPath left, FileSystemPath right)

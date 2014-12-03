@@ -183,9 +183,32 @@ namespace AnFake.Plugins.Tfs2012
 			return result;
 		}
 
-		public static Api.IToolExecutionResult Update(FileSystemPath localPath, Action<Params> setParams)
+		public static void UndoLocal(IEnumerable<FileItem> files)
 		{
-			return null;
+			/*if (localPath == null)
+				throw new AnFakeArgumentException("TfsWorkspace.UndoLocal(localPath): localPath must not be null");*/
+			if (files == null)
+				throw new AnFakeArgumentException("TfsWorkspace.UndoLocal(files): files must not be null");
+
+			var filesArray = files.ToArray();
+
+			var ws = Vcs.TryGetWorkspace(filesArray[0].Path.Full);
+			if (ws == null)
+				return;
+
+			Trace.InfoFormat("TfsWorkspace.UndoLocal");
+
+			foreach (var file in filesArray)
+			{
+				Trace.DebugFormat("  {0}", file);
+			}
+
+			ws.Undo(
+				filesArray
+					.Select(x => new ItemSpec(x.Path.Full, RecursionType.None))
+					.ToArray());
+
+			Trace.InfoFormat("{0} file(s) reverted.", filesArray.Length);
 		}
 
 		private static void EnsureWorkspaceFile(Params parameters)
