@@ -3,6 +3,8 @@ AnFake = Another F# Make
 
 Build tool for .NET projects
 
+Current status: Alpha.
+
 Prehistory
 ----------
 
