@@ -1,6 +1,6 @@
-﻿#r "../Bin/AnFake.Api.dll"
-#r "../Bin/AnFake.Core.dll"
-#r "../Bin/AnFake.Fsx.dll"
+﻿#r "../AnFake.Api.dll"
+#r "../AnFake.Core.dll"
+#r "../AnFake.Fsx.dll"
 #r "../Plugins/AnFake.Plugins.Tfs2012.dll"
 
 open System
@@ -29,36 +29,46 @@ let serviceNames =
 Tfs.UseIt()
 
 "Build" => (fun _ ->
-    Logger.Debug "Usage: AnFake.Tf[.cmd] <command> [<param>] ..."
-    Logger.Debug "Supported commands:"
-    Logger.Debug " {Checkout|co} <server-path> [<local-path> [<workspace-name>]]"
-    Logger.Debug " {SyncLocal|syncl} [<local-path>]"
-    Logger.Debug " {Sync|sync} [<local-path>]"
+    Trace.Info "Usage: AnFake.Tf[.cmd] <command> [<param>] ..."
+    Trace.Info "Supported commands:"
+    Trace.Info " {Checkout|co} <server-path> [<local-path> [<workspace-name>]]"
+    Trace.Info " {SyncLocal|syncl} [<local-path>]"
+    Trace.Info " {Sync|sync} [<local-path>]"
 
     MyBuild.Failed "Command is missed."
 )
 
-"co" => (fun _ ->
+"Checkout" => (fun _ ->
     let mutable needConfirmation = false
 
     let serverPath =
         if not <| MyBuild.HasProp("Arg1") then
-            if not <| Clipboard.ContainsText() then
-                MyBuild.Failed("Required parameter <server-path> is missed.\nHint: you can pass it via clipboard, simply do 'Copy' on desired value.")
-                null
+            if Clipboard.ContainsText() then                
+                let text = Clipboard.GetText()
+                if text.StartsWith("$") && not <| text.Contains("\n") && not <| text.Contains("\r") then
+                    needConfirmation <- true
+                    text.AsServerPath()
+                else
+                    null
             else
-                needConfirmation <- true
-                Clipboard.GetText().AsServerPath()                
+                null                
         else
             MyBuild.GetProp("Arg1").AsServerPath()
 
-    Console.ForegroundColor <- ConsoleColor.White
+    if serverPath = null then
+        MyBuild.Failed("Required parameter <server-path> is missed.\nHint: you can pass it via clipboard, simply do 'Copy' on desired value.")
+
+    Console.ForegroundColor <- ConsoleColor.Cyan
     Console.WriteLine()
-    Console.WriteLine("TFS Path: {0}", serverPath)
+    Console.Write("TFS Path: ")
+    Console.ForegroundColor <- ConsoleColor.White    
+    Console.WriteLine(serverPath)
     
-    Console.ForegroundColor <- ConsoleColor.Gray
+    Console.ForegroundColor <- ConsoleColor.DarkYellow
     Console.WriteLine("If you see something strange above then you probably didn't copy TFS path to clipboard.")
     Console.WriteLine("Simply select project root in Source Control Explorer, click on 'Source location' and press Ctrl+C then re-run command.")
+    Console.WriteLine()
+    Console.ForegroundColor <- ConsoleColor.Gray
 
     let productName = 
         serverPath
@@ -106,9 +116,9 @@ Tfs.UseIt()
     TfsWorkspace.Checkout(serverPath, localPath, workspaceName) |> ignore
 )
 
-"Checkout" <== ["co"]
+"co" <== ["Checkout"]
 
-"syncl" => (fun _ ->
+"SyncLocal" => (fun _ ->
     let localPath = 
         if MyBuild.HasProp("Arg1") then
             curDir / MyBuild.GetProp("Arg1");
@@ -118,7 +128,7 @@ Tfs.UseIt()
     TfsWorkspace.SyncLocal(localPath) |> ignore
 )
 
-"SyncLocal" <== ["syncl"]
+"syncl" <== ["SyncLocal"]
 
 "Sync" => (fun _ ->
     let localPath = 

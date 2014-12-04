@@ -133,7 +133,7 @@ namespace AnFake.Plugins.Tfs2012
 			var logsPath = (FileSystemPath) null;
 			if (!String.IsNullOrEmpty(_build.DropLocation))
 			{
-				logsPath = _build.DropLocation.AsPath()/".logs";
+				logsPath = _build.DropLocation.AsPath()/"logs";
 				if (!SafeOp.Try(Folders.Clean, logsPath))
 				{
 					logsPath = null;
@@ -166,7 +166,7 @@ namespace AnFake.Plugins.Tfs2012
 						var srcPath = message.LinkHref.AsPath();
 						var dstPath = logsPath/srcPath.LastName;
 
-						if (SafeOp.Try(Files.Copy, srcPath, dstPath))
+						if (SafeOp.Try(Files.Copy, srcPath, dstPath, false))
 						{
 							href = dstPath.Spec;
 						}
@@ -193,9 +193,9 @@ namespace AnFake.Plugins.Tfs2012
 			if (logsPath != null)
 			{
 				var logFile = MyBuild.Defaults.LogFile;
-				var dstPath = logsPath / logFile.Name;
+				var dstPath = logsPath / "build.log";
 
-				if (SafeOp.Try(Files.Copy, logFile.Path, dstPath))
+				if (SafeOp.Try(Files.Copy, logFile.Path, dstPath, false))
 				{
 					_build.LogLocation = dstPath.Spec;
 					_build.Save();

@@ -63,6 +63,11 @@
     <Compile Include="Logging\FilePattern.cs" />
     <Compile Include="Logging\ConsolePattern.cs" />
     <Compile Include="Logging\Log4NetLogger.cs" />
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
     <Compile Include="RunOptions.cs" />
     <None Include="experimental-02.fsx" />
     <Compile Include="Scripting\CSharpEvaluator.cs" />
@@ -71,6 +76,10 @@
     <Compile Include="Logging\LogWriter.cs" />
     <Compile Include="Runner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

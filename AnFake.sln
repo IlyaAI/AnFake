@@ -32,6 +32,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		build.csx = build.csx
 		build.fsx = build.fsx
+		README.md = README.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnFake.Integration.Tfs2012", "AnFake.Integration.Tfs2012\AnFake.Integration.Tfs2012.csproj", "{F01FCA16-6B92-4C23-8365-EDD614405267}"

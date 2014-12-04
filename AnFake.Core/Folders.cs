@@ -23,12 +23,12 @@ namespace AnFake.Core
 			Directory.CreateDirectory(folderPath.Full);
 		}
 
-		public static void Create(string path)
+		public static void Create(string folderPath)
 		{
-			if (path == null)
-				throw new AnFakeArgumentException("Folders.Create(path): path must not be null");
+			if (folderPath == null)
+				throw new AnFakeArgumentException("Folders.Create(folderPath): folderPath must not be null");
 
-			Create(path.AsPath());
+			Create(folderPath.AsPath());
 		}
 
 		public static void Delete(IEnumerable<FolderItem> folders)
@@ -47,6 +47,14 @@ namespace AnFake.Core
 			Trace.InfoFormat("{0} folder(s) deleted.", folderPathes.Length);
 		}
 
+		public static void Delete(FolderItem folder)
+		{
+			if (folder == null)
+				throw new AnFakeArgumentException("Folders.Delete(folder): folder must not be null");
+
+			Delete(folder.Path);
+		}
+
 		public static void Delete(FileSystemPath folderPath)
 		{
 			if (folderPath == null)
@@ -57,12 +65,12 @@ namespace AnFake.Core
 			FileSystem.DeleteFolder(folderPath);
 		}
 
-		public static void Delete(string path)
+		public static void Delete(string folderPath)
 		{
-			if (path == null)
-				throw new AnFakeArgumentException("Folders.Delete(path): path must not be null");
+			if (folderPath == null)
+				throw new AnFakeArgumentException("Folders.Delete(folderPath): folderPath must not be null");
 
-			Delete(path.AsPath());
+			Delete(folderPath.AsPath());
 		}
 
 		public static void Clean(IEnumerable<FolderItem> folders)
@@ -84,6 +92,14 @@ namespace AnFake.Core
 			}
 
 			Trace.InfoFormat("{0} folders cleaned.", folderPathes.Length);
+		}
+
+		public static void Clean(FolderItem folder)
+		{
+			if (folder == null)
+				throw new AnFakeArgumentException("Folders.Clean(folder): folder must not be null");
+
+			Clean(folder.Path);
 		}
 
 		public static void Clean(FileSystemPath folderPath)
