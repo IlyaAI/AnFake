@@ -55,6 +55,12 @@
     <Compile Include="Experimental.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AnFake.Plugins.Tfs2012.Test\AnFake.Plugins.Tfs2012.Test.csproj">
+      <Project>{CF2C4AB6-7FA0-4E49-A151-53BEE29B9BD0}</Project>
+      <Name>AnFake.Plugins.Tfs2012.Test</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>

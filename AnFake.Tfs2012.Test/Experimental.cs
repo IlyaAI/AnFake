@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using AnFake.Plugins.Tfs2012.Test;
 using Microsoft.TeamFoundation.Build.Client;
 using Microsoft.TeamFoundation.Client;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -8,15 +9,15 @@ namespace AnFake.Tfs2012.Test
 {
 	[Ignore]
 	[TestClass]
-	public class Experimental
+	public class Experimental : TfsTestSuite
 	{
 		[TestMethod]
 		public void Test()
 		{
-			var teamProjectCollection = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(new Uri("https://nsk-tfs.avp.ru:8081/tfs/dlpr"));
+			var teamProjectCollection = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(new Uri(TfsUri));
 			var buildService = (IBuildServer)teamProjectCollection.GetService(typeof(IBuildServer));
 
-			//IBuildDefinition buildDefinition = buildService.GetBuildDefinition("DLP_PDK", "BuildDefinitionName");
+			//IBuildDefinition buildDefinition = buildService.GetBuildDefinition(TeamProject, "BuildDefinitionName");
 			var buildDetail = buildService.QueryBuildsByUri(
 				new[] { new Uri("vstfs:///Build/Build/32717") }, 
 				new[] { "*" }, 
@@ -29,11 +30,11 @@ namespace AnFake.Tfs2012.Test
 		[TestMethod]
 		public void Test2()
 		{
-			var teamProjectCollection = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(new Uri("https://nsk-tfs.avp.ru:8081/tfs/dlpr"));
+			var teamProjectCollection = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(new Uri(TfsUri));
 			var buildServer = (IBuildServer)teamProjectCollection.GetService(typeof(IBuildServer));
 
-			var definition = buildServer.GetBuildDefinition("DLP_PDK", "FAKE-test");
-			var detail = definition.CreateManualBuild("0006", @"\\nsk-fs\Inbox\Ivanov Ilya");
+			var definition = buildServer.GetBuildDefinition(TeamProject, BuildDefinition);
+			var detail = definition.CreateManualBuild("0006", DropLocation);
 
 			detail.Information
 				.AddActivityTracking("0001", "Sequence", "General")/*.Node.Children
@@ -87,10 +88,10 @@ namespace AnFake.Tfs2012.Test
 		[TestMethod]
 		public void Test3()
 		{
-			var teamProjectCollection = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(new Uri("https://nsk-tfs.avp.ru:8081/tfs/dlpr"));
+			var teamProjectCollection = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(new Uri(TfsUri));
 			var buildService = (IBuildServer)teamProjectCollection.GetService(typeof(IBuildServer));
 
-			var buildDefinition = buildService.GetBuildDefinition("DLP_PDK", "compliance-dev.fake");
+			var buildDefinition = buildService.GetBuildDefinition(TeamProject, BuildDefinition);
 			var buildDetails = buildDefinition.QueryBuilds();
 
 			/*var buildDetail = buildService.QueryBuildsByUri(
