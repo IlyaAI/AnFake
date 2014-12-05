@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Runtime.Serialization.Json;
 using AnFake.Api;
 using AnFake.Core.Exceptions;
 
@@ -26,7 +27,7 @@ namespace AnFake.Core
 				LogFile = logFile;
 				ScriptFile = scriptFile;
 				Targets = targets;
-				Properties = new ReadOnlyDictionary<string, string>(properties);
+				Properties = properties;
 				Verbosity = verbosity;								
 			}			
 		}
@@ -116,12 +117,46 @@ namespace AnFake.Core
 				: defaultValue;
 		}
 
+		public static void SetProp(string name, string value)
+		{
+			if (String.IsNullOrEmpty(name))
+				throw new AnFakeArgumentException("MyBuild.SetProp(name, value): name must not be null or empty");
+			if (value == null)
+				throw new AnFakeArgumentException("MyBuild.SetProp(name, value): value must not be null");
+			
+			Defaults.Properties[name] = value;
+		}
+
+		public static void SaveProp(params string[] names)
+		{
+			if (names.Length == 0)
+				throw new ArgumentException("MyBuild.SaveProp(name[, ...]): at least one name should be specified");
+
+			if (names.Any(String.IsNullOrEmpty))
+				throw new ArgumentException("MyBuild.SaveProp(name[, ...]): name must not be null or empty");
+
+			foreach (var name in names)
+			{
+				string value;
+				if (Defaults.Properties.TryGetValue(name, out value))
+				{
+					Settings.Current.Set(name, value);
+				}
+				else
+				{
+					Settings.Current.Remove(name);
+				}				
+			}
+
+			Settings.Current.Save();
+		}		
+
 		public static void Failed(string format, params object[] args)
 		{
 			if (String.IsNullOrEmpty(format))
 				throw new AnFakeArgumentException("MyBuild.Failed(format): format must not be null or empty");
 
 			throw new TargetFailureException(String.Format(format, args));
-		}				
+		}		
 	}
 }

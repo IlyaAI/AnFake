@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Principal;
+using System.Text;
 using AnFake.Api;
 using AnFake.Core;
 using AnFake.Core.Exceptions;
@@ -95,7 +96,7 @@ namespace AnFake.Plugins.Tfs2012
 			var wsDesc = GetTextContent(wsPath);
 			var mappings = VcsMappings.Parse(wsDesc, serverPath.Full, localPath.Full);
 
-			LogMappings(mappings);
+			TraceMappings(mappings);
 
 			ws = Vcs.CreateWorkspace(workspaceName, GetCurrentUser(), String.Format("AnFake: {0} => {1}", serverPath, localPath), mappings);
 			Trace.InfoFormat("Workspace '{0}' successfully created for '{1}'.", workspaceName, GetCurrentUser());
@@ -134,7 +135,7 @@ namespace AnFake.Plugins.Tfs2012
 			var wsDesc = GetTextContent(wsPath);
 			var mappings = VcsMappings.Parse(wsDesc, wsPath.Parent.Full, localPath.Full);
 
-			LogMappings(mappings);
+			TraceMappings(mappings);
 
 			ws.Update(ws.Name, ws.Comment, mappings);
 			Trace.InfoFormat("Workspace '{0}' successfully updated.", ws.Name);
@@ -173,7 +174,7 @@ namespace AnFake.Plugins.Tfs2012
 			var wsDesc = GetTextContent(wsFile);
 			var mappings = VcsMappings.Parse(wsDesc, serverPath.Full, localPath.Full);
 
-			LogMappings(mappings);
+			TraceMappings(mappings);
 
 			ws.Update(ws.Name, ws.Comment, mappings);
 			Trace.InfoFormat("Workspace '{0}' successfully updated.", ws.Name);
@@ -183,18 +184,173 @@ namespace AnFake.Plugins.Tfs2012
 			return result;
 		}
 
-		public static void UndoLocal(IEnumerable<FileItem> files)
+		public static Api.IToolExecutionResult SaveLocal(FileSystemPath localPath)
 		{
-			/*if (localPath == null)
-				throw new AnFakeArgumentException("TfsWorkspace.UndoLocal(localPath): localPath must not be null");*/
+			return SaveLocal(localPath, p => { });
+		}
+
+		public static Api.IToolExecutionResult SaveLocal(FileSystemPath localPath, Action<Params> setParams)
+		{
+			if (localPath == null)
+				throw new AnFakeArgumentException("TfsWorkspace.SyncLocal(localPath[, setParams]): localPath must not be null");
+			if (setParams == null)
+				throw new AnFakeArgumentException("TfsWorkspace.SyncLocal(localPath, setParams): setParams must not be null");
+
+			var parameters = Defaults.Clone();
+			setParams(parameters);
+
+			EnsureWorkspaceFile(parameters);
+			
+			var wsFile = (localPath / parameters.WorkspaceFile).AsFile();
+			if (wsFile.Exists())
+				throw new InvalidConfigurationException(
+					String.Format("Workspace file already exists. Hint: delete it implicitly if you really want to overwrite it.\n  {0}", wsFile));
+
+			var ws = Vcs.GetWorkspace(wsFile.Path.Full);
+			var serverPath = ws.GetServerItemForLocalItem(localPath.Full).AsServerPath();
+
+			Trace.InfoFormat("TfsWorkspace.SaveLocal:\n  WorkspaceFile: {0}\n  ServerRoot: {1}\n  LocalRoot: {2}", 
+				wsFile.Path.Full, serverPath.Full, localPath.Full);
+			
+			var errors = 0;
+			using (var writer = new StreamWriter(wsFile.Path.Full, false, Encoding.UTF8))
+			{
+				writer.WriteLine("# AnFake Workspace Definition File");
+				writer.WriteLine("# Mapping '<project-root>: <local-root>' always added automatically");
+
+				foreach (var workingFolder in ws.Folders)
+				{
+					var relServerPath = workingFolder.ServerItem
+						.AsServerPath()
+						.ToRelative(serverPath);
+
+					var err = (string)null;
+
+					if (workingFolder.IsCloaked)
+					{
+						if (relServerPath.Spec == String.Empty)
+							err = "Unable to cloak server root.";
+
+						if (err != null)
+						{
+							writer.Write("# ERROR: ");
+							writer.WriteLine(err);
+							writer.Write("# -");
+							writer.WriteLine(workingFolder.ServerItem);
+
+							Trace.Message(new TraceMessage(TraceMessageLevel.Error, err) {File = wsFile.Path.Full});
+							errors++;
+
+							continue;
+						}
+
+						writer.Write('-');
+						writer.WriteLine(relServerPath.Full);						
+					}
+					else
+					{
+						var relLocalPath = workingFolder.LocalItem
+							.AsPath()
+							.ToRelative(localPath);
+
+						if (relServerPath.Spec == String.Empty && relLocalPath.Spec == String.Empty)
+							continue;
+
+						if (relLocalPath.IsRooted)						
+							err = "All local sub-pathes should be under the same root.";						
+
+						if (relServerPath.Spec == String.Empty && relLocalPath.Spec != String.Empty)						
+							err = "Server root should be mapped to local root only.";
+
+						if (relServerPath.Spec != String.Empty && relLocalPath.Spec == String.Empty)
+							err = "Local root should be mapped to server root only.";
+
+						if (err != null)
+						{
+							writer.Write("# ERROR: ");
+							writer.WriteLine(err);
+							writer.Write("# ");
+							writer.Write(workingFolder.ServerItem);
+							writer.Write(": ");
+							writer.WriteLine(workingFolder.LocalItem);
+							writer.Write("# ");
+							writer.Write(relServerPath.Spec);
+							writer.Write(": ");
+							writer.WriteLine(relLocalPath.Spec);
+
+							Trace.Message(new TraceMessage(TraceMessageLevel.Error, err) {File = wsFile.Path.Full});
+							errors++;
+
+							continue;
+						}
+
+						writer.Write(relServerPath.Spec);
+						writer.Write(": ");
+						writer.WriteLine(relLocalPath.Spec);						
+					}
+				}
+			}
+
+			var result = new ToolExecutionResult(errors, 0)
+				.FailIfAnyError("TfsWorkspace.SaveLocal failed due to incompatibilities in workspace.");
+			
+			Trace.InfoFormat("Workspace '{0}' successfully saved.", ws.Name);
+
+			return result;
+		}
+
+		public static bool IsLocal(FileSystemPath localPath)
+		{
+			if (localPath == null)
+				throw new AnFakeArgumentException("TfsWorkspace.IsLocal(localPath): localPath must not be null");
+
+			return Vcs.TryGetWorkspace(localPath.Full) != null;
+		}
+
+		public static Api.IToolExecutionResult PendAdd(IEnumerable<FileItem> files)
+		{
 			if (files == null)
-				throw new AnFakeArgumentException("TfsWorkspace.UndoLocal(files): files must not be null");
+				throw new AnFakeArgumentException("TfsWorkspace.PendAdd(files): files must not be null");
+
+			var filePathes = files
+				.Select(x => x.Path)
+				.ToArray();
+
+			var ws = Vcs.TryGetWorkspace(filePathes[0].Full);
+			if (ws == null)
+			{
+				Trace.Warn("TfsWorkspace.PendAdd requires local workspace.");
+				return new ToolExecutionResult(0, 1);
+			}				
+
+			Trace.InfoFormat("TfsWorkspace.PendAdd");
+
+			foreach (var path in filePathes)
+			{
+				Trace.DebugFormat("  {0}", path);
+			}
+
+			ws.PendAdd(
+				filePathes.Select(x => x.Full).ToArray());
+
+			Trace.InfoFormat("{0} file(s) pended for add.", filePathes.Length);
+
+			return new ToolExecutionResult(0, 0);
+		}
+
+		public static Api.IToolExecutionResult Undo(IEnumerable<FileItem> files)
+		{
+			if (files == null)
+				throw new AnFakeArgumentException("TfsWorkspace.Undo(files): files must not be null");
 
 			var filesArray = files.ToArray();
 
 			var ws = Vcs.TryGetWorkspace(filesArray[0].Path.Full);
 			if (ws == null)
-				return;
+			{
+				Trace.Warn("TfsWorkspace.Undo requires local workspace.");
+				return new ToolExecutionResult(0, 1);
+			}
 
 			Trace.InfoFormat("TfsWorkspace.UndoLocal");
 
@@ -209,6 +365,8 @@ namespace AnFake.Plugins.Tfs2012
 					.ToArray());
 
 			Trace.InfoFormat("{0} file(s) reverted.", filesArray.Length);
+
+			return new ToolExecutionResult(0, 0);
 		}
 
 		private static void EnsureWorkspaceFile(Params parameters)
@@ -217,7 +375,7 @@ namespace AnFake.Plugins.Tfs2012
 				throw new AnFakeArgumentException("TfsWorkspace.Params.WorkspaceFile must not be null or empty");
 		}
 
-		private static void LogMappings(IEnumerable<WorkingFolder> mappings)
+		private static void TraceMappings(IEnumerable<WorkingFolder> mappings)
 		{
 			Trace.DebugFormat(
 				"Mappings:\n  {0}", 

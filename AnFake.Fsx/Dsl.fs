@@ -23,6 +23,10 @@ let inline (|=>) (target: Target) (action: unit -> unit) = target.Finally(action
 
 let inline (<==) target (dependencies: IEnumerable<string>) = TargetExtension.AsTarget(target).DependsOn(dependencies)
 
+let inline (==>) (predecessor: string) successor = 
+    TargetExtension.AsTarget(successor).DependsOn(predecessor) |> ignore
+    successor
+
 let skipErrors (target: Target) = target.SkipErrors()
 
 let noInt () = new Nullable<Int32>()

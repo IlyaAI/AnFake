@@ -63,6 +63,16 @@ namespace AnFake.Plugins.Tfs2012
 			return _value.Split(ServerPathUtils.SeparatorChar);
 		}
 
+		public ServerPath ToRelative(ServerPath basePath)
+		{
+			var myFull = Full;
+			var baseFull = basePath.Full;
+
+			return myFull.StartsWith(baseFull, StringComparison.OrdinalIgnoreCase)
+				? new ServerPath(myFull.Substring(baseFull.Length).TrimStart(ServerPathUtils.SeparatorChar, ServerPathUtils.AltSeparatorChar), true)
+				: this;
+		}
+
 		public override int GetHashCode()
 		{
 			return StringComparer.OrdinalIgnoreCase.GetHashCode(_value);

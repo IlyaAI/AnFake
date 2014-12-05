@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using AnFake.Core;
 using log4net.Core;
 using log4net.Layout;
 
@@ -23,27 +24,18 @@ namespace AnFake.Logging
 			if (msg == null)
 				return;
 
-			var start = 0;			
-			do
+			foreach (var line in TextLine.From(msg))
 			{
-				var index = msg.IndexOf('\n', start);
-				if (index < 0) index = msg.Length;
-
-				if (index - start >= _width - 4 && loggingEvent.Level < Level.Warn)
+				if (line.Length >= _width - 4 && loggingEvent.Level < Level.Warn)
 				{
-					writer.Write(msg.Substring(start, _width - 4));
+					writer.Write(line.ToString(0, _width - 4));
 					writer.WriteLine("...");
 				}
 				else
 				{
-					writer.WriteLine(msg.Substring(start, index - start));
+					writer.WriteLine(line);
 				}
-
-				if (index + 1 < msg.Length && msg[index + 1] == '\r') index++;
-
-				start = index + 1;				
-
-			} while (start < msg.Length);
+			}
 		}
 	}
 }

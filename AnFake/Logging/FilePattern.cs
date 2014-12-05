@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using AnFake.Core;
 using log4net.Core;
 using log4net.Layout;
 
@@ -17,20 +18,12 @@ namespace AnFake.Logging
 				return;
 
 			var level = FormatLevel(loggingEvent.Level);
-			var start = 0;			
-			do
+			foreach (var line in TextLine.From(msg))
 			{
-				var index = msg.IndexOf('\n', start);
-				if (index < 0) index = msg.Length;
-
 				writer.Write(level);
 				writer.Write(' ');
-				writer.WriteLine(msg.Substring(start, index - start));				
-
-				if (index + 1 < msg.Length && msg[index + 1] == '\r') index++;
-
-				start = index + 1;
-			} while (start < msg.Length);
+				writer.WriteLine(line);
+			}			
 		}
 
 		private static string FormatLevel(Level level)

@@ -77,11 +77,9 @@ namespace AnFake
 
 		private static void ParseConfig(RunOptions options)
 		{
-			for (var i = 0; i < ConfigurationManager.AppSettings.Count; i++)
+			foreach (var setting in Settings.Current)
 			{
-				options.Properties.Add(
-					ConfigurationManager.AppSettings.GetKey(i),
-					ConfigurationManager.AppSettings.Get(i));
+				options.Properties.Add(setting.Key, setting.Value);
 			}
 		}
 

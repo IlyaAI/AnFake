@@ -69,6 +69,11 @@ namespace AnFake.Core
 			return File.Exists(_path.Full);
 		}
 
+		public void Append(string format, params object[] args)
+		{
+			File.AppendAllText(_path.Full, String.Format(format, args));
+		}
+
 		public override string ToString()
 		{
 			return _path.ToString();

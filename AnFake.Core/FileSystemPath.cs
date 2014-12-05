@@ -39,6 +39,11 @@ namespace AnFake.Core
 			get { return _value.IndexOfAny(new[] {'*', '?'}) > 0; }
 		}
 
+		public bool IsRooted
+		{
+			get { return Path.IsPathRooted(_value); }
+		}
+
 		public string Spec
 		{
 			get { return _value; }
@@ -72,7 +77,7 @@ namespace AnFake.Core
 		public FileSystemPath Parent
 		{
 			get { return new FileSystemPath(Path.GetDirectoryName(_value), true); }
-		}
+		}		
 
 		public FileSystemPath ToRelative(FileSystemPath basePath)
 		{

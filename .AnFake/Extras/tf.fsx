@@ -26,8 +26,6 @@ let serviceNames =
         "features"
     ]
 
-Tfs.UseIt()
-
 "Build" => (fun _ ->
     Trace.Info "Usage: AnFake.Tf[.cmd] <command> [<param>] ..."
     Trace.Info "Supported commands:"
@@ -37,6 +35,62 @@ Tfs.UseIt()
 
     MyBuild.Failed "Command is missed."
 )
+
+"SetUpTeamProjects" => (fun _ ->
+    if not <| MyBuild.HasProp("Tfs.Uri") then        
+        MyBuild.SetProp(
+            "Tfs.Uri",
+            UserInterop.Prompt(
+                "TeamFoundation Collection Uri", 
+                "Please, enter an URI of Team Foundation Projects Collection, e.g. https://tf-server:8080/my-collection.\n" + 
+                "Alternatively you can provide URI as command line parameter: \"Tfs.Uri=<your-uri>\"")
+        )
+    
+    Tfs.UseIt()
+
+    MyBuild.SaveProp("Tfs.Uri")
+)
+
+"GetStarted" => (fun _ ->
+    if not <| MyBuild.HasProp("AnFake.TfsPath") then
+        MyBuild.SetProp(
+            "AnFake.TfsPath",
+            UserInterop.Prompt(
+                "TFS Path to AnFake", 
+                "Please, enter a TFS path where AnFake should be stored.\n" + 
+                "Alternatively, you can provide path as command line parameter: \"AnFake.TfsPath=<tfs-path-to-anfake>\"")
+        )
+
+    let dstPath = curDir / ".AnFake"
+
+    if not <| dstPath.AsFolder().Exists() then
+        TfsWorkspace.SaveLocal(curDir) |> ignore
+
+        let myselfServerPath = MyBuild.GetProp("AnFake.TfsPath").AsServerPath()        
+        let wsFile = (curDir / TfsWorkspace.Defaults.WorkspaceFile).AsFile()
+        let wsDef = wsFile.AsEditableText();
+
+        if not <| wsDef.HasLine(".AnFake") then
+            wsDef.AppendLine("{0}: {1}", myselfServerPath, dstPath.LastName)
+        else
+            MyBuild.Failed("Workspace already contains AnFake mapping.")
+                
+        TfsWorkspace.SyncLocal(curDir) |> ignore
+        TfsWorkspace.PendAdd([wsFile]) |> ignore
+
+        if not <| dstPath.AsFolder().Exists() then
+            let myself = ~~"[AnFake]" % "**\*"
+            Files.Copy(myself, dstPath)
+            TfsWorkspace.PendAdd(dstPath % "**\*") |> ignore
+    
+        MyBuild.SaveProp("AnFake.TfsPath")
+
+        Trace.InfoFormat("Folder '{0}' is ready to use AnFake. Carefully review all pended chages before commit.")
+    else
+        MyBuild.Failed("AnFake already exists: '{0}'", dstPath)   
+)
+
+"SetUpTeamProjects" ==> "GetStarted" ==> "gs"
 
 "Checkout" => (fun _ ->
     let mutable needConfirmation = false
@@ -58,17 +112,12 @@ Tfs.UseIt()
     if serverPath = null then
         MyBuild.Failed("Required parameter <server-path> is missed.\nHint: you can pass it via clipboard, simply do 'Copy' on desired value.")
 
-    Console.ForegroundColor <- ConsoleColor.Cyan
-    Console.WriteLine()
-    Console.Write("TFS Path: ")
-    Console.ForegroundColor <- ConsoleColor.White    
-    Console.WriteLine(serverPath)
-    
-    Console.ForegroundColor <- ConsoleColor.DarkYellow
-    Console.WriteLine("If you see something strange above then you probably didn't copy TFS path to clipboard.")
-    Console.WriteLine("Simply select project root in Source Control Explorer, click on 'Source location' and press Ctrl+C then re-run command.")
-    Console.WriteLine()
-    Console.ForegroundColor <- ConsoleColor.Gray
+    UserInterop.Highlight(
+        "TFS Path", 
+        serverPath.Spec, 
+        "If you see something strange above then you probably didn't copy TFS path to clipboard.\n" +
+        "Simply select project root in Source Control Explorer, click on 'Source location' and press Ctrl+C then re-run command."
+    )
 
     let productName = 
         serverPath
@@ -102,21 +151,17 @@ Tfs.UseIt()
             )
 
     if needConfirmation then
-        Console.ForegroundColor <- ConsoleColor.White
-        Console.WriteLine()
-        Console.WriteLine("Checkout \"{0}\" \"{1}\" \"{2}\"", serverPath, localPath, workspaceName)
-    
-        Console.ForegroundColor <- ConsoleColor.Gray
-        Console.Write("Enter/Space = OK, Esc = CANCEL?");
-        let consoleInfo = Console.ReadKey()    
-        Console.WriteLine()
-        if consoleInfo.Key = ConsoleKey.Escape then
+        let confirmed = 
+            UserInterop.Confirm(
+                String.Format("Checkout \"{0}\" \"{1}\" \"{2}\"", serverPath, localPath, workspaceName)
+            )
+        if not confirmed then
             MyBuild.Failed("Operation cancelled.")
     
     TfsWorkspace.Checkout(serverPath, localPath, workspaceName) |> ignore
 )
 
-"co" <== ["Checkout"]
+"SetUpTeamProjects" ==> "Checkout" ==> "co"
 
 "SyncLocal" => (fun _ ->
     let localPath = 
@@ -128,7 +173,7 @@ Tfs.UseIt()
     TfsWorkspace.SyncLocal(localPath) |> ignore
 )
 
-"syncl" <== ["SyncLocal"]
+"SetUpTeamProjects" ==> "SyncLocal" ==> "syncl"
 
 "Sync" => (fun _ ->
     let localPath = 
@@ -139,3 +184,5 @@ Tfs.UseIt()
     
     TfsWorkspace.Sync(localPath) |> ignore
 )
+
+"SetUpTeamProjects" ==> "Sync"
