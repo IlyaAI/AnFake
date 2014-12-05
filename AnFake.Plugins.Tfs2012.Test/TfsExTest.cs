@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AnFake.Plugins.Tfs2012.Test
 {
-	//[Ignore]
+	[Ignore]
 	[TestClass]
 	public class TfsExTest : TfsTestSuite
 	{
