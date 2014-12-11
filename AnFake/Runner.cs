@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.IO;
 using System.Linq;
 using AnFake.Api;
@@ -85,19 +84,34 @@ namespace AnFake
 
 		private static void ParseCommandLine(IEnumerable<string> args, RunOptions options)
 		{
+			var propMode = false;
+			var propIndex = 1;
+
 			foreach (var arg in args)
 			{
 				if (arg.Contains(".") && SupportedScripts.ContainsKey(Path.GetExtension(arg)))
 				{
 					options.Script = arg;
 					continue;
-				}
+				}				
 
 				if (arg.Contains("="))
 				{
 					var index = arg.IndexOf("=", StringComparison.InvariantCulture);
 
 					options.Properties.Add(arg.Substring(0, index).Trim(), arg.Substring(index + 1).Trim());
+					continue;
+				}
+
+				if (arg == "-p" || arg == "/p")
+				{
+					propMode = true;
+					continue;
+				}
+
+				if (propMode)
+				{
+					options.Properties.Add("Arg" + propIndex++, arg.Trim());
 					continue;
 				}
 

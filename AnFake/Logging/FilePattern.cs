@@ -18,7 +18,7 @@ namespace AnFake.Logging
 				return;
 
 			var level = FormatLevel(loggingEvent.Level);
-			foreach (var line in TextLine.From(msg))
+			foreach (var line in msg.GetLines())
 			{
 				writer.Write(level);
 				writer.Write(' ');

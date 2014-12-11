@@ -3,6 +3,13 @@ using System.IO;
 
 namespace AnFake.Core
 {
+	/// <summary>
+	///     Represents a file item in file system.
+	/// </summary>
+	/// <remarks>
+	///     Single FileItem is instantiated from string or FileSystemPath by an extension method AsFile. 
+	///		The set of FileItem-s is instantiated by FileSet during enumeration.
+	/// </remarks>
 	public sealed class FileItem : IComparable<FileItem>
 	{
 		private readonly FileSystemPath _path;
@@ -10,10 +17,10 @@ namespace AnFake.Core
 		private FileInfo _info;
 
 		internal FileItem(FileSystemPath path, FileSystemPath basePath)
-		{			
+		{
 			_path = path;
 			_basePath = basePath;
-		}		
+		}
 
 		public FileSystemPath Path
 		{

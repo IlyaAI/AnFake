@@ -1,1 +1,1 @@
-@"%~dp0\AnFake.exe" [AnFakeExtras]\tf.fsx %1 "Arg1=%2" "Arg2=%3" "Arg3=%4" "Arg4=%5" "Arg5=%6" "Arg6=%7" "Arg7=%8" "Arg8=%9"
+@"%~dp0\AnFake.exe" [AnFakeExtras]\tf.fsx %1 -p %2 %3 %4 %5 %6 %7 %8 %9

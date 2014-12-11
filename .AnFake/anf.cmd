@@ -1,12 +1,12 @@
 @echo off
 
 if exist "%~dp0\AnFake.exe" (
-	"%~dp0\AnFake.exe" %1 %2 %3 %4 %5 %6 %7 %7 %8 %9	
+	"%~dp0\AnFake.exe" %1 %2 %3 %4 %5 %6 %7 %8 %9	
 	goto eof
 )
 
 if exist "%~dp0\.AnFake\AnFake.exe" (
-	"%~dp0\.AnFake\AnFake.exe" %1 %2 %3 %4 %5 %6 %7 %7 %8 %9
+	"%~dp0\.AnFake\AnFake.exe" %1 %2 %3 %4 %5 %6 %7 %8 %9
 	goto eof
 )
 

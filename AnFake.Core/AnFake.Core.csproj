@@ -95,7 +95,6 @@
     <Compile Include="Tests\TestResult.cs" />
     <Compile Include="Tests\TestStatus.cs" />
     <Compile Include="Text.cs" />
-    <Compile Include="TextLine.cs" />
     <Compile Include="ToolExecutionResultExtension.cs" />
     <Compile Include="UserInterop.cs" />
     <Compile Include="Utils\CycleDependencyException.cs" />

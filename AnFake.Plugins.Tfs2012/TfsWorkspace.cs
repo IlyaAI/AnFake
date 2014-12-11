@@ -217,6 +217,7 @@ namespace AnFake.Plugins.Tfs2012
 			{
 				writer.WriteLine("# AnFake Workspace Definition File");
 				writer.WriteLine("# Mapping '<project-root>: <local-root>' always added automatically");
+				writer.WriteLine();
 
 				foreach (var workingFolder in ws.Folders)
 				{
@@ -316,13 +317,8 @@ namespace AnFake.Plugins.Tfs2012
 				.Select(x => x.Path)
 				.ToArray();
 
-			var ws = Vcs.TryGetWorkspace(filePathes[0].Full);
-			if (ws == null)
-			{
-				Trace.Warn("TfsWorkspace.PendAdd requires local workspace.");
-				return new ToolExecutionResult(0, 1);
-			}				
-
+			var ws = Vcs.GetWorkspace(filePathes[0].Full);
+			
 			Trace.InfoFormat("TfsWorkspace.PendAdd");
 
 			foreach (var path in filePathes)
@@ -345,14 +341,9 @@ namespace AnFake.Plugins.Tfs2012
 
 			var filesArray = files.ToArray();
 
-			var ws = Vcs.TryGetWorkspace(filesArray[0].Path.Full);
-			if (ws == null)
-			{
-				Trace.Warn("TfsWorkspace.Undo requires local workspace.");
-				return new ToolExecutionResult(0, 1);
-			}
-
-			Trace.InfoFormat("TfsWorkspace.UndoLocal");
+			var ws = Vcs.GetWorkspace(filesArray[0].Path.Full);
+			
+			Trace.InfoFormat("TfsWorkspace.Undo");
 
 			foreach (var file in filesArray)
 			{

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AnFake.Core.Test
@@ -71,6 +72,22 @@ namespace AnFake.Core.Test
 
 			// assert
 			Assert.AreEqual("c:\\full", parent.Spec);
+		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void FileSystemPath_should_resolve_relative_path()
+		{
+			// arrange
+			var basePath = Assembly.GetExecutingAssembly().Location.AsPath();
+			var filesPath = basePath / "Data/Files";
+			var dataPath = filesPath / "..";
+
+			// act
+			var relative = dataPath.ToRelative(basePath/"Data");
+
+			// assert
+			Assert.AreEqual("", relative.Spec);
 		}
 	}
 }

@@ -6,9 +6,15 @@ using AnFake.Core.Exceptions;
 
 namespace AnFake.Core
 {
+	/// <summary>
+	///     Represents a build target.
+	/// </summary>
+	/// <remarks>
+	///     Target is instantiated by an extension method AsTarget or by operator => in F#.
+	/// </remarks>
 	public sealed class Target
 	{
-		private static readonly IDictionary<string, Target> Targets 
+		private static readonly IDictionary<string, Target> Targets
 			= new Dictionary<string, Target>(StringComparer.OrdinalIgnoreCase);
 
 		public sealed class ExecutionReason
@@ -107,7 +113,7 @@ namespace AnFake.Core
 		public TraceMessageCollector Messages
 		{
 			get { return _messages; }
-		}		
+		}
 
 		public Target Do(Action action)
 		{
@@ -130,7 +136,7 @@ namespace AnFake.Core
 			if (_onFailure != null)
 				throw new InvalidConfigurationException(String.Format("Target '{0}' already has on-failure handler.", _name));
 
-			_onFailure = action;			
+			_onFailure = action;
 
 			return this;
 		}
@@ -173,7 +179,7 @@ namespace AnFake.Core
 
 		public Target DependsOn(params string[] names)
 		{
-			return DependsOn((IEnumerable<string>)names);
+			return DependsOn((IEnumerable<string>) names);
 		}
 
 		public Target DependsOn(IEnumerable<string> names)
@@ -202,13 +208,13 @@ namespace AnFake.Core
 		{
 			return _name.GetHashCode();
 		}
-		
+
 		internal void Run()
 		{
 			// Prepare
 			var orderedTargets = new List<Target>();
 			ResolveDependencies(orderedTargets);
-			
+
 			Trace.InfoFormat("'{0}' execution order: {1}.", _name, String.Join(", ", orderedTargets.Select(x => x.Name)));
 
 			// Target.Do
@@ -226,7 +232,7 @@ namespace AnFake.Core
 			{
 				error = e;
 			}
-			
+
 			// Target.OnFailure
 			for (var i = lastExecutedTarget; i >= 0; i--)
 			{
@@ -243,7 +249,7 @@ namespace AnFake.Core
 			{
 				var executedTarget = orderedTargets[i];
 				executedTarget.DoFinally(new ExecutionReason(error != null, executedTarget._state == TargetState.Failed));
-			}			
+			}
 
 			// Summarize
 			var executedTargets = orderedTargets
@@ -266,13 +272,13 @@ namespace AnFake.Core
 
 		private void ResolveDependencies(ICollection<Target> orderedTargets)
 		{
-			if (_state == TargetState.PreQueued)			
+			if (_state == TargetState.PreQueued)
 				throw new InvalidConfigurationException(String.Format("Target '{0}' has cycle dependency.", _name));
 
 			if (_state == TargetState.Queued)
 				return;
 
-			_state = TargetState.PreQueued;			
+			_state = TargetState.PreQueued;
 			foreach (var dependent in _dependencies)
 			{
 				dependent.ResolveDependencies(orderedTargets);
@@ -282,7 +288,7 @@ namespace AnFake.Core
 
 			_state = TargetState.Queued;
 		}
-		
+
 		private void DoMain()
 		{
 			if (_state == TargetState.Succeeded || _state == TargetState.PartiallySucceeded)
@@ -300,22 +306,23 @@ namespace AnFake.Core
 				if (_do != null)
 				{
 					Invoke("Do", _do, false);
-				}				
+				}
 
 				_state = TargetState.PartiallySucceeded;
 			}
 			catch (Exception)
-			{				
+			{
 				_state = TargetState.Failed;
 				if (!_skipErrors)
 					throw;
-			}			
+			}
 		}
 
 		private void DoOnFailure(ExecutionReason reason)
 		{
 			if (_state != TargetState.Failed && _state != TargetState.Succeeded && _state != TargetState.PartiallySucceeded)
-				throw new InvalidOperationException(String.Format("Inconsistence in build order: trying to run OnFailure action for non-failed or non-executed target '{0}'.", _name));
+				throw new InvalidOperationException(
+					String.Format("Inconsistence in build order: trying to run OnFailure action for non-failed or non-executed target '{0}'.", _name));
 
 			if (_onFailure != null || Failed != null)
 			{
@@ -353,7 +360,7 @@ namespace AnFake.Core
 					true);
 
 				if (!ret)
-					return;				
+					return;
 			}
 
 			if (_state == TargetState.PartiallySucceeded)
@@ -369,11 +376,11 @@ namespace AnFake.Core
 
 			return executedTargets.Any(x => x.State != TargetState.Succeeded)
 				? TargetState.PartiallySucceeded
-				: TargetState.Succeeded;			
+				: TargetState.Succeeded;
 		}
 
 		private void LogSummary(TargetState finalState, IEnumerable<Target> executedTargets)
-		{			
+		{
 			var index = 0;
 
 			var caption = String.Format("================ '{0}' Summary ================", _name);
@@ -382,9 +389,9 @@ namespace AnFake.Core
 
 			foreach (var target in executedTargets)
 			{
-				LogEx.TargetStateFormat(target.State, "{0}: {1} error(s) {2} warning(s) {3} message(s)", 
+				LogEx.TargetStateFormat(target.State, "{0}: {1} error(s) {2} warning(s) {3} message(s)",
 					target.Name, target.Messages.ErrorsCount, target.Messages.WarningsCount, target.Messages.SummariesCount);
-				
+
 				foreach (var message in target.Messages)
 				{
 					Log.TraceMessageFormat(message.Level, "[{0,4}] {1}", ++index, message.ToString());
@@ -404,11 +411,11 @@ namespace AnFake.Core
 			var setTarget = new EventHandler<TraceMessage>((s, m) => m.Target = Name);
 
 			_current = this;
-			
+
 			Trace.InfoFormat(">>> '{0}.{1}' started.", _name, phase);
-			
+
 			Trace.MessageReceiving += setTarget;
-			Trace.MessageReceived += _messages.OnMessage;			
+			Trace.MessageReceived += _messages.OnMessage;
 			try
 			{
 				var existingErrors = _messages.ErrorsCount;
@@ -416,7 +423,7 @@ namespace AnFake.Core
 				action.Invoke();
 
 				if (_messages.ErrorsCount > existingErrors)
-					throw new TerminateTargetException(String.Format("Target '{0}' terminated due to errors reported via tracer.", _name));				
+					throw new TerminateTargetException(String.Format("Target '{0}' terminated due to errors reported via tracer.", _name));
 			}
 			catch (TerminateTargetException)
 			{
@@ -468,11 +475,11 @@ namespace AnFake.Core
 		internal static Target GetOrCreate(string name)
 		{
 			Target target;
-			return Targets.TryGetValue(name, out target) 
-				? target 
+			return Targets.TryGetValue(name, out target)
+				? target
 				: new Target(name);
 		}
-		
+
 		internal static void Reset()
 		{
 			Targets.Clear();

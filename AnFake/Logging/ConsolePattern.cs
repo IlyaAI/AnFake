@@ -24,11 +24,11 @@ namespace AnFake.Logging
 			if (msg == null)
 				return;
 
-			foreach (var line in TextLine.From(msg))
+			foreach (var line in msg.GetLines())
 			{
 				if (line.Length >= _width - 4 && loggingEvent.Level < Level.Warn)
 				{
-					writer.Write(line.ToString(0, _width - 4));
+					writer.Write(line.Substring(0, _width - 4));
 					writer.WriteLine("...");
 				}
 				else

@@ -61,31 +61,38 @@ let serviceNames =
                 "Alternatively, you can provide path as command line parameter: \"AnFake.TfsPath=<tfs-path-to-anfake>\"")
         )
 
-    let dstPath = curDir / ".AnFake"
+    let dstPath = 
+        if MyBuild.HasProp("Arg1") then
+            curDir / MyBuild.GetProp("Arg1")
+        else
+            curDir
 
-    if not <| dstPath.AsFolder().Exists() then
-        TfsWorkspace.SaveLocal(curDir) |> ignore
+    let anfDstPath = dstPath  / ".AnFake";
+
+    if not <| anfDstPath.AsFolder().Exists() then
+        TfsWorkspace.SaveLocal(dstPath) |> ignore
 
         let myselfServerPath = MyBuild.GetProp("AnFake.TfsPath").AsServerPath()        
-        let wsFile = (curDir / TfsWorkspace.Defaults.WorkspaceFile).AsFile()
-        let wsDef = wsFile.AsEditableText();
+        let wsFile = (dstPath / TfsWorkspace.Defaults.WorkspaceFile).AsFile()
+        let wsDef = wsFile.AsTextDoc();
 
-        if not <| wsDef.HasLine(".AnFake") then
-            wsDef.AppendLine("{0}: {1}", myselfServerPath, dstPath.LastName)
+        if not <| wsDef.HasLine("\\.AnFake") then
+            wsDef.LastLine().InsertAfter("{0}: .AnFake", myselfServerPath)
+            wsDef.Save()
         else
             MyBuild.Failed("Workspace already contains AnFake mapping.")
                 
-        TfsWorkspace.SyncLocal(curDir) |> ignore
-        TfsWorkspace.PendAdd([wsFile]) |> ignore
+        TfsWorkspace.SyncLocal(dstPath) |> ignore
+        TfsWorkspace.PendAdd([wsFile]) |> ignore        
 
-        if not <| dstPath.AsFolder().Exists() then
+        if not <| anfDstPath.AsFolder().Exists() then
             let myself = ~~"[AnFake]" % "**\*"
-            Files.Copy(myself, dstPath)
-            TfsWorkspace.PendAdd(dstPath % "**\*") |> ignore
+            Files.Copy(myself, anfDstPath)
+            TfsWorkspace.PendAdd(anfDstPath % "**\*") |> ignore
     
         MyBuild.SaveProp("AnFake.TfsPath")
 
-        Trace.InfoFormat("Folder '{0}' is ready to use AnFake. Carefully review all pended chages before commit.")
+        Trace.InfoFormat("Folder '{0}' is ready to use AnFake. Carefully review all pended chages before commit!", dstPath)
     else
         MyBuild.Failed("AnFake already exists: '{0}'", dstPath)   
 )

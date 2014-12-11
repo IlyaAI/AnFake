@@ -4,6 +4,13 @@ using System.Collections.Generic;
 
 namespace AnFake.Core
 {
+	/// <summary>
+	///     Represents a set of files matched by specified wildcard patterns.
+	/// </summary>
+	/// <remarks>
+	///     FileSet is instantiated from string or FileSystemPath by an extension method AsFileSet or by operator !! in F#, or
+	///     from FileSystemPath by operator % followed by wildcard (means files matching pattern in given folder).
+	/// </remarks>
 	public sealed class FileSet : IEnumerable<FileItem>
 	{
 		private enum PatternType
@@ -63,12 +70,12 @@ namespace AnFake.Core
 		public FileSet Exclude(string wildcardedPath)
 		{
 			return Exclude(wildcardedPath.AsPath());
-		}		
+		}
 
 		public FileSet From(FileSystemPath basePath)
 		{
 			_basePath = basePath;
-			
+
 			return this;
 		}
 
@@ -148,7 +155,7 @@ namespace AnFake.Core
 
 				return;
 			}
-			
+
 			if (mergeType == PatternType.Exclude)
 			{
 				foreach (var fn in src)
