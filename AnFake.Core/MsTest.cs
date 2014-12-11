@@ -56,13 +56,13 @@ namespace AnFake.Core
 		{
 			var assembliesArray = assemblies.ToArray();
 			if (assembliesArray.Length == 0)
-				throw new AnFakeArgumentException("MsTest.Run(setParams, assemblies): assemblies must not be an empty list");
+				throw new ArgumentException("MsTest.Run(setParams, assemblies): assemblies must not be an empty list");
 
 			var parameters = Defaults.Clone();
 			setParams(parameters);
 
 			if (parameters.ToolPath == null)
-				throw new AnFakeArgumentException(
+				throw new ArgumentException(
 					String.Format(
 						"MsTest.Params.ToolPath must not be null.\nHint: probably, MsTest.exe not found.\nSearch path:\n  {0}",
 						String.Join("\n  ", Locations)));
@@ -70,7 +70,7 @@ namespace AnFake.Core
 			// TODO: check other parameters
 
 			//if (parameters.WorkingDirectory == null)
-			//	throw new AnFakeArgumentException("MsTest.Params.WorkingDirectory must not be null");
+			//	throw new ArgumentException("MsTest.Params.WorkingDirectory must not be null");
 
 			Trace.InfoFormat("MsTest.Run\n => {0}", String.Join("\n => ", assembliesArray.Select(x => x.RelPath)));
 

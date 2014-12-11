@@ -1,6 +1,5 @@
 ﻿using System;
 using AnFake.Api;
-using AnFake.Core.Exceptions;
 
 namespace AnFake.Core
 {
@@ -36,15 +35,15 @@ namespace AnFake.Core
 		public static ProcessExecutionResult Run(Action<Params> setParams)
 		{
 			if (setParams == null)
-				throw new AnFakeArgumentException("Process.Run(setParams): setParams must not be null");
+				throw new ArgumentException("Process.Run(setParams): setParams must not be null");
 
 			var parameters = Defaults.Clone();
 			setParams(parameters);
 
 			if (parameters.FileName == null)
-				throw new AnFakeArgumentException("Process.Params.FileName: must not be null");
+				throw new ArgumentException("Process.Params.FileName: must not be null");
 			if (parameters.WorkingDirectory == null)
-				throw new AnFakeArgumentException("Process.Params.WorkingDirectory: must not be null");
+				throw new ArgumentException("Process.Params.WorkingDirectory: must not be null");
 
 			var process = new System.Diagnostics.Process
 			{

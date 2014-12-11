@@ -118,7 +118,7 @@ namespace AnFake.Core
 		public Target Do(Action action)
 		{
 			if (action == null)
-				throw new AnFakeArgumentException("Target.Do(action): action must not be null");
+				throw new ArgumentException("Target.Do(action): action must not be null");
 
 			if (_do != null)
 				throw new InvalidConfigurationException(String.Format("Target '{0}' already has a body.", _name));
@@ -131,7 +131,7 @@ namespace AnFake.Core
 		public Target OnFailure(Action<ExecutionReason> action)
 		{
 			if (action == null)
-				throw new AnFakeArgumentException("Target.OnFailure(action): action must not be null");
+				throw new ArgumentException("Target.OnFailure(action): action must not be null");
 
 			if (_onFailure != null)
 				throw new InvalidConfigurationException(String.Format("Target '{0}' already has on-failure handler.", _name));
@@ -144,7 +144,7 @@ namespace AnFake.Core
 		public Target OnFailure(Action action)
 		{
 			if (action == null)
-				throw new AnFakeArgumentException("Target.OnFailure(action): action must not be null");
+				throw new ArgumentException("Target.OnFailure(action): action must not be null");
 
 			return OnFailure(x => action.Invoke());
 		}
@@ -152,7 +152,7 @@ namespace AnFake.Core
 		public Target Finally(Action<ExecutionReason> action)
 		{
 			if (action == null)
-				throw new AnFakeArgumentException("Target.Finally(action): action must not be null");
+				throw new ArgumentException("Target.Finally(action): action must not be null");
 
 			if (_finally != null)
 				throw new InvalidConfigurationException(String.Format("Target '{0}' already has finally handler.", _name));
@@ -165,7 +165,7 @@ namespace AnFake.Core
 		public Target Finally(Action action)
 		{
 			if (action == null)
-				throw new AnFakeArgumentException("Target.Finally(action): action must not be null");
+				throw new ArgumentException("Target.Finally(action): action must not be null");
 
 			return Finally(x => action.Invoke());
 		}

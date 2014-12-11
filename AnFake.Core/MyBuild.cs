@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.Serialization.Json;
 using AnFake.Api;
 using AnFake.Core.Exceptions;
 
@@ -75,7 +74,7 @@ namespace AnFake.Core
 		public static bool HasProp(string name)
 		{
 			if (String.IsNullOrEmpty(name))
-				throw new AnFakeArgumentException("MyBuild.HasProp(name): name must not be null or empty");
+				throw new ArgumentException("MyBuild.HasProp(name): name must not be null or empty");
 
 			string value;
 			return Defaults.Properties.TryGetValue(name, out value) && !String.IsNullOrEmpty(value);
@@ -89,7 +88,7 @@ namespace AnFake.Core
 		public static string GetProp(string name)
 		{
 			if (String.IsNullOrEmpty(name))
-				throw new AnFakeArgumentException("MyBuild.GetProp(name): name must not be null or empty");
+				throw new ArgumentException("MyBuild.GetProp(name): name must not be null or empty");
 			
 			string value;
 			if (!Defaults.Properties.TryGetValue(name, out value))
@@ -109,7 +108,7 @@ namespace AnFake.Core
 		public static string GetProp(string name, string defaultValue)
 		{
 			if (String.IsNullOrEmpty(name))
-				throw new AnFakeArgumentException("MyBuild.GetProp(name, defaultValue): name must not be null or empty");
+				throw new ArgumentException("MyBuild.GetProp(name, defaultValue): name must not be null or empty");
 
 			string value;
 			return Defaults.Properties.TryGetValue(name, out value) && !String.IsNullOrEmpty(value)
@@ -120,9 +119,9 @@ namespace AnFake.Core
 		public static void SetProp(string name, string value)
 		{
 			if (String.IsNullOrEmpty(name))
-				throw new AnFakeArgumentException("MyBuild.SetProp(name, value): name must not be null or empty");
+				throw new ArgumentException("MyBuild.SetProp(name, value): name must not be null or empty");
 			if (value == null)
-				throw new AnFakeArgumentException("MyBuild.SetProp(name, value): value must not be null");
+				throw new ArgumentException("MyBuild.SetProp(name, value): value must not be null");
 			
 			Defaults.Properties[name] = value;
 		}
@@ -154,7 +153,7 @@ namespace AnFake.Core
 		public static void Failed(string format, params object[] args)
 		{
 			if (String.IsNullOrEmpty(format))
-				throw new AnFakeArgumentException("MyBuild.Failed(format): format must not be null or empty");
+				throw new ArgumentException("MyBuild.Failed(format): format must not be null or empty");
 
 			throw new TargetFailureException(String.Format(format, args));
 		}		

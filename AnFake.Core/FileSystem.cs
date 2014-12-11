@@ -37,7 +37,7 @@ namespace AnFake.Core
 		public static FileSystemPath AsPath(this string path)
 		{
 			if (path == null)
-				throw new AnFakeArgumentException("FileSystem.AsPath(path): path must not be null");
+				throw new ArgumentException("FileSystem.AsPath(path): path must not be null");
 
 			return new FileSystemPath(path, false);
 		}		
@@ -45,7 +45,7 @@ namespace AnFake.Core
 		public static FileSystemPath AsPath(this string[] pathSteps, int start, int count)
 		{
 			if (pathSteps == null)
-				throw new AnFakeArgumentException("FileSystem.AsPath(pathSteps): pathSteps must not be null");
+				throw new ArgumentException("FileSystem.AsPath(pathSteps): pathSteps must not be null");
 
 			return new FileSystemPath(String.Join(DirectorySeparatorString, pathSteps, start, count), true);
 		}
@@ -53,7 +53,7 @@ namespace AnFake.Core
 		public static FileItem AsFile(this FileSystemPath path)
 		{
 			if (path == null)
-				throw new AnFakeArgumentException("FileSystem.AsFile(path): path must not be null");
+				throw new ArgumentException("FileSystem.AsFile(path): path must not be null");
 
 			return new FileItem(path, FileSystemPath.Base);
 		}
@@ -66,7 +66,7 @@ namespace AnFake.Core
 		public static FileSet AsFileSet(this FileSystemPath wildcardedPath)
 		{
 			if (wildcardedPath == null)
-				throw new AnFakeArgumentException("FileSystem.AsFileSet(wildcardedPath): wildcardedPath must not be null");
+				throw new ArgumentException("FileSystem.AsFileSet(wildcardedPath): wildcardedPath must not be null");
 
 			return new FileSet().Include(wildcardedPath);
 		}
@@ -74,7 +74,7 @@ namespace AnFake.Core
 		public static FileSet AsFileSet(this FileSystemPath[] wildcardedPathes)
 		{
 			if (wildcardedPathes == null)
-				throw new AnFakeArgumentException("FileSystem.AsFileSet(wildcardedPathes): wildcardedPathes must not be null");
+				throw new ArgumentException("FileSystem.AsFileSet(wildcardedPathes): wildcardedPathes must not be null");
 
 			var fs = new FileSet();
 			foreach (var path in wildcardedPathes)
@@ -93,7 +93,7 @@ namespace AnFake.Core
 		public static FileSet AsFileSet(this string[] wildcardedPathes)
 		{
 			if (wildcardedPathes == null)
-				throw new AnFakeArgumentException("FileSystem.AsFileSet(wildcardedPathes): wildcardedPathes must not be null");
+				throw new ArgumentException("FileSystem.AsFileSet(wildcardedPathes): wildcardedPathes must not be null");
 
 			var fs = new FileSet();
 			foreach (var path in wildcardedPathes)
@@ -107,9 +107,9 @@ namespace AnFake.Core
 		public static FileSet AsFileSetFrom(this FileSystemPath wildcardedPath, FileSystemPath basePath)
 		{
 			if (wildcardedPath == null)
-				throw new AnFakeArgumentException("FileSystem.AsFileSetFrom(wildcardedPath, basePath): wildcardedPath must not be null");
+				throw new ArgumentException("FileSystem.AsFileSetFrom(wildcardedPath, basePath): wildcardedPath must not be null");
 			if (basePath == null)
-				throw new AnFakeArgumentException("FileSystem.AsFileSetFrom(wildcardedPath, basePath): basePath must not be null");
+				throw new ArgumentException("FileSystem.AsFileSetFrom(wildcardedPath, basePath): basePath must not be null");
 
 			return new FileSet().From(basePath)
 				.Include(wildcardedPath);
@@ -133,7 +133,7 @@ namespace AnFake.Core
 		public static FolderItem AsFolder(this FileSystemPath path)
 		{
 			if (path == null)
-				throw new AnFakeArgumentException("FileSystem.AsFolder(path): path must not be null");
+				throw new ArgumentException("FileSystem.AsFolder(path): path must not be null");
 
 			return new FolderItem(path);
 		}
@@ -146,7 +146,7 @@ namespace AnFake.Core
 		public static FolderSet AsFolderSet(this FileSystemPath wildcardedPath)
 		{
 			if (wildcardedPath == null)
-				throw new AnFakeArgumentException("FileSystem.AsFolderSet(wildcardedPath): wildcardedPath must not be null");
+				throw new ArgumentException("FileSystem.AsFolderSet(wildcardedPath): wildcardedPath must not be null");
 
 			return new FolderSet().Include(wildcardedPath);
 		}

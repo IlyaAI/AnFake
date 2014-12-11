@@ -1,5 +1,4 @@
 ﻿using System;
-using AnFake.Core.Exceptions;
 
 namespace AnFake.Core
 {
@@ -8,7 +7,7 @@ namespace AnFake.Core
 		public static Target AsTarget(this string name)
 		{
 			if (String.IsNullOrEmpty(name))
-				throw new AnFakeArgumentException("TargetExtension.AsTarget(name): name must not be null or empty");
+				throw new ArgumentException("TargetExtension.AsTarget(name): name must not be null or empty");
 
 			return Target.GetOrCreate(name);
 		}

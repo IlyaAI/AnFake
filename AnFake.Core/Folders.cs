@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using AnFake.Api;
-using AnFake.Core.Exceptions;
 
 namespace AnFake.Core
 {
@@ -16,7 +16,7 @@ namespace AnFake.Core
 		public static void Create(FileSystemPath folderPath)
 		{
 			if (folderPath == null)
-				throw new AnFakeArgumentException("Folders.Create(folderPath): folderPath must not be null");
+				throw new ArgumentException("Folders.Create(folderPath): folderPath must not be null");
 
 			Trace.InfoFormat("Creating '{0}'...", folderPath);
 
@@ -26,7 +26,7 @@ namespace AnFake.Core
 		public static void Create(string folderPath)
 		{
 			if (folderPath == null)
-				throw new AnFakeArgumentException("Folders.Create(folderPath): folderPath must not be null");
+				throw new ArgumentException("Folders.Create(folderPath): folderPath must not be null");
 
 			Create(folderPath.AsPath());
 		}
@@ -34,7 +34,7 @@ namespace AnFake.Core
 		public static void Delete(IEnumerable<FolderItem> folders)
 		{
 			if (folders == null)
-				throw new AnFakeArgumentException("Folders.Delete(folders): folders must not be null");
+				throw new ArgumentException("Folders.Delete(folders): folders must not be null");
 
 			Trace.InfoFormat("Deleting folders...");
 
@@ -50,7 +50,7 @@ namespace AnFake.Core
 		public static void Delete(FolderItem folder)
 		{
 			if (folder == null)
-				throw new AnFakeArgumentException("Folders.Delete(folder): folder must not be null");
+				throw new ArgumentException("Folders.Delete(folder): folder must not be null");
 
 			Delete(folder.Path);
 		}
@@ -58,7 +58,7 @@ namespace AnFake.Core
 		public static void Delete(FileSystemPath folderPath)
 		{
 			if (folderPath == null)
-				throw new AnFakeArgumentException("Folders.Delete(folderPath): folderPath must not be null");
+				throw new ArgumentException("Folders.Delete(folderPath): folderPath must not be null");
 
 			Trace.InfoFormat("Deleting '{0}'...", folderPath);
 
@@ -68,7 +68,7 @@ namespace AnFake.Core
 		public static void Delete(string folderPath)
 		{
 			if (folderPath == null)
-				throw new AnFakeArgumentException("Folders.Delete(folderPath): folderPath must not be null");
+				throw new ArgumentException("Folders.Delete(folderPath): folderPath must not be null");
 
 			Delete(folderPath.AsPath());
 		}
@@ -76,7 +76,7 @@ namespace AnFake.Core
 		public static void Clean(IEnumerable<FolderItem> folders)
 		{
 			if (folders == null)
-				throw new AnFakeArgumentException("Folders.Clean(folders): folders must not be null");
+				throw new ArgumentException("Folders.Clean(folders): folders must not be null");
 
 			Trace.Info("Cleaning folders...");
 
@@ -97,7 +97,7 @@ namespace AnFake.Core
 		public static void Clean(FolderItem folder)
 		{
 			if (folder == null)
-				throw new AnFakeArgumentException("Folders.Clean(folder): folder must not be null");
+				throw new ArgumentException("Folders.Clean(folder): folder must not be null");
 
 			Clean(folder.Path);
 		}
@@ -105,7 +105,7 @@ namespace AnFake.Core
 		public static void Clean(FileSystemPath folderPath)
 		{
 			if (folderPath == null)
-				throw new AnFakeArgumentException("Folders.Clean(folderPath): folderPath must not be null");
+				throw new ArgumentException("Folders.Clean(folderPath): folderPath must not be null");
 
 			Trace.InfoFormat("Cleaning '{0}'...", folderPath);
 
@@ -119,7 +119,7 @@ namespace AnFake.Core
 		public static void Clean(string path)
 		{
 			if (path == null)
-				throw new AnFakeArgumentException("Folders.Clean(path): path must not be null");
+				throw new ArgumentException("Folders.Clean(path): path must not be null");
 
 			Clean(path.AsPath());
 		}

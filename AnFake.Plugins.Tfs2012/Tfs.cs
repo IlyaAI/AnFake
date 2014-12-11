@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using AnFake.Core;
-using AnFake.Core.Exceptions;
 using Microsoft.TeamFoundation.Build.Client;
 using Microsoft.TeamFoundation.VersionControl.Client;
 
@@ -75,7 +74,7 @@ namespace AnFake.Plugins.Tfs2012
 		public static ServerPath AsServerPath(this string path)
 		{
 			if (path == null)
-				throw new AnFakeArgumentException("Tfs.AsServerPath(path): path must not be null");
+				throw new ArgumentException("Tfs.AsServerPath(path): path must not be null");
 
 			return new ServerPath(path, false);
 		}

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using AnFake.Api;
-using AnFake.Core.Exceptions;
 
 namespace AnFake.Core
 {
@@ -12,9 +11,9 @@ namespace AnFake.Core
 		public static void Copy(IEnumerable<FileItem> files, FileSystemPath targetPath, bool overwrite = false)
 		{
 			if (files == null)
-				throw new AnFakeArgumentException("Files.Copy(files, targetPath[, overwrite]): files must not be null");
+				throw new ArgumentException("Files.Copy(files, targetPath[, overwrite]): files must not be null");
 			if (targetPath == null)
-				throw new AnFakeArgumentException("Files.Copy(files, targetPath[, overwrite]): targetPath must not be null");
+				throw new ArgumentException("Files.Copy(files, targetPath[, overwrite]): targetPath must not be null");
 
 			Trace.InfoFormat("Copying files to '{0}'...", targetPath);
 
@@ -36,9 +35,9 @@ namespace AnFake.Core
 		public static void Copy(FileItem file, FileSystemPath targetFilePath, bool overwrite = false)
 		{
 			if (file == null)
-				throw new AnFakeArgumentException("Files.Copy(file, targetFilePath[, overwrite]): file must not be null");
+				throw new ArgumentException("Files.Copy(file, targetFilePath[, overwrite]): file must not be null");
 			if (targetFilePath == null)
-				throw new AnFakeArgumentException("Files.Copy(file, targetFilePath[, overwrite]): targetFilePath must not be null");
+				throw new ArgumentException("Files.Copy(file, targetFilePath[, overwrite]): targetFilePath must not be null");
 
 			Copy(file.Path, targetFilePath, overwrite);
 		}
@@ -46,9 +45,9 @@ namespace AnFake.Core
 		public static void Copy(FileSystemPath sourceFilePath, FileSystemPath targetFilePath, bool overwrite = false)
 		{
 			if (sourceFilePath == null)
-				throw new AnFakeArgumentException("Files.Copy(sourceFilePath, targetFilePath[, overwrite]): sourceFilePath must not be null");
+				throw new ArgumentException("Files.Copy(sourceFilePath, targetFilePath[, overwrite]): sourceFilePath must not be null");
 			if (targetFilePath == null)
-				throw new AnFakeArgumentException("Files.Copy(sourceFilePath, targetFilePath[, overwrite]): targetFilePath must not be null");
+				throw new ArgumentException("Files.Copy(sourceFilePath, targetFilePath[, overwrite]): targetFilePath must not be null");
 
 			Trace.InfoFormat("Copying '{0}' to '{1}'...", sourceFilePath, targetFilePath);
 
@@ -61,9 +60,9 @@ namespace AnFake.Core
 		public static void Copy(string sourceFilePath, string targetFilePath, bool overwrite = false)
 		{
 			if (sourceFilePath == null)
-				throw new AnFakeArgumentException("Files.Copy(sourceFilePath, targetFilePath, overwrite): sourceFilePath must not be null");
+				throw new ArgumentException("Files.Copy(sourceFilePath, targetFilePath, overwrite): sourceFilePath must not be null");
 			if (targetFilePath == null)
-				throw new AnFakeArgumentException("Files.Copy(sourceFilePath, targetFilePath, overwrite): targetFilePath must not be null");
+				throw new ArgumentException("Files.Copy(sourceFilePath, targetFilePath, overwrite): targetFilePath must not be null");
 
 			Copy(sourceFilePath.AsPath(), targetFilePath.AsPath(), overwrite);
 		}
@@ -71,9 +70,9 @@ namespace AnFake.Core
 		public static void Move(IEnumerable<FileItem> files, FileSystemPath targetPath, bool overwrite = false)
 		{
 			if (files == null)
-				throw new AnFakeArgumentException("Files.Move(files, targetPath[, overwrite]): files must not be null");
+				throw new ArgumentException("Files.Move(files, targetPath[, overwrite]): files must not be null");
 			if (targetPath == null)
-				throw new AnFakeArgumentException("Files.Move(files, targetPath[, overwrite]): targetPath must not be null");
+				throw new ArgumentException("Files.Move(files, targetPath[, overwrite]): targetPath must not be null");
 
 			Trace.InfoFormat("Moving files to '{0}'...", targetPath);
 
@@ -95,9 +94,9 @@ namespace AnFake.Core
 		public static void Move(FileItem file, FileSystemPath targetFilePath, bool overwrite = false)
 		{
 			if (file == null)
-				throw new AnFakeArgumentException("Files.Move(file, targetFilePath[, overwrite]): file must not be null");
+				throw new ArgumentException("Files.Move(file, targetFilePath[, overwrite]): file must not be null");
 			if (targetFilePath == null)
-				throw new AnFakeArgumentException("Files.Move(file, targetFilePath[, overwrite]): targetFilePath must not be null");
+				throw new ArgumentException("Files.Move(file, targetFilePath[, overwrite]): targetFilePath must not be null");
 
 			Move(file.Path, targetFilePath, overwrite);
 		}
@@ -105,9 +104,9 @@ namespace AnFake.Core
 		public static void Move(FileSystemPath sourceFilePath, FileSystemPath targetFilePath, bool overwrite = false)
 		{
 			if (sourceFilePath == null)
-				throw new AnFakeArgumentException("Files.Move(sourceFilePath, targetFilePath[, overwrite]): sourceFilePath must not be null");
+				throw new ArgumentException("Files.Move(sourceFilePath, targetFilePath[, overwrite]): sourceFilePath must not be null");
 			if (targetFilePath == null)
-				throw new AnFakeArgumentException("Files.Move(sourceFilePath, targetFilePath[, overwrite]): targetFilePath must not be null");
+				throw new ArgumentException("Files.Move(sourceFilePath, targetFilePath[, overwrite]): targetFilePath must not be null");
 
 			Trace.InfoFormat("Moving '{0}' to '{1}'...", sourceFilePath, targetFilePath);
 
@@ -120,9 +119,9 @@ namespace AnFake.Core
 		public static void Move(string sourceFilePath, string targetFilePath, bool overwrite = false)
 		{
 			if (sourceFilePath == null)
-				throw new AnFakeArgumentException("Files.Move(sourceFilePath, targetFilePath, overwrite): sourceFilePath must not be null");
+				throw new ArgumentException("Files.Move(sourceFilePath, targetFilePath, overwrite): sourceFilePath must not be null");
 			if (targetFilePath == null)
-				throw new AnFakeArgumentException("Files.Move(sourceFilePath, targetFilePath, overwrite): targetFilePath must not be null");
+				throw new ArgumentException("Files.Move(sourceFilePath, targetFilePath, overwrite): targetFilePath must not be null");
 
 			Move(sourceFilePath.AsPath(), targetFilePath.AsPath(), overwrite);
 		}
@@ -130,7 +129,7 @@ namespace AnFake.Core
 		public static void Delete(IEnumerable<FileItem> files)
 		{
 			if (files == null)
-				throw new AnFakeArgumentException("Files.Delete(files): files must not be null");
+				throw new ArgumentException("Files.Delete(files): files must not be null");
 
 			Trace.Info("Deleting files...");
 
@@ -146,7 +145,7 @@ namespace AnFake.Core
 		public static void Delete(FileItem file)
 		{
 			if (file == null)
-				throw new AnFakeArgumentException("Files.Delete(file): file must not be null");
+				throw new ArgumentException("Files.Delete(file): file must not be null");
 
 			Delete(file.Path);
 		}
@@ -154,7 +153,7 @@ namespace AnFake.Core
 		public static void Delete(FileSystemPath filePath)
 		{
 			if (filePath == null)
-				throw new AnFakeArgumentException("Files.Delete(filePath): filePath must not be null");
+				throw new ArgumentException("Files.Delete(filePath): filePath must not be null");
 
 			Trace.InfoFormat("Deleting '{0}'...", filePath);
 
@@ -164,7 +163,7 @@ namespace AnFake.Core
 		public static void Delete(string filePath)
 		{
 			if (filePath == null)
-				throw new AnFakeArgumentException("Files.Delete(filePath): filePath must not be null");
+				throw new ArgumentException("Files.Delete(filePath): filePath must not be null");
 
 			Delete(filePath.AsPath());
 		}
@@ -172,7 +171,7 @@ namespace AnFake.Core
 		public static Snapshot Snapshot(IEnumerable<FileItem> files)
 		{
 			if (files == null)
-				throw new AnFakeArgumentException("Files.Snapshot(files): files must not be null");
+				throw new ArgumentException("Files.Snapshot(files): files must not be null");
 
 			var snapshot = new Snapshot();			
 			try

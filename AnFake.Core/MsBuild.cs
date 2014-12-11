@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using AnFake.Api;
-using AnFake.Core.Exceptions;
 
 namespace AnFake.Core
 {
@@ -61,7 +60,7 @@ namespace AnFake.Core
 		public static IToolExecutionResult BuildDebug(FileItem solution)
 		{
 			if (solution == null)
-				throw new AnFakeArgumentException("MsBuild.BuildDebug(solution): solution must not be null");
+				throw new ArgumentException("MsBuild.BuildDebug(solution): solution must not be null");
 
 			return BuildDebug(new[] {solution});
 		}
@@ -69,7 +68,7 @@ namespace AnFake.Core
 		public static IToolExecutionResult BuildDebug(IEnumerable<FileItem> projects)
 		{
 			if (projects == null)
-				throw new AnFakeArgumentException("MsBuild.BuildDebug(projects): projects must not be null");
+				throw new ArgumentException("MsBuild.BuildDebug(projects): projects must not be null");
 
 			return Build(projects, p => { p.Properties["Configuration"] = "Debug"; });
 		}
@@ -77,9 +76,9 @@ namespace AnFake.Core
 		public static IToolExecutionResult BuildDebug(IEnumerable<FileItem> projects, FileSystemPath output)
 		{
 			if (projects == null)
-				throw new AnFakeArgumentException("MsBuild.BuildDebug(projects, output): projects must not be null");
+				throw new ArgumentException("MsBuild.BuildDebug(projects, output): projects must not be null");
 			if (output == null)
-				throw new AnFakeArgumentException("MsBuild.BuildDebug(projects, output): output must not be null");
+				throw new ArgumentException("MsBuild.BuildDebug(projects, output): output must not be null");
 
 			return Build(projects, p =>
 			{
@@ -91,7 +90,7 @@ namespace AnFake.Core
 		public static IToolExecutionResult BuildRelease(FileItem solution)
 		{
 			if (solution == null)
-				throw new AnFakeArgumentException("MsBuild.BuildRelease(solution): solution must not be null");
+				throw new ArgumentException("MsBuild.BuildRelease(solution): solution must not be null");
 
 			return BuildRelease(new[] {solution});
 		}
@@ -99,7 +98,7 @@ namespace AnFake.Core
 		public static IToolExecutionResult BuildRelease(IEnumerable<FileItem> projects)
 		{
 			if (projects == null)
-				throw new AnFakeArgumentException("MsBuild.BuildRelease(projects): projects must not be null");
+				throw new ArgumentException("MsBuild.BuildRelease(projects): projects must not be null");
 
 			return Build(projects, p => { p.Properties["Configuration"] = "Release"; });
 		}
@@ -107,9 +106,9 @@ namespace AnFake.Core
 		public static IToolExecutionResult BuildRelease(IEnumerable<FileItem> projects, FileSystemPath output)
 		{
 			if (projects == null)
-				throw new AnFakeArgumentException("MsBuild.BuildRelease(projects, output): projects must not be null");
+				throw new ArgumentException("MsBuild.BuildRelease(projects, output): projects must not be null");
 			if (output == null)
-				throw new AnFakeArgumentException("MsBuild.BuildRelease(projects, output): output must not be null");
+				throw new ArgumentException("MsBuild.BuildRelease(projects, output): output must not be null");
 
 			return Build(projects, p =>
 			{
@@ -121,7 +120,7 @@ namespace AnFake.Core
 		public static IToolExecutionResult Build(FileItem solution)
 		{
 			if (solution == null)
-				throw new AnFakeArgumentException("MsBuild.Build(solution): solution must not be null");
+				throw new ArgumentException("MsBuild.Build(solution): solution must not be null");
 
 			return Build(new[] {solution}, p => { });
 		}
@@ -129,7 +128,7 @@ namespace AnFake.Core
 		public static IToolExecutionResult Build(IEnumerable<FileItem> projects)
 		{
 			if (projects == null)
-				throw new AnFakeArgumentException("MsBuild.Build(projects): projects must not be null");
+				throw new ArgumentException("MsBuild.Build(projects): projects must not be null");
 
 			return Build(projects, p => { });
 		}
@@ -137,9 +136,9 @@ namespace AnFake.Core
 		public static IToolExecutionResult Build(FileItem solution, Action<Params> setParams)
 		{
 			if (solution == null)
-				throw new AnFakeArgumentException("MsBuild.Build(solution, setParams): solution must not be null");
+				throw new ArgumentException("MsBuild.Build(solution, setParams): solution must not be null");
 			if (setParams == null)
-				throw new AnFakeArgumentException("MsBuild.Build(solution, setParams): setParams must not be null");
+				throw new ArgumentException("MsBuild.Build(solution, setParams): setParams must not be null");
 
 			return Build(new[] {solution}, setParams);
 		}
@@ -147,19 +146,19 @@ namespace AnFake.Core
 		public static IToolExecutionResult Build(IEnumerable<FileItem> projects, Action<Params> setParams)
 		{
 			if (projects == null)
-				throw new AnFakeArgumentException("MsBuild.Build(projects, setParams): projects must not be null");
+				throw new ArgumentException("MsBuild.Build(projects, setParams): projects must not be null");
 			if (setParams == null)
-				throw new AnFakeArgumentException("MsBuild.Build(projects, setParams): setParams must not be null");
+				throw new ArgumentException("MsBuild.Build(projects, setParams): setParams must not be null");
 
 			var projArray = projects.ToArray();
 			if (projArray.Length == 0)
-				throw new AnFakeArgumentException("MsBuild.Build(projects, setParams): projects set must not be empty");
+				throw new ArgumentException("MsBuild.Build(projects, setParams): projects set must not be empty");
 
 			var parameters = Defaults.Clone();
 			setParams(parameters);
 
 			if (parameters.ToolPath == null)
-				throw new AnFakeArgumentException(
+				throw new ArgumentException(
 					String.Format(
 						"MsBuild.Params.ToolPath must not be null.\nHint: probably, MsBuild.exe not found.\nSearch path:\n  {0}",
 						String.Join("\n  ", Locations)));

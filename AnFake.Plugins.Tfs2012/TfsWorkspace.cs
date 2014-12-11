@@ -64,20 +64,20 @@ namespace AnFake.Plugins.Tfs2012
 		public static Api.IToolExecutionResult Checkout(ServerPath serverPath, FileSystemPath localPath, string workspaceName, Action<Params> setParams)
 		{
 			if (serverPath == null)
-				throw new AnFakeArgumentException("TfsWorkspace.Checkout(serverPath, localPath, workspaceName[, setParams]): serverPath must not be null");
+				throw new ArgumentException("TfsWorkspace.Checkout(serverPath, localPath, workspaceName[, setParams]): serverPath must not be null");
 			if (!serverPath.IsRooted)
-				throw new AnFakeArgumentException("TfsWorkspace.Checkout(serverPath, localPath, workspaceName[, setParams]): serverPath must be an absolute path");
+				throw new ArgumentException("TfsWorkspace.Checkout(serverPath, localPath, workspaceName[, setParams]): serverPath must be an absolute path");
 
 			if (localPath == null)
-				throw new AnFakeArgumentException("TfsWorkspace.Checkout(serverPath, localPath, workspaceName[, setParams]): localPath must not be null");
+				throw new ArgumentException("TfsWorkspace.Checkout(serverPath, localPath, workspaceName[, setParams]): localPath must not be null");
 			if (!localPath.AsFolder().IsEmpty())
 				throw new InvalidConfigurationException(String.Format("TfsWorkspace.Checkout intended for initial downloading only but target directory '{0}' is not empty.", localPath));
 
 			if (String.IsNullOrEmpty(workspaceName))
-				throw new AnFakeArgumentException("TfsWorkspace.Checkout(serverPath, localPath, workspaceName[, setParams]): workspaceName must not be null or empty");
+				throw new ArgumentException("TfsWorkspace.Checkout(serverPath, localPath, workspaceName[, setParams]): workspaceName must not be null or empty");
 
 			if (setParams == null)
-				throw new AnFakeArgumentException("TfsWorkspace.Checkout(serverPath, localPath, workspaceName, setParams): setParams must not be null");
+				throw new ArgumentException("TfsWorkspace.Checkout(serverPath, localPath, workspaceName, setParams): setParams must not be null");
 
 			var ws = FindWorkspace(workspaceName);			
 			if (ws != null)
@@ -114,9 +114,9 @@ namespace AnFake.Plugins.Tfs2012
 		public static Api.IToolExecutionResult Sync(FileSystemPath localPath, Action<Params> setParams)
 		{
 			if (localPath == null)
-				throw new AnFakeArgumentException("TfsWorkspace.Sync(localPath[, setParams]): localPath must not be null");
+				throw new ArgumentException("TfsWorkspace.Sync(localPath[, setParams]): localPath must not be null");
 			if (setParams == null)
-				throw new AnFakeArgumentException("TfsWorkspace.Sync(localPath, setParams): setParams must not be null");
+				throw new ArgumentException("TfsWorkspace.Sync(localPath, setParams): setParams must not be null");
 
 			var parameters = Defaults.Clone();
 			setParams(parameters);
@@ -153,9 +153,9 @@ namespace AnFake.Plugins.Tfs2012
 		public static Api.IToolExecutionResult SyncLocal(FileSystemPath localPath, Action<Params> setParams)
 		{
 			if (localPath == null)
-				throw new AnFakeArgumentException("TfsWorkspace.SyncLocal(localPath[, setParams]): localPath must not be null");
+				throw new ArgumentException("TfsWorkspace.SyncLocal(localPath[, setParams]): localPath must not be null");
 			if (setParams == null)
-				throw new AnFakeArgumentException("TfsWorkspace.SyncLocal(localPath, setParams): setParams must not be null");
+				throw new ArgumentException("TfsWorkspace.SyncLocal(localPath, setParams): setParams must not be null");
 
 			var parameters = Defaults.Clone();
 			setParams(parameters);
@@ -192,9 +192,9 @@ namespace AnFake.Plugins.Tfs2012
 		public static Api.IToolExecutionResult SaveLocal(FileSystemPath localPath, Action<Params> setParams)
 		{
 			if (localPath == null)
-				throw new AnFakeArgumentException("TfsWorkspace.SyncLocal(localPath[, setParams]): localPath must not be null");
+				throw new ArgumentException("TfsWorkspace.SyncLocal(localPath[, setParams]): localPath must not be null");
 			if (setParams == null)
-				throw new AnFakeArgumentException("TfsWorkspace.SyncLocal(localPath, setParams): setParams must not be null");
+				throw new ArgumentException("TfsWorkspace.SyncLocal(localPath, setParams): setParams must not be null");
 
 			var parameters = Defaults.Clone();
 			setParams(parameters);
@@ -278,6 +278,7 @@ namespace AnFake.Plugins.Tfs2012
 							writer.Write(relServerPath.Spec);
 							writer.Write(": ");
 							writer.WriteLine(relLocalPath.Spec);
+							writer.WriteLine();
 
 							Trace.Message(new TraceMessage(TraceMessageLevel.Error, err) {File = wsFile.Path.Full});
 							errors++;
@@ -303,7 +304,7 @@ namespace AnFake.Plugins.Tfs2012
 		public static bool IsLocal(FileSystemPath localPath)
 		{
 			if (localPath == null)
-				throw new AnFakeArgumentException("TfsWorkspace.IsLocal(localPath): localPath must not be null");
+				throw new ArgumentException("TfsWorkspace.IsLocal(localPath): localPath must not be null");
 
 			return Vcs.TryGetWorkspace(localPath.Full) != null;
 		}
@@ -311,7 +312,7 @@ namespace AnFake.Plugins.Tfs2012
 		public static Api.IToolExecutionResult PendAdd(IEnumerable<FileItem> files)
 		{
 			if (files == null)
-				throw new AnFakeArgumentException("TfsWorkspace.PendAdd(files): files must not be null");
+				throw new ArgumentException("TfsWorkspace.PendAdd(files): files must not be null");
 
 			var filePathes = files
 				.Select(x => x.Path)
@@ -337,7 +338,7 @@ namespace AnFake.Plugins.Tfs2012
 		public static Api.IToolExecutionResult Undo(IEnumerable<FileItem> files)
 		{
 			if (files == null)
-				throw new AnFakeArgumentException("TfsWorkspace.Undo(files): files must not be null");
+				throw new ArgumentException("TfsWorkspace.Undo(files): files must not be null");
 
 			var filesArray = files.ToArray();
 
@@ -363,7 +364,7 @@ namespace AnFake.Plugins.Tfs2012
 		private static void EnsureWorkspaceFile(Params parameters)
 		{
 			if (String.IsNullOrEmpty(parameters.WorkspaceFile))
-				throw new AnFakeArgumentException("TfsWorkspace.Params.WorkspaceFile must not be null or empty");
+				throw new ArgumentException("TfsWorkspace.Params.WorkspaceFile must not be null or empty");
 		}
 
 		private static void TraceMappings(IEnumerable<WorkingFolder> mappings)

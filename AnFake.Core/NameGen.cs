@@ -37,13 +37,13 @@ namespace AnFake.Core
 		public static string Generate(string basicName, Predicate<string> validator, Action<Params> setParams)
 		{
 			if (String.IsNullOrEmpty(basicName))
-				throw new AnFakeArgumentException("NameGen.Generate(basicName, validator[, setParams]): basicName must not be null or empty");
+				throw new ArgumentException("NameGen.Generate(basicName, validator[, setParams]): basicName must not be null or empty");
 
 			if (validator == null)
-				throw new AnFakeArgumentException("NameGen.Generate(basicName, validator[, setParams]): validator must not be null");
+				throw new ArgumentException("NameGen.Generate(basicName, validator[, setParams]): validator must not be null");
 
 			if (setParams == null)
-				throw new AnFakeArgumentException("NameGen.Generate(basicName, validator, setParams): setParams must not be null");
+				throw new ArgumentException("NameGen.Generate(basicName, validator, setParams): setParams must not be null");
 
 			if (validator(basicName))
 				return basicName;

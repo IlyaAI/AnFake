@@ -51,7 +51,6 @@
     <Compile Include="NameGen.cs" />
     <Compile Include="NuGetExecutionResult.cs" />
     <Compile Include="AssemblyInfoExecutionResult.cs" />
-    <Compile Include="Exceptions\AnFakeArgumentException.cs" />
     <Compile Include="Exceptions\AnFakeException.cs" />
     <Compile Include="Exceptions\InvalidConfigurationException.cs" />
     <Compile Include="Exceptions\TargetFailureException.cs" />

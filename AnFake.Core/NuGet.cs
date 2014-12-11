@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
 using AnFake.Api;
-using AnFake.Core.Exceptions;
 
 namespace AnFake.Core
 {
@@ -75,22 +74,22 @@ namespace AnFake.Core
 		public static NuGetExecutionResult Pack(NuSpec.v25.Package nuspec, FileSystemPath srcFolder, FileSystemPath dstFolder, Action<Params> setParams)
 		{
 			if (nuspec == null)
-				throw new AnFakeArgumentException("NuGet.Pack(nuspec, srcFolder, dstFolder, setParams): nuspec must not be null");
+				throw new ArgumentException("NuGet.Pack(nuspec, srcFolder, dstFolder, setParams): nuspec must not be null");
 			if (srcFolder == null)
-				throw new AnFakeArgumentException("NuGet.Pack(nuspec, srcFolder, dstFolder, setParams): srcFolder must not be null");
+				throw new ArgumentException("NuGet.Pack(nuspec, srcFolder, dstFolder, setParams): srcFolder must not be null");
 			if (dstFolder == null)
-				throw new AnFakeArgumentException("NuGet.Pack(nuspec, srcFolder, dstFolder, setParams): dstFolder must not be null");
+				throw new ArgumentException("NuGet.Pack(nuspec, srcFolder, dstFolder, setParams): dstFolder must not be null");
 			if (setParams == null)
-				throw new AnFakeArgumentException("NuGet.Pack(nuspec, srcFolder, dstFolder, setParams): setParams must not be null");
+				throw new ArgumentException("NuGet.Pack(nuspec, srcFolder, dstFolder, setParams): setParams must not be null");
 
 			if (String.IsNullOrEmpty(nuspec.Metadata.Id))
-				throw new AnFakeArgumentException("NuSpec.v25.Metadata.Id must not be null or empty");
+				throw new ArgumentException("NuSpec.v25.Metadata.Id must not be null or empty");
 			if (nuspec.Metadata.Version == null)
-				throw new AnFakeArgumentException("NuSpec.v25.Metadata.Version must not be null");
+				throw new ArgumentException("NuSpec.v25.Metadata.Version must not be null");
 			if (String.IsNullOrEmpty(nuspec.Metadata.Authors))
-				throw new AnFakeArgumentException("NuSpec.v25.Metadata.Authors must not be null or empty");
+				throw new ArgumentException("NuSpec.v25.Metadata.Authors must not be null or empty");
 			if (String.IsNullOrEmpty(nuspec.Metadata.Description))
-				throw new AnFakeArgumentException("NuSpec.v25.Metadata.Description must not be null or empty");			
+				throw new ArgumentException("NuSpec.v25.Metadata.Description must not be null or empty");			
 
 			var parameters = Defaults.Clone();
 			setParams(parameters);
@@ -132,9 +131,9 @@ namespace AnFake.Core
 		public static IToolExecutionResult Push(FileSystemPath package, Action<Params> setParams)
 		{
 			if (package == null)
-				throw new AnFakeArgumentException("NuGet.Push(package, setParams): package must not be null");
+				throw new ArgumentException("NuGet.Push(package, setParams): package must not be null");
 			if (setParams == null)
-				throw new AnFakeArgumentException("NuGet.Push(package, setParams): setParams must not be null");
+				throw new ArgumentException("NuGet.Push(package, setParams): setParams must not be null");
 
 			var parameters = Defaults.Clone();
 			setParams(parameters);
@@ -142,7 +141,7 @@ namespace AnFake.Core
 			EnsureToolPath(parameters);
 
 			if (String.IsNullOrEmpty(parameters.AccessKey))
-				throw new AnFakeArgumentException("NuGet.Params.AccessKey must not be null or empty");
+				throw new ArgumentException("NuGet.Params.AccessKey must not be null or empty");
 
 			// TODO: check other parameters
 
@@ -172,7 +171,7 @@ namespace AnFake.Core
 		private static void EnsureToolPath(Params parameters)
 		{
 			if (parameters.ToolPath == null)
-				throw new AnFakeArgumentException(
+				throw new ArgumentException(
 					String.Format(
 						"NuGet.Params.ToolPath must not be null.\nHint: probably, NuGet.exe not found.\nSearch path:\n  {0}",
 						String.Join("\n  ", Locations)));

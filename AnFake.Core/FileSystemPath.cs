@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Reflection;
-using AnFake.Core.Exceptions;
 
 namespace AnFake.Core
 {
@@ -49,10 +48,10 @@ namespace AnFake.Core
 			internal set
 			{
 				if (value == null)
-					throw new AnFakeArgumentException("FileSystemPath.Base must not be null");
+					throw new ArgumentException("FileSystemPath.Base must not be null");
 
 				if (!Path.IsPathRooted(value.Spec))
-					throw new AnFakeArgumentException("FileSystemPath.Base must be absolute path");
+					throw new ArgumentException("FileSystemPath.Base must be absolute path");
 
 				_basePath = value;
 			}
