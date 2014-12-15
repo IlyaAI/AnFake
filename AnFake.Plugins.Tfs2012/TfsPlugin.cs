@@ -1,23 +1,28 @@
 ﻿using System;
+using System.Globalization;
 using System.Linq;
 using AnFake.Api;
 using AnFake.Core;
 using AnFake.Core.Exceptions;
+using AnFake.Core.Integration;
 using Microsoft.TeamFoundation.Build.Client;
 using Microsoft.TeamFoundation.Client;
+using Microsoft.TeamFoundation.VersionControl.Client;
 
 namespace AnFake.Plugins.Tfs2012
 {
-	internal sealed class TfsPlugin : IPlugin
+	internal sealed class TfsPlugin : IPlugin, IVersionControl
 	{
 		private const string SectionKey = "AnFake";
 		private const string SectionHeader = "AnFake Summary";
 		private const int SectionPriority = 199;
 
 		private readonly TfsTeamProjectCollection _teamProjectCollection;
-
+		
 		private readonly IBuildDetail _build;
 		private readonly IBuildInformation _tracker;
+
+		private VersionControlServer _vcs;
 
 		public TfsPlugin(MyBuild.Params parameters)
 		{
@@ -75,7 +80,8 @@ namespace AnFake.Plugins.Tfs2012
 				}
 
 				Trace.MessageReceived += OnMessage;
-				Target.RunFinished += OnRunFinished;
+				Target.Finished += OnTargetFinished;
+				MyBuild.Finished += OnBuildFinished;
 			}
 			else
 			{
@@ -99,6 +105,45 @@ namespace AnFake.Plugins.Tfs2012
 				return _build;
 			}
 		}
+
+		public VersionControlServer Vcs
+		{
+			get { return _vcs ?? (_vcs = _teamProjectCollection.GetService<VersionControlServer>()); }
+		}
+
+		public int LastChangesetOf(FileSystemPath path)
+		{
+			var ws = Vcs.GetWorkspace(path.Full);
+			var queryParams = new QueryHistoryParameters(path.Full, RecursionType.Full)
+			{
+				VersionStart = new ChangesetVersionSpec(1),
+				VersionEnd = new WorkspaceVersionSpec(ws),
+				MaxResults = 1
+			};
+
+			var changeset = Vcs.QueryHistory(queryParams).FirstOrDefault();
+			return changeset != null
+				? changeset.ChangesetId
+				: 0;
+		}
+
+		// IVersionControl members
+
+		public string CurrentChangesetId
+		{
+			get
+			{
+				return LastChangesetOf("".AsPath())
+					.ToString(CultureInfo.InvariantCulture);
+			}
+		}
+
+		public IChangeset GetChangeset(string changesetId)
+		{
+			return new TfsChangeset(Vcs.GetChangeset(Int32.Parse(changesetId)));
+		}
+
+		//
 
 		private void OnMessage(object sender, TraceMessage message)
 		{
@@ -128,8 +173,10 @@ namespace AnFake.Plugins.Tfs2012
 			_tracker.Save();
 		}
 
-		private void OnRunFinished(object sender, Target.RunFinishedEventArgs evt)
+		private void OnTargetFinished(object sender, Target.RunDetails details)
 		{
+			var topTarget = (Target) sender;
+
 			var logsPath = (FileSystemPath) null;
 			if (!String.IsNullOrEmpty(_build.DropLocation))
 			{
@@ -146,10 +193,9 @@ namespace AnFake.Plugins.Tfs2012
 
 			string summary;
 			var hasErrorsOrWarns = false;
-			var hasDropErrors = false;
-			var currentTarget = (Target) sender;			
+			var hasDropErrors = false;			
 
-			foreach (var target in evt.ExecutedTargets)
+			foreach (var target in details.ExecutedTargets)
 			{
 				summary = String.Format("{0}: {1,3} error(s) {2,3} warning(s) {3,3} messages(s)  {4}",
 					target.Name, target.Messages.ErrorsCount, target.Messages.WarningsCount, target.Messages.SummariesCount, 
@@ -189,10 +235,10 @@ namespace AnFake.Plugins.Tfs2012
 					target.Messages.WarningsCount > 0;
 			}
 
-			summary = String.Format("'{0}' {1}", currentTarget.Name, evt.FinalState.ToHumanReadable().ToUpperInvariant());
+			summary = String.Format("'{0}' {1}", topTarget.Name, topTarget.State.ToHumanReadable().ToUpperInvariant());
 			if (logsPath != null)
 			{
-				var logFile = MyBuild.Defaults.LogFile;
+				var logFile = MyBuild.Current.LogFile;
 				var dstPath = logsPath / "build.log";
 
 				if (SafeOp.Try(Files.Copy, logFile.Path, dstPath, false))
@@ -237,35 +283,29 @@ namespace AnFake.Plugins.Tfs2012
 			}			
 
 			_build.Information
-				.Save();
-
-			if (currentTarget.Name == MyBuild.Defaults.Targets.Last())
-			{
-				_build.FinalizeStatus(AsTfsBuildStatus(evt.FinalState));
-			}
-			else
-			{
-				_build.Status = AsTfsBuildStatus(evt.FinalState);
-				_build.Save();
-			}
+				.Save();			
 		}
 
-		private static BuildStatus AsTfsBuildStatus(TargetState state)
+		private void OnBuildFinished(object sender, MyBuild.RunDetails details)
 		{
-			switch (state)
+			_build.FinalizeStatus(AsTfsBuildStatus(details.Status));
+		}
+
+		private static BuildStatus AsTfsBuildStatus(MyBuild.Status status)
+		{
+			switch (status)
 			{
-				case TargetState.Succeeded:
+				case MyBuild.Status.Succeeded:
 					return BuildStatus.Succeeded;
 
-				case TargetState.PartiallySucceeded:
+				case MyBuild.Status.PartiallySucceeded:
 					return BuildStatus.PartiallySucceeded;
 
-				case TargetState.Failed:
+				case MyBuild.Status.Failed:
 					return BuildStatus.Failed;
 
 				default:
-					throw new InvalidOperationException(
-						String.Format("Inconsistency detected: final state expected to be {{Successed|PartiallySuccessed|Failed}} but {0} provided.", state));
+					return BuildStatus.None;
 			}
 		}
 	}

@@ -57,12 +57,12 @@ namespace AnFake.Core.Exceptions
 			var stackTrace = new StackTrace(InnerException ?? this, true);
 			_insideScript = false;
 
-			if (MyBuild.Defaults != null && MyBuild.Defaults.ScriptFile != null)
+			if (MyBuild.Current != null && MyBuild.Current.ScriptFile != null)
 			{
 				var frames = stackTrace.GetFrames();
 				if (frames != null)
 				{
-					var scriptName = MyBuild.Defaults.ScriptFile.Name;
+					var scriptName = MyBuild.Current.ScriptFile.Name;
 					var scriptFrame = frames.FirstOrDefault(f =>
 					{
 						var file = f.GetFileName();

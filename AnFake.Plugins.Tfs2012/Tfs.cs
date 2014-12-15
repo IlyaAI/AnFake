@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Linq;
 using AnFake.Core;
 using Microsoft.TeamFoundation.Build.Client;
-using Microsoft.TeamFoundation.VersionControl.Client;
 
 namespace AnFake.Plugins.Tfs2012
 {
@@ -48,27 +46,12 @@ namespace AnFake.Plugins.Tfs2012
 
 		public static int LastChangesetOf(FileSystemPath path)
 		{
-			var vcs = Plugin.Get<TfsPlugin>()
-				.TeamProjectCollection
-				.GetService<VersionControlServer>();
-
-			var ws = vcs.GetWorkspace(path.Full);
-			var queryParams = new QueryHistoryParameters(path.Full, RecursionType.Full)
-			{					
-				VersionStart = new ChangesetVersionSpec(1),
-				VersionEnd = new WorkspaceVersionSpec(ws),
-				MaxResults = 1
-			};
-
-			var changeset = vcs.QueryHistory(queryParams).FirstOrDefault();
-			return changeset != null 
-				? changeset.ChangesetId 
-				: 0;			
+			return Plugin.Get<TfsPlugin>().LastChangesetOf(path);
 		}		
 
 		public static void UseIt()
 		{
-			Plugin.Register(new TfsPlugin(MyBuild.Defaults));
+			Plugin.Register(new TfsPlugin(MyBuild.Current));
 		}
 
 		public static ServerPath AsServerPath(this string path)

@@ -185,7 +185,7 @@ namespace AnFake.Core
 
 				args.Space().NonQuotedValue(propArgs.ToString());
 
-				var loggerT = typeof (Integration.MsBuild.Logger);
+				var loggerT = typeof (AnFake.Integration.MsBuild.Logger);
 				args.Space()
 					.ValuedOption("logger")
 					.NonQuotedValue(loggerT.FullName)

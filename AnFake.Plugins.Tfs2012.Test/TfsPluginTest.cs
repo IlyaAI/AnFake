@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using AnFake.Api;
 using AnFake.Core;
 using Microsoft.TeamFoundation.Build.Client;
@@ -10,7 +9,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AnFake.Plugins.Tfs2012.Test
 {
-	[Ignore]
 	[TestClass]
 	public class TfsPluginTest : TfsTestSuite
 	{
@@ -18,8 +16,10 @@ namespace AnFake.Plugins.Tfs2012.Test
 		public IBuildDetail Build;
 
 		[TestInitialize]
-		public void Initialize()
+		public override void Initialize()
 		{
+			base.Initialize();
+
 			PrevTracer = Trace.Set(new BypassTracer());
 
 			var teamProjectCollection = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(new Uri(TfsUri));

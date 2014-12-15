@@ -99,6 +99,9 @@
     <Compile Include="Utils\CycleDependencyException.cs" />
     <Compile Include="Utils\DependencyResolver.cs" />
     <Compile Include="Utils\EnumerableAdapter.cs" />
+    <Compile Include="Integration\IChangeset.cs" />
+    <Compile Include="Integration\IVersionControl.cs" />
+    <Compile Include="VersionControl.cs" />
     <Compile Include="VersionExtension.cs" />
     <Compile Include="Xml.cs" />
   </ItemGroup>

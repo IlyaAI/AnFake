@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using AnFake.Api;
 using AnFake.Core;
-using AnFake.Core.Exceptions;
 using AnFake.Logging;
 using AnFake.Scripting;
 
@@ -194,18 +193,18 @@ namespace AnFake
 
 		private static int Run(RunOptions options)
 		{
-			var buildPath = options.BuildPath.AsPath();
-			var scriptFile = new FileItem(buildPath/options.Script, buildPath);			
-			var logFile = new FileItem(options.LogPath.AsPath(), buildPath);
-
-			FileSystemPath.Base = scriptFile.Folder;			
-
 			try
 			{
+				var buildPath = options.BuildPath.AsPath();
+				var scriptFile = new FileItem(buildPath / options.Script, buildPath);
+				var logFile = new FileItem(options.LogPath.AsPath(), buildPath);
+
+				FileSystemPath.Base = scriptFile.Folder;
+
 				Trace.Info("Configuring build...");
-				Trace.InfoFormat("BuildPath : {0}", options.BuildPath);				
+				Trace.InfoFormat("BuildPath : {0}", options.BuildPath);
 				Trace.InfoFormat("LogFile   : {0}", logFile);
-				Trace.InfoFormat("ScriptFile: {0}", scriptFile);				
+				Trace.InfoFormat("ScriptFile: {0}", scriptFile);
 				Trace.InfoFormat("Targets   : {0}", String.Join(" ", options.Targets));
 				Trace.InfoFormat("Parameters:\n  {0}", String.Join("\n  ", options.Properties.Select(x => x.Key + " = " + x.Value)));
 
@@ -232,36 +231,15 @@ namespace AnFake
 						options.Properties));
 
 				evaluator.Evaluate(scriptFile);
-
-				Trace.Info("Running targets...");
-				foreach (var target in options.Targets)
-				{
-					Target.Get(target).Run();
-				}
-			}
-			catch (TerminateTargetException)
-			{
-				// just skip, its already processed
+				
+				var status = MyBuild.Run();
+				return status - MyBuild.Status.Succeeded;
 			}
 			catch (Exception e)
-			{
-				var error = (e as AnFakeException) ?? new AnFakeWrapperException(e);
-
-				// Do the best efforts to notify observers via Tracer				
-				try
-				{
-					Trace.Error(error);
-				}
-					// ReSharper disable once EmptyGeneralCatchClause
-				catch (Exception)
-				{
-					// ignore
-				}
-
-				return 1;
+			{				
+				Log.Error(e);
+				return (int) MyBuild.Status.Unknown;
 			}
-
-			return 0;
 		}
 	}
 }

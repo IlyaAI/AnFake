@@ -17,32 +17,74 @@ namespace AnFake.Core
 		private static readonly IDictionary<string, Target> Targets
 			= new Dictionary<string, Target>(StringComparer.OrdinalIgnoreCase);
 
+		/// <summary>
+		///		Represents execution reason of on-failure or finally action.
+		/// </summary>
 		public sealed class ExecutionReason
 		{
-			public readonly bool IsRunFailed;
-			public readonly bool IsTargetFailed;
+			/// <summary>
+			///		Whether top requested target failed or not.
+			/// </summary>
+			public readonly bool IsTopFailed;
 
-			internal ExecutionReason(bool isRunFailed, bool isTargetFailed)
+			/// <summary>
+			///		Whether current target failed or not.
+			/// </summary>
+			public readonly bool IsCurrentFailed;
+
+			internal ExecutionReason(bool isTopFailed, bool isCurrentFailed)
 			{
-				IsRunFailed = isRunFailed;
-				IsTargetFailed = isTargetFailed;
+				IsTopFailed = isTopFailed;
+				IsCurrentFailed = isCurrentFailed;
 			}
 		}
 
-		public sealed class RunFinishedEventArgs : EventArgs
+		/// <summary>
+		///		Represents target run details. Used in <c>Started</c> and <c>Finished</c> events.
+		/// </summary>
+		public sealed class RunDetails
 		{
-			public readonly TargetState FinalState;
+			/// <summary>
+			///		Target start time.
+			/// </summary>
+			public readonly DateTime StartTime;
+
+			/// <summary>
+			///		Target finish time.
+			/// </summary>
+			/// <remarks>
+			///		This value is undefined for <c>Finished</c> event.
+			/// </remarks>
+			public readonly DateTime FinishTime;
+
+			/// <summary>
+			///		Set of executed targets.
+			/// </summary>
+			/// <remarks>
+			///		<para>This set contains all targets which Do action was invoked.</para>
+			///		<para>This set is empty for <c>Finished</c> event.</para>
+			/// </remarks>
 			public readonly Target[] ExecutedTargets;
 
-			public RunFinishedEventArgs(TargetState finalState, Target[] executedTargets)
+			internal RunDetails(DateTime startTime, DateTime finishTime, Target[] executedTargets)
 			{
-				FinalState = finalState;
+				StartTime = startTime;
+				FinishTime = finishTime;
 				ExecutedTargets = executedTargets;
+			}
+
+			internal RunDetails(DateTime startTime)
+			{
+				StartTime = startTime;
+				ExecutedTargets = new Target[0];
 			}
 		}
 
 		private static Target _current;
 
+		/// <summary>
+		///		Currently running target.
+		/// </summary>
 		public static Target Current
 		{
 			get
@@ -63,6 +105,7 @@ namespace AnFake.Core
 		private Action<ExecutionReason> _finally;
 		private TargetState _state;
 		private bool _skipErrors;
+		private TimeSpan _runTime = TimeSpan.Zero;
 		private event EventHandler<ExecutionReason> Failed;
 		private event EventHandler<ExecutionReason> Finalized;
 
@@ -76,45 +119,90 @@ namespace AnFake.Core
 			Targets.Add(name, this);
 		}
 
-		public static event EventHandler<RunFinishedEventArgs> RunFinished;
+		/// <summary>
+		///     Fired when target started.
+		/// </summary>
+		public static event EventHandler<RunDetails> Started;
 
+		/// <summary>
+		///     Fired when target finished either successful or failed.
+		/// </summary>
+		public static event EventHandler<RunDetails> Finished;
+
+		/// <summary>
+		///     Fired when currently running target failed.
+		/// </summary>
 		public static event EventHandler<ExecutionReason> CurrentFailed
 		{
 			add { Current.Failed += value; }
 			remove { Current.Failed -= value; }
 		}
 
+		/// <summary>
+		///     Fired when currently running target finalized.
+		/// </summary>
 		public static event EventHandler<ExecutionReason> CurrentFinalized
 		{
 			add { Current.Finalized += value; }
 			remove { Current.Finalized -= value; }
 		}
 
+		/// <summary>
+		///     Target name.
+		/// </summary>
 		public string Name
 		{
 			get { return _name; }
 		}
 
+		/// <summary>
+		///     Target dependencies.
+		/// </summary>
+		/// <remarks>
+		///     Targets from Dependencies sequence are run before current.
+		/// </remarks>
 		public IEnumerable<Target> Dependencies
 		{
 			get { return _dependencies; }
 		}
 
+		/// <summary>
+		///     Current target state.
+		/// </summary>
 		public TargetState State
 		{
 			get { return _state; }
 		}
 
+		/// <summary>
+		///     Whether target has body (i.e. Do action) or not.
+		/// </summary>
 		public bool HasBody
 		{
 			get { return _do != null; }
 		}
 
+		/// <summary>
+		///     Trace messages accumulated during target run.
+		/// </summary>
 		public TraceMessageCollector Messages
 		{
 			get { return _messages; }
 		}
 
+		/// <summary>
+		///     Target run time.
+		/// </summary>
+		public TimeSpan RunTime
+		{
+			get { return _runTime; }
+		}
+
+		/// <summary>
+		///     Defines target body.
+		/// </summary>
+		/// <param name="action"></param>
+		/// <returns></returns>
 		public Target Do(Action action)
 		{
 			if (action == null)
@@ -128,6 +216,11 @@ namespace AnFake.Core
 			return this;
 		}
 
+		/// <summary>
+		///     Defines target on-failure action.
+		/// </summary>
+		/// <param name="action"></param>
+		/// <returns></returns>
 		public Target OnFailure(Action<ExecutionReason> action)
 		{
 			if (action == null)
@@ -141,6 +234,11 @@ namespace AnFake.Core
 			return this;
 		}
 
+		/// <summary>
+		///     Defines target on-failure action.
+		/// </summary>
+		/// <param name="action"></param>
+		/// <returns></returns>
 		public Target OnFailure(Action action)
 		{
 			if (action == null)
@@ -149,6 +247,14 @@ namespace AnFake.Core
 			return OnFailure(x => action.Invoke());
 		}
 
+		/// <summary>
+		///     Defines target finally action.
+		/// </summary>
+		/// <remarks>
+		///     Finally action is executed eigher target successful or failed.
+		/// </remarks>
+		/// <param name="action"></param>
+		/// <returns></returns>
 		public Target Finally(Action<ExecutionReason> action)
 		{
 			if (action == null)
@@ -162,6 +268,14 @@ namespace AnFake.Core
 			return this;
 		}
 
+		/// <summary>
+		///     Defines target finally action.
+		/// </summary>
+		/// <remarks>
+		///     Finally action is executed eigher target successful or failed.
+		/// </remarks>
+		/// <param name="action"></param>
+		/// <returns></returns>
 		public Target Finally(Action action)
 		{
 			if (action == null)
@@ -170,6 +284,10 @@ namespace AnFake.Core
 			return Finally(x => action.Invoke());
 		}
 
+		/// <summary>
+		///     Marks this target skip errors, i.e. not to fail even some error occured.
+		/// </summary>
+		/// <returns></returns>
 		public Target SkipErrors()
 		{
 			_skipErrors = true;
@@ -177,11 +295,21 @@ namespace AnFake.Core
 			return this;
 		}
 
+		/// <summary>
+		///     Defines target which this one depends on.
+		/// </summary>
+		/// <param name="names"></param>
+		/// <returns></returns>
 		public Target DependsOn(params string[] names)
 		{
 			return DependsOn((IEnumerable<string>) names);
 		}
 
+		/// <summary>
+		///     Defines target which this one depends on.
+		/// </summary>
+		/// <param name="names"></param>
+		/// <returns></returns>
 		public Target DependsOn(IEnumerable<string> names)
 		{
 			foreach (var name in names)
@@ -197,6 +325,11 @@ namespace AnFake.Core
 			return string.Equals(_name, other._name);
 		}
 
+		/// <summary>
+		///     Returns true if targets have the same name.
+		/// </summary>
+		/// <param name="obj"></param>
+		/// <returns></returns>
 		public override bool Equals(object obj)
 		{
 			if (ReferenceEquals(null, obj)) return false;
@@ -204,11 +337,18 @@ namespace AnFake.Core
 			return obj is Target && Equals((Target) obj);
 		}
 
+		/// <summary>
+		///     Returns hash code based on target name.
+		/// </summary>
+		/// <returns></returns>
 		public override int GetHashCode()
 		{
 			return _name.GetHashCode();
 		}
 
+		/// <summary>
+		///     Used internally to run target.
+		/// </summary>
 		internal void Run()
 		{
 			// Prepare
@@ -216,6 +356,12 @@ namespace AnFake.Core
 			ResolveDependencies(orderedTargets);
 
 			Trace.InfoFormat("'{0}' execution order: {1}.", _name, String.Join(", ", orderedTargets.Select(x => x.Name)));
+
+			var startTime = DateTime.UtcNow;
+			if (Started != null)
+			{
+				Started.Invoke(this, new RunDetails(startTime));
+			}
 
 			// Target.Do
 			var lastExecutedTarget = -1;
@@ -238,7 +384,7 @@ namespace AnFake.Core
 			{
 				var executedTarget = orderedTargets[i];
 				var reason = new ExecutionReason(error != null, executedTarget._state == TargetState.Failed);
-				if (!reason.IsRunFailed && !reason.IsTargetFailed)
+				if (!reason.IsTopFailed && !reason.IsCurrentFailed)
 					continue;
 
 				executedTarget.DoOnFailure(reason);
@@ -249,20 +395,21 @@ namespace AnFake.Core
 			{
 				var executedTarget = orderedTargets[i];
 				executedTarget.DoFinally(new ExecutionReason(error != null, executedTarget._state == TargetState.Failed));
-			}
+			}			
 
 			// Summarize
 			var executedTargets = orderedTargets
 				.Take(lastExecutedTarget + 1)
 				.Where(x => x.HasBody)
 				.ToArray();
-			var finalState = GetFinalState(executedTargets);
+			FinalizeState(executedTargets);
 
-			LogSummary(finalState, executedTargets);
+			LogSummary(executedTargets);
 
-			if (RunFinished != null)
+			var finishTime = DateTime.UtcNow;
+			if (Finished != null)
 			{
-				RunFinished.Invoke(this, new RunFinishedEventArgs(finalState, executedTargets));
+				Finished.Invoke(this, new RunDetails(startTime, finishTime, executedTargets));
 			}
 
 			// Re-throw
@@ -369,17 +516,20 @@ namespace AnFake.Core
 			}
 		}
 
-		private TargetState GetFinalState(IEnumerable<Target> executedTargets)
+		private void FinalizeState(IEnumerable<Target> executedTargets)
 		{
 			if (_state == TargetState.Queued || _state == TargetState.Failed)
-				return TargetState.Failed;
+			{
+				_state = TargetState.Failed;
+				return;
+			}
 
-			return executedTargets.Any(x => x.State != TargetState.Succeeded)
+			_state = executedTargets.Any(x => x.State != TargetState.Succeeded)
 				? TargetState.PartiallySucceeded
 				: TargetState.Succeeded;
 		}
 
-		private void LogSummary(TargetState finalState, IEnumerable<Target> executedTargets)
+		private void LogSummary(IEnumerable<Target> executedTargets)
 		{
 			var index = 0;
 
@@ -399,7 +549,7 @@ namespace AnFake.Core
 			}
 
 			Log.Text(new String('-', caption.Length));
-			LogEx.TargetStateFormat(finalState, "'{0}' {1}", _name, finalState.ToHumanReadable());
+			LogEx.TargetStateFormat(_state, "'{0}' {1}", _name, _state.ToHumanReadable());
 			Log.Text("");
 		}
 
@@ -411,6 +561,8 @@ namespace AnFake.Core
 			var setTarget = new EventHandler<TraceMessage>((s, m) => m.Target = Name);
 
 			_current = this;
+
+			var startTime = Environment.TickCount;
 
 			Trace.InfoFormat(">>> '{0}.{1}' started.", _name, phase);
 
@@ -448,6 +600,9 @@ namespace AnFake.Core
 				Trace.InfoFormat("<<< '{0}.{1}' finished.", _name, phase);
 				Trace.MessageReceived -= _messages.OnMessage;
 				Trace.MessageReceiving -= setTarget;
+
+				var finishTime = Environment.TickCount;
+				_runTime += TimeSpan.FromMilliseconds(finishTime - startTime);
 
 				_current = null;
 			}

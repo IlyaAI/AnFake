@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using AnFake.Api;
 using AnFake.Core.Exceptions;
 
@@ -13,7 +14,7 @@ namespace AnFake.Core
 			where T : IPlugin
 		{
 			var pluginType = typeof (T);
-
+			
 			if (PluginInstances.ContainsKey(pluginType))
 				throw new InvalidConfigurationException(String.Format("Plugin '{0}' already registered.", pluginType.GetPluginName()));
 
@@ -22,16 +23,52 @@ namespace AnFake.Core
 			Trace.InfoFormat("Plugged-in: {0}, {1}", pluginType.FullName, pluginType.Assembly.FullName);
 		}
 
-		public static T Get<T>()
-			where T : IPlugin
+		public static T Get<T>()			
 		{
-			var pluginType = typeof (T);
-			IPlugin plugin;
+			var requestedType = typeof (T);
+			
+			if (requestedType.IsClass)
+			{
+				IPlugin plugin;
+				if (!PluginInstances.TryGetValue(requestedType, out plugin))
+					throw new InvalidConfigurationException(String.Format("Plugin '{0}' not registered. Hint: probably, you forgot to call {0}.UseIt()", requestedType.GetPluginName()));
 
-			if (!PluginInstances.TryGetValue(pluginType, out plugin))
-				throw new InvalidConfigurationException(String.Format("Plugin '{0}' not registered. Hint: probably, you forgot to call {0}.UseIt()", pluginType.GetPluginName()));
+				return (T) plugin;
+			}
+			else
+			{
+				var plugin = PluginInstances.Values
+					.FirstOrDefault(requestedType.IsInstanceOfType);
 
-			return (T) plugin;
+				if (plugin == null)
+					throw new InvalidConfigurationException(String.Format("There is no plugin which provides '{0}' interface.", requestedType.FullName));
+
+				return (T) plugin;
+			}			
+		}
+
+		public static T Find<T>()
+		{
+			var requestedType = typeof(T);
+
+			if (requestedType.IsClass)
+			{
+				IPlugin plugin;
+				if (!PluginInstances.TryGetValue(requestedType, out plugin))
+					return default(T);
+
+				return (T)plugin;
+			}
+			else
+			{
+				var plugin = PluginInstances.Values
+					.FirstOrDefault(requestedType.IsInstanceOfType);
+
+				if (plugin == null)
+					return default(T);
+
+				return (T)plugin;
+			}
 		}
 
 		public static void Reset()

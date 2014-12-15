@@ -42,7 +42,7 @@ namespace AnFake.Plugins.Tfs2012
 
 		private static VersionControlServer Vcs
 		{
-			get { return _vcs ?? (_vcs = Plugin.Get<TfsPlugin>().TeamProjectCollection.GetService<VersionControlServer>()); }
+			get { return _vcs ?? (_vcs = Plugin.Get<TfsPlugin>().Vcs); }
 		}
 
 		public static Predicate<string> UniqueName

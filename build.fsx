@@ -2,6 +2,7 @@
 #r ".AnFake/AnFake.Core.dll"
 #r ".AnFake/AnFake.Fsx.dll"
 #r ".AnFake/Plugins/AnFake.Plugins.Tfs2012.dll"
+#r ".AnFake/Plugins/AnFake.Plugins.HtmlSummary.dll"
 
 open System
 open System.Linq
@@ -9,8 +10,10 @@ open AnFake.Api
 open AnFake.Core
 open AnFake.Fsx.Dsl
 open AnFake.Plugins.Tfs2012
+open AnFake.Plugins.HtmlSummary
 
-Tfs.UseIt()
+//Tfs.UseIt()
+HtmlSummary.UseIt()
 
 let out = ~~".out"
 let productOut = out / "product"
