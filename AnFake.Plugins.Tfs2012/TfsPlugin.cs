@@ -4,14 +4,13 @@ using System.Linq;
 using AnFake.Api;
 using AnFake.Core;
 using AnFake.Core.Exceptions;
-using AnFake.Core.Integration;
 using Microsoft.TeamFoundation.Build.Client;
 using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.VersionControl.Client;
 
 namespace AnFake.Plugins.Tfs2012
 {
-	internal sealed class TfsPlugin : IPlugin, IVersionControl
+	internal sealed class TfsPlugin : IPlugin, Core.Integration.IVersionControl
 	{
 		private const string SectionKey = "AnFake";
 		private const string SectionHeader = "AnFake Summary";
@@ -138,7 +137,7 @@ namespace AnFake.Plugins.Tfs2012
 			}
 		}
 
-		public IChangeset GetChangeset(string changesetId)
+		public Core.Integration.IChangeset GetChangeset(string changesetId)
 		{
 			return new TfsChangeset(Vcs.GetChangeset(Int32.Parse(changesetId)));
 		}

@@ -1,0 +1,143 @@
+﻿.content {
+    font-family: Consolas, SANS-SERIF;
+    font-size: 10pt;
+    width: 1024px;    
+    min-width: 640px;    
+    overflow: hidden;    
+}
+
+p {
+    margin: 0;
+}
+
+.status-icon,
+.state-icon,
+.level-icon {
+    display: inline-block;
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+
+.level0 {
+    font-size: 24pt;
+}
+
+.level1 {
+    font-size: 18pt;
+}
+
+.level2 {
+    font-size: 14pt;
+}
+
+.status-icon {
+    width: 32px;
+    height: 32px;
+}
+.status-icon.succeeded {
+    background-image: url("Icons/status-succeeded-32.png");
+}
+.status-icon.partially-succeeded {
+    background-image: url("Icons/status-partially-succeeded-32.png");
+}
+.status-icon.failed {
+    background-image: url("Icons/status-failed-32.png");
+}
+.status-icon.unknown {
+    background-image: url("Icons/status-unknown-32.png");
+}
+
+.level-icon {
+    width: 16px;
+    height: 16px;
+}
+.level-icon.error {
+    background-image: url("Icons/level-error-16.png");
+}
+.level-icon.warning {
+    background-image: url("Icons/level-warning-16.png");
+}
+.level-icon.summary {
+    background-image: url("Icons/level-summary-16.png");
+}
+
+.level1 .state-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 8px;
+}
+
+.level1 .state-icon.succeeded {
+    background-image: url("Icons/state-succeeded-24.png");
+}
+
+.level1 .state-icon.partially-succeeded {
+    background-image: url("Icons/state-partially-succeeded-24.png");
+}
+
+.level1 .state-icon.failed {
+    background-image: url("Icons/state-failed-24.png");
+}
+
+.level1 .state-icon.unknown {
+    background-image: url("Icons/state-unknown-24.png");
+}
+
+.level2 .state-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.level-error {
+    color: darkred;
+}
+
+.level-warning {
+    color: darkgoldenrod;
+}
+
+.level-summary {
+    color: darkslategray;
+}
+
+.targets-overview {    
+    margin-left: 24px;    
+}
+
+/* Target Overview */
+
+.target-overview {    
+    margin: 8px;    
+}
+
+/* Target Details */
+
+.target-details {
+    margin-left: 16px;
+    margin-bottom: 16px;
+}
+
+.target-details .title > span {
+    padding-left: 8px;
+    padding-right: 8px;
+    margin-left: 8px;
+    background: white;
+}
+
+.target-details .title .separator {
+    width: 100%;      
+    border-top: 2px solid darkgray;
+    position: absolute;
+    top: 55%;
+    z-index: -1;
+}
+
+.target-details .content {
+    margin-left: 16px;
+    font-size: 12pt;
+}
+
+.target-details .details {
+    margin-left: 24px;
+    color: rgb(120,120,120);
+}

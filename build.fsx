@@ -21,7 +21,9 @@ let pluginsOut = productOut / "Plugins"
 let extrasOut = productOut / "Extras"
 let testsOut = out / "tests"
 let product = !!"AnFake/*.csproj"
-let plugins = !!"AnFake.Plugins.Tfs2012/*.csproj"
+let plugins = 
+    !!"AnFake.Plugins.Tfs2012/*.csproj"
+    + "AnFake.Plugins.HtmlSummary/*.csproj"
 let extras = ~~".AnFake/Extras" % "*"
 let cmds = ~~".AnFake" % "*.cmd"
 let tests = !!"*/*.Test.csproj"
@@ -35,6 +37,8 @@ let nugetFiles =
     + "Extras/*"
     + "Plugins/AnFake.Integration.Tfs2012.dll"
     + "Plugins/AnFake.Plugins.Tfs2012.dll"
+    + "Plugins/AnFake.Plugins.HtmlSummary.dll"
+    + "Plugins/AnFake.Plugins.HtmlSummary.zip"
 let version = "0.9".AsVersion()
 
 "Clean" => (fun _ ->    
@@ -61,11 +65,22 @@ let version = "0.9".AsVersion()
 
     Files.Copy(cmds, productOut, true)
 
-    MsBuild.BuildRelease(plugins, pluginsOut) |> ignore
+    MsBuild.BuildRelease(plugins, pluginsOut) |> ignore    
 
     Files.Copy(extras, extrasOut, true)
 
     MsBuild.BuildRelease(tests, testsOut) |> ignore
+)
+
+"Custom.ZipHtmlSummary" => (fun _ ->
+    let htmlSummary = 
+        ~~"AnFake.Plugins.HtmlSummary/Html" % "**/*"
+        - "build.summary.js"
+
+    let zip = pluginsOut / "AnFake.Plugins.HtmlSummary.zip"
+
+    Zip.Pack(htmlSummary, zip) |> ignore
+    Files.Copy(zip, ~~".AnFake/Plugins" / zip.LastName, true)
 )
 
 "Test.Unit" => (fun _ -> 
@@ -91,4 +106,4 @@ let version = "0.9".AsVersion()
         |> ignore
 )
 
-"Build" <== ["Compile"; "Test.Unit"]
+"Build" <== ["Compile"; "Custom.ZipHtmlSummary"; "Test.Unit"]

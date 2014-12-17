@@ -59,13 +59,28 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Html\build.summary.html" />
+    <Content Include="Html\Icons\level-error-16.png" />
+    <Content Include="Html\Icons\level-summary-16.png" />
+    <Content Include="Html\Icons\level-warning-16.png" />
+    <Content Include="Html\Icons\state-failed-24.png" />
+    <Content Include="Html\Icons\state-partially-succeeded-24.png" />
+    <Content Include="Html\Icons\state-unknown-24.png" />
+    <Content Include="Html\Icons\status-failed-32.png" />
+    <Content Include="Html\Icons\state-succeeded-16.png" />
+    <Content Include="Html\Icons\state-succeeded-24.png" />
+    <Content Include="Html\Icons\status-partially-succeeded-32.png" />
+    <Content Include="Html\Icons\status-succeeded-32.png" />
+    <Content Include="Html\Icons\status-unknown-32.png" />
+    <Content Include="Html\Index.html" />
+    <Content Include="Html\jquery-2.1.1.min.js" />
     <Content Include="Html\LiteVm.js" />
+    <Content Include="Html\Theme.css" />
     <Content Include="Html\Views.js" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Html\summary.js" />
+    <Content Include="Html\build.summary.js" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
