@@ -44,7 +44,6 @@
   <ItemGroup>
     <Compile Include="Args.cs" />
     <Compile Include="ArgsExtension.cs" />
-    <Compile Include="IToolExecutionResult.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="ITracer.cs" />
     <Compile Include="BypassTracer.cs" />
@@ -56,8 +55,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TraceMessageCollector.cs" />
     <Compile Include="LogMessageLevel.cs" />
+    <Compile Include="TraceMessageCounter.cs" />
     <Compile Include="TraceMessageLevel.cs" />
-    <Compile Include="ToolExecutionResult.cs" />
     <Compile Include="TraceMessage.cs" />
     <Compile Include="Trace.cs" />
     <Compile Include="Verbosity.cs" />

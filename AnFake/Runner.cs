@@ -110,7 +110,7 @@ namespace AnFake
 
 				if (propMode)
 				{
-					options.Properties.Add("Arg" + propIndex++, arg.Trim());
+					options.Properties.Add("__" + propIndex++, arg.Trim());
 					continue;
 				}
 
@@ -170,7 +170,7 @@ namespace AnFake
 
 		private static void ConfigureTracer(RunOptions options)
 		{
-			var tracer = new JsonFileTracer(Path.Combine(options.BuildPath, "trace.jsx"), false);
+			var tracer = new JsonFileTracer(Path.Combine(options.BuildPath, "AnFake.trace.jsx"), false);
 			switch (options.Verbosity)
 			{
 				case Verbosity.Quiet:

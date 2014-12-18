@@ -73,16 +73,14 @@ namespace AnFake.Core
 			Defaults = new Params();
 		}
 
-		public static AssemblyInfoExecutionResult EmbedTemporary(IEnumerable<FileItem> files, Action<Params> setParams)
+		public static void EmbedTemporary(IEnumerable<FileItem> files, Action<Params> setParams)
 		{
-			var result = Embed(files, setParams);
+			var snapshot = Embed(files, setParams);
 
-			Target.CurrentFinalized += (s, r) => result.Revert();
-
-			return result;
+			Target.CurrentFinalized += (s, r) => snapshot.Revert();
 		}
 
-		public static AssemblyInfoExecutionResult Embed(IEnumerable<FileItem> files, Action<Params> setParams)
+		public static Snapshot Embed(IEnumerable<FileItem> files, Action<Params> setParams)
 		{			
 			if (files == null)
 				throw new ArgumentException("AssemblyInfo.Embed(files, setParams): files must not be null");
@@ -94,9 +92,8 @@ namespace AnFake.Core
 
 			Trace.Info("Embeding assembly info...");
 
-			var snapshot = new Snapshot();
 			var warnings = 0;
-
+			var snapshot = new Snapshot();
 			try
 			{
 				foreach (var file in files)
@@ -120,7 +117,6 @@ namespace AnFake.Core
 								{
 									File = file.RelPath.Spec
 								});
-
 							warnings++;
 						}
 					}
@@ -138,7 +134,7 @@ namespace AnFake.Core
 
 			Trace.InfoFormat("Assembly info embedded. {0} warning(s)", warnings);
 
-			return new AssemblyInfoExecutionResult(snapshot, warnings);
+			return snapshot;
 		}
 
 		private static void EmbedAttribute(string fileType, string attributeName, string value, ref string content)

@@ -170,8 +170,7 @@ namespace AnFake.Api.Test
 			};
 			var external = new JsonFileTracer("external.log.jsx", true);
 			
-			// act & assert
-			IToolExecutionResult result;
+			// act & assert			
 			tracer.StartTrackExternal();
 			try
 			{
@@ -186,12 +185,8 @@ namespace AnFake.Api.Test
 			}
 			finally
 			{
-				result = tracer.StopTrackExternal();
-			}
-			
-			// final assert
-			Assert.AreEqual(1, result.WarningsCount);
-			Assert.AreEqual(1, result.ErrorsCount);
+				tracer.StopTrackExternal();
+			}			
 		}		
 	}
 }

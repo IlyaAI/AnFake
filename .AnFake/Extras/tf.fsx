@@ -62,15 +62,15 @@ let serviceNames =
         )
 
     let dstPath = 
-        if MyBuild.HasProp("Arg1") then
-            curDir / MyBuild.GetProp("Arg1")
+        if MyBuild.HasProp("__1") then
+            curDir / MyBuild.GetProp("__1")
         else
             curDir
 
     let anfDstPath = dstPath  / ".AnFake";
 
     if not <| anfDstPath.AsFolder().Exists() then
-        TfsWorkspace.SaveLocal(dstPath) |> ignore
+        TfsWorkspace.SaveLocal(dstPath)
 
         let myselfServerPath = MyBuild.GetProp("AnFake.TfsPath").AsServerPath()        
         let wsFile = (dstPath / TfsWorkspace.Defaults.WorkspaceFile).AsFile()
@@ -82,13 +82,13 @@ let serviceNames =
         else
             MyBuild.Failed("Workspace already contains AnFake mapping.")
                 
-        TfsWorkspace.SyncLocal(dstPath) |> ignore
-        TfsWorkspace.PendAdd([wsFile]) |> ignore        
+        TfsWorkspace.SyncLocal(dstPath)
+        TfsWorkspace.PendAdd([wsFile])
 
         if not <| anfDstPath.AsFolder().Exists() then
             let myself = ~~"[AnFake]" % "**\*"
             Files.Copy(myself, anfDstPath)
-            TfsWorkspace.PendAdd(anfDstPath % "**\*") |> ignore
+            TfsWorkspace.PendAdd(anfDstPath % "**\*")
     
         MyBuild.SaveProp("AnFake.TfsPath")
 
@@ -103,7 +103,7 @@ let serviceNames =
     let mutable needConfirmation = false
 
     let serverPath =
-        if not <| MyBuild.HasProp("Arg1") then
+        if not <| MyBuild.HasProp("__1") then
             if Clipboard.ContainsText() then                
                 let text = Clipboard.GetText()
                 if text.StartsWith("$") && not <| text.Contains("\n") && not <| text.Contains("\r") then
@@ -114,7 +114,7 @@ let serviceNames =
             else
                 null                
         else
-            MyBuild.GetProp("Arg1").AsServerPath()
+            MyBuild.GetProp("__1").AsServerPath()
 
     if serverPath = null then
         MyBuild.Failed("Required parameter <server-path> is missed.\nHint: you can pass it via clipboard, simply do 'Copy' on desired value.")
@@ -134,12 +134,12 @@ let serviceNames =
             .Except(serviceNames, StringComparer.OrdinalIgnoreCase)
             .FirstOrDefault()
 
-    if productName = null && not <| MyBuild.HasProp("Arg2") && not <| MyBuild.HasProp("Arg3") then
+    if productName = null && not <| MyBuild.HasProp("__2") && not <| MyBuild.HasProp("__3") then
         MyBuild.Failed("Unable to auto-detect product name. Please, specify <local-path> and <workspace-name> explicitly.")
 
     let localPath = 
-        if MyBuild.HasProp("Arg2") then
-            curDir / MyBuild.GetProp("Arg2")
+        if MyBuild.HasProp("__2") then
+            curDir / MyBuild.GetProp("__2")
         else
             needConfirmation <- true
             curDir / productName / NameGen.Generate(
@@ -148,8 +148,8 @@ let serviceNames =
             )
 
     let workspaceName =
-        if MyBuild.HasProp("Arg3") then
-            MyBuild.GetProp("Arg3")
+        if MyBuild.HasProp("__3") then
+            MyBuild.GetProp("__3")
         else
             needConfirmation <- true
             NameGen.Generate(
@@ -165,31 +165,31 @@ let serviceNames =
         if not confirmed then
             MyBuild.Failed("Operation cancelled.")
     
-    TfsWorkspace.Checkout(serverPath, localPath, workspaceName) |> ignore
+    TfsWorkspace.Checkout(serverPath, localPath, workspaceName)
 )
 
 "SetUpTeamProjects" ==> "Checkout" ==> "co"
 
 "SyncLocal" => (fun _ ->
     let localPath = 
-        if MyBuild.HasProp("Arg1") then
-            curDir / MyBuild.GetProp("Arg1");
+        if MyBuild.HasProp("__1") then
+            curDir / MyBuild.GetProp("__1");
         else
             curDir
     
-    TfsWorkspace.SyncLocal(localPath) |> ignore
+    TfsWorkspace.SyncLocal(localPath)
 )
 
 "SetUpTeamProjects" ==> "SyncLocal" ==> "syncl"
 
 "Sync" => (fun _ ->
     let localPath = 
-        if MyBuild.HasProp("Arg1") then
-            curDir / MyBuild.GetProp("Arg1");
+        if MyBuild.HasProp("__1") then
+            curDir / MyBuild.GetProp("__1");
         else
             curDir
     
-    TfsWorkspace.Sync(localPath) |> ignore
+    TfsWorkspace.Sync(localPath)
 )
 
 "SetUpTeamProjects" ==> "Sync"

@@ -1,6 +1,8 @@
 using System;
 using System.IO;
 using System.Reflection;
+using System.Text;
+using AnFake.Core.Exceptions;
 
 namespace AnFake.Core
 {
@@ -37,6 +39,9 @@ namespace AnFake.Core
 	/// </example>
 	public sealed class FileSystemPath : IComparable<FileSystemPath>
 	{
+		private static readonly char[] Wildcards = {'*', '?'};
+		private static readonly string[] Steps = {".", ".."};
+
 		private static FileSystemPath _basePath = Directory.GetCurrentDirectory().AsPath();
 
 		/// <summary>
@@ -72,7 +77,7 @@ namespace AnFake.Core
 		/// </summary>
 		public bool IsWildcarded
 		{
-			get { return _value.IndexOfAny(new[] {'*', '?'}) > 0; }
+			get { return _value.IndexOfAny(Wildcards) > 0; }
 		}
 
 		/// <summary>
@@ -198,13 +203,43 @@ namespace AnFake.Core
 		}
 
 		/// <summary>
-		///		
+		///		Parent folder. If path is root or just file name then exception is throws.
 		/// </summary>
+		/// <example>
+		/// C:\Projects\MySolution\build.fsx
+		/// <code>
+		/// let path = ~~"MyProject/MyProject.csproj"
+		/// let parent = path.Parent  // "MyProject"
+		/// </code>
+		/// <code>
+		/// let path = ~~"solution.sln"
+		/// let parent = path.Parent  // throws InvalidConfigurationException
+		/// </code>
+		/// <code>
+		/// let path = ~~"C:/MySolution/build.fsx"
+		/// let parent1 = path.Parent     // @"C:\MySolution"
+		/// let parent2 = parent1.Parent  // @"C:\"
+		/// let parent3 = parent2.Parent  // throws InvalidConfigurationException
+		/// </code>
+		/// </example>
+		/// <exception cref="InvalidConfigurationException">if path is root or just file name</exception>
 		public FileSystemPath Parent
 		{
-			get { return new FileSystemPath(Path.GetDirectoryName(_value), true); }
+			get
+			{
+				var parent = Path.GetDirectoryName(_value);
+				if (String.IsNullOrEmpty(parent))
+					throw new InvalidConfigurationException(String.Format("Path '{0}' does not have parent.", _value));
+
+				return new FileSystemPath(parent, true);
+			}
 		}
 
+		/// <summary>
+		///		Converts this path to relative against given base.
+		/// </summary>
+		/// <param name="basePath"></param>
+		/// <returns></returns>
 		public FileSystemPath ToRelative(FileSystemPath basePath)
 		{
 			if (basePath == null)
@@ -288,7 +323,45 @@ namespace AnFake.Core
 
 		private static string Normalize(string path)
 		{
-			return path.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+			var nzPath = new StringBuilder(path.Length);
+
+			var valid = true;
+			var begin = 0;
+			for (var index = 0; index <= path.Length; index++)
+			{				
+				if (index == path.Length 
+					|| path[index] == Path.DirectorySeparatorChar 
+					|| path[index] == Path.AltDirectorySeparatorChar)
+				{
+					var len = index - begin;
+					
+					if (len == 1 && path[begin] == '.')
+					{
+						valid = false;
+						break;
+					}
+
+					if (len == 2 && path[begin] == '.' && path[begin + 1] == '.')
+					{
+						valid = false;
+						break;
+					}
+
+					nzPath.Append(path, begin, len);
+
+					if (index < path.Length)
+					{
+						nzPath.Append(Path.DirectorySeparatorChar);
+					}					
+					
+					begin = index + 1;
+				}
+			}
+
+			if (!valid)
+				throw new InvalidConfigurationException(String.Format("Path '{0}' contains not allowed steps '.' and/or '..'", path));
+
+			return nzPath.ToString();
 		}
 
 		private static string ExpandWellknownFolders(string path)

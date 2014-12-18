@@ -59,15 +59,15 @@ namespace AnFake.Core.Tests
 			}
 		}
 
-		public static TestExecutionResult TraceSummary(this IEnumerable<TestResult> tests)
+		public static void TraceSummary(this IEnumerable<TestResult> tests)
 		{
 			var runTime = TimeSpan.Zero;
 			var passed = 0;
 			var errors = 0;
 			var warnings = 0;
-
-			var array = tests.ToArray();
-			foreach (var test in array)
+			var total = 0;
+			
+			foreach (var test in tests)
 			{
 				switch (test.Status)
 				{
@@ -84,12 +84,11 @@ namespace AnFake.Core.Tests
 				}
 				
 				runTime += test.RunTime;
+				total++;
 			}
 
 			Api.Trace.SummaryFormat("Test Run Summary: {0}, {1} failed, {2} skipped, {3} passed, {4} total.",
-					runTime, errors, warnings, passed, array.Length);
-			
-			return new TestExecutionResult(errors, warnings, array);
+					runTime, errors, warnings, passed, total);					
 		}
 	}
 }

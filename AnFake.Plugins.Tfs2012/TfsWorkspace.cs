@@ -56,12 +56,12 @@ namespace AnFake.Plugins.Tfs2012
 			}
 		}		
 
-		public static Api.IToolExecutionResult Checkout(ServerPath serverPath, FileSystemPath localPath, string workspaceName)
+		public static void Checkout(ServerPath serverPath, FileSystemPath localPath, string workspaceName)
 		{
-			return Checkout(serverPath, localPath, workspaceName, p => { });
+			Checkout(serverPath, localPath, workspaceName, p => { });
 		}
 
-		public static Api.IToolExecutionResult Checkout(ServerPath serverPath, FileSystemPath localPath, string workspaceName, Action<Params> setParams)
+		public static void Checkout(ServerPath serverPath, FileSystemPath localPath, string workspaceName, Action<Params> setParams)
 		{
 			if (serverPath == null)
 				throw new ArgumentException("TfsWorkspace.Checkout(serverPath, localPath, workspaceName[, setParams]): serverPath must not be null");
@@ -101,17 +101,15 @@ namespace AnFake.Plugins.Tfs2012
 			ws = Vcs.CreateWorkspace(workspaceName, GetCurrentUser(), String.Format("AnFake: {0} => {1}", serverPath, localPath), mappings);
 			Trace.InfoFormat("Workspace '{0}' successfully created for '{1}'.", workspaceName, GetCurrentUser());
 
-			var result = UpdateFiles(ws);
-
-			return result;
+			UpdateFiles(ws);
 		}
 
-		public static Api.IToolExecutionResult Sync(FileSystemPath localPath)
+		public static void Sync(FileSystemPath localPath)
 		{
-			return Sync(localPath, p => { });
+			Sync(localPath, p => { });
 		}
 
-		public static Api.IToolExecutionResult Sync(FileSystemPath localPath, Action<Params> setParams)
+		public static void Sync(FileSystemPath localPath, Action<Params> setParams)
 		{
 			if (localPath == null)
 				throw new ArgumentException("TfsWorkspace.Sync(localPath[, setParams]): localPath must not be null");
@@ -140,17 +138,15 @@ namespace AnFake.Plugins.Tfs2012
 			ws.Update(ws.Name, ws.Comment, mappings);
 			Trace.InfoFormat("Workspace '{0}' successfully updated.", ws.Name);
 
-			var result = UpdateFiles(ws);
-
-			return result;
+			UpdateFiles(ws);
 		}
 
-		public static Api.IToolExecutionResult SyncLocal(FileSystemPath localPath)
+		public static void SyncLocal(FileSystemPath localPath)
 		{
-			return SyncLocal(localPath, p => { });
+			SyncLocal(localPath, p => { });
 		}
 
-		public static Api.IToolExecutionResult SyncLocal(FileSystemPath localPath, Action<Params> setParams)
+		public static void SyncLocal(FileSystemPath localPath, Action<Params> setParams)
 		{
 			if (localPath == null)
 				throw new ArgumentException("TfsWorkspace.SyncLocal(localPath[, setParams]): localPath must not be null");
@@ -179,17 +175,15 @@ namespace AnFake.Plugins.Tfs2012
 			ws.Update(ws.Name, ws.Comment, mappings);
 			Trace.InfoFormat("Workspace '{0}' successfully updated.", ws.Name);
 
-			var result = UpdateFiles(ws);
-
-			return result;
+			UpdateFiles(ws);
 		}
 
-		public static Api.IToolExecutionResult SaveLocal(FileSystemPath localPath)
+		public static void SaveLocal(FileSystemPath localPath)
 		{
-			return SaveLocal(localPath, p => { });
+			SaveLocal(localPath, p => { });
 		}
 
-		public static Api.IToolExecutionResult SaveLocal(FileSystemPath localPath, Action<Params> setParams)
+		public static void SaveLocal(FileSystemPath localPath, Action<Params> setParams)
 		{
 			if (localPath == null)
 				throw new ArgumentException("TfsWorkspace.SyncLocal(localPath[, setParams]): localPath must not be null");
@@ -293,12 +287,10 @@ namespace AnFake.Plugins.Tfs2012
 				}
 			}
 
-			var result = new ToolExecutionResult(errors, 0)
-				.FailIfAnyError("TfsWorkspace.SaveLocal failed due to incompatibilities in workspace.");
+			if (errors > 0)
+				throw new TargetFailureException("TfsWorkspace.SaveLocal failed due to incompatibilities in workspace.");
 			
 			Trace.InfoFormat("Workspace '{0}' successfully saved.", ws.Name);
-
-			return result;
 		}
 
 		public static bool IsLocal(FileSystemPath localPath)
@@ -309,7 +301,7 @@ namespace AnFake.Plugins.Tfs2012
 			return Vcs.TryGetWorkspace(localPath.Full) != null;
 		}
 
-		public static Api.IToolExecutionResult PendAdd(IEnumerable<FileItem> files)
+		public static void PendAdd(IEnumerable<FileItem> files)
 		{
 			if (files == null)
 				throw new ArgumentException("TfsWorkspace.PendAdd(files): files must not be null");
@@ -331,11 +323,9 @@ namespace AnFake.Plugins.Tfs2012
 				filePathes.Select(x => x.Full).ToArray());
 
 			Trace.InfoFormat("{0} file(s) pended for add.", filePathes.Length);
-
-			return new ToolExecutionResult(0, 0);
 		}
 
-		public static Api.IToolExecutionResult Undo(IEnumerable<FileItem> files)
+		public static void Undo(IEnumerable<FileItem> files)
 		{
 			if (files == null)
 				throw new ArgumentException("TfsWorkspace.Undo(files): files must not be null");
@@ -357,8 +347,6 @@ namespace AnFake.Plugins.Tfs2012
 					.ToArray());
 
 			Trace.InfoFormat("{0} file(s) reverted.", filesArray.Length);
-
-			return new ToolExecutionResult(0, 0);
 		}
 
 		private static void EnsureWorkspaceFile(Params parameters)
@@ -438,7 +426,7 @@ namespace AnFake.Plugins.Tfs2012
 			return wsFile;
 		}
 
-		private static Api.IToolExecutionResult UpdateFiles(Workspace ws)
+		private static void UpdateFiles(Workspace ws)
 		{
 			Trace.Info("Updating files...");
 			var status = ws.Get();
@@ -451,9 +439,7 @@ namespace AnFake.Plugins.Tfs2012
 				Trace.Warn(msg);				
 			}
 
-			Trace.InfoFormat("Files updated. {0} warning(s)", failures.Length);
-
-			return new ToolExecutionResult(0, failures.Length);
+			Trace.InfoFormat("Files updated. {0} warning(s)", failures.Length);			
 		}
 	}
 }

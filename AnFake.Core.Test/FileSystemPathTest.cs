@@ -1,13 +1,150 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
+using AnFake.Core.Exceptions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AnFake.Core.Test
 {
 	[TestClass]
 	public class FileSystemPath
-	{		
+	{
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void FileSystemPath_should_normalize_path()
+		{
+			// act & assert
+			Assert.AreEqual("\\root\\path", "/root/path".AsPath().Spec);
+			Assert.AreEqual("root\\path\\", "root/path/".AsPath().Spec);
+			Assert.AreEqual("file", "file".AsPath().Spec);
+		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void FileSystemPath_should_throw_if_dot_step_used_1()
+		{
+			// act & assert
+			try
+			{
+				"./current".AsPath();
+				Assert.Fail("InvalidConfigurationException is expected.");
+			}
+			catch (InvalidConfigurationException)
+			{
+				// it's expected
+			}
+		}
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void FileSystemPath_should_throw_if_dot_step_used_2()
+		{
+			// act & assert
+			try
+			{
+				"/./current".AsPath();
+				Assert.Fail("InvalidConfigurationException is expected.");
+			}
+			catch (InvalidConfigurationException)
+			{
+				// it's expected
+			}
+		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void FileSystemPath_should_throw_if_dot_step_used_3()
+		{
+			// act & assert
+			try
+			{
+				"current/.".AsPath();
+				Assert.Fail("InvalidConfigurationException is expected.");
+			}
+			catch (InvalidConfigurationException)
+			{
+				// it's expected
+			}
+		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void FileSystemPath_should_throw_if_dot_step_used_4()
+		{
+			// act & assert
+			try
+			{
+				"current/./".AsPath();
+				Assert.Fail("InvalidConfigurationException is expected.");
+			}
+			catch (InvalidConfigurationException)
+			{
+				// it's expected
+			}
+		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void FileSystemPath_should_throw_if_dot_dot_step_used_1()
+		{
+			// act & assert
+			try
+			{
+				"../current".AsPath();
+				Assert.Fail("InvalidConfigurationException is expected.");
+			}
+			catch (InvalidConfigurationException)
+			{
+				// it's expected
+			}
+		}
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void FileSystemPath_should_throw_if_dot_dot_step_used_2()
+		{
+			// act & assert
+			try
+			{
+				"/../current".AsPath();
+				Assert.Fail("InvalidConfigurationException is expected.");
+			}
+			catch (InvalidConfigurationException)
+			{
+				// it's expected
+			}
+		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void FileSystemPath_should_throw_if_dot_dot_step_used_3()
+		{
+			// act & assert
+			try
+			{
+				"current/..".AsPath();
+				Assert.Fail("InvalidConfigurationException is expected.");
+			}
+			catch (InvalidConfigurationException)
+			{
+				// it's expected
+			}
+		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void FileSystemPath_should_throw_if_dot_dot_step_used_4()
+		{
+			// act & assert
+			try
+			{
+				"current/../".AsPath();
+				Assert.Fail("InvalidConfigurationException is expected.");
+			}
+			catch (InvalidConfigurationException)
+			{
+				// it's expected
+			}
+		}
+
 		[TestCategory("Unit")]
 		[TestMethod]
 		public void FileSystemPath_should_expand_wellknown_folders()
@@ -76,18 +213,90 @@ namespace AnFake.Core.Test
 
 		[TestCategory("Unit")]
 		[TestMethod]
-		public void FileSystemPath_should_resolve_relative_path()
+		public void FileSystemPath_should_throw_when_getting_parent_on_driver_root()
 		{
 			// arrange
-			var basePath = Assembly.GetExecutingAssembly().Location.AsPath();
-			var filesPath = basePath / "Data/Files";
-			var dataPath = filesPath / "..";
+			var path = "C:/".AsPath();
 
-			// act
-			var relative = dataPath.ToRelative(basePath/"Data");
+			// act & assert
+			try
+			{
+				var parent = path.Parent;
 
-			// assert
-			Assert.AreEqual("", relative.Spec);
+				Assert.Fail("InvalidConfigurationException is expected.");
+			}
+			catch (InvalidConfigurationException)
+			{
+				// it's expected
+			}
+		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void FileSystemPath_should_throw_when_getting_parent_on_root()
+		{
+			// arrange
+			var path = "/".AsPath();
+
+			// act & assert
+			try
+			{
+				var parent = path.Parent;
+
+				Assert.Fail("InvalidConfigurationException is expected.");
+			}
+			catch (InvalidConfigurationException)
+			{
+				// it's expected
+			}
+		}		
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void FileSystemPath_should_throw_when_getting_parent_on_file()
+		{
+			// arrange
+			var path = "file.txt".AsPath();
+
+			// act & assert
+			try
+			{
+				var parent = path.Parent;
+
+				Assert.Fail("InvalidConfigurationException is expected.");
+			}
+			catch (InvalidConfigurationException)
+			{
+				// it's expected
+			}
+		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void FileSystemPath_should_return_root_on_file_in_root()
+		{
+			// arrange
+			var path = "/file.txt".AsPath();
+
+			// act 
+			var parent = path.Parent;
+
+			//assert
+			Assert.AreEqual("\\", parent.Spec);
+		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void FileSystemPath_should_return_drive_root_on_file_in_root()
+		{
+			// arrange
+			var path = "c:/file.txt".AsPath();
+
+			// act 
+			var parent = path.Parent;
+
+			//assert
+			Assert.AreEqual("c:\\", parent.Spec);
 		}
 	}
 }

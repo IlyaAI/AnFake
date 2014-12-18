@@ -41,7 +41,7 @@ namespace AnFake.Api
 			throw new NotSupportedException("BypassTracer.StartTrackExternal() not supported.");
 		}
 
-		public IToolExecutionResult StopTrackExternal()
+		public void StopTrackExternal()
 		{
 			throw new NotSupportedException("BypassTracer.StopTrackExternal() not supported.");
 		}

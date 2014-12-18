@@ -36,13 +36,16 @@ namespace AnFake.Core
 		private readonly List<Pattern> _patterns = new List<Pattern>();
 		private FileSystemPath _basePath;
 
-		public FileSet()
+		internal FileSet()
 		{
 			_basePath = FileSystemPath.Base;
 		}
 
 		public FileSet Include(FileSystemPath wildcardedPath)
 		{
+			if (wildcardedPath == null)
+				throw new ArgumentException("FileSet.Include(wildcardedPath): wildcardedPath must not be null");
+
 			_patterns.Add(new Pattern(PatternType.Include, wildcardedPath, _basePath));
 
 			return this;
@@ -50,11 +53,17 @@ namespace AnFake.Core
 
 		public FileSet Include(string wildcardedPath)
 		{
+			if (wildcardedPath == null)
+				throw new ArgumentException("FileSet.Include(wildcardedPath): wildcardedPath must not be null");
+
 			return Include(wildcardedPath.AsPath());
 		}
 
 		public FileSet Include(FileSet otherFiles)
 		{
+			if (otherFiles == null)
+				throw new ArgumentException("FileSet.Include(otherFiles): otherFiles must not be null");
+
 			_patterns.AddRange(otherFiles._patterns);
 
 			return this;
@@ -62,6 +71,9 @@ namespace AnFake.Core
 
 		public FileSet Exclude(FileSystemPath wildcardedPath)
 		{
+			if (wildcardedPath == null)
+				throw new ArgumentException("FileSet.Exclude(wildcardedPath): wildcardedPath must not be null");
+
 			_patterns.Add(new Pattern(PatternType.Exclude, wildcardedPath, _basePath));
 
 			return this;
@@ -69,11 +81,17 @@ namespace AnFake.Core
 
 		public FileSet Exclude(string wildcardedPath)
 		{
+			if (wildcardedPath == null)
+				throw new ArgumentException("FileSet.Exclude(wildcardedPath): wildcardedPath must not be null");
+
 			return Exclude(wildcardedPath.AsPath());
 		}
 
 		public FileSet From(FileSystemPath basePath)
 		{
+			if (basePath == null)
+				throw new ArgumentException("FileSet.From(basePath): basePath must not be null");
+
 			_basePath = basePath;
 
 			return this;
@@ -81,6 +99,9 @@ namespace AnFake.Core
 
 		public FileSet From(string basePath)
 		{
+			if (basePath == null)
+				throw new ArgumentException("FileSet.From(basePath): basePath must not be null");
+
 			return From(basePath.AsPath());
 		}
 

@@ -65,7 +65,7 @@ namespace AnFake.Core
 			Trace.InfoFormat("Starting process...\n  Executable: {0}\n  Arguments: {1}\n  WorkingDirectory: {2}",
 				process.StartInfo.FileName, process.StartInfo.Arguments, process.StartInfo.WorkingDirectory);
 
-			var external = new TraceMessageCollector();
+			var external = new TraceMessageCounter();
 			Trace.MessageReceived += external.OnMessage;
 
 			if (parameters.TrackExternalMessages)

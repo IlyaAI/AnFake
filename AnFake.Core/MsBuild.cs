@@ -57,93 +57,93 @@ namespace AnFake.Core
 			};
 		}
 
-		public static IToolExecutionResult BuildDebug(FileItem solution)
+		public static void BuildDebug(FileItem solution)
 		{
 			if (solution == null)
 				throw new ArgumentException("MsBuild.BuildDebug(solution): solution must not be null");
 
-			return BuildDebug(new[] {solution});
+			BuildDebug(new[] {solution});
 		}
 
-		public static IToolExecutionResult BuildDebug(IEnumerable<FileItem> projects)
+		public static void BuildDebug(IEnumerable<FileItem> projects)
 		{
 			if (projects == null)
 				throw new ArgumentException("MsBuild.BuildDebug(projects): projects must not be null");
 
-			return Build(projects, p => { p.Properties["Configuration"] = "Debug"; });
+			Build(projects, p => { p.Properties["Configuration"] = "Debug"; });
 		}
 
-		public static IToolExecutionResult BuildDebug(IEnumerable<FileItem> projects, FileSystemPath output)
+		public static void BuildDebug(IEnumerable<FileItem> projects, FileSystemPath output)
 		{
 			if (projects == null)
 				throw new ArgumentException("MsBuild.BuildDebug(projects, output): projects must not be null");
 			if (output == null)
 				throw new ArgumentException("MsBuild.BuildDebug(projects, output): output must not be null");
 
-			return Build(projects, p =>
+			Build(projects, p =>
 			{
 				p.Properties["Configuration"] = "Debug";
 				p.Properties["OutDir"] = output.Full;
 			});
 		}
 
-		public static IToolExecutionResult BuildRelease(FileItem solution)
+		public static void BuildRelease(FileItem solution)
 		{
 			if (solution == null)
 				throw new ArgumentException("MsBuild.BuildRelease(solution): solution must not be null");
 
-			return BuildRelease(new[] {solution});
+			BuildRelease(new[] {solution});
 		}
 
-		public static IToolExecutionResult BuildRelease(IEnumerable<FileItem> projects)
+		public static void BuildRelease(IEnumerable<FileItem> projects)
 		{
 			if (projects == null)
 				throw new ArgumentException("MsBuild.BuildRelease(projects): projects must not be null");
 
-			return Build(projects, p => { p.Properties["Configuration"] = "Release"; });
+			Build(projects, p => { p.Properties["Configuration"] = "Release"; });
 		}
 
-		public static IToolExecutionResult BuildRelease(IEnumerable<FileItem> projects, FileSystemPath output)
+		public static void BuildRelease(IEnumerable<FileItem> projects, FileSystemPath output)
 		{
 			if (projects == null)
 				throw new ArgumentException("MsBuild.BuildRelease(projects, output): projects must not be null");
 			if (output == null)
 				throw new ArgumentException("MsBuild.BuildRelease(projects, output): output must not be null");
 
-			return Build(projects, p =>
+			Build(projects, p =>
 			{
 				p.Properties["Configuration"] = "Release";
 				p.Properties["OutDir"] = output.Full;
 			});
 		}
 
-		public static IToolExecutionResult Build(FileItem solution)
+		public static void Build(FileItem solution)
 		{
 			if (solution == null)
 				throw new ArgumentException("MsBuild.Build(solution): solution must not be null");
 
-			return Build(new[] {solution}, p => { });
+			Build(new[] {solution}, p => { });
 		}
 
-		public static IToolExecutionResult Build(IEnumerable<FileItem> projects)
+		public static void Build(IEnumerable<FileItem> projects)
 		{
 			if (projects == null)
 				throw new ArgumentException("MsBuild.Build(projects): projects must not be null");
 
-			return Build(projects, p => { });
+			Build(projects, p => { });
 		}
 
-		public static IToolExecutionResult Build(FileItem solution, Action<Params> setParams)
+		public static void Build(FileItem solution, Action<Params> setParams)
 		{
 			if (solution == null)
 				throw new ArgumentException("MsBuild.Build(solution, setParams): solution must not be null");
 			if (setParams == null)
 				throw new ArgumentException("MsBuild.Build(solution, setParams): setParams must not be null");
 
-			return Build(new[] {solution}, setParams);
+			Build(new[] {solution}, setParams);
 		}
 
-		public static IToolExecutionResult Build(IEnumerable<FileItem> projects, Action<Params> setParams)
+		public static void Build(IEnumerable<FileItem> projects, Action<Params> setParams)
 		{
 			if (projects == null)
 				throw new ArgumentException("MsBuild.Build(projects, setParams): projects must not be null");
@@ -165,8 +165,7 @@ namespace AnFake.Core
 			// TODO: check other parameters
 
 			Trace.InfoFormat("MsBuild.Build\n => {0}", String.Join("\n => ", projArray.Select(x => x.RelPath)));
-
-			var summary = new ToolExecutionResult();
+			
 			foreach (var proj in projArray)
 			{
 				var args = new Args("/", ":")
@@ -205,11 +204,7 @@ namespace AnFake.Core
 				result
 					.FailIfAnyError("Target terminated due to MsBuild errors.")
 					.FailIfExitCodeNonZero(String.Format("MsBuild failed with exit code {0}. Solution: {1}", result.ExitCode, proj));
-
-				summary += result;
-			}			
-
-			return summary;
+			}
 		}
 	}
 }

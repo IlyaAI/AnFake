@@ -203,18 +203,19 @@ namespace AnFake.Core.Test
 
 		[TestCategory("Functional")]
 		[TestMethod]
-		public void FileSet_should_support_up_steps_and_wildcard_steps()
+		public void FileSet_should_support_wildcard_steps()
 		{
 			// arrange
-			var fs = "../../../*/bin/**/AnFake.Core.dll".AsFileSet();
+			var fs = "Data/FileSet/*/dir-?/*".AsFileSet();
 
 			// act
 			var files = fs.ToList();
 
 			// assert
-			Assert.IsTrue(files.Count >= 2);
-			Assert.IsTrue(files.Any(x => x.RelPath.Spec == "..\\..\\..\\AnFake.Core\\bin\\Debug\\AnFake.Core.dll"));
-		}
+			Assert.AreEqual(2, files.Count);
+			Assert.AreEqual("Data\\FileSet\\dir-A\\dir-C\\file-6.txt", files[0].RelPath.Spec);
+			Assert.AreEqual("Data\\FileSet\\dir-B\\dir-D\\file-7.txt", files[1].RelPath.Spec);
+		}		
 
 		[TestCategory("Functional")]
 		[TestMethod]

@@ -12,7 +12,7 @@ namespace AnFake.Api
 
 		void StartTrackExternal();
 
-		IToolExecutionResult StopTrackExternal();
+		void StopTrackExternal();
 
 		event EventHandler<TraceMessage> MessageReceiving;
 

@@ -55,8 +55,6 @@
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="Exceptions\AnFakeWrapperException.cs" />
     <Compile Include="NameGen.cs" />
-    <Compile Include="NuGetExecutionResult.cs" />
-    <Compile Include="AssemblyInfoExecutionResult.cs" />
     <Compile Include="Exceptions\AnFakeException.cs" />
     <Compile Include="Exceptions\InvalidConfigurationException.cs" />
     <Compile Include="Exceptions\TargetFailureException.cs" />
@@ -85,7 +83,6 @@
     <Compile Include="Snapshot.cs" />
     <Compile Include="Target.cs" />
     <Compile Include="TargetState.cs" />
-    <Compile Include="TestExecutionResult.cs" />
     <Compile Include="FileItem.cs" />
     <Compile Include="FileSystem.cs" />
     <Compile Include="FolderSet.cs" />
@@ -100,7 +97,6 @@
     <Compile Include="Tests\TestResult.cs" />
     <Compile Include="Tests\TestStatus.cs" />
     <Compile Include="Text.cs" />
-    <Compile Include="ToolExecutionResultExtension.cs" />
     <Compile Include="UserInterop.cs" />
     <Compile Include="Utils\CycleDependencyException.cs" />
     <Compile Include="Utils\DependencyResolver.cs" />

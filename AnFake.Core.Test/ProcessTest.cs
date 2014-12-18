@@ -16,8 +16,6 @@ namespace AnFake.Core.Test
 			// arrange
 			var logger = MockRepository.GenerateMock<ILogger>();
 			var tracer = MockRepository.GenerateMock<ITracer>();
-			var result = MockRepository.GenerateMock<IToolExecutionResult>();
-			tracer.Stub(x => x.StopTrackExternal()).Return(result);
 			
 			var prevLogger = Log.Set(logger);
 			var prevTracer = Trace.Set(tracer);
@@ -78,9 +76,7 @@ namespace AnFake.Core.Test
 		{
 			// arrange
 			var tracer = MockRepository.GenerateMock<ITracer>();
-			var res = MockRepository.GenerateMock<IToolExecutionResult>();
-			tracer.Stub(x => x.StopTrackExternal()).Return(res);
-
+			
 			var prevTracer = Trace.Set(tracer);
 			try
 			{
@@ -107,9 +103,7 @@ namespace AnFake.Core.Test
 		{
 			// arrange
 			var tracer = MockRepository.GenerateMock<ITracer>();
-			var res = MockRepository.GenerateMock<IToolExecutionResult>();
-			tracer.Stub(x => x.StopTrackExternal()).Return(res);
-
+			
 			var prevTracer = Trace.Set(tracer);
 			try
 			{

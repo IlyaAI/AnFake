@@ -24,7 +24,7 @@ namespace AnFake.Api
 			throw new NotSupportedException("NoopTracer.StartTrackExternal() not supported.");
 		}
 
-		public IToolExecutionResult StopTrackExternal()
+		public void StopTrackExternal()
 		{
 			throw new NotSupportedException("NoopTracer.StopTrackExternal() not supported.");
 		}

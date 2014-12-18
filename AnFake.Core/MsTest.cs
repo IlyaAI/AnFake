@@ -47,12 +47,12 @@ namespace AnFake.Core
 			Defaults = new Params();
 		}
 
-		public static TestExecutionResult Run(IEnumerable<FileItem> assemblies)
+		public static IEnumerable<TestResult> Run(IEnumerable<FileItem> assemblies)
 		{
 			return Run(assemblies, p => { });
 		}
 
-		public static TestExecutionResult Run(IEnumerable<FileItem> assemblies, Action<Params> setParams)
+		public static IEnumerable<TestResult> Run(IEnumerable<FileItem> assemblies, Action<Params> setParams)
 		{
 			var assembliesArray = assemblies.ToArray();
 			if (assembliesArray.Length == 0)
@@ -127,10 +127,9 @@ namespace AnFake.Core
 				}
 			}			
 
-			var testResult = tests.TraceSummary();
-			testResult.FailIfAnyError("Target terminated due to test failures.");
-
-			return testResult;
+			tests.TraceSummary();
+			
+			return tests;
 		}
 	}
 }

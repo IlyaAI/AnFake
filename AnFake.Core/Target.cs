@@ -105,6 +105,7 @@ namespace AnFake.Core
 		private Action<ExecutionReason> _finally;
 		private TargetState _state;
 		private bool _skipErrors;
+		private bool _failIfAnyWarning;
 		private TimeSpan _runTime = TimeSpan.Zero;
 		private event EventHandler<ExecutionReason> Failed;
 		private event EventHandler<ExecutionReason> Finalized;
@@ -285,12 +286,26 @@ namespace AnFake.Core
 		}
 
 		/// <summary>
-		///     Marks this target skip errors, i.e. not to fail even some error occured.
+		///     Instructs this target to skip errors, i.e. not to fail even some error occured.
 		/// </summary>
+		/// <remarks>
+		///		Errors means some tool throws an exception.
+		/// </remarks>
 		/// <returns></returns>
 		public Target SkipErrors()
 		{
 			_skipErrors = true;
+
+			return this;
+		}
+
+		/// <summary>
+		///     Instructs this target to fail if any warning/error message was written to tracer.
+		/// </summary>
+		/// <returns></returns>
+		public Target FailIfAnyWarning()
+		{
+			_failIfAnyWarning = true;
 
 			return this;
 		}
@@ -453,6 +468,9 @@ namespace AnFake.Core
 				if (_do != null)
 				{
 					Invoke("Do", _do, false);
+
+					if (_failIfAnyWarning && (_messages.ErrorsCount > 0 || _messages.WarningsCount > 0))
+						throw new TerminateTargetException("Target terminated due to reported warning/error(s).");
 				}
 
 				_state = TargetState.PartiallySucceeded;

@@ -61,12 +61,12 @@ namespace AnFake.Core
 			Defaults = new Params();
 		}
 
-		public static IToolExecutionResult Pack(IEnumerable<FileItem> files, FileSystemPath zipFilePath)
+		public static void Pack(IEnumerable<FileItem> files, FileSystemPath zipFilePath)
 		{
-			return Pack(files, zipFilePath, p => { });
+			Pack(files, zipFilePath, p => { });
 		}
 
-		public static IToolExecutionResult Pack(IEnumerable<FileItem> files, FileSystemPath zipFilePath, Action<Params> setParams)
+		public static void Pack(IEnumerable<FileItem> files, FileSystemPath zipFilePath, Action<Params> setParams)
 		{
 			if (files == null)
 				throw new ArgumentException("Zip.Pack(files, zipFilePath[, setParams]): files must not be null");
@@ -102,17 +102,15 @@ namespace AnFake.Core
 				}				
 			}
 
-			Trace.InfoFormat("{0} file(s) zipped.", filesToZip.Length);
-
-			return new ToolExecutionResult();
+			Trace.InfoFormat("{0} file(s) zipped.", filesToZip.Length);			
 		}
 
-		public static IToolExecutionResult Unpack(FileSystemPath zipFilePath, FileSystemPath targetPath)
+		public static void Unpack(FileSystemPath zipFilePath, FileSystemPath targetPath)
 		{
-			return Unpack(zipFilePath, targetPath, p => { });
+			Unpack(zipFilePath, targetPath, p => { });
 		}
 
-		public static IToolExecutionResult Unpack(FileSystemPath zipFilePath, FileSystemPath targetPath, Action<Params> setParams)
+		public static void Unpack(FileSystemPath zipFilePath, FileSystemPath targetPath, Action<Params> setParams)
 		{
 			if (zipFilePath == null)
 				throw new ArgumentException("Zip.Pack(zipFilePath, targetPath[, setParams]): zipFilePath must not be null");
@@ -154,9 +152,7 @@ namespace AnFake.Core
 				}
 			}
 
-			Trace.InfoFormat("{0} file(s) unzipped.", unzippedFiles);
-
-			return new ToolExecutionResult();
+			Trace.InfoFormat("{0} file(s) unzipped.", unzippedFiles);			
 		}
 	}
 }

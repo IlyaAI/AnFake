@@ -56,22 +56,22 @@ namespace AnFake.Core
 			return pkg;			
 		}
 
-		public static NuGetExecutionResult Pack(NuSpec.v25.Package nuspec, FileSystemPath dstFolder)
+		public static FileItem Pack(NuSpec.v25.Package nuspec, FileSystemPath dstFolder)
 		{
 			return Pack(nuspec, dstFolder, dstFolder, p => { });
 		}
 
-		public static NuGetExecutionResult Pack(NuSpec.v25.Package nuspec, FileSystemPath dstFolder, Action<Params> setParams)
+		public static FileItem Pack(NuSpec.v25.Package nuspec, FileSystemPath dstFolder, Action<Params> setParams)
 		{
 			return Pack(nuspec, dstFolder, dstFolder, setParams);
 		}
 
-		public static NuGetExecutionResult Pack(NuSpec.v25.Package nuspec, FileSystemPath srcFolder, FileSystemPath dstFolder)
+		public static FileItem Pack(NuSpec.v25.Package nuspec, FileSystemPath srcFolder, FileSystemPath dstFolder)
 		{
 			return Pack(nuspec, srcFolder, dstFolder, p => { });
 		}
 
-		public static NuGetExecutionResult Pack(NuSpec.v25.Package nuspec, FileSystemPath srcFolder, FileSystemPath dstFolder, Action<Params> setParams)
+		public static FileItem Pack(NuSpec.v25.Package nuspec, FileSystemPath srcFolder, FileSystemPath dstFolder, Action<Params> setParams)
 		{
 			if (nuspec == null)
 				throw new ArgumentException("NuGet.Pack(nuspec, srcFolder, dstFolder, setParams): nuspec must not be null");
@@ -125,10 +125,10 @@ namespace AnFake.Core
 
 			var pkgPath = dstFolder / String.Format("{0}.{1}.nupkg", nuspec.Metadata.Id, nuspec.Metadata.Version);
 
-			return new NuGetExecutionResult(result, pkgPath);
+			return pkgPath.AsFile();
 		}
 
-		public static IToolExecutionResult Push(FileSystemPath package, Action<Params> setParams)
+		public static void Push(FileSystemPath package, Action<Params> setParams)
 		{
 			if (package == null)
 				throw new ArgumentException("NuGet.Push(package, setParams): package must not be null");
@@ -164,8 +164,6 @@ namespace AnFake.Core
 			result
 				.FailIfAnyError("Target terminated due to NuGet errors.")
 				.FailIfExitCodeNonZero(String.Format("NuGet.Push failed with exit code {0}. Package: {1}", result.ExitCode, package));
-
-			return result;
 		}
 
 		private static void EnsureToolPath(Params parameters)

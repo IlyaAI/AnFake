@@ -59,17 +59,17 @@ let version = "0.9".AsVersion()
             p.Description <- "AnFake: Another F# Make"
             p.Copyright <- String.Format("Ilya A. Ivanov {0}", DateTime.Now.Year)
             p.Version <- version
-        ) |> ignore
+        )
 
-    MsBuild.BuildRelease(product, productOut) |> ignore
+    MsBuild.BuildRelease(product, productOut)
 
     Files.Copy(cmds, productOut, true)
 
-    MsBuild.BuildRelease(plugins, pluginsOut) |> ignore    
+    MsBuild.BuildRelease(plugins, pluginsOut)
 
     Files.Copy(extras, extrasOut, true)
 
-    MsBuild.BuildRelease(tests, testsOut) |> ignore
+    MsBuild.BuildRelease(tests, testsOut)
 )
 
 "Custom.ZipHtmlSummary" => (fun _ ->
@@ -79,7 +79,7 @@ let version = "0.9".AsVersion()
 
     let zip = pluginsOut / "AnFake.Plugins.HtmlSummary.zip"
 
-    Zip.Pack(htmlSummary, zip) |> ignore
+    Zip.Pack(htmlSummary, zip)
     Files.Copy(zip, ~~".AnFake/Plugins" / zip.LastName, true)
 )
 

@@ -89,6 +89,9 @@ namespace AnFake.Plugins.HtmlSummary
 
 		private void Drop()
 		{
+			Log.Text("-------- HTML Summary Plugin --------");
+			Log.Text("Generating report...");
+
 			var logsPath = BuildServer.LogsLocation/PluginName;
 
 			Zip.Unpack(

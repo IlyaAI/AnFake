@@ -15,9 +15,7 @@ namespace AnFake.Api
 		private TimeSpan _retryInterval = TimeSpan.FromMilliseconds(50);
 		private int _maxRetries = 20;
 		private Thread _tracker;
-		private int _externalErrors;
-		private int _externalWarnings;
-
+		
 		public JsonFileTracer(string logFile, bool append)
 		{
 			if (String.IsNullOrEmpty(logFile))
@@ -107,9 +105,6 @@ namespace AnFake.Api
 			if (_tracker != null)
 				throw new InvalidOperationException("Tracking of external messages activated already. Hint: check parity of Start/StopTrackExternal methods.");
 
-			_externalErrors = 0;
-			_externalWarnings = 0;
-
 			long processedLength;
 			using (var log = OpenLog(FileMode.Append, FileAccess.Write, MaxRetries))
 			{
@@ -155,17 +150,6 @@ namespace AnFake.Api
 						TraceMessage message;
 						while ((message = reader.Next()) != null)
 						{
-							switch (message.Level)
-							{
-								case TraceMessageLevel.Warning:
-									_externalWarnings++;
-									break;
-
-								case TraceMessageLevel.Error:
-									_externalErrors++;
-									break;
-							}
-
 							if (message.Level >= _threshold)
 							{
 								if (MessageReceived != null)
@@ -187,16 +171,14 @@ namespace AnFake.Api
 			_tracker.Start();
 		}
 
-		public IToolExecutionResult StopTrackExternal()
+		public void StopTrackExternal()
 		{
 			if (_tracker == null)
-				return new ToolExecutionResult();
+				return;
 
 			_tracker.Interrupt();
 			_tracker.Join(3000);
-			_tracker = null;			
-
-			return new ToolExecutionResult(_externalErrors, _externalWarnings);
+			_tracker = null;
 		}
 
 		public event EventHandler<TraceMessage> MessageReceiving;

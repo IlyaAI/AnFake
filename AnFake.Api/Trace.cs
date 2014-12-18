@@ -120,11 +120,10 @@ namespace AnFake.Api
 			}
 		}
 
-		public static IToolExecutionResult StopTrackExternal()
+		public static void StopTrackExternal()
 		{
 			Tracer.MessageReceived -= OnMessageReceived;
-
-			return Tracer.StopTrackExternal();
+			Tracer.StopTrackExternal();
 		}
 
 		public static event EventHandler<TraceMessage> MessageReceiving
