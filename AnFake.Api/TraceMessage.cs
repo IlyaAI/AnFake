@@ -5,7 +5,7 @@ using System.Text;
 namespace AnFake.Api
 {
 	/// <summary>
-	/// Represents typed message of build trace.
+	///     Represents typed message of build trace.
 	/// </summary>
 	[DataContract(Name = "Generic", Namespace = "")]
 	public class TraceMessage : IFormattable
@@ -42,7 +42,7 @@ namespace AnFake.Api
 
 		[DataMember(EmitDefaultValue = false)]
 		public string Target { get; set; }
-		
+
 		[DataMember(EmitDefaultValue = false)]
 		public string LinkHref { get; set; }
 
@@ -50,21 +50,24 @@ namespace AnFake.Api
 		public string LinkLabel { get; set; }
 
 		/// <summary>
-		/// Formats message.
+		///     Formats message.
 		/// </summary>
 		/// <remarks>
-		/// <para>
-		/// Message text is a default string representation. Additionally the following information might be included:
-		/// </para>
-		/// <para>
-		/// l - link if specified;
-		/// </para>
-		/// <para>
-		/// f - file/project reference if specified;
-		/// </para>
-		/// <para>
-		/// d - details if specified;
-		/// </para>		
+		///     <para>
+		///         Message text is a default string representation. Additionally the following information might be included:
+		///     </para>
+		///		<para>
+		///			m - message itself prefixed with code (if any)
+		///		</para>
+		///     <para>
+		///         l - link if specified;
+		///     </para>
+		///     <para>
+		///         f - file/project reference if specified;
+		///     </para>
+		///     <para>
+		///         d - details if specified;
+		///     </para>
 		/// </remarks>
 		/// <param name="format"></param>
 		/// <param name="formatProvider"></param>
@@ -74,56 +77,64 @@ namespace AnFake.Api
 			const int ident = 2;
 			var sb = new StringBuilder();
 
-			if (!String.IsNullOrEmpty(Code))
-			{
-				sb.Append(Code).Append(": ");
-			}
-
-			sb.Append(Message);
-
 			foreach (var field in format)
 			{
 				switch (field)
 				{
+					case 'm':
+						if (sb.Length > 0) 
+							sb.AppendLine();
+
+						if (!String.IsNullOrEmpty(Code))			
+							sb.Append(Code).Append(": ");						
+
+						sb.Append(Message);
+						break;
+
 					case 'l':
 						if (String.IsNullOrWhiteSpace(LinkHref))
 							break;
-						
-						sb.AppendLine().Append(' ', ident);
-						if (!String.IsNullOrWhiteSpace(LinkLabel))
-						{
+
+						if (sb.Length > 0)
+							sb.AppendLine().Append(' ', ident);
+
+						if (!String.IsNullOrEmpty(LinkLabel))						
 							sb.Append('[').Append(LinkLabel).Append('|').Append(LinkHref).Append(']');
-						}
-						else
-						{
+						else						
 							sb.Append('[').Append(LinkHref).Append(']');
-						}
+						
 						break;
 
 					case 'f':
 						if (!String.IsNullOrEmpty(File))
 						{
-							sb.AppendLine().Append(' ', ident).Append(File);
-							if (Line > 0)
-							{
+							if (sb.Length > 0)
+								sb.AppendLine().Append(' ', ident);
+
+							sb.Append(File);
+							if (Line > 0)							
 								sb.AppendFormat(" Ln: {0}", Line);
-							}
+							
 							if (Column > 0)
-							{
-								sb.AppendFormat(" Col: {0}", Column);
-							}
+								sb.AppendFormat(" Col: {0}", Column);							
 						}
 
 						if (!String.IsNullOrEmpty(Project))
 						{
-							sb.AppendLine().Append(' ', ident).Append(Project);
+							if (sb.Length > 0)
+								sb.AppendLine().Append(' ', ident);
+
+							sb.Append(Project);
 						}
 						break;
 
 					case 'd':
 						if (!String.IsNullOrWhiteSpace(Details))
 						{
-							sb.AppendLine().Append(Details);
+							if (sb.Length > 0)
+								sb.AppendLine();
+
+							sb.Append(Details);
 						}
 						break;
 				}
@@ -133,12 +144,12 @@ namespace AnFake.Api
 		}
 
 		/// <summary>
-		/// Formats message with default presentation 'lfd'. <see cref="ToString(string,System.IFormatProvider)"/>
-		/// </summary>		
+		///     Formats message with default presentation 'mlfd'. <see cref="ToString(string,System.IFormatProvider)" />
+		/// </summary>
 		/// <returns></returns>
 		public override string ToString()
 		{
-			return ToString("lfd", null);
+			return ToString("mlfd", null);
 		}
 	}
 }

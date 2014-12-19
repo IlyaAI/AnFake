@@ -1,7 +1,7 @@
 ﻿.content {
     font-family: Consolas, SANS-SERIF;
     font-size: 10pt;
-    width: 1024px;    
+    width: 75%;    
     min-width: 640px;    
     overflow: hidden;    
 }
@@ -50,6 +50,8 @@ p {
 .level-icon {
     width: 16px;
     height: 16px;
+    margin-top: 2px;
+    margin-right: 6px;
 }
 .level-icon.error {
     background-image: url("Icons/level-error-16.png");
@@ -102,6 +104,10 @@ p {
 
 .targets-overview {    
     margin-left: 24px;    
+}
+
+.message {
+    vertical-align: top;
 }
 
 /* Target Overview */

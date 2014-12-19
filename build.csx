@@ -12,8 +12,9 @@ public sealed class BuildScript : BuildScriptSkeleton
 		var extrasOut = productOut/"Extras";
 		var testsOut = outDir/"tests";
 		var product = "AnFake/*.csproj".AsFileSet();
-		var plugins = "AnFake.Plugins.Tfs2012/*.csproj".AsFileSet()
-					+ "AnFake.Plugins.HtmlSummary/*.csproj";
+		var plugins =
+			"AnFake.Plugins.Tfs2012/*.csproj".AsFileSet()
+			+ "AnFake.Plugins.HtmlSummary/*.csproj";
 		var extras = "*".AsFileSetFrom(".AnFake/Extras");
 		var cmds = "*.cmd".AsFileSetFrom(".AnFake");
 		var tests = "*/*.Test.csproj".AsFileSet();
@@ -67,8 +68,9 @@ public sealed class BuildScript : BuildScriptSkeleton
 
 		"Custom.ZipHtmlSummary".AsTarget().Do(() =>
 		{
-			var htmlSummary = "**/*".AsFileSetFrom("AnFake.Plugins.HtmlSummary/Html")
-							- "build.summary.js";
+			var htmlSummary =
+				"**/*".AsFileSetFrom("AnFake.Plugins.HtmlSummary/Html")
+				- "build.summary.js";
 
 			var zip = pluginsOut/"AnFake.Plugins.HtmlSummary.zip";
 

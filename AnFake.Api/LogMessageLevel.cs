@@ -18,7 +18,7 @@ namespace AnFake.Api
 		///     Denotes information about current progress. E.g. 'Starting process x', 'Copying files x => y', etc.
 		/// </summary>
 		/// <remarks>
-		///     Info meessages are visible with verbosity Normal or higher.
+		///     Info messages are visible with verbosity Normal or higher.
 		///     They have WHITE color on console and [INFO] tag in log file.
 		/// </remarks>
 		Info,
@@ -27,7 +27,7 @@ namespace AnFake.Api
 		///     Denotes summary of important operation. E.g. 'x failed / y total tests'.
 		/// </summary>
 		/// <remarks>
-		///     Summary meessages are visible with verbosity Minimal or higher.
+		///     Summary messages are visible with verbosity Minimal or higher.
 		///     They have WHITE color on console and [INFO] tag in log file.
 		/// </remarks>
 		Summary,
@@ -36,7 +36,7 @@ namespace AnFake.Api
 		///     Denotes warning about operation's result. E.g. 'Obsolete API is used'.
 		/// </summary>
 		/// <remarks>
-		///     Warning meessages are visible with any verbosity.
+		///     Warning messages are visible with any verbosity.
 		///     They have YELLOW color on console and [WARN] tag in log file.
 		/// </remarks>
 		Warning,
@@ -45,7 +45,7 @@ namespace AnFake.Api
 		///     Denotes failure of operation. E.g. 'Syntax error in ...'
 		/// </summary>
 		/// <remarks>
-		///     Error meessages are visible with any verbosity.
+		///     Error messages are visible with any verbosity.
 		///     They have RED color on console and [ERROR] tag in log file.
 		/// </remarks>
 		Error,
@@ -55,7 +55,7 @@ namespace AnFake.Api
 		/// </summary>
 		/// <remarks>
 		///     <para>
-		///         Success meessages are visible with any verbosity.
+		///         Success messages are visible with any verbosity.
 		///         They have GREEN color on console and [SUCCESS] tag in log file.
 		///     </para>
 		///     <para>
@@ -69,13 +69,27 @@ namespace AnFake.Api
 		/// </summary>
 		/// <remarks>
 		///     <para>
-		///         Text meessages are visible with any verbosity.
+		///         Text messages are visible with any verbosity.
 		///         They have WHITE color on console and [INFO] tag in log file.
 		///     </para>
 		///     <para>
 		///         Normally text messages are used in global build summary only.
 		///     </para>
 		/// </remarks>
-		Text
+		Text,
+
+		/// <summary>
+		///     Denotes text message with details.
+		/// </summary>
+		/// <remarks>
+		///     <para>
+		///         Details messages are visible with any verbosity.
+		///         They have GRAY color on console and [INFO] tag in log file.
+		///     </para>
+		///     <para>
+		///         Normally details messages are used in global build summary only.
+		///     </para>
+		/// </remarks>
+		Details
 	}
 }

@@ -286,10 +286,10 @@ namespace AnFake.Core
 		}
 
 		/// <summary>
-		///     Instructs this target to skip errors, i.e. not to fail even some error occured.
+		///     Instructs this target to skip errors, i.e. do not fail even some error occured.
 		/// </summary>
 		/// <remarks>
-		///		Errors means some tool throws an exception.
+		///		Error might be reported eigther by throwing an exception or by writing error message to tracer.
 		/// </remarks>
 		/// <returns></returns>
 		public Target SkipErrors()
@@ -300,7 +300,7 @@ namespace AnFake.Core
 		}
 
 		/// <summary>
-		///     Instructs this target to fail if any warning/error message was written to tracer.
+		///     Instructs this target to fail if any warning message was written to tracer.
 		/// </summary>
 		/// <returns></returns>
 		public Target FailIfAnyWarning()
@@ -469,7 +469,7 @@ namespace AnFake.Core
 				{
 					Invoke("Do", _do, false);
 
-					if (_failIfAnyWarning && (_messages.ErrorsCount > 0 || _messages.WarningsCount > 0))
+					if (_failIfAnyWarning && _messages.WarningsCount > 0)
 						throw new TerminateTargetException("Target terminated due to reported warning/error(s).");
 				}
 
@@ -557,12 +557,17 @@ namespace AnFake.Core
 
 			foreach (var target in executedTargets)
 			{
+				Log.Text("");
 				LogEx.TargetStateFormat(target.State, "{0}: {1} error(s) {2} warning(s) {3} message(s)",
 					target.Name, target.Messages.ErrorsCount, target.Messages.WarningsCount, target.Messages.SummariesCount);
 
 				foreach (var message in target.Messages)
 				{
-					Log.TraceMessageFormat(message.Level, "[{0,4}] {1}", ++index, message.ToString());
+					Log.TraceMessageFormat(message.Level, "[{0,4}] {1}", ++index, message.ToString("m", null));
+
+					var more = message.ToString("lfd", null);
+					if (more.Length > 0)
+						Log.Details(more);
 				}
 			}
 

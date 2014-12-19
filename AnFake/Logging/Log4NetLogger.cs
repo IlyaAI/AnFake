@@ -92,6 +92,7 @@ namespace AnFake.Logging
 			switch (msgLevel)
 			{
 				case LogMessageLevel.Debug:
+				case LogMessageLevel.Details:
 					return Level.Trace;
 				case LogMessageLevel.Info:
 				case LogMessageLevel.Summary:

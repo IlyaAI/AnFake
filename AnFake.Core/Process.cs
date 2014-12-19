@@ -12,6 +12,8 @@ namespace AnFake.Core
 			public FileSystemPath WorkingDirectory;
 			public TimeSpan Timeout;
 			public bool TrackExternalMessages;
+			public Action<string> OnStdOut;
+			public Action<string> OnStdErr;
 
 			internal Params()
 			{
@@ -74,21 +76,25 @@ namespace AnFake.Core
 			}
 			else
 			{
-				process.OutputDataReceived += (sender, evt) =>
-				{
-					if (String.IsNullOrWhiteSpace(evt.Data))
-						return;
-
-					Trace.Debug(evt.Data);
-				};
-				process.ErrorDataReceived += (sender, evt) =>
-				{
-					if (String.IsNullOrWhiteSpace(evt.Data))
-						return;
-
-					Trace.Error(evt.Data);
-				};
+				if (parameters.OnStdOut == null)				
+					parameters.OnStdOut = Trace.Debug;
+				
+				if (parameters.OnStdErr == null)				
+					parameters.OnStdErr = Trace.Error;				
 			}
+
+			if (parameters.OnStdOut != null)
+			{
+				process.OutputDataReceived += 
+					(sender, evt) => { if (!String.IsNullOrEmpty(evt.Data)) parameters.OnStdOut(evt.Data); };
+			}
+
+			if (parameters.OnStdErr != null)
+			{
+				process.ErrorDataReceived +=
+					(sender, evt) => { if (!String.IsNullOrEmpty(evt.Data)) parameters.OnStdErr(evt.Data); };
+			}
+
 			try
 			{
 				process.Start();

@@ -51,6 +51,7 @@
     <Compile Include="ArgsExtension.cs" />
     <Compile Include="Integration\IBuildServer.cs" />
     <Compile Include="BuildServer.cs" />
+    <Compile Include="VsTest.cs" />
     <Compile Include="Zip.cs" />
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="Exceptions\AnFakeWrapperException.cs" />
