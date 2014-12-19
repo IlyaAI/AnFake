@@ -21,7 +21,7 @@ namespace AnFake.Api
 		///     Denotes information about current progress. E.g. 'Starting process x', 'Copying files x => y', etc.
 		/// </summary>
 		/// <remarks>
-		///     Info meessages are visible with verbosity Normal or higher.
+		///     Info messages are visible with verbosity Normal or higher.
 		///     They have WHITE color on console and [DEBUG] tag in log file.
 		/// </remarks>
 		[EnumMember] Info,
@@ -31,7 +31,7 @@ namespace AnFake.Api
 		/// </summary>
 		/// <remarks>
 		///     <para>
-		///         Summary meessages are visible with verbosity Minimal or higher.
+		///         Summary messages are visible with verbosity Minimal or higher.
 		///         They have WHITE color on console and [DEBUG] tag in log file.
 		///     </para>
 		///     <para>
@@ -46,7 +46,7 @@ namespace AnFake.Api
 		/// </summary>
 		/// <remarks>
 		///     <para>
-		///         Warning meessages are visible with any verbosity.
+		///         Warning messages are visible with any verbosity.
 		///         They have YELLOW color on console and [WARN] tag in log file.
 		///     </para>
 		///     <para>
@@ -60,7 +60,7 @@ namespace AnFake.Api
 		/// </summary>
 		/// <remarks>
 		///     <para>
-		///         Error meessages are visible with any verbosity.
+		///         Error messages are visible with any verbosity.
 		///         They have RED color on console and [ERROR] tag in log file.
 		///     </para>
 		///     <para>

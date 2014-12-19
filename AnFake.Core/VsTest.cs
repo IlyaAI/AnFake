@@ -141,7 +141,7 @@ namespace AnFake.Core
 							new TraceMessage(TraceMessageLevel.Summary, summary)
 							{
 								LinkLabel = "Trace",
-								LinkHref = trxPath.ToRelative(MyBuild.Current.Path).Spec
+								LinkHref = trxPath.Full
 							});
 
 						tests.AddRange(currentTests);

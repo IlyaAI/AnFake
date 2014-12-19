@@ -86,13 +86,13 @@ namespace AnFake.Core
 			if (parameters.OnStdOut != null)
 			{
 				process.OutputDataReceived += 
-					(sender, evt) => { if (!String.IsNullOrEmpty(evt.Data)) parameters.OnStdOut(evt.Data); };
+					(sender, evt) => { if (!String.IsNullOrWhiteSpace(evt.Data)) parameters.OnStdOut(evt.Data); };
 			}
 
 			if (parameters.OnStdErr != null)
 			{
 				process.ErrorDataReceived +=
-					(sender, evt) => { if (!String.IsNullOrEmpty(evt.Data)) parameters.OnStdErr(evt.Data); };
+					(sender, evt) => { if (!String.IsNullOrWhiteSpace(evt.Data)) parameters.OnStdErr(evt.Data); };
 			}
 
 			try
