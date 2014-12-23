@@ -26,6 +26,8 @@ let serviceNames =
         "features"
     ]
 
+Tfs.UseItDeferred()
+
 "Build" => (fun _ ->
     Trace.Info "Usage: AnFake.Tf[.cmd] <command> [<param>] ..."
     Trace.Info "Supported commands:"

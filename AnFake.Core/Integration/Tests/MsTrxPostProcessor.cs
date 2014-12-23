@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using AnFake.Core.Tests;
 
-namespace AnFake.Core
+namespace AnFake.Core.Integration.Tests
 {
-	public class MsTestPostProcessor : ITestPostProcessor
+	public class MsTrxPostProcessor : IMsTrxPostProcessor
 	{
 		public IEnumerable<TestResult> PostProcess(Stream stream)
 		{

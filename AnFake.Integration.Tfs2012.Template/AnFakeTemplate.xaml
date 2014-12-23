@@ -136,7 +136,7 @@
           </mtbwa:SyncWorkspace.RequestsFailed>
         </mtbwa:SyncWorkspace>
       </Sequence>
-      <ait:InvokeAnFake BuildDetail="[BuildDetail]" BuildDirectory="[BuildDirectory]" CleanWorkspace="[CleanWorkspace]" sap2010:WorkflowViewState.IdRef="InvokeAnFake_1" PrivateDropLocation="[PrivateDropLocation]" Properties="[AnFakeProperties]" Script="[AnFakeScript]" Targets="[AnFakeTargets]" ToolPath=".AnFake\Bin\AnFake.exe" Verbosity="[Verbosity]" />
+      <ait:InvokeAnFake BuildDetail="[BuildDetail]" BuildDirectory="[BuildDirectory]" CleanWorkspace="[CleanWorkspace]" sap2010:WorkflowViewState.IdRef="InvokeAnFake_1" PrivateDropLocation="[PrivateDropLocation]" Properties="[AnFakeProperties]" Script="[AnFakeScript]" Targets="[AnFakeTargets]" ToolPath=".AnFake\AnFake.exe" Verbosity="[Verbosity]" />
     </mtbwa:AgentScope>
     <sads:DebugSymbol.Symbol>dw1DOlxFbXB0eS54YW1sAA==</sads:DebugSymbol.Symbol>
   </Sequence>

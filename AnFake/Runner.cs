@@ -222,18 +222,22 @@ namespace AnFake
 				}
 
 				MyBuild.Initialize(
-					new MyBuild.Params(
 						buildPath,
 						logFile,
 						scriptFile,
 						options.Verbosity,
 						options.Targets.ToArray(),
-						options.Properties));
+						options.Properties);
 
 				evaluator.Evaluate(scriptFile);
+
+				Trace.Info("Configuring plugins...");
+				Plugin.Configure();
 				
 				var status = MyBuild.Run();
-				return status - MyBuild.Status.Succeeded;
+				var exitCode = status - MyBuild.Status.Succeeded;
+
+				return exitCode;
 			}
 			catch (Exception e)
 			{				

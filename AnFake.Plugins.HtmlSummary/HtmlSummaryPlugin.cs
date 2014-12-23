@@ -9,7 +9,7 @@ using AnFake.Core.Integration;
 
 namespace AnFake.Plugins.HtmlSummary
 {
-	internal sealed class HtmlSummaryPlugin : IPlugin
+	internal sealed class HtmlSummaryPlugin
 	{
 		private static readonly string PluginName = typeof(HtmlSummaryPlugin).Namespace;
 		private const string SummaryJs = "build.summary.js";
@@ -17,9 +17,8 @@ namespace AnFake.Plugins.HtmlSummary
 		
 		private BuildSummary _summary;
 		private FileSystemPath _tempSummaryFilePath;
-
-		// ReSharper disable once UnusedParameter.Local
-		public HtmlSummaryPlugin(MyBuild.Params parameters)
+		
+		public HtmlSummaryPlugin()
 		{
 			Target.Finished += OnTargetFinished;
 
@@ -92,7 +91,7 @@ namespace AnFake.Plugins.HtmlSummary
 			Log.Text("-------- HTML Summary Plugin --------");
 			Log.Text("Generating report...");
 
-			var logsPath = BuildServer.LogsLocation/PluginName;
+			var logsPath = Plugin.Get<IBuildServer>().LogsLocation/PluginName;
 
 			Zip.Unpack(
 				"[AnFakePlugins]".AsPath() / PluginName + ".zip", 

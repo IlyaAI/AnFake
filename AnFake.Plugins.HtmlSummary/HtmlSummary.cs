@@ -6,7 +6,7 @@ namespace AnFake.Plugins.HtmlSummary
 	{
 		public static void UseIt()
 		{
-			Plugin.Register(new HtmlSummaryPlugin(MyBuild.Current));
+			Plugin.Register<HtmlSummaryPlugin>();
 		}
 	}
 }

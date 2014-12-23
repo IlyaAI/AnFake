@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using AnFake.Api;
 using AnFake.Core.Exceptions;
-using AnFake.Core.Tests;
+using AnFake.Core.Integration.Tests;
 
 namespace AnFake.Core
 {
@@ -12,7 +12,8 @@ namespace AnFake.Core
 	{
 		private static readonly string[] Locations =
 		{
-			"[ProgramFilesX86]/Microsoft Visual Studio 12.0/Common7/IDE/MsTest.exe"
+			"[ProgramFilesX86]/Microsoft Visual Studio 12.0/Common7/IDE/MsTest.exe",
+			"[ProgramFilesX86]/Microsoft Visual Studio 11.0/Common7/IDE/MsTest.exe"
 		};
 
 		public sealed class Params
@@ -22,15 +23,13 @@ namespace AnFake.Core
 			public FileSystemPath TestSettingsPath;
 			public FileSystemPath WorkingDirectory;
 			public TimeSpan Timeout;			
-			public bool NoIsolation;
-			public ITestPostProcessor PostProcessor;
+			public bool NoIsolation;			
 			public FileSystemPath ToolPath;
 			public string ToolArguments;
 
 			internal Params()
 			{				
-				Timeout = TimeSpan.MaxValue;
-				PostProcessor = new MsTestPostProcessor();
+				Timeout = TimeSpan.MaxValue;				
 				ToolPath = Locations.AsFileSet().Select(x => x.Path).FirstOrDefault();
 			}
 
@@ -47,12 +46,12 @@ namespace AnFake.Core
 			Defaults = new Params();
 		}
 
-		public static IEnumerable<TestResult> Run(IEnumerable<FileItem> assemblies)
+		public static void Run(IEnumerable<FileItem> assemblies)
 		{
-			return Run(assemblies, p => { });
+			Run(assemblies, p => { });
 		}
 
-		public static IEnumerable<TestResult> Run(IEnumerable<FileItem> assemblies, Action<Params> setParams)
+		public static void Run(IEnumerable<FileItem> assemblies, Action<Params> setParams)
 		{
 			var assembliesArray = assemblies.ToArray();
 			if (assembliesArray.Length == 0)
@@ -75,6 +74,7 @@ namespace AnFake.Core
 			Trace.InfoFormat("MsTest.Run\n => {0}", String.Join("\n => ", assembliesArray.Select(x => x.RelPath)));
 
 			var tests = new List<TestResult>();
+			var postProcessor = Plugin.Find<IMsTrxPostProcessor>();
 			
 			foreach (var assembly in assembliesArray)
 			{
@@ -100,9 +100,9 @@ namespace AnFake.Core
 					p.Arguments = args;					
 				});
 
-				if (parameters.PostProcessor != null && File.Exists(resultPath.Full))
+				if (postProcessor != null && File.Exists(resultPath.Full))
 				{
-					var currentTests = parameters.PostProcessor
+					var currentTests = postProcessor
 						.PostProcess(resultPath)
 						.Trace()
 						.ToArray();
@@ -127,9 +127,7 @@ namespace AnFake.Core
 				}
 			}			
 
-			tests.TraceSummary();
-			
-			return tests;
+			tests.TraceSummary();					
 		}
 	}
 }

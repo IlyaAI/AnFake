@@ -39,7 +39,7 @@ namespace AnFake.Integration.Tfs2012
 			PrivateDropLocation = new InArgument<string>();
 			Properties = new InArgument<string>("");
 			Script = new InArgument<string>("build.fsx");
-			ToolPath = new InArgument<string>(@".AnFake\Bin\AnFake.exe");
+			ToolPath = new InArgument<string>(@".AnFake\AnFake.exe");
 
 			Implementation = CreateBody;
 		}

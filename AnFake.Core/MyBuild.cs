@@ -84,15 +84,21 @@ namespace AnFake.Core
 		private static bool _isInitialized;
 		private static EventHandler<Params> _initialized;
 
-		internal static void Initialize(Params @params)
+		internal static void Initialize(
+			FileSystemPath path, 
+			FileItem logFile, 
+			FileItem scriptFile,
+			Verbosity verbosity, 
+			string[] targets, 
+			IDictionary<string, string> properties)
 		{
 			if (_isInitialized)
 				throw new InvalidConfigurationException("MyBuild already initialized.");
 
-			Debug.Assert(Path.IsPathRooted(@params.LogFile.Path.Spec), "LogFile must have absolute path.");
-			Debug.Assert(Path.IsPathRooted(@params.ScriptFile.Path.Spec), "ScriptFile must have absolute path.");
+			Debug.Assert(Path.IsPathRooted(logFile.Path.Spec), "LogFile must have absolute path.");
+			Debug.Assert(Path.IsPathRooted(scriptFile.Path.Spec), "ScriptFile must have absolute path.");
 
-			Current = @params;
+			Current = new Params(path, logFile, scriptFile, verbosity, targets, properties);
 
 			_isInitialized = true;
 

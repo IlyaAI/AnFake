@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using AnFake.Api;
-using AnFake.Core;
+using AnFake.Core.Internal;
 using Microsoft.TeamFoundation.Build.Client;
 using Microsoft.TeamFoundation.Client;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -54,7 +54,7 @@ namespace AnFake.Plugins.Tfs2012.Test
 			Build.Information
 				.Save();
 
-			var p = MyBuildTesting.CreateParams(
+			MyBuildTesting.Initialize(
 				new Dictionary<string, string>
 				{					
 					{"Tfs.Uri", TfsUri},
@@ -62,7 +62,8 @@ namespace AnFake.Plugins.Tfs2012.Test
 					{"Tfs.ActivityInstanceId", "0001"}
 				});
 
-			var tfs = new TfsPlugin(p);			
+			// ReSharper disable once ObjectCreationAsStatement
+			new TfsPlugin();
 
 			// act
 			Trace.Message(new TraceMessage(TraceMessageLevel.Debug, "Debug"));

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 using AnFake.Api;
-using AnFake.Core.Tests;
+using AnFake.Core.Integration.Tests;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Rhino.Mocks;
 
@@ -30,7 +30,7 @@ namespace AnFake.Core.Test
 		public void MsTestPostProcessor_should_parse_trx()
 		{
 			// arrange
-			var pp = new MsTestPostProcessor();
+			var pp = new MsTrxPostProcessor();
 
 			// act
 			var tests = pp.PostProcess("Data/mstest-01.trx".AsPath()).ToList();

@@ -10,7 +10,7 @@ using Microsoft.TeamFoundation.VersionControl.Client;
 
 namespace AnFake.Plugins.Tfs2012
 {
-	internal sealed class TfsPlugin : IPlugin, Core.Integration.IVersionControl
+	internal sealed class TfsPlugin : Core.Integration.IVersionControl
 	{
 		private const string SectionKey = "AnFake";
 		private const string SectionHeader = "AnFake Summary";
@@ -23,19 +23,21 @@ namespace AnFake.Plugins.Tfs2012
 
 		private VersionControlServer _vcs;
 
-		public TfsPlugin(MyBuild.Params parameters)
+		public TfsPlugin()
 		{
 			string tfsUri;
 			string buildUri;
 			string activityInstanceId;
 			string privateDropLocation;
 
-			if (!parameters.Properties.TryGetValue("Tfs.Uri", out tfsUri))
+			var props = MyBuild.Current.Properties;
+
+			if (!props.TryGetValue("Tfs.Uri", out tfsUri))
 				throw new InvalidConfigurationException("TFS plugin requires 'Tfs.Uri' to be specified in build properties.");
 
-			parameters.Properties.TryGetValue("Tfs.BuildUri", out buildUri);
-			parameters.Properties.TryGetValue("Tfs.ActivityInstanceId", out activityInstanceId);
-			parameters.Properties.TryGetValue("Tfs.PrivateDropLocation", out privateDropLocation);
+			props.TryGetValue("Tfs.BuildUri", out buildUri);
+			props.TryGetValue("Tfs.ActivityInstanceId", out activityInstanceId);
+			props.TryGetValue("Tfs.PrivateDropLocation", out privateDropLocation);
 
 			_teamProjectCollection = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(new Uri(tfsUri));
 

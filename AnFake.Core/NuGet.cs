@@ -15,6 +15,8 @@ namespace AnFake.Core
 
 		public sealed class Params
 		{
+			public string Version;
+			public FileSystemPath OutputDirectory;
 			public bool IncludeReferencedProjects;
 			public bool NoPackageAnalysis;
 			public bool NoDefaultExcludes;
@@ -26,6 +28,7 @@ namespace AnFake.Core
 
 			internal Params()
 			{
+				OutputDirectory = "packages".AsPath();
 				Timeout = TimeSpan.MaxValue;				
 			}
 
@@ -45,6 +48,41 @@ namespace AnFake.Core
 			{
 				Defaults.ToolPath = Locations.AsFileSet().Select(x => x.Path).FirstOrDefault();
 			};
+		}
+
+		public static void Install(string packageId, Action<Params> setParams)
+		{
+			if (String.IsNullOrEmpty(packageId))
+				throw new ArgumentException("NuGet.Install(packageId[, setParams]): packageId must not be null or empty");			
+			if (setParams == null)
+				throw new ArgumentException("NuGet.Install(packageId, setParams): setParams must not be null");
+			
+			var parameters = Defaults.Clone();
+			setParams(parameters);
+
+			EnsureToolPath(parameters);
+			// TODO: check other parameters
+
+			Trace.InfoFormat("NuGet.Install => {0}", packageId);
+
+			var args = new Args("-", " ")
+				.Command("install")
+				.Param(packageId)
+				.Option("Version", parameters.Version)
+				.Option("OutputDirectory", parameters.OutputDirectory)
+				.Option("NonInteractive", true)
+				.Other(parameters.ToolArguments);			
+
+			var result = Process.Run(p =>
+			{
+				p.FileName = parameters.ToolPath;
+				p.Timeout = parameters.Timeout;
+				p.Arguments = args.ToString();
+			});
+
+			result
+				.FailIfAnyError("Target terminated due to NuGet errors.")
+				.FailIfExitCodeNonZero(String.Format("NuGet.Install failed with exit code {0}. Package: {1}", result.ExitCode, packageId));
 		}
 
 		public static NuSpec.v25.Package Spec25(Action<NuSpec.v25.Metadata> setMeta)

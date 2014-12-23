@@ -34,6 +34,9 @@
     </DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Autofac">
+      <HintPath>..\packages\Autofac.3.5.2\lib\net40\Autofac.dll</HintPath>
+    </Reference>
     <Reference Include="ICSharpCode.SharpZipLib">
       <HintPath>..\packages\SharpZipLib.0.86.0\lib\20\ICSharpCode.SharpZipLib.dll</HintPath>
     </Reference>
@@ -51,6 +54,12 @@
     <Compile Include="ArgsExtension.cs" />
     <Compile Include="Integration\IBuildServer.cs" />
     <Compile Include="BuildServer.cs" />
+    <Compile Include="Integration\Tests\IMsTrxPostProcessor.cs" />
+    <Compile Include="Integration\LocalBuildServer.cs" />
+    <Compile Include="Integration\Tests\ITestPostProcessor.cs" />
+    <Compile Include="Integration\Tests\TestPostProcessExtension.cs" />
+    <Compile Include="Integration\Tests\TestResult.cs" />
+    <Compile Include="Integration\Tests\TestStatus.cs" />
     <Compile Include="VsTest.cs" />
     <Compile Include="Zip.cs" />
     <Compile Include="AssemblyInfo.cs" />
@@ -64,13 +73,12 @@
     <Compile Include="Files.cs" />
     <Compile Include="FolderItem.cs" />
     <Compile Include="FileSystemPath.cs" />
-    <Compile Include="IPlugin.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="TargetStateLogExtension.cs" />
     <Compile Include="MsBuild.cs" />
     <Compile Include="MsTest.cs" />
-    <Compile Include="MsTestPostProcessor.cs" />
-    <Compile Include="MyBuildTesting.cs" />
+    <Compile Include="Integration\Tests\MsTrxPostProcessor.cs" />
+    <Compile Include="Internal\MyBuildTesting.cs" />
     <Compile Include="NuGet.cs" />
     <Compile Include="NuGetExtension.cs" />
     <Compile Include="NuSpec\v25\Package.cs" />
@@ -93,10 +101,6 @@
     <Compile Include="ProcessExecutionResult.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TargetExtension.cs" />
-    <Compile Include="Tests\ITestPostProcessor.cs" />
-    <Compile Include="Tests\TestPostProcessExtension.cs" />
-    <Compile Include="Tests\TestResult.cs" />
-    <Compile Include="Tests\TestStatus.cs" />
     <Compile Include="Text.cs" />
     <Compile Include="UserInterop.cs" />
     <Compile Include="Utils\CycleDependencyException.cs" />

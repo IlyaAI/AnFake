@@ -139,7 +139,7 @@ namespace AnFake.Core
 
 			FileSystem.DeleteFiles(filePathes);
 
-			Trace.InfoFormat("{0} file(s) deleted.");
+			Trace.InfoFormat("{0} file(s) deleted.", filePathes.Length);
 		}
 
 		public static void Delete(FileItem file)

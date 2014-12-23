@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 
-namespace AnFake.Core.Tests
+namespace AnFake.Core.Integration.Tests
 {
 	public interface ITestPostProcessor
 	{

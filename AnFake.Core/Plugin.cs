@@ -1,89 +1,207 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using AnFake.Api;
 using AnFake.Core.Exceptions;
+using AnFake.Core.Integration;
+using AnFake.Core.Integration.Tests;
+using Autofac;
+using Autofac.Builder;
+using Autofac.Core.Registration;
 
 namespace AnFake.Core
 {
+	/// <summary>
+	///     Represents "entry-point" for accessing pluged-in functionality.
+	/// </summary>
 	public static class Plugin
 	{
-		private static readonly IDictionary<Type, IPlugin> PluginInstances = new Dictionary<Type, IPlugin>();
+		private static ContainerBuilder _builder = new ContainerBuilder();
+		private static IContainer _container;
 
-		public static void Register<T>(T plugin)
-			where T : IPlugin
+		public sealed class Registrator<T>
 		{
-			var pluginType = typeof (T);
-			
-			if (PluginInstances.ContainsKey(pluginType))
-				throw new InvalidConfigurationException(String.Format("Plugin '{0}' already registered.", pluginType.GetPluginName()));
+			private readonly IRegistrationBuilder<T, ConcreteReflectionActivatorData, SingleRegistrationStyle> _registrator;
 
-			PluginInstances.Add(pluginType, plugin);
+			internal Registrator(IRegistrationBuilder<T, ConcreteReflectionActivatorData, SingleRegistrationStyle> registrator)
+			{
+				_registrator = registrator;
+			}
 
+			/// <summary>
+			///     Defines interface provided by registered plugin.
+			/// </summary>
+			/// <typeparam name="TInterface">interface type provided by plugin</typeparam>
+			/// <returns>this</returns>
+			public Registrator<T> As<TInterface>()
+			{
+				_registrator.As<TInterface>();
+
+				return this;
+			}
+
+			/// <summary>
+			///     Defines plugin as self-service.
+			/// </summary>			
+			/// <returns>this</returns>
+			public Registrator<T> AsSelf()
+			{
+				_registrator.AsSelf();
+
+				return this;
+			}
+		}
+
+		/// <summary>
+		///     Registers plugin.
+		/// </summary>
+		/// <remarks>
+		///     <para>Plugins should be registered in 'build configuration phase' i.e. before any target starts.</para>
+		///     <para>By default registered plugins instantiated just before invoking of first target.</para>
+		/// </remarks>
+		/// <typeparam name="TPlugin">class representing plugin</typeparam>
+		public static Registrator<TPlugin> Register<TPlugin>()
+			where TPlugin : class
+		{
+			EnsureBuilder();
+
+			var pluginType = typeof (TPlugin);
 			Trace.InfoFormat("Plugged-in: {0}, {1}", pluginType.FullName, pluginType.Assembly.FullName);
+
+			return new Registrator<TPlugin>(
+				_builder.RegisterType<TPlugin>()
+					.SingleInstance()
+					.AutoActivate()
+				);
 		}
 
-		public static T Get<T>()			
+		/// <summary>
+		///     Registers plugin with deferred activation.
+		/// </summary>
+		/// <remarks>
+		///     <para>Plugin with defrred activation will be instantiated on first call.</para>
+		///     <para>
+		///         Deferred activation should be used carefully because plugin might miss some events due to later
+		///         instantiation.
+		///     </para>
+		/// </remarks>
+		/// <typeparam name="TPlugin">class representing plugin</typeparam>
+		public static Registrator<TPlugin> RegisterDeferred<TPlugin>()
+			where TPlugin : class
 		{
-			var requestedType = typeof (T);
-			
-			if (requestedType.IsClass)
-			{
-				IPlugin plugin;
-				if (!PluginInstances.TryGetValue(requestedType, out plugin))
-					throw new InvalidConfigurationException(String.Format("Plugin '{0}' not registered. Hint: probably, you forgot to call {0}.UseIt()", requestedType.GetPluginName()));
+			EnsureBuilder();
 
-				return (T) plugin;
-			}
-			else
-			{
-				var plugin = PluginInstances.Values
-					.FirstOrDefault(requestedType.IsInstanceOfType);
+			var pluginType = typeof (TPlugin);
+			Trace.InfoFormat("Plugged-in (deferred): {0}, {1}", pluginType.FullName, pluginType.Assembly.FullName);
 
-				if (plugin == null)
-					throw new InvalidConfigurationException(String.Format("There is no plugin which provides '{0}' interface.", requestedType.FullName));
-
-				return (T) plugin;
-			}			
+			return new Registrator<TPlugin>(
+				_builder.RegisterType<TPlugin>()
+					.SingleInstance()
+				);
 		}
 
-		public static T Find<T>()
+		/// <summary>
+		///     Registers default implementation.
+		/// </summary>
+		/// <typeparam name="TImpl">class providing default implementation</typeparam>
+		public static Registrator<TImpl> RegisterDefault<TImpl>()
+			where TImpl : class
 		{
-			var requestedType = typeof(T);
+			EnsureBuilder();
 
-			if (requestedType.IsClass)
+			return new Registrator<TImpl>(
+				_builder.RegisterType<TImpl>()
+					.PreserveExistingDefaults()
+					.SingleInstance()
+					.AutoActivate()
+				);
+		}
+
+		/// <summary>
+		///     Gets implementation of specified interface or throws an exception if no one registered.
+		/// </summary>
+		/// <typeparam name="TInterface"></typeparam>
+		/// <returns></returns>
+		public static TInterface Get<TInterface>()
+		{
+			EnsureContainer();
+
+			try
 			{
-				IPlugin plugin;
-				if (!PluginInstances.TryGetValue(requestedType, out plugin))
-					return default(T);
-
-				return (T)plugin;
+				return _container.Resolve<TInterface>();
 			}
-			else
+			catch (ComponentNotRegisteredException)
 			{
-				var plugin = PluginInstances.Values
-					.FirstOrDefault(requestedType.IsInstanceOfType);
-
-				if (plugin == null)
-					return default(T);
-
-				return (T)plugin;
+				throw new InvalidConfigurationException(
+					String.Format(
+						"There is no registered plugin which provides '{0}' interface. Hint: probably, you forgot to call UseIt() for some plugins.",
+						typeof (TInterface).Name));
 			}
 		}
 
+		/// <summary>
+		///     Finds implementation of specified interface or returns null if no one registered.
+		/// </summary>
+		/// <typeparam name="TInterface"></typeparam>
+		/// <returns></returns>
+		public static TInterface Find<TInterface>()
+		{
+			EnsureContainer();
+
+			TInterface iface;
+			return _container.TryResolve(out iface)
+				? iface
+				: default(TInterface);
+		}
+
+		/// <summary>
+		///     Resets all registrations. Normally used for unit-test purpose only.
+		/// </summary>
 		public static void Reset()
 		{
-			PluginInstances.Clear();
+			if (_container != null)
+			{
+				_container.Dispose();
+				_container = null;
+			}
+
+			_builder = new ContainerBuilder();
+		}		
+
+		/// <summary>
+		///     Configures underlying IoC container.
+		/// </summary>
+		/// <remarks>
+		///     This method should be called when all plugins have been registered but before first call to <c>Plugin.Get</c> or
+		///     <c>Plugin.Find</c>
+		/// </remarks>
+		public static void Configure()
+		{
+			EnsureBuilder();
+
+			if (_container != null)
+			{
+				_container.Dispose();
+				_container = null;
+			}
+
+			RegisterDefault<MsTrxPostProcessor>()
+				.As<IMsTrxPostProcessor>();
+			RegisterDefault<LocalBuildServer>()
+				.As<IBuildServer>();
+
+			_container = _builder.Build();
+			_builder = null;
 		}
 
-		private static string GetPluginName(this Type pluginType)
+		private static void EnsureBuilder()
 		{
-			var beg = pluginType.Name.StartsWith("I") ? 1 : 0;
-			var length = pluginType.Name.EndsWith("Plugin")
-				? pluginType.Name.Length - 6
-				: pluginType.Name.Length;
+			if (_builder == null)
+				throw new InvalidOperationException("Plugin: Internal IoC container already configured. Hint: did you forget to call Plugin.Reset?");
+		}
 
-			return pluginType.Name.Substring(beg, length);
+		private static void EnsureContainer()
+		{
+			if (_container == null)
+				throw new InvalidOperationException("Plugin: Internal IoC container isn't configured. Hint: did you forget to call Plugin.Configure?");
 		}
 	}
 }

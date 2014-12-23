@@ -86,8 +86,7 @@ let version = "0.9".AsVersion()
 "Test.Unit" => (fun _ -> 
     MsTest.Run(
         testsOut % "*.Test.dll",
-        fun p -> p.NoIsolation <- true) 
-        |> ignore
+        fun p -> p.NoIsolation <- true)
 ) |> skipErrors
 
 "Package" => (fun _ -> 

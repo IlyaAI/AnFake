@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using AnFake.Api;
-using AnFake.Core.Tests;
+using AnFake.Core.Integration.Tests;
 
 namespace AnFake.Core
 {
@@ -16,7 +16,8 @@ namespace AnFake.Core
 	{
 		private static readonly string[] Locations =
 		{
-			"[ProgramFilesX86]/Microsoft Visual Studio 12.0/Common7/IDE/CommonExtensions/Microsoft/TestWindow/vstest.console.exe"
+			"[ProgramFilesX86]/Microsoft Visual Studio 12.0/Common7/IDE/CommonExtensions/Microsoft/TestWindow/vstest.console.exe",
+			"[ProgramFilesX86]/Microsoft Visual Studio 11.0/Common7/IDE/CommonExtensions/Microsoft/TestWindow/vstest.console.exe"
 		};
 
 		public sealed class Params
@@ -29,15 +30,13 @@ namespace AnFake.Core
 			public FileSystemPath SettingsPath;
 			public FileSystemPath TestAdapterPath;
 			public FileSystemPath WorkingDirectory;
-			public TimeSpan Timeout;
-			public ITestPostProcessor PostProcessor;
+			public TimeSpan Timeout;			
 			public FileSystemPath ToolPath;
 			public string ToolArguments;
 
 			internal Params()
 			{
-				Timeout = TimeSpan.MaxValue;
-				PostProcessor = new MsTestPostProcessor();
+				Timeout = TimeSpan.MaxValue;				
 				ToolPath = Locations.AsFileSet().Select(x => x.Path).FirstOrDefault();
 			}
 
@@ -54,12 +53,12 @@ namespace AnFake.Core
 			Defaults = new Params();
 		}
 
-		public static IEnumerable<TestResult> Run(IEnumerable<FileItem> assemblies)
+		public static void Run(IEnumerable<FileItem> assemblies)
 		{
-			return Run(assemblies, p => { });
+			Run(assemblies, p => { });
 		}
 
-		public static IEnumerable<TestResult> Run(IEnumerable<FileItem> assemblies, Action<Params> setParams)
+		public static void Run(IEnumerable<FileItem> assemblies, Action<Params> setParams)
 		{
 			var assembliesToRun = assemblies.ToArray();
 			if (assembliesToRun.Length == 0)
@@ -89,6 +88,7 @@ namespace AnFake.Core
 			Trace.InfoFormat("VsTest.Run\n => {0}", String.Join("\n => ", assembliesToRun.Select(x => x.RelPath)));			
 
 			var tests = new List<TestResult>();
+			var postProcessor = Plugin.Find<IMsTrxPostProcessor>();
 
 			foreach (var assembly in assembliesToRun)
 			{
@@ -121,13 +121,13 @@ namespace AnFake.Core
 				});
 				var endTime = DateTime.UtcNow;
 
-				var processed = false;
-				if (parameters.PostProcessor != null)
+				var processed = false;				
+				if (postProcessor != null)
 				{
 					var trxPath = FindDotTrx(workDir/resultPath, startTime, endTime);
 					if (trxPath != null)
 					{
-						var currentTests = parameters.PostProcessor
+						var currentTests = postProcessor
 							.PostProcess(trxPath)
 							.Trace()
 							.ToArray();
@@ -149,15 +149,13 @@ namespace AnFake.Core
 					}					
 				}
 
-				if (!processed)				
+				if (!processed)
 				{
 					stderr.ForEach(Trace.Error);
 				}
 			}
 
 			tests.TraceSummary();
-
-			return tests;
 		}
 
 		private static FileSystemPath FindDotTrx(FileSystemPath path, DateTime start, DateTime end)

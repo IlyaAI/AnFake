@@ -1,6 +1,6 @@
 using System;
 
-namespace AnFake.Core.Tests
+namespace AnFake.Core.Integration.Tests
 {
 	public class TestResult
 	{

@@ -9,7 +9,10 @@ namespace AnFake.Core
 	{
 		private static readonly string[] Locations =
 		{
-			"[ProgramFilesX86]/MSBuild/12.0/Bin/MsBuild.exe"
+			"[ProgramFilesX86]/MSBuild/12.0/Bin/MsBuild.exe",
+			"[ProgramFilesX86]/MSBuild/11.0/Bin/MsBuild.exe",
+			"[Windows]/Microsoft.NET/Framework/v4.0.30319/MsBuild.exe",
+            "[Windows]/Microsoft.NET/Framework/v4.0.30128/MsBuild.exe"
 		};
 
 		public sealed class Params
@@ -40,7 +43,7 @@ namespace AnFake.Core
 		public static Params Defaults { get; private set; }
 
 		static MsBuild()
-		{
+		{			
 			Defaults = new Params();
 
 			MyBuild.Initialized += (s, p) =>

@@ -58,7 +58,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Extras", "Extras", "{CBAFFC16-B785-46E1-8C90-1CAD1115D3D3}"
 	ProjectSection(SolutionItems) = preProject
 		.AnFake\Extras\tf.fsx = .AnFake\Extras\tf.fsx
-		.AnFake\Extras\tfs-starter.fsx = .AnFake\Extras\tfs-starter.fsx
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnFake.Plugins.HtmlSummary", "AnFake.Plugins.HtmlSummary\AnFake.Plugins.HtmlSummary.csproj", "{CAB7DBD6-C7AD-4A6E-9676-E873767E9880}"

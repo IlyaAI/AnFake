@@ -4,7 +4,7 @@ using System.IO;
 using System.Text;
 using AnFake.Api;
 
-namespace AnFake.Core.Tests
+namespace AnFake.Core.Integration.Tests
 {
 	public static class TestPostProcessExtension
 	{

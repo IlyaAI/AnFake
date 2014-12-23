@@ -1,4 +1,4 @@
-namespace AnFake.Core.Tests
+namespace AnFake.Core.Integration.Tests
 {
 	public enum TestStatus
 	{
