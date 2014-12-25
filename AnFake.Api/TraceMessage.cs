@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Text;
 
@@ -10,6 +11,8 @@ namespace AnFake.Api
 	[DataContract(Name = "Generic", Namespace = "")]
 	public class TraceMessage : IFormattable
 	{
+		private List<Hyperlink> _links;
+
 		public TraceMessage(TraceMessageLevel level, string message)
 		{
 			Level = level;
@@ -43,11 +46,11 @@ namespace AnFake.Api
 		[DataMember(EmitDefaultValue = false)]
 		public string Target { get; set; }
 
-		[DataMember(EmitDefaultValue = false)]
-		public string LinkHref { get; set; }
-
-		[DataMember(EmitDefaultValue = false)]
-		public string LinkLabel { get; set; }
+		[DataMember]
+		public List<Hyperlink> Links
+		{
+			get { return _links ?? (_links = new List<Hyperlink>()); }
+		}		
 
 		/// <summary>
 		///     Formats message.
@@ -75,7 +78,7 @@ namespace AnFake.Api
 		public string ToString(string format, IFormatProvider formatProvider)
 		{
 			const int ident = 2;
-			var sb = new StringBuilder();
+			var sb = new StringBuilder(512);
 
 			foreach (var field in format)
 			{
@@ -91,18 +94,17 @@ namespace AnFake.Api
 						sb.Append(Message);
 						break;
 
-					case 'l':
-						if (String.IsNullOrWhiteSpace(LinkHref))
+					case 'l':						
+						if (_links == null)
 							break;
 
-						if (sb.Length > 0)
-							sb.AppendLine().Append(' ', ident);
-
-						if (!String.IsNullOrEmpty(LinkLabel))						
-							sb.Append('[').Append(LinkLabel).Append('|').Append(LinkHref).Append(']');
-						else						
-							sb.Append('[').Append(LinkHref).Append(']');
-						
+						foreach (var link in _links)
+						{
+							if (sb.Length > 0)
+								sb.AppendLine().Append(' ', ident);
+							
+							sb.Append(link);
+						}
 						break;
 
 					case 'f':
@@ -141,6 +143,16 @@ namespace AnFake.Api
 			}
 
 			return sb.ToString();
+		}
+
+		/// <summary>
+		///		Formats message. Equals to <c>ToString(format, null)</c>
+		/// </summary>
+		/// <param name="format"></param>
+		/// <returns></returns>
+		public string ToString(string format)
+		{
+			return ToString(format, null);
 		}
 
 		/// <summary>

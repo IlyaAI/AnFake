@@ -59,6 +59,7 @@
     <Compile Include="Integration\Tests\ITestPostProcessor.cs" />
     <Compile Include="Integration\Tests\TestPostProcessExtension.cs" />
     <Compile Include="Integration\Tests\TestResult.cs" />
+    <Compile Include="Integration\Tests\TestResultAware.cs" />
     <Compile Include="Integration\Tests\TestStatus.cs" />
     <Compile Include="VsTest.cs" />
     <Compile Include="Zip.cs" />

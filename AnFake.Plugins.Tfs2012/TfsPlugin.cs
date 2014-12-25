@@ -1,9 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Text;
 using AnFake.Api;
 using AnFake.Core;
 using AnFake.Core.Exceptions;
+using AnFake.Core.Integration.Tests;
 using Microsoft.TeamFoundation.Build.Client;
 using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.VersionControl.Client;
@@ -15,6 +19,7 @@ namespace AnFake.Plugins.Tfs2012
 		private const string SectionKey = "AnFake";
 		private const string SectionHeader = "AnFake Summary";
 		private const int SectionPriority = 199;
+		private const string LocalTemp = ".tmp";
 
 		private readonly TfsTeamProjectCollection _teamProjectCollection;
 		
@@ -22,6 +27,9 @@ namespace AnFake.Plugins.Tfs2012
 		private readonly IBuildInformation _tracker;
 
 		private VersionControlServer _vcs;
+		private FileSystemPath _logsDropPath;
+		private bool _hasDropErrors;
+		private bool _hasBuildErrorsOrWarns;
 
 		public TfsPlugin()
 		{
@@ -51,7 +59,7 @@ namespace AnFake.Plugins.Tfs2012
 				_build = buildServer.QueryBuildsByUri(
 					new[] { new Uri(buildUri) },
 					new[] { "ActivityTracking" },
-					QueryOptions.None).Single();
+					QueryOptions.Definitions).Single();
 
 				if (_build == null)
 					throw new InvalidConfigurationException(String.Format("TFS plugin unable to find build '{0}'", buildUri));
@@ -81,7 +89,10 @@ namespace AnFake.Plugins.Tfs2012
 				}
 
 				Trace.MessageReceived += OnMessage;
+				TestResultAware.Failed += OnTestFailed;
 				Target.Finished += OnTargetFinished;
+
+				MyBuild.Started += OnBuildStarted;
 				MyBuild.Finished += OnBuildFinished;
 			}
 			else
@@ -89,7 +100,7 @@ namespace AnFake.Plugins.Tfs2012
 				_build = null;
 				_tracker = null;
 			}
-		}
+		}		
 
 		public TfsTeamProjectCollection TeamProjectCollection
 		{
@@ -151,121 +162,139 @@ namespace AnFake.Plugins.Tfs2012
 			switch (message.Level)
 			{
 				case TraceMessageLevel.Debug:
-					_tracker.AddBuildMessage(message.ToString(), BuildMessageImportance.Low, DateTime.Now);					
+					_tracker.AddBuildMessage(message.ToString("mfd"), BuildMessageImportance.Low, DateTime.Now);					
 					break;
 
 				case TraceMessageLevel.Info:
-					_tracker.AddBuildMessage(message.ToString(), BuildMessageImportance.Normal, DateTime.Now);
+					_tracker.AddBuildMessage(message.ToString("mfd"), BuildMessageImportance.Normal, DateTime.Now);
 					break;
 
 				case TraceMessageLevel.Summary:
-					_tracker.AddBuildMessage(message.ToString(), BuildMessageImportance.High, DateTime.Now);
+					_tracker.AddBuildMessage(message.ToString("mfd"), BuildMessageImportance.High, DateTime.Now);
 					break;
 
 				case TraceMessageLevel.Warning:
-					_tracker.AddBuildWarning(message.ToString(), DateTime.Now);
+					_tracker.AddBuildWarning(FormatMessage(message), DateTime.Now);
 					break;
 
 				case TraceMessageLevel.Error:
-					_tracker.AddBuildError(message.ToString(), DateTime.Now);
+					_tracker.AddBuildError(FormatMessage(message), DateTime.Now);
 					break;
 			}
 
 			_tracker.Save();
 		}
 
+		private void OnBuildStarted(object sender, MyBuild.RunDetails details)
+		{
+			Folders.Create(LocalTemp);
+
+			if (String.IsNullOrEmpty(_build.DropLocation))
+				return;
+
+			_logsDropPath = _build.DropLocation.AsPath() / "logs";
+			if (SafeOp.Try(Folders.Clean, _logsDropPath))
+				return;
+
+			_logsDropPath = null;
+
+			_build.Information.AddCustomSummaryInformation(
+				"(!) Drop location is inaccessible, logs will be unavailable.",
+				SectionKey, SectionHeader, SectionPriority);
+
+			_build.Information.Save();
+		}
+
+		private void OnTestFailed(object sender, TestResult test)
+		{
+			if (String.IsNullOrEmpty(test.Output))
+				return;
+
+			try
+			{
+				var outFile = LocalTemp.AsPath() / String.Format("{0}.{1}", test.Suite, test.Name).MakeUnique(".txt");
+				File.WriteAllText(outFile.Full, test.Output);
+
+				test.Links.Add(new Hyperlink(outFile.Full, "Output"));
+			}
+			catch (Exception e)
+			{
+				Log.WarnFormat("TfsPlugin.OnTestFailed: {0}", e.Message);
+			}					
+		}
+
 		private void OnTargetFinished(object sender, Target.RunDetails details)
 		{
 			var topTarget = (Target) sender;
-
-			var logsPath = (FileSystemPath) null;
-			if (!String.IsNullOrEmpty(_build.DropLocation))
-			{
-				logsPath = _build.DropLocation.AsPath()/"logs";
-				if (!SafeOp.Try(Folders.Clean, logsPath))
-				{
-					logsPath = null;
-
-					_build.Information.AddCustomSummaryInformation(
-						"Drop location is inaccessible, logs will be unavailable.", 
-						SectionKey, SectionHeader, SectionPriority);
-				}
-			}
-
-			string summary;
-			var hasErrorsOrWarns = false;
-			var hasDropErrors = false;			
+			var summary = new StringBuilder(512);			
 
 			foreach (var target in details.ExecutedTargets)
 			{
-				summary = String.Format("{0}: {1,3} error(s) {2,3} warning(s) {3,3} messages(s)  {4}",
-					target.Name, target.Messages.ErrorsCount, target.Messages.WarningsCount, target.Messages.SummariesCount, 
-					target.State.ToHumanReadable().ToUpperInvariant());
+				summary
+					.Clear()
+					.AppendFormat("{0}: {1,3} error(s) {2,3} warning(s) {3,3} messages(s)  {4}",
+						target.Name, target.Messages.ErrorsCount, target.Messages.WarningsCount, target.Messages.SummariesCount, 
+						target.State.ToHumanReadable().ToUpperInvariant());
 
 				_build.Information
-					.AddCustomSummaryInformation(summary, SectionKey, SectionHeader, SectionPriority);
+					.AddCustomSummaryInformation(summary.ToString(), SectionKey, SectionHeader, SectionPriority);
 
 				foreach (var message in target.Messages.Where(x => x.Level == TraceMessageLevel.Summary))
 				{
-					var href = (string) null;
-					if (!String.IsNullOrEmpty(message.LinkHref) && logsPath != null)
-					{
-						var srcPath = message.LinkHref.AsPath();
-						var dstPath = logsPath/srcPath.LastName;
+					summary
+						.Clear()
+						.AppendFormat("    {0}", message.Message);
 
-						if (SafeOp.Try(Files.Copy, srcPath, dstPath, false))
-						{
-							href = dstPath.Spec;
-						}
-						else
-						{
-							hasDropErrors = true;
-						}
-					}
-
-					summary = href == null
-						? String.Format("    {0}", message.Message)
-						: String.Format("    {0} [{1}]({2})", message.Message, message.LinkLabel ?? href, href);					
-
+					JoinLinks(summary, message.Links);
+					
 					_build.Information
-						.AddCustomSummaryInformation(summary, SectionKey, SectionHeader, SectionPriority);
+						.AddCustomSummaryInformation(summary.ToString(), SectionKey, SectionHeader, SectionPriority);
 				}
 
-				hasErrorsOrWarns |= 
+				_hasBuildErrorsOrWarns |= 
 					target.Messages.ErrorsCount > 0 || 
 					target.Messages.WarningsCount > 0;
 			}
 
-			summary = String.Format("'{0}' {1}", topTarget.Name, topTarget.State.ToHumanReadable().ToUpperInvariant());
-			if (logsPath != null)
-			{
-				var logFile = MyBuild.Current.LogFile;
-				var dstPath = logsPath / "build.log";
-
-				if (SafeOp.Try(Files.Copy, logFile.Path, dstPath, false))
-				{
-					_build.LogLocation = dstPath.Spec;
-					_build.Save();
-
-					summary += String.Format("  [build.log]({0})", dstPath.Spec);
-				}
-				else
-				{
-					hasDropErrors = true;
-				}
-			}
+			summary
+				.Clear()
+				.AppendFormat(
+					"'{0}' {1}", 
+					topTarget.Name, 
+					topTarget.State.ToHumanReadable().ToUpperInvariant());
 
 			_build.Information
 				.AddCustomSummaryInformation(new string('=', 48), SectionKey, SectionHeader, SectionPriority);
 			_build.Information
-				.AddCustomSummaryInformation(summary, SectionKey, SectionHeader, SectionPriority);
+				.AddCustomSummaryInformation(summary.ToString(), SectionKey, SectionHeader, SectionPriority);						
 
-			if (logsPath != null)
+			_build.Information
+				.Save();			
+		}		
+
+		private void OnBuildFinished(object sender, MyBuild.RunDetails details)
+		{
+			if (_logsDropPath != null)
 			{
-				if (hasDropErrors)
+				var buildLog = AppendLink(
+					new StringBuilder(128),
+					new Hyperlink(MyBuild.Current.LogFile.Path.Full, "build.log"),
+					"build.log");
+
+				if (buildLog.Length > 0)
+				{
+					_build.LogLocation = (_logsDropPath / "build.log").Full;
+					_build.Information
+						.AddCustomSummaryInformation(buildLog.ToString(), SectionKey, SectionHeader, SectionPriority);					
+				}
+			}			
+
+			if (_logsDropPath != null)
+			{
+				if (_hasDropErrors)
 				{
 					_build.Information.AddCustomSummaryInformation(
-						"There are troubles accessing drop location, some logs are unavailable.",
+						"(!) There are troubles accessing drop location, some logs are unavailable.",
 						SectionKey, SectionHeader, SectionPriority);
 				}
 			}
@@ -275,21 +304,72 @@ namespace AnFake.Plugins.Tfs2012
 					"Hint: set up drop location to get access to complete build logs.",
 					SectionKey, SectionHeader, SectionPriority);
 			}
-			
-			if (hasErrorsOrWarns)
+
+			if (_hasBuildErrorsOrWarns)
 			{
 				_build.Information.AddCustomSummaryInformation(
-					"See the section below for error/warning list.", 
+					"See the section below for error/warning list.",
 					SectionKey, SectionHeader, SectionPriority);
-			}			
+			}
 
-			_build.Information
-				.Save();			
+			_build.Information.Save();			
+			_build.FinalizeStatus(AsTfsBuildStatus(details.Status));
 		}
 
-		private void OnBuildFinished(object sender, MyBuild.RunDetails details)
+		private string DropLink(Hyperlink link, string newName = null)
 		{
-			_build.FinalizeStatus(AsTfsBuildStatus(details.Status));
+			if (_logsDropPath == null)
+				return null;
+
+			var href = (string)null;			
+			var srcPath = link.Href.AsPath();
+			var dstPath = _logsDropPath / (newName ?? srcPath.LastName);
+
+			if (dstPath.AsFile().Exists() || SafeOp.Try(Files.Copy, srcPath, dstPath, false))
+			{
+				href = dstPath.Full;
+			}
+			else
+			{
+				_hasDropErrors = true;
+			}
+
+			return href;
+		}
+
+		private StringBuilder AppendLink(StringBuilder sb, Hyperlink link, string newName = null)
+		{
+			var href = DropLink(link, newName);
+			return href != null
+				? sb.Append('[').Append(link.Label).Append("](").Append(href).Append(')')
+				: sb;
+		}
+
+		private StringBuilder JoinLinks(StringBuilder sb, List<Hyperlink> links, string prefix = " ", string separator = " | ")
+		{
+			if (links.Count == 0)
+				return sb;
+
+			sb.Append(prefix);
+			AppendLink(sb, links[0]);
+
+			for (var i = 1; i < links.Count; i++)
+			{
+				sb.Append(separator);
+				AppendLink(sb, links[i]);
+			}
+
+			return sb;
+		}
+
+		private string FormatMessage(TraceMessage message)
+		{
+			var formatted = new StringBuilder(512)
+				.Append(message.ToString("mfd"));
+
+			JoinLinks(formatted, message.Links, "\n");
+
+			return formatted.ToString();
 		}
 
 		private static BuildStatus AsTfsBuildStatus(MyBuild.Status status)

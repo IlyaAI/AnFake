@@ -1,11 +1,22 @@
 using System;
+using System.Collections.Generic;
+using AnFake.Api;
 
 namespace AnFake.Core.Integration.Tests
 {
 	public class TestResult
 	{
-		public string Name { get; private set; }		
-		
+		private List<Hyperlink> _links;
+
+		public TestResult(string name, TestStatus status, TimeSpan runTime)
+		{
+			Name = name;
+			Status = status;
+			RunTime = runTime;
+		}
+
+		public string Name { get; private set; }
+
 		public TestStatus Status { get; private set; }
 
 		public TimeSpan RunTime { get; private set; }
@@ -16,13 +27,13 @@ namespace AnFake.Core.Integration.Tests
 
 		public string ErrorMessage { get; set; }
 
-		public string ErrorDetails { get; set; }
+		public string ErrorStackTrace { get; set; }
 
-		public TestResult(string name, TestStatus status, TimeSpan runTime)
+		public string Output { get; set; }
+
+		public List<Hyperlink> Links
 		{
-			Name = name;
-			Status = status;
-			RunTime = runTime;
-		}		
+			get { return _links ?? (_links = new List<Hyperlink>()); }
+		}
 	}
 }

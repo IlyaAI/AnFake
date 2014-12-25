@@ -230,5 +230,43 @@ namespace AnFake.Core.Test
 			// assert
 			Assert.IsTrue(files.Count >= 1);
 		}
+
+		[TestCategory("Functional")]
+		[TestMethod]
+		public void FileSet_should_preserve_order_1()
+		{
+			// arrange
+			var fs = "file-2.txt".AsFileSetFrom("Data/FileSet")
+				.Include("file-3.js")
+				.Include("file-1.txt");
+
+			// act
+			var files = fs.ToList();
+
+			// assert
+			Assert.AreEqual(3, files.Count);
+			Assert.AreEqual("fIlE-2.Txt", files[0].RelPath.Spec);
+			Assert.AreEqual("FILE-3.js", files[1].RelPath.Spec);
+			Assert.AreEqual("FiLe-1.txt", files[2].RelPath.Spec);			
+		}
+
+		[TestCategory("Functional")]
+		[TestMethod]
+		public void FileSet_should_preserve_order_2()
+		{
+			// arrange
+			var fs = "file-3.js".AsFileSetFrom("Data/FileSet")
+				.Include("file-1.txt")
+				.Include("file-2.txt");
+
+			// act
+			var files = fs.ToList();
+
+			// assert
+			Assert.AreEqual(3, files.Count);
+			Assert.AreEqual("FILE-3.js", files[0].RelPath.Spec);
+			Assert.AreEqual("FiLe-1.txt", files[1].RelPath.Spec);
+			Assert.AreEqual("fIlE-2.Txt", files[2].RelPath.Spec);
+		}
 	}
 }

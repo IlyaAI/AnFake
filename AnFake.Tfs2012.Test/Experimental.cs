@@ -11,20 +11,26 @@ namespace AnFake.Tfs2012.Test
 	[TestClass]
 	public class Experimental : TfsTestSuite
 	{
+		[TestInitialize]
+		public override void Initialize()
+		{
+			base.Initialize();
+		}
+
 		[TestMethod]
-		public void Test()
+		public void ExploreBuildDetailInformation()
 		{
 			var teamProjectCollection = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(new Uri(TfsUri));
 			var buildService = (IBuildServer)teamProjectCollection.GetService(typeof(IBuildServer));
 
 			//IBuildDefinition buildDefinition = buildService.GetBuildDefinition(TeamProject, "BuildDefinitionName");
 			var buildDetail = buildService.QueryBuildsByUri(
-				new[] { new Uri("vstfs:///Build/Build/32717") }, 
+				new[] { new Uri("vstfs:///Build/Build/33788") }, 
 				new[] { "*" }, 
-				QueryOptions.All).Single();
+				QueryOptions.All).Single();		
 
 			//var node = Find(buildDetail.Information.Nodes[0], "DisplayText", "package must be empty");
-			var node = Find(buildDetail.Information.Nodes[0], "Test Run Inconclusive");			
+			var node = Find(buildDetail.Information.Nodes[0], "Any CPU|Debug|AllInOne");
 		}
 
 		[TestMethod]

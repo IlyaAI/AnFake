@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AnFake.Core
 {
@@ -112,7 +113,7 @@ namespace AnFake.Core
 
 		public IEnumerator<FileItem> GetEnumerator()
 		{
-			var files = new SortedSet<FileItem>();
+			var files = new List<FileItem>();
 
 			foreach (var pattern in _patterns)
 			{
@@ -137,7 +138,7 @@ namespace AnFake.Core
 				}
 			}
 
-			return files.GetEnumerator();
+			return files.Distinct().GetEnumerator();
 		}
 
 		public static FileSet operator +(FileSet files, FileSystemPath wildcardedPath)
@@ -165,7 +166,7 @@ namespace AnFake.Core
 			return files.Exclude(wildcardedPath);
 		}
 
-		private static void MergeFiles(PatternType mergeType, FileSystemPath basePath, IEnumerable<FileSystemPath> src, ISet<FileItem> dst)
+		private static void MergeFiles(PatternType mergeType, FileSystemPath basePath, IEnumerable<FileSystemPath> src, ICollection<FileItem> dst)
 		{
 			if (mergeType == PatternType.Include)
 			{

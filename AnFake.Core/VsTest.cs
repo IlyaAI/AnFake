@@ -129,20 +129,7 @@ namespace AnFake.Core
 					{
 						var currentTests = postProcessor
 							.PostProcess(trxPath)
-							.Trace()
-							.ToArray();
-
-						var summary = String.Format("{0}: {1} passed / {2} total tests",
-							assembly.Name,
-							currentTests.Count(x => x.Status == TestStatus.Passed),
-							currentTests.Length);
-
-						Trace.Message(
-							new TraceMessage(TraceMessageLevel.Summary, summary)
-							{
-								LinkLabel = "Trace",
-								LinkHref = trxPath.Full
-							});
+							.Trace(assembly.Name, trxPath.Full);
 
 						tests.AddRange(currentTests);
 						processed = true;

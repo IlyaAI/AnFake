@@ -41,7 +41,7 @@ namespace AnFake.Core.Test
 			Assert.AreEqual("AllInOne.TestDataTestSuite", tests[0].Suite);
 			Assert.AreEqual("TestDataNegativeTest", tests[0].Name);
 			Assert.IsFalse(String.IsNullOrWhiteSpace(tests[0].ErrorMessage));
-			Assert.IsFalse(String.IsNullOrWhiteSpace(tests[0].ErrorDetails));
+			Assert.IsFalse(String.IsNullOrWhiteSpace(tests[0].ErrorStackTrace));
 		}
 	}
 }

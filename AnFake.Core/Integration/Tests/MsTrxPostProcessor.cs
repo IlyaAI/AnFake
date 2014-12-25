@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace AnFake.Core.Integration.Tests
 {
@@ -35,12 +36,12 @@ namespace AnFake.Core.Integration.Tests
 				switch (test.Status)
 				{
 					case TestStatus.Skipped:
-						test.ErrorMessage = result.ValueOf("t:Output/t:ErrorInfo/t:Message");
+						ExtractErrorMessage(result, test);
 						break;
 
 					case TestStatus.Failed:
-						test.ErrorMessage = result.ValueOf("t:Output/t:ErrorInfo/t:Message");
-						test.ErrorDetails = result.ValueOf("t:Output/t:ErrorInfo/t:StackTrace");
+						ExtractErrorMessage(result, test);
+						ExtractErrorDetails(result, test);
 						break;
 				}
 
@@ -52,11 +53,47 @@ namespace AnFake.Core.Integration.Tests
 					test.Suite = def.Suite.Split(',').First();
 					test.Category = def.Category;
 				}
-
+				
 				tests.Add(test);				
 			}
 
 			return tests;
+		}
+
+		private static void ExtractErrorMessage(Xml.XNode result, TestResult test)
+		{
+			test.ErrorMessage = result.ValueOf("t:Output/t:ErrorInfo/t:Message", "UNKNOWN REASON (there is no 'ErrorInfo/Message' node in .trx)");
+		}
+
+		private static void ExtractErrorDetails(Xml.XNode result, TestResult test)
+		{
+			test.ErrorStackTrace = result.ValueOf("t:Output/t:ErrorInfo/t:StackTrace");
+
+			var stdErr = result.ValueOf("t:Output/t:StdErr");
+			var stdOut = result.ValueOf("t:Output/t:StdOut");
+			var trace = result.ValueOf("t:Output/t:Trace");
+
+			var output = new StringBuilder(stdErr.Length + stdOut.Length + trace.Length + 256);
+			if (stdErr.Length > 0)
+			{
+				output
+					.AppendLine("======== Standard Error ========")
+					.AppendLine(stdErr);
+			}
+			if (stdOut.Length > 0)
+			{
+				output
+					.AppendLine("======== Standard Output ========")
+					.AppendLine(stdOut);
+			}
+			if (trace.Length > 0)
+			{
+				output
+					.AppendLine("======== Diagnostics Trace ========")
+					.AppendLine(trace);
+			}
+
+			test.Output = output.ToString();
 		}
 
 		private static TestStatus ParseTestStatus(string outcome)

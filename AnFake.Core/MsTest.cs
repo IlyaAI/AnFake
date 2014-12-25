@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using AnFake.Api;
-using AnFake.Core.Exceptions;
 using AnFake.Core.Integration.Tests;
 
 namespace AnFake.Core
@@ -81,7 +80,10 @@ namespace AnFake.Core
 				Trace.DebugFormat("{0}...", assembly.RelPath);
 
 				var workDir = parameters.WorkingDirectory ?? assembly.Folder;
-				var resultPath = (parameters.ResultsDirectory ?? workDir)/assembly.NameWithoutExt.MakeUnique(".trx");
+				var resultDir = parameters.ResultsDirectory ?? workDir;
+				var resultPath = resultDir/assembly.NameWithoutExt.MakeUnique(".trx");
+
+				Directory.CreateDirectory(resultDir.Full);
 
 				var args = new Args("/", ":")
 					.Option("testcontainer", assembly.Path.Full)
@@ -104,20 +106,7 @@ namespace AnFake.Core
 				{
 					var currentTests = postProcessor
 						.PostProcess(resultPath)
-						.Trace()
-						.ToArray();
-
-					var summary = String.Format("{0}: {1} passed / {2} total tests",
-						assembly.Name,
-						currentTests.Count(x => x.Status == TestStatus.Passed),
-						currentTests.Length);
-
-					Trace.Message(
-						new TraceMessage(TraceMessageLevel.Summary, summary)
-							{
-								LinkLabel = "Trace",
-								LinkHref = resultPath.ToRelative(MyBuild.Current.Path).Spec
-							});
+						.Trace(assembly.Name, resultPath.Full);
 
 					tests.AddRange(currentTests);
 				}

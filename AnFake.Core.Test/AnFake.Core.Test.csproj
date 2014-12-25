@@ -57,6 +57,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="FolderSetTest.cs" />
     <Compile Include="SnapshotTest.cs" />
     <Compile Include="AssemblyInfoTest.cs" />
     <Compile Include="TextDocTest.cs" />

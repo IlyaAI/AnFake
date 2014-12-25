@@ -563,9 +563,9 @@ namespace AnFake.Core
 
 				foreach (var message in target.Messages)
 				{
-					Log.TraceMessageFormat(message.Level, "[{0,4}] {1}", ++index, message.ToString("m", null));
+					Log.TraceMessageFormat(message.Level, "[{0,4}] {1}", ++index, message.ToString("m"));
 
-					var more = message.ToString("lfd", null);
+					var more = message.ToString("lfd");
 					if (more.Length > 0)
 						Log.Details(more);
 				}

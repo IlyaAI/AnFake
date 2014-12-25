@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using AnFake.Api;
 
@@ -16,12 +17,20 @@ namespace AnFake.Core.Integration.Tests
 			}
 		}
 
-		public static IEnumerable<TestResult> Trace(this IEnumerable<TestResult> tests)
+		public static IEnumerable<TestResult> Trace(this IEnumerable<TestResult> tests, string containerName, string trxHref)
 		{
 			const int ident = 2;
 
+			var msg = (TraceMessage) null;
+			var total = 0;
+			var passed = 0;
+			var skipped = 0;
+			var failed = 0;
+
 			foreach (var test in tests)
 			{
+				TestResultAware.Notify(test);
+
 				var report = new StringBuilder();
 				report.AppendFormat("{0} {1,-8} {2,-80} @ {3}",
 					test.RunTime, test.Status.ToString().ToUpperInvariant(), test.Name, test.Suite);
@@ -30,6 +39,7 @@ namespace AnFake.Core.Integration.Tests
 				{
 					case TestStatus.Passed:
 						Api.Trace.Info(report.ToString());
+						passed++;
 						break;
 
 					case TestStatus.Unknown:
@@ -39,6 +49,7 @@ namespace AnFake.Core.Integration.Tests
 							.Append(test.ErrorMessage);
 
 						Api.Trace.Warn(report.ToString());
+						skipped++;
 						break;
 
 					case TestStatus.Failed:
@@ -46,16 +57,47 @@ namespace AnFake.Core.Integration.Tests
 							.AppendLine().Append(' ', ident)
 							.Append(test.ErrorMessage);
 
-						Api.Trace.Message(
-							new TraceMessage(TraceMessageLevel.Error, report.ToString())
-							{
-								Details = test.ErrorDetails
-							});						
+						msg = new TraceMessage(TraceMessageLevel.Error, report.ToString())
+						{
+							Details = test.ErrorStackTrace							
+						};
+						msg.Links.AddRange(test.Links);
+
+						if (trxHref != null)
+						{
+							msg.Links.Add(new Hyperlink(trxHref, "Trace"));
+						}
+						
+						Api.Trace.Message(msg);
+						failed++;
 						break;
 				}
 
+				total++;				
+				
 				yield return test;
 			}
+
+			var summary = new StringBuilder(128)
+				.AppendFormat("{0}: {1} total / {2} passed", containerName, total, passed);
+
+			if (skipped > 0)
+			{
+				summary.AppendFormat(" / {0} skipped", skipped);
+			}
+
+			if (failed > 0)
+			{
+				summary.AppendFormat(" / {0} FAILED", failed);
+			}
+
+			msg = new TraceMessage(TraceMessageLevel.Summary, summary.ToString());
+			if (trxHref != null)
+			{
+				msg.Links.Add(new Hyperlink(trxHref, "Trace"));
+			}
+
+			Api.Trace.Message(msg);
 		}
 
 		public static void TraceSummary(this IEnumerable<TestResult> tests)
@@ -86,8 +128,8 @@ namespace AnFake.Core.Integration.Tests
 				total++;
 			}
 
-			Api.Trace.SummaryFormat("Test Run Summary: {0}, {1} failed, {2} skipped, {3} passed, {4} total.",
-					runTime, errors, warnings, passed, total);					
+			Api.Trace.SummaryFormat("Test Run Summary: {0}, {1} total / {2} passed / {3} skipped / {4} FAILED.",
+					runTime, total, passed, warnings, errors);
 		}
 	}
 }

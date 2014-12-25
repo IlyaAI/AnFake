@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Xml;
 using System.Xml.XPath;
+using AnFake.Core.Exceptions;
 using AnFake.Core.Utils;
 
 namespace AnFake.Core
@@ -45,11 +46,11 @@ namespace AnFake.Core
 				return _navigator.Value;
 			}
 
-			public string ValueOf(string xpath)
+			public string ValueOf(string xpath, string defaultValue = "")
 			{
 				var subNode = _navigator.SelectSingleNode(xpath, _ns);
 				return subNode == null
-					? String.Empty
+					? defaultValue
 					: subNode.Value;
 			}
 
@@ -58,6 +59,15 @@ namespace AnFake.Core
 				return _navigator.Select(xpath, _ns)
 					.AsEnumerable()
 					.Select(x => new XNode(x, _ns));
+			}
+
+			public XNode SelectSingle(string xpath)
+			{
+				var subNode = _navigator.SelectSingleNode(xpath, _ns);
+				if (subNode == null)
+					throw new InvalidConfigurationException(String.Format("Node '{0}' not found in XML document.", xpath));
+
+				return new XNode(subNode, _ns);
 			}
 		}
 
