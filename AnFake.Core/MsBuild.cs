@@ -206,7 +206,8 @@ namespace AnFake.Core
 
 				result
 					.FailIfAnyError("Target terminated due to MsBuild errors.")
-					.FailIfExitCodeNonZero(String.Format("MsBuild failed with exit code {0}. Solution: {1}", result.ExitCode, proj));
+					.FailIfExitCodeNonZero(
+						String.Format("MsBuild failed with exit code {0}. Solution: {1}", result.ExitCode, proj));
 			}
 		}
 	}

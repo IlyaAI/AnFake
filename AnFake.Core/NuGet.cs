@@ -159,7 +159,8 @@ namespace AnFake.Core
 
 			result
 				.FailIfAnyError("Target terminated due to NuGet errors.")
-				.FailIfExitCodeNonZero(String.Format("NuGet.Pack failed with exit code {0}. Package: {1}", result.ExitCode, nuspecFile));
+				.FailIfExitCodeNonZero(
+					String.Format("NuGet.Pack failed with exit code {0}. Package: {1}", result.ExitCode, nuspecFile));
 
 			var pkgPath = dstFolder / String.Format("{0}.{1}.nupkg", nuspec.Metadata.Id, nuspec.Metadata.Version);
 

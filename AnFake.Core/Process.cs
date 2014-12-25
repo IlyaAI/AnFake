@@ -1,10 +1,40 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using AnFake.Api;
 
 namespace AnFake.Core
 {
 	public static class Process
 	{
+		private sealed class OutputBuffer
+		{
+			private readonly int _capacity;
+			private readonly Queue<string> _buffer;
+
+			public OutputBuffer(int capacity)
+			{
+				_capacity = capacity;
+				_buffer = new Queue<string>(capacity);
+			}
+
+			public void OnDataReceived(object sender, DataReceivedEventArgs evt)
+			{
+				if (String.IsNullOrWhiteSpace(evt.Data))
+					return;
+
+				while (_buffer.Count >= _capacity)
+					_buffer.Dequeue();
+
+				_buffer.Enqueue(evt.Data);
+			}
+
+			public override string ToString()
+			{
+				return String.Join("\n", _buffer);
+			}
+		}
+
 		public sealed class Params
 		{
 			public FileSystemPath FileName;
@@ -14,11 +44,13 @@ namespace AnFake.Core
 			public bool TrackExternalMessages;
 			public Action<string> OnStdOut;
 			public Action<string> OnStdErr;
+			public int OutputBufferCapacity;
 
 			internal Params()
 			{
 				WorkingDirectory = "".AsPath();
 				Timeout = TimeSpan.MaxValue;
+				OutputBufferCapacity = 48; // lines
 			}
 
 			public Params Clone()
@@ -64,23 +96,23 @@ namespace AnFake.Core
 				process.StartInfo.Arguments = parameters.Arguments;
 			}
 
-			Trace.InfoFormat("Starting process...\n  Executable: {0}\n  Arguments: {1}\n  WorkingDirectory: {2}",
+			Api.Trace.InfoFormat("Starting process...\n  Executable: {0}\n  Arguments: {1}\n  WorkingDirectory: {2}",
 				process.StartInfo.FileName, process.StartInfo.Arguments, process.StartInfo.WorkingDirectory);
 
 			var external = new TraceMessageCounter();
-			Trace.MessageReceived += external.OnMessage;
+			Api.Trace.MessageReceived += external.OnMessage;
 
 			if (parameters.TrackExternalMessages)
 			{
-				Trace.StartTrackExternal();
+				Api.Trace.StartTrackExternal();
 			}
 			else
 			{
 				if (parameters.OnStdOut == null)				
-					parameters.OnStdOut = Trace.Debug;
+					parameters.OnStdOut = Api.Trace.Debug;
 				
 				if (parameters.OnStdErr == null)				
-					parameters.OnStdErr = Trace.Error;				
+					parameters.OnStdErr = Api.Trace.Error;				
 			}
 
 			if (parameters.OnStdOut != null)
@@ -94,6 +126,10 @@ namespace AnFake.Core
 				process.ErrorDataReceived +=
 					(sender, evt) => { if (!String.IsNullOrWhiteSpace(evt.Data)) parameters.OnStdErr(evt.Data); };
 			}
+
+			var outputBuffer = new OutputBuffer(parameters.OutputBufferCapacity);
+			process.OutputDataReceived += outputBuffer.OnDataReceived;
+			process.ErrorDataReceived += outputBuffer.OnDataReceived;
 
 			try
 			{
@@ -117,16 +153,20 @@ namespace AnFake.Core
 			{
 				if (parameters.TrackExternalMessages)
 				{
-					Trace.StopTrackExternal();
+					Api.Trace.StopTrackExternal();
 				}
 
-				Trace.MessageReceived -= external.OnMessage;
+				Api.Trace.MessageReceived -= external.OnMessage;
 			}
 
-			Trace.InfoFormat("Process finished. ExitCode = {0} Errors = {1} Warnings = {2} Time = {3}",
+			Api.Trace.InfoFormat("Process finished. ExitCode = {0} Errors = {1} Warnings = {2} Time = {3}",
 				process.ExitCode, external.ErrorsCount, external.WarningsCount, process.ExitTime - process.StartTime);
 
-			return new ProcessExecutionResult(process.ExitCode, external.ErrorsCount, external.WarningsCount);
+			return new ProcessExecutionResult(
+				process.ExitCode, 
+				external.ErrorsCount, 
+				external.WarningsCount,
+				outputBuffer.ToString());
 		}
 	}
 }

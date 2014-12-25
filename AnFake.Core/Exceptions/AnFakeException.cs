@@ -7,8 +7,9 @@ namespace AnFake.Core.Exceptions
 {
 	public abstract class AnFakeException : Exception
 	{
-		private string _message;
-		private string _details;
+		private readonly string _details;
+		private string _formattedMessage;
+		private string _stackTrace;
 		private bool _insideScript;
 
 		protected AnFakeException(string message) : base(message)
@@ -19,12 +20,18 @@ namespace AnFake.Core.Exceptions
 		{
 		}
 
+		protected AnFakeException(string message, string details)
+			: base(message)
+		{
+			_details = details;
+		}
+
 		public override string Message
 		{
 			get
 			{
 				DoFormat();
-				return _message;
+				return _formattedMessage;
 			}
 		}
 
@@ -33,7 +40,7 @@ namespace AnFake.Core.Exceptions
 			get
 			{
 				DoFormat();				
-				return _insideScript ? null : _details;
+				return _insideScript ? null : _stackTrace;
 			}
 		}
 
@@ -42,13 +49,18 @@ namespace AnFake.Core.Exceptions
 			get
 			{
 				DoFormat();
-				return _details;
+				return _stackTrace;
 			}
+		}
+
+		public string Details
+		{
+			get { return _details; }
 		}
 
 		private void DoFormat()
 		{
-			if (_message != null)
+			if (_formattedMessage != null)
 				return;
 
 			var msgBuilder = new StringBuilder();
@@ -77,8 +89,15 @@ namespace AnFake.Core.Exceptions
 				}
 			}
 
-			_message = msgBuilder.ToString();
-			_details = stackTrace.ToString();
+			if (!String.IsNullOrEmpty(_details))
+			{
+				msgBuilder
+					.AppendLine()					
+					.Append(_details);
+			}
+
+			_formattedMessage = msgBuilder.ToString();
+			_stackTrace = stackTrace.ToString();
 		}
 
 		public override string ToString()
@@ -86,8 +105,8 @@ namespace AnFake.Core.Exceptions
 			DoFormat();
 
 			return _insideScript
-				? _message
-				: _message + Environment.NewLine + _details;
+				? _formattedMessage
+				: _formattedMessage + Environment.NewLine + _stackTrace;
 		}
 	}
 }

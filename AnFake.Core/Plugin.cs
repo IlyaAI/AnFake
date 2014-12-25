@@ -5,6 +5,7 @@ using AnFake.Core.Integration;
 using AnFake.Core.Integration.Tests;
 using Autofac;
 using Autofac.Builder;
+using Autofac.Core;
 using Autofac.Core.Registration;
 
 namespace AnFake.Core
@@ -133,8 +134,16 @@ namespace AnFake.Core
 				throw new InvalidConfigurationException(
 					String.Format(
 						"There is no registered plugin which provides '{0}' interface. Hint: probably, you forgot to call UseIt() for some plugins.",
-						typeof (TInterface).Name));
+						typeof(TInterface).Name));
 			}
+			catch (DependencyResolutionException e)
+			{
+				var anfake = FindAnFakeException(e);
+				if (anfake != null)
+					throw anfake;
+
+				throw;
+			}			
 		}
 
 		/// <summary>
@@ -188,8 +197,19 @@ namespace AnFake.Core
 			RegisterDefault<LocalBuildServer>()
 				.As<IBuildServer>();
 
-			_container = _builder.Build();
-			_builder = null;
+			try
+			{
+				_container = _builder.Build();
+				_builder = null;
+			}
+			catch (DependencyResolutionException e)
+			{
+				var anfake = FindAnFakeException(e);
+				if (anfake != null)
+					throw anfake;
+
+				throw;
+			}			
 		}
 
 		private static void EnsureBuilder()
@@ -202,6 +222,17 @@ namespace AnFake.Core
 		{
 			if (_container == null)
 				throw new InvalidOperationException("Plugin: Internal IoC container isn't configured. Hint: did you forget to call Plugin.Configure?");
+		}
+
+		private static AnFakeException FindAnFakeException(Exception exception)
+		{
+			var inner = exception.InnerException;
+			while (inner != null && !(inner is AnFakeException))
+			{
+				inner = inner.InnerException;
+			}
+
+			return (AnFakeException) inner;
 		}
 	}
 }

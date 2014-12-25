@@ -13,5 +13,10 @@ namespace AnFake.Core.Exceptions
 			: base(message, innerException)
 		{
 		}
+
+		public TargetFailureException(string message, string details)
+			: base(message, details)
+		{
+		}
 	}
 }

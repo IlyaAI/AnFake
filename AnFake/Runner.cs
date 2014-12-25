@@ -21,8 +21,10 @@ namespace AnFake
 		[STAThread]
 		public static int Main(string[] args)
 		{
-			Console.SetWindowSize((int) (Console.LargestWindowWidth*0.75), (int) (Console.LargestWindowHeight*0.75));
-
+			// Console might be unavailable if executing on server, 
+			// so we use SafeOp.Try to skip exception if any.
+			SafeOp.Try(ConfigureConsole);
+			
 			if (args.Length == 0)
 			{
 				Console.WriteLine("Usage: AnFake.exe [<script>] [<target>] ... [<name>=<value>] ...");
@@ -71,6 +73,18 @@ namespace AnFake
 			}			
 
 			return Run(options);
+		}
+
+		private static void ConfigureConsole()
+		{
+			Console.Title = "AnFake: Another F# Make";
+
+			var consoleWidth = (int)(Console.LargestWindowWidth * 0.75);
+			var consoleHeight = (int)(Console.LargestWindowHeight * 0.75);
+			if (consoleWidth > Console.WindowWidth || consoleHeight > Console.WindowHeight)
+			{
+				Console.SetWindowSize(consoleWidth, consoleHeight);
+			}
 		}
 
 		private static void ParseConfig(RunOptions options)
@@ -147,7 +161,10 @@ namespace AnFake
 				options.Properties.Remove("Verbosity");
 			}
 
-			var logger = new Log4NetLogger(options.LogPath, Math.Min(Console.WindowWidth, 180));
+			var maxWidth = 180;
+			SafeOp.Try(() => maxWidth = Math.Min(Console.WindowWidth, maxWidth));
+
+			var logger = new Log4NetLogger(options.LogPath, maxWidth);
 			switch (options.Verbosity)
 			{
 				case Verbosity.Quiet:

@@ -5,6 +5,22 @@ namespace AnFake.Core
 {
 	public static class SafeOp
 	{
+		public static bool Try(Action action)
+		{
+			try
+			{
+				action();
+
+				return true;
+			}
+			catch (Exception e)
+			{
+				Log.Error("SafeOp.Try: {0}", e);
+			}
+
+			return false;
+		}
+
 		public static bool Try<T1>(Action<T1> action, T1 arg1)
 		{
 			try

@@ -1,4 +1,4 @@
-﻿<Activity mc:Ignorable="sads sap sap2010" x:Class="TfsBuild.Process" this:Process.BuildNumberFormat="[&quot;$(BuildDefinitionName)_$(Date:yyyyMMdd)$(Rev:.r)&quot;]" this:Process.CleanWorkspace="[Microsoft.TeamFoundation.Build.Workflow.Activities.CleanWorkspaceOption.All]" this:Process.AgentSettings="[New Microsoft.TeamFoundation.Build.Workflow.Activities.AgentSettings() With {.MaxWaitTime = New System.TimeSpan(4, 0, 0), .MaxExecutionTime = New System.TimeSpan(0, 0, 0), .TagComparison = Microsoft.TeamFoundation.Build.Workflow.Activities.TagComparison.MatchExactly }]" this:Process.Verbosity="[Microsoft.TeamFoundation.Build.Workflow.BuildVerbosity.Normal]" this:Process.SupportedReasons="All" this:Process.BuildProcessVersion="11.0" this:Process.AnFakeTargets="Build" this:Process.AnFakeProperties="[String.Empty]" this:Process.AnFakeScript="build.fsx"
+﻿<Activity mc:Ignorable="sads sap sap2010" x:Class="TfsBuild.Process" this:Process.BuildNumberFormat="[&quot;$(BuildDefinitionName)_$(Date:yyyyMMdd)$(Rev:.r)&quot;]" this:Process.CleanWorkspace="[Microsoft.TeamFoundation.Build.Workflow.Activities.CleanWorkspaceOption.All]" this:Process.AgentSettings="[New Microsoft.TeamFoundation.Build.Workflow.Activities.AgentSettings() With {.MaxWaitTime = New System.TimeSpan(4, 0, 0), .MaxExecutionTime = New System.TimeSpan(0, 0, 0), .TagComparison = Microsoft.TeamFoundation.Build.Workflow.Activities.TagComparison.MatchExactly }]" this:Process.Verbosity="[Microsoft.TeamFoundation.Build.Workflow.BuildVerbosity.Normal]" this:Process.SupportedReasons="All" this:Process.BuildProcessVersion="11.0" this:Process.AnFakeTargets="Build" this:Process.AnFakeProperties="[String.Empty]" this:Process.AnFakeScript="build.fsx" this:Process.AnFakePath=".AnFake\AnFake.exe"
  xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities"
  xmlns:ait="clr-namespace:AnFake.Integration.Tfs2012;assembly=AnFake.Integration.Tfs2012"
  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -37,6 +37,7 @@
       </x:Property.Attributes>
     </x:Property>
     <x:Property Name="AnFakeScript" Type="InArgument(x:String)" />
+    <x:Property Name="AnFakePath" Type="InArgument(x:String)" />
   </x:Members>
   <this:Process.GetVersion>
     <InArgument x:TypeArguments="x:String" />
@@ -136,9 +137,9 @@
           </mtbwa:SyncWorkspace.RequestsFailed>
         </mtbwa:SyncWorkspace>
       </Sequence>
-      <ait:InvokeAnFake BuildDetail="[BuildDetail]" BuildDirectory="[BuildDirectory]" CleanWorkspace="[CleanWorkspace]" sap2010:WorkflowViewState.IdRef="InvokeAnFake_1" PrivateDropLocation="[PrivateDropLocation]" Properties="[AnFakeProperties]" Script="[AnFakeScript]" Targets="[AnFakeTargets]" ToolPath=".AnFake\AnFake.exe" Verbosity="[Verbosity]" />
+      <ait:InvokeAnFake BuildDetail="[BuildDetail]" BuildDirectory="[BuildDirectory]" CleanWorkspace="[CleanWorkspace]" sap2010:WorkflowViewState.IdRef="InvokeAnFake_1" PrivateDropLocation="[PrivateDropLocation]" Properties="[AnFakeProperties]" Script="[AnFakeScript]" Targets="[AnFakeTargets]" ToolPath="[AnFakePath]" Verbosity="[Verbosity]" />
     </mtbwa:AgentScope>
-    <sads:DebugSymbol.Symbol>dw1DOlxFbXB0eS54YW1sAA==</sads:DebugSymbol.Symbol>
+    <sads:DebugSymbol.Symbol>d0pDOlxQcm9qZWN0c1xBbkZha2VcQW5GYWtlLkludGVncmF0aW9uLlRmczIwMTIuVGVtcGxhdGVcQW5GYWtlVGVtcGxhdGUueGFtbEQB/gUBhAYBCQHVBAGVBQEIAa0CAbwEAQcB8wYBhgcBBgGkBgGzBgEFAcIBAZACAQQBzwYB2QYBAwFlAaQBAQJbA48BDgIBAWAFYLMBAgFZYQVjHQIBVWQFjQEYAgECYKEBYLABAgFaYgdiogECAVZksQFkzgECAQdkggFkpAECAQZk3wFkigICAQRpNmlRAgEDbAd4EgIBQHkHiwESAgEbjAEHjAGLAwIBCGIyYkcCAVdtCW20AQIBUm4JbsoBAgFPbwlvlgMCAUtwCXcOAgFBegl+DgIBOn8Jf58CAgEwgAEJgAG6AQIBKYEBCYoBHwIBHIwBkgKMAaYCAgEZjAGuAowBvgICAReMAeICjAHwAgIBFYwB+wKMAYgDAgETjAEljAE0AgERjAHHAowB2AICAQ+MAUSMAVYCAQ2MAe8BjAGGAgIBC4wBZowBeAIBCW2jAW2xAQIBU261AW7HAQIBUG/MAW+TAwIBTm+0AW/FAQIBTHAXcIwBAgFCcg11GAIBQ3oXekQCATt8DXzaAQIBPH8vf0ECATh/Sn95AgE3f+sBf/gBAgE1f4oCf5wCAgEzf9IBf+MBAgExgAGxAYABtwECAS+AASqAATkCAS2AAZQBgAGgAQIBLIABeIABhQECASqBAeABgQHuAQIBJIEB+QGBAYYCAgEihwEPhwGjAgIBHXMPc/gDAgFIdA903gICAUR8NXw9AgE/fMYBfNcBAgE9hwEthwF8AgEghwGOAocBoAICAR9zkQFzkQMCAUp02gF02wICAUd0wgF00wECAUU=</sads:DebugSymbol.Symbol>
   </Sequence>
   <sap2010:WorkflowViewState.ViewStateManager>
     <sap2010:ViewStateManager>

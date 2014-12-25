@@ -121,9 +121,12 @@ namespace AnFake.Core
 
 					tests.AddRange(currentTests);
 				}
-				else if (result.ExitCode != 0)
+				else
 				{
-					throw new TargetFailureException(String.Format("MsTest failed with exit code {0}.\n  Assembly: {1}", result.ExitCode, assembly.Path));
+					result
+						.FailIfAnyError("Target terminated due to MsTest errors.")
+						.FailIfExitCodeNonZero(
+							String.Format("MsTest failed with exit code {0}. Assembly: {1}", result.ExitCode, assembly));
 				}
 			}			
 
