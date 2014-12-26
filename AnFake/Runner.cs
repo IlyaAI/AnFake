@@ -210,6 +210,11 @@ namespace AnFake
 
 		private static int Run(RunOptions options)
 		{
+			SafeOp.Try(() =>
+			{
+				Console.Title += String.Format(" [{0}]", String.Join(", ", options.Targets));
+			});
+
 			try
 			{
 				var buildPath = options.BuildPath.AsPath();

@@ -15,6 +15,7 @@ namespace AnFake.Api
 		private TimeSpan _retryInterval = TimeSpan.FromMilliseconds(50);
 		private int _maxRetries = 20;
 		private Thread _tracker;
+		private ManualResetEventSlim _trackStopEvent;
 		
 		public JsonFileTracer(string logFile, bool append)
 		{
@@ -111,6 +112,7 @@ namespace AnFake.Api
 				processedLength = log.Length;
 			}
 
+			_trackStopEvent = new ManualResetEventSlim();
 			_tracker = new Thread(() =>
 			{
 				try
@@ -119,14 +121,7 @@ namespace AnFake.Api
 					var interrupted = false;
 					while (!interrupted)
 					{
-						try
-						{
-							Thread.Sleep(sleepTime);
-						}
-						catch (ThreadInterruptedException)
-						{
-							interrupted = true;
-						}
+						interrupted = _trackStopEvent.Wait(sleepTime);
 						
 						var log = interrupted 
 							? OpenLog(FileMode.Open, FileAccess.ReadWrite, MaxRetries)
@@ -176,7 +171,7 @@ namespace AnFake.Api
 			if (_tracker == null)
 				return;
 
-			_tracker.Interrupt();
+			_trackStopEvent.Set();
 			if (!_tracker.Join(_trackingInterval))
 			{
 				Log.WarnFormat(
@@ -184,6 +179,9 @@ namespace AnFake.Api
 					_trackingInterval.TotalMilliseconds);
 			}
 			_tracker = null;
+
+			_trackStopEvent.Dispose();
+			_trackStopEvent = null;
 		}
 
 		public event EventHandler<TraceMessage> MessageReceiving;
