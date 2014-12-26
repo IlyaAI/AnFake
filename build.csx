@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using AnFake.Core;
 using AnFake.Csx;
 
@@ -17,14 +18,20 @@ public sealed class BuildScript : BuildScriptSkeleton
 			+ "AnFake.Plugins.HtmlSummary/*.csproj";
 		var extras = "*".AsFileSetFrom(".AnFake/Extras");
 		var cmds = "*.cmd".AsFileSetFrom(".AnFake");
+		var fsharp =
+			"[ProgramFilesX86]/Reference Assemblies/Microsoft/FSharp/.NETFramework/v4.0/4.3.1.0".AsPath()
+			%"FSharp.Core.dll"
+			+ "FSharp.Core.optdata"
+			+ "FSharp.Core.sigdata";
 		var tests = "*/*.Test.csproj".AsFileSet();
 		var nugetFiles =
 			productOut%"AnFake.exe"
 			+ "AnFake.exe.config"
 			+ "*.cmd"
 			+ "*.dll"
-			+ "AnFake.*.xml"
-			- "FSharp.Core.dll"
+			+ "AnFake.*.xml"			
+			+ "FSharp.Core.optdata"
+			+ "FSharp.Core.sigdata"
 			+ "Extras/*"
 			+ "Plugins/AnFake.Integration.Tfs2012.dll"
 			+ "Plugins/AnFake.Plugins.Tfs2012.dll"
@@ -58,6 +65,7 @@ public sealed class BuildScript : BuildScriptSkeleton
 			MsBuild.BuildRelease(product, productOut);
 
 			Files.Copy(cmds, productOut, true);
+			Files.Copy(fsharp, productOut, true);
 
 			MsBuild.BuildRelease(plugins, pluginsOut);
 
@@ -83,10 +91,18 @@ public sealed class BuildScript : BuildScriptSkeleton
 			MsTest.Run(
 				testsOut%"*.Test.dll",
 				p => { p.NoIsolation = true; });
-		}).SkipErrors();
+		});
 
 		"Package".AsTarget().Do(() =>
 		{
+			var fsharpCore =
+				productOut%"FSharp.Core.dll"
+				+ "FSharp.Core.optdata"
+				+ "FSharp.Core.sigdata";
+
+			if (fsharpCore.Count() != 3)
+				MyBuild.Failed("There are FSharp.Core.dll, FSharp.Core.optdata and FSharp.Core.sigdata files must present in .out/product");
+
 			var nuspec = NuGet.Spec25(meta =>
 			{
 				meta.Id = "AnFake";
@@ -104,6 +120,7 @@ public sealed class BuildScript : BuildScriptSkeleton
 			});
 		});
 		
-		"Build".AsTarget().DependsOn("Compile", "Custom.ZipHtmlSummary", "Test.Unit");
+		"Build".AsTarget()
+			.DependsOn("Compile", "Custom.ZipHtmlSummary", "Test.Unit");
 	}
 }

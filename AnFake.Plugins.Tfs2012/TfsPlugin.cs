@@ -30,6 +30,7 @@ namespace AnFake.Plugins.Tfs2012
 		private FileSystemPath _logsDropPath;
 		private bool _hasDropErrors;
 		private bool _hasBuildErrorsOrWarns;
+		private long _lastSaved;
 
 		public TfsPlugin()
 		{
@@ -182,7 +183,16 @@ namespace AnFake.Plugins.Tfs2012
 					break;
 			}
 
-			_tracker.Save();
+			//
+			// To prevent too active TFS accessing we save messages just once in 5s.			
+			// Some of the last messages might not be saved by this method but OnTargetFinished handler saves the rest in anyway.
+			//
+			var now = Environment.TickCount;
+			if (now - _lastSaved >= 5000)
+			{
+				_tracker.Save();
+				_lastSaved = now;
+			}
 		}
 
 		private void OnBuildStarted(object sender, MyBuild.RunDetails details)

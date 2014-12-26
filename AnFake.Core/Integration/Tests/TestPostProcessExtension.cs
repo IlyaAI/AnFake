@@ -1,14 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 using AnFake.Api;
 
 namespace AnFake.Core.Integration.Tests
 {
+	/// <summary>
+	///		Provides set of extension methods for <c>TestResult</c> sequences.
+	/// </summary>
 	public static class TestPostProcessExtension
 	{
+		/// <summary>
+		///		Processes test-run trace from specified file.
+		/// </summary>
+		/// <param name="postProcessor">ITestPostProcessor implementation</param>
+		/// <param name="resultPath">path to test-run trace file</param>
+		/// <returns>set of test results</returns>
+		/// <seealso cref="ITestPostProcessor.PostProcess"/>
 		public static IEnumerable<TestResult> PostProcess(this ITestPostProcessor postProcessor, FileSystemPath resultPath)
 		{
 			using (var stream = new FileStream(resultPath.Full, FileMode.Open, FileAccess.Read))
@@ -17,6 +26,13 @@ namespace AnFake.Core.Integration.Tests
 			}
 		}
 
+		/// <summary>
+		///		Generates and writes appropriate <c>TraceMessage</c> for each given <c>TestResult</c>.
+		/// </summary>
+		/// <param name="tests">set of tests to be traced</param>
+		/// <param name="containerName">test container name (usually assembly name)</param>
+		/// <param name="trxHref">path to test-run trace file if applicable (optional)</param>
+		/// <returns>the same sequence which was passed as 'tests' argument</returns>
 		public static IEnumerable<TestResult> Trace(this IEnumerable<TestResult> tests, string containerName, string trxHref)
 		{
 			const int ident = 2;
@@ -100,6 +116,10 @@ namespace AnFake.Core.Integration.Tests
 			Api.Trace.Message(msg);
 		}
 
+		/// <summary>
+		///		Generates and writes test-run summary <c>TraceMessage</c>.
+		/// </summary>
+		/// <param name="tests">set of tests to be summarized</param>
 		public static void TraceSummary(this IEnumerable<TestResult> tests)
 		{
 			var runTime = TimeSpan.Zero;

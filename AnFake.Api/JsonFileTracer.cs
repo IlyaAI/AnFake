@@ -147,17 +147,17 @@ namespace AnFake.Api
 							processedLength = reader.ReadFrom(log, processedLength);
 						}
 
-						TraceMessage message;
-						while ((message = reader.Next()) != null)
+						if (MessageReceived != null)
 						{
-							if (message.Level >= _threshold)
+							TraceMessage message;
+							while ((message = reader.Next()) != null)
 							{
-								if (MessageReceived != null)
+								if (message.Level >= _threshold)
 								{
 									MessageReceived.Invoke(this, message);
 								}
 							}
-						}							
+						}
 
 						sleepTime = _trackingInterval;
 					}
@@ -177,7 +177,12 @@ namespace AnFake.Api
 				return;
 
 			_tracker.Interrupt();
-			_tracker.Join(3000);
+			if (!_tracker.Join(_trackingInterval))
+			{
+				Log.WarnFormat(
+					"JsonFileTracer.StopTrackExternal: tracking thread is not finished in {0}ms. Concurrency issues are possible futher.", 
+					_trackingInterval.TotalMilliseconds);
+			}
 			_tracker = null;
 		}
 

@@ -6,8 +6,16 @@ using System.Text;
 
 namespace AnFake.Core.Integration.Tests
 {
+	/// <summary>
+	///		Provides implementation of processing of '.trx' used by MsTest/VsTest.
+	/// </summary>
 	public class MsTrxPostProcessor : IMsTrxPostProcessor
 	{
+		/// <summary>
+		///		See <see cref="ITestPostProcessor.PostProcess"/>.
+		/// </summary>
+		/// <param name="stream"></param>
+		/// <returns></returns>
 		public IEnumerable<TestResult> PostProcess(Stream stream)
 		{
 			var xdoc = stream.AsXmlDoc();

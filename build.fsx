@@ -26,6 +26,10 @@ let plugins =
     + "AnFake.Plugins.HtmlSummary/*.csproj"
 let extras = ~~".AnFake/Extras" % "*"
 let cmds = ~~".AnFake" % "*.cmd"
+let fsharp = 
+    ~~"[ProgramFilesX86]/Reference Assemblies/Microsoft/FSharp/.NETFramework/v4.0/4.3.1.0" % "FSharp.Core.dll"
+    + "FSharp.Core.optdata"
+    + "FSharp.Core.sigdata"
 let tests = !!"*/*.Test.csproj"
 let nugetFiles = 
     productOut % "AnFake.exe"
@@ -33,7 +37,8 @@ let nugetFiles =
     + "*.cmd"
     + "*.dll"
     + "AnFake.*.xml"
-    - "FSharp.Core.dll"
+    + "FSharp.Core.optdata"
+    + "FSharp.Core.sigdata"
     + "Extras/*"
     + "Plugins/AnFake.Integration.Tfs2012.dll"
     + "Plugins/AnFake.Plugins.Tfs2012.dll"
@@ -64,6 +69,7 @@ let version = "0.9".AsVersion()
     MsBuild.BuildRelease(product, productOut)
 
     Files.Copy(cmds, productOut, true)
+    Files.Copy(fsharp, productOut, true)
 
     MsBuild.BuildRelease(plugins, pluginsOut)
 
@@ -90,6 +96,14 @@ let version = "0.9".AsVersion()
 ) |> skipErrors
 
 "Package" => (fun _ -> 
+    let fsharpCore = 
+        productOut % "FSharp.Core.dll"
+        + "FSharp.Core.optdata"
+        + "FSharp.Core.sigdata"
+
+    if fsharpCore.Count() <> 3 then
+        MyBuild.Failed("There are FSharp.Core.dll, FSharp.Core.optdata and FSharp.Core.sigdata files must present in .out/product")
+
     let nuspec = NuGet.Spec25(fun meta -> 
         meta.Id <- "AnFake"
         meta.Version <- version
