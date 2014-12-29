@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using AnFake.Api;
@@ -17,6 +18,10 @@ namespace AnFake
 				{".fsx", new FSharpEvaluator()},
 				{".csx", new CSharpEvaluator()}
 			};
+
+		private class AbortException : Exception
+		{
+		}
 
 		[STAThread]
 		public static int Main(string[] args)
@@ -65,6 +70,10 @@ namespace AnFake
 				ConfigureLogger(options);
 				ConfigureTracer(options);
 			}
+			catch (AbortException)
+			{
+				// just skip
+			}
 			catch (Exception e)
 			{
 				Console.ForegroundColor = ConsoleColor.Red;
@@ -89,9 +98,34 @@ namespace AnFake
 
 		private static void ParseConfig(RunOptions options)
 		{
-			foreach (var setting in Settings.Current)
+			try
 			{
-				options.Properties.Add(setting.Key, setting.Value);
+				var localSettings = options.BuildPath.AsPath() / Settings.LocalPath;
+				if (localSettings.AsFile().Exists())
+				{
+					foreach (var setting in new Settings(localSettings))
+					{
+						options.Properties.Add(setting.Key, setting.Value);
+					}
+				}
+			}
+			catch (Exception e)
+			{
+				ConsoleLog(String.Format("Failed to parse local settings '{0}'", Settings.LocalPath.AsPath().Full), e);
+				throw new AbortException();
+			}
+
+			try
+			{
+				foreach (var setting in Settings.Current)
+				{
+					options.Properties.Add(setting.Key, setting.Value);
+				}
+			}
+			catch (Exception e)
+			{
+				ConsoleLog(String.Format("Failed to parse user settings '{0}'", Settings.UserPath.AsPath().Full), e);
+				throw new AbortException();
 			}
 		}
 
@@ -119,6 +153,12 @@ namespace AnFake
 				if (arg == "-p" || arg == "/p")
 				{
 					propMode = true;
+					continue;
+				}
+
+				if (arg == "-dbg" || arg == "/dbg")
+				{
+					Debugger.Launch();
 					continue;
 				}
 
@@ -205,7 +245,7 @@ namespace AnFake
 					break;
 			}
 
-			Trace.Set(tracer);
+			Api.Trace.Set(tracer);
 		}
 
 		private static int Run(RunOptions options)
@@ -223,23 +263,23 @@ namespace AnFake
 
 				FileSystemPath.Base = scriptFile.Folder;
 
-				Trace.Info("Configuring build...");
-				Trace.InfoFormat("BuildPath : {0}", options.BuildPath);
-				Trace.InfoFormat("LogFile   : {0}", logFile);
-				Trace.InfoFormat("ScriptFile: {0}", scriptFile);
-				Trace.InfoFormat("Targets   : {0}", String.Join(" ", options.Targets));
-				Trace.InfoFormat("Parameters:\n  {0}", String.Join("\n  ", options.Properties.Select(x => x.Key + " = " + x.Value)));
+				Api.Trace.Info("Configuring build...");
+				Api.Trace.InfoFormat("BuildPath : {0}", options.BuildPath);
+				Api.Trace.InfoFormat("LogFile   : {0}", logFile);
+				Api.Trace.InfoFormat("ScriptFile: {0}", scriptFile);
+				Api.Trace.InfoFormat("Targets   : {0}", String.Join(" ", options.Targets));
+				Api.Trace.InfoFormat("Parameters:\n  {0}", String.Join("\n  ", options.Properties.Select(x => x.Key + " = " + x.Value)));
 
 				if (!scriptFile.Exists())
 				{
-					Trace.ErrorFormat("Build script doesn't exist: {0}", scriptFile.Path.Full);
+					Api.Trace.ErrorFormat("Build script doesn't exist: {0}", scriptFile.Path.Full);
 					return -1;
 				}
 
 				IScriptEvaluator evaluator;
 				if (!SupportedScripts.TryGetValue(scriptFile.Ext, out evaluator))
 				{
-					Trace.ErrorFormat("Unsupported scripting language: {0}", scriptFile.Ext);
+					Api.Trace.ErrorFormat("Unsupported scripting language: {0}", scriptFile.Ext);
 					return -1;
 				}
 
@@ -253,7 +293,7 @@ namespace AnFake
 
 				evaluator.Evaluate(scriptFile);
 
-				Trace.Info("Configuring plugins...");
+				Api.Trace.Info("Configuring plugins...");
 				Plugin.Configure();
 				
 				var status = MyBuild.Run();
@@ -267,5 +307,15 @@ namespace AnFake
 				return (int) MyBuild.Status.Unknown;
 			}
 		}
+
+		private static void ConsoleLog(string message, Exception exception)
+		{
+			var prevColor = Console.ForegroundColor;
+
+			Console.ForegroundColor = ConsoleColor.Red;
+			Console.WriteLine(message);
+			Console.WriteLine(exception.Message);
+			Console.ForegroundColor = prevColor;
+		}		
 	}
 }

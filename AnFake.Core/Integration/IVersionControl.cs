@@ -2,8 +2,8 @@
 {
 	public interface IVersionControl
 	{
-		string CurrentChangesetId { get; }
+		int CurrentChangesetId { get; }
 
-		IChangeset GetChangeset(string changesetId);
+		IChangeset GetChangeset(int changesetId);
 	}
 }

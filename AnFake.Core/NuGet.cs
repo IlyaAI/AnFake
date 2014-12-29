@@ -85,6 +85,15 @@ namespace AnFake.Core
 				.FailIfExitCodeNonZero(String.Format("NuGet.Install failed with exit code {0}. Package: {1}", result.ExitCode, packageId));
 		}
 
+		public static NuSpec.v20.Package Spec20(Action<NuSpec.v20.Metadata> setMeta)
+		{
+			var pkg = new NuSpec.v20.Package { Metadata = new NuSpec.v20.Metadata() };
+
+			setMeta(pkg.Metadata);
+
+			return pkg;
+		}
+
 		public static NuSpec.v25.Package Spec25(Action<NuSpec.v25.Metadata> setMeta)
 		{
 			var pkg = new NuSpec.v25.Package { Metadata = new NuSpec.v25.Metadata() };
@@ -94,22 +103,22 @@ namespace AnFake.Core
 			return pkg;			
 		}
 
-		public static FileItem Pack(NuSpec.v25.Package nuspec, FileSystemPath dstFolder)
+		public static FileItem Pack(NuSpec.IPackage nuspec, FileSystemPath dstFolder)
 		{
 			return Pack(nuspec, dstFolder, dstFolder, p => { });
 		}
 
-		public static FileItem Pack(NuSpec.v25.Package nuspec, FileSystemPath dstFolder, Action<Params> setParams)
+		public static FileItem Pack(NuSpec.IPackage nuspec, FileSystemPath dstFolder, Action<Params> setParams)
 		{
 			return Pack(nuspec, dstFolder, dstFolder, setParams);
 		}
 
-		public static FileItem Pack(NuSpec.v25.Package nuspec, FileSystemPath srcFolder, FileSystemPath dstFolder)
+		public static FileItem Pack(NuSpec.IPackage nuspec, FileSystemPath srcFolder, FileSystemPath dstFolder)
 		{
 			return Pack(nuspec, srcFolder, dstFolder, p => { });
 		}
 
-		public static FileItem Pack(NuSpec.v25.Package nuspec, FileSystemPath srcFolder, FileSystemPath dstFolder, Action<Params> setParams)
+		public static FileItem Pack(NuSpec.IPackage nuspec, FileSystemPath srcFolder, FileSystemPath dstFolder, Action<Params> setParams)
 		{
 			if (nuspec == null)
 				throw new ArgumentException("NuGet.Pack(nuspec, srcFolder, dstFolder, setParams): nuspec must not be null");
@@ -120,14 +129,7 @@ namespace AnFake.Core
 			if (setParams == null)
 				throw new ArgumentException("NuGet.Pack(nuspec, srcFolder, dstFolder, setParams): setParams must not be null");
 
-			if (String.IsNullOrEmpty(nuspec.Metadata.Id))
-				throw new ArgumentException("NuSpec.v25.Metadata.Id must not be null or empty");
-			if (nuspec.Metadata.Version == null)
-				throw new ArgumentException("NuSpec.v25.Metadata.Version must not be null");
-			if (String.IsNullOrEmpty(nuspec.Metadata.Authors))
-				throw new ArgumentException("NuSpec.v25.Metadata.Authors must not be null or empty");
-			if (String.IsNullOrEmpty(nuspec.Metadata.Description))
-				throw new ArgumentException("NuSpec.v25.Metadata.Description must not be null or empty");			
+			nuspec.Validate();			
 
 			var parameters = Defaults.Clone();
 			setParams(parameters);
@@ -162,10 +164,10 @@ namespace AnFake.Core
 				.FailIfExitCodeNonZero(
 					String.Format("NuGet.Pack failed with exit code {0}. Package: {1}", result.ExitCode, nuspecFile));
 
-			var pkgPath = dstFolder / String.Format("{0}.{1}.nupkg", nuspec.Metadata.Id, nuspec.Metadata.Version);
+			var pkgPath = dstFolder / String.Format("{0}.{1}.nupkg", nuspec.Id, nuspec.Version);
 
 			return pkgPath.AsFile();
-		}
+		}		
 
 		public static void Push(FileSystemPath package, Action<Params> setParams)
 		{
@@ -214,14 +216,14 @@ namespace AnFake.Core
 						String.Join("\n  ", Locations)));
 		}
 
-		private static FileItem GenerateNuspecFile(NuSpec.v25.Package nuspec, FileSystemPath srcFolder)
+		private static FileItem GenerateNuspecFile(NuSpec.IPackage nuspec, FileSystemPath srcFolder)
 		{
-			var nuspecFile = (srcFolder / nuspec.Metadata.Id + ".nuspec").AsFile();
+			var nuspecFile = (srcFolder / nuspec.Id + ".nuspec").AsFile();
 			
 			Folders.Create(nuspecFile.Folder);
 			using (var stm = new FileStream(nuspecFile.Path.Full, FileMode.Create, FileAccess.Write))
 			{
-				new XmlSerializer(typeof(NuSpec.v25.Package)).Serialize(stm, nuspec);
+				new XmlSerializer(nuspec.GetType()).Serialize(stm, nuspec);
 			}
 
 			return nuspecFile;

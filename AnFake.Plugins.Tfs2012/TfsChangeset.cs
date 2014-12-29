@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Globalization;
 using AnFake.Core.Integration;
 using Microsoft.TeamFoundation.VersionControl.Client;
 
@@ -14,9 +13,9 @@ namespace AnFake.Plugins.Tfs2012
 			_tfsChangeset = tfsChangeset;
 		}
 
-		public string Id
+		public int Id
 		{
-			get { return _tfsChangeset.ChangesetId.ToString(CultureInfo.InvariantCulture); }
+			get { return _tfsChangeset.ChangesetId; }
 		}
 
 		public string Author

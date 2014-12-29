@@ -17,7 +17,7 @@ namespace AnFake.Plugins.HtmlSummary
 		public string ComputerName { get; set; }
 
 		[DataMember]
-		public string ChangesetId { get; set; }
+		public int ChangesetId { get; set; }
 
 		[DataMember]
 		public string ChangesetAuthor { get; set; }

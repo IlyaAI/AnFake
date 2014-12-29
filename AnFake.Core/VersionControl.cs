@@ -4,7 +4,7 @@ namespace AnFake.Core
 {
 	public static class VersionControl
 	{
-		public static string CurrentChangesetId
+		public static int CurrentChangesetId
 		{
 			get { return Plugin.Get<IVersionControl>().CurrentChangesetId; }
 		}

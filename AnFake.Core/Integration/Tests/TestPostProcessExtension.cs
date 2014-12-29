@@ -148,8 +148,20 @@ namespace AnFake.Core.Integration.Tests
 				total++;
 			}
 
-			Api.Trace.SummaryFormat("Test Run Summary: {0}, {1} total / {2} passed / {3} skipped / {4} FAILED.",
-					runTime, total, passed, warnings, errors);
+			var summary = new StringBuilder(128)
+				.AppendFormat("Test Run Summary: {0}, {1} total / {2} passed", runTime, total, passed);
+
+			if (warnings > 0)
+			{
+				summary.AppendFormat(" / {0} skipped", warnings);
+			}
+
+			if (errors > 0)
+			{
+				summary.AppendFormat(" / {0} FAILED", errors);
+			}			
+
+			Api.Trace.SummaryFormat(summary.ToString());
 		}
 	}
 }

@@ -80,6 +80,7 @@ Tfs.UseItDeferred()
 
         if not <| wsDef.HasLine("\\.AnFake") then
             wsDef.LastLine().InsertAfter("{0}: .AnFake", myselfServerPath)
+            wsDef.LastLine().InsertAfter("{0}/anf.cmd: anf.cmd", myselfServerPath)
             wsDef.Save()
         else
             MyBuild.Failed("Workspace already contains AnFake mapping.")
@@ -88,9 +89,11 @@ Tfs.UseItDeferred()
         TfsWorkspace.PendAdd([wsFile])
 
         if not <| anfDstPath.AsFolder().Exists() then
-            let myself = ~~"[AnFake]" % "**\*"
+            let myself = ~~"[AnFake]" % "**/*" - "anf.cmd"
             Files.Copy(myself, anfDstPath)
-            TfsWorkspace.PendAdd(anfDstPath % "**\*")
+            Files.Copy(~~"[AnFake]/anf.cmd", dstPath / "anf.cmd")
+            TfsWorkspace.PendAdd(anfDstPath % "**/*")
+            TfsWorkspace.PendAdd(dstPath % "anf.cmd")
     
         MyBuild.SaveProp("AnFake.TfsPath")
 

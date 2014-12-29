@@ -142,18 +142,17 @@ namespace AnFake.Plugins.Tfs2012
 
 		// IVersionControl members
 
-		public string CurrentChangesetId
+		public int CurrentChangesetId
 		{
 			get
 			{
-				return LastChangesetOf("".AsPath())
-					.ToString(CultureInfo.InvariantCulture);
+				return LastChangesetOf("".AsPath());
 			}
 		}
 
-		public Core.Integration.IChangeset GetChangeset(string changesetId)
+		public Core.Integration.IChangeset GetChangeset(int changesetId)
 		{
-			return new TfsChangeset(Vcs.GetChangeset(Int32.Parse(changesetId)));
+			return new TfsChangeset(Vcs.GetChangeset(changesetId));
 		}
 
 		//

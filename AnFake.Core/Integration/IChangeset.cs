@@ -4,7 +4,7 @@ namespace AnFake.Core.Integration
 {
 	public interface IChangeset
 	{
-		string Id { get; }
+		int Id { get; }
 
 		string Author { get; }
 

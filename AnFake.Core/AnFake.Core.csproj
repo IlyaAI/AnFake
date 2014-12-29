@@ -61,6 +61,12 @@
     <Compile Include="Integration\Tests\TestResult.cs" />
     <Compile Include="Integration\Tests\TestResultAware.cs" />
     <Compile Include="Integration\Tests\TestStatus.cs" />
+    <Compile Include="NuSpec\IPackage.cs" />
+    <Compile Include="NuSpec\v20\File.cs" />
+    <Compile Include="NuSpec\v20\Framework.cs" />
+    <Compile Include="NuSpec\v20\Metadata.cs" />
+    <Compile Include="NuSpec\v20\Package.cs" />
+    <Compile Include="NuSpec\v20\Reference.cs" />
     <Compile Include="VsTest.cs" />
     <Compile Include="Zip.cs" />
     <Compile Include="AssemblyInfo.cs" />

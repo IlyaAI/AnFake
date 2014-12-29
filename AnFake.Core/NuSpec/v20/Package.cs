@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Xml.Serialization;
 
-namespace AnFake.Core.NuSpec.v25
+namespace AnFake.Core.NuSpec.v20
 {
 	[Serializable]	
 	[XmlRoot(ElementName = "package", Namespace = "http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd")]
@@ -27,16 +27,16 @@ namespace AnFake.Core.NuSpec.v25
 		void IPackage.Validate()
 		{
 			if (String.IsNullOrEmpty(Metadata.Id))
-				throw new ArgumentException("NuSpec.v25.Metadata.Id must not be null or empty");
+				throw new ArgumentException("NuSpec.v20.Metadata.Id must not be null or empty");
 
 			if (Metadata.Version == null)
-				throw new ArgumentException("NuSpec.v25.Metadata.Version must not be null");
-
+				throw new ArgumentException("NuSpec.v20.Metadata.Version must not be null");
+			
 			if (String.IsNullOrEmpty(Metadata.Authors))
-				throw new ArgumentException("NuSpec.v25.Metadata.Authors must not be null or empty");
-
+				throw new ArgumentException("NuSpec.v20.Metadata.Authors must not be null or empty");
+			
 			if (String.IsNullOrEmpty(Metadata.Description))
-				throw new ArgumentException("NuSpec.v25.Metadata.Description must not be null or empty");
+				throw new ArgumentException("NuSpec.v20.Metadata.Description must not be null or empty");
 		}
 	}
 }

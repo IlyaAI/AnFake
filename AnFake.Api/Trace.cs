@@ -122,8 +122,8 @@ namespace AnFake.Api
 
 		public static void StopTrackExternal()
 		{
-			Tracer.MessageReceived -= OnMessageReceived;
 			Tracer.StopTrackExternal();
+			Tracer.MessageReceived -= OnMessageReceived;			
 		}
 
 		public static event EventHandler<TraceMessage> MessageReceiving

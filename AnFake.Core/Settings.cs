@@ -9,13 +9,14 @@ namespace AnFake.Core
 {
 	public sealed class Settings : IEnumerable<KeyValuePair<string, string>>
 	{
-		private const string StorePathDefault = "[ApplicationData]/AnFake/settings.json";
+		internal const string LocalPath = "AnFake.settings.json";
+		internal const string UserPath = "[ApplicationData]/AnFake/settings.json";
 
 		private static Settings _current;
 
 		public static Settings Current
 		{
-			get { return _current ?? (_current = new Settings(StorePathDefault.AsPath())); }
+			get { return _current ?? (_current = new Settings(UserPath.AsPath())); }
 		}
 
 		private readonly FileSystemPath _storePath;

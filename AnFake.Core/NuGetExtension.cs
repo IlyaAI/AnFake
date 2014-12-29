@@ -6,6 +6,29 @@ namespace AnFake.Core
 {
 	public static class NuGetExtension
 	{
+		public static void AddRefs(this NuSpec.v20.Metadata meta, IEnumerable<string> assemblies)
+		{
+			var refs = assemblies
+				.Select(x => new NuSpec.v20.Reference {File = x})
+				.ToArray();
+
+			meta.References = Merge(meta.References, refs);
+		}
+
+		public static void AddFiles(this NuSpec.v20.Package package, IEnumerable<FileItem> files, string target)
+		{
+			var nuFiles = files
+				.Select(x => new NuSpec.v20.File(x.Path.Full, (target.AsPath() / x.RelPath).Spec))
+				.ToArray();
+
+			package.Files = Merge(package.Files, nuFiles);
+		}
+
+		public static void AddFiles(this NuSpec.v20.Package package, IEnumerable<FileItem> files, NuSpec.v20.Framework targetFramework)
+		{
+			AddFiles(package, files, "lib/" + targetFramework.ToString().ToLowerInvariant());
+		}
+
 		public static void AddRefs(this NuSpec.v25.Metadata meta, NuSpec.v25.Framework targetFramework, IEnumerable<string> assemblies)
 		{
 			var group = new NuSpec.v25.ReferenceGroup
@@ -26,6 +49,11 @@ namespace AnFake.Core
 				.ToArray();
 
 			package.Files = Merge(package.Files, nuFiles);
+		}
+
+		public static void AddFiles(this NuSpec.v25.Package package, IEnumerable<FileItem> files, NuSpec.v25.Framework targetFramework)
+		{
+			AddFiles(package, files, "lib/" + targetFramework.ToString().ToLowerInvariant());
 		}
 
 		private static T[] Merge<T>(T[] srcArray, T[] addArray)
