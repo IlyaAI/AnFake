@@ -350,7 +350,7 @@ namespace AnFake.Core
 			}
 
 			/// <summary>
-			///     Saves changes to file.
+			///     Saves changes to the same file which text was loaded from.
 			/// </summary>
 			/// <remarks>
 			///     This method throws an exception if TextDoc was created from plain text.
@@ -362,6 +362,21 @@ namespace AnFake.Core
 					throw new InvalidConfigurationException("Unable to save text document because it wasn't loaded from file.");
 
 				using (var writer = new StreamWriter(_file.Path.Full, false, _encoding))
+				{
+					writer.Write(GetText());
+				}
+			}
+
+			/// <summary>
+			///		Saves changes to specified file.
+			/// </summary>
+			/// <param name="file">file to save to (not null)</param>
+			public void SaveTo(FileItem file)
+			{
+				if (file == null)
+					throw new ArgumentException("TextDoc.SaveTo(file): file must not be null");
+
+				using (var writer = new StreamWriter(file.Path.Full, false, _encoding))
 				{
 					writer.Write(GetText());
 				}

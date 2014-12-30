@@ -123,6 +123,7 @@ namespace AnFake.Core
 
 					snapshot.Save(file);
 
+					file.SetReadOnly(false);
 					File.WriteAllText(file.Path.Full, content);
 				}
 			}

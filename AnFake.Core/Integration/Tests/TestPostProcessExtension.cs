@@ -149,7 +149,7 @@ namespace AnFake.Core.Integration.Tests
 			}
 
 			var summary = new StringBuilder(128)
-				.AppendFormat("Test Run Summary: {0}, {1} total / {2} passed", runTime, total, passed);
+				.AppendFormat("TEST-RUN SUMMARY: {0}, {1} total / {2} passed", runTime, total, passed);
 
 			if (warnings > 0)
 			{

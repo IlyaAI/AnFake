@@ -275,7 +275,9 @@ namespace AnFake.Plugins.Tfs2012
 			_build.Information
 				.AddCustomSummaryInformation(new string('=', 48), SectionKey, SectionHeader, SectionPriority);
 			_build.Information
-				.AddCustomSummaryInformation(summary.ToString(), SectionKey, SectionHeader, SectionPriority);						
+				.AddCustomSummaryInformation(summary.ToString(), SectionKey, SectionHeader, SectionPriority);
+			_build.Information
+				.AddCustomSummaryInformation(" ", SectionKey, SectionHeader, SectionPriority);
 
 			_build.Information
 				.Save();			

@@ -74,13 +74,22 @@ Tfs.UseItDeferred()
     if not <| anfDstPath.AsFolder().Exists() then
         TfsWorkspace.SaveLocal(dstPath)
 
-        let myselfServerPath = MyBuild.GetProp("AnFake.TfsPath").AsServerPath()        
+        let myselfServerPath = MyBuild.GetProp("AnFake.TfsPath").AsServerPath()
+        let settingsServerPath = 
+            if MyBuild.HasProp("AnFake.SettingsTfsPath") then
+                MyBuild.GetProp("AnFake.SettingsTfsPath").AsServerPath()
+            else
+                null
+        let settingsFile = (dstPath / "AnFake.settings.json").AsFile()
+        
         let wsFile = (dstPath / TfsWorkspace.Defaults.WorkspaceFile).AsFile()
         let wsDef = wsFile.AsTextDoc();
 
         if not <| wsDef.HasLine("\\.AnFake") then
             wsDef.LastLine().InsertAfter("{0}: .AnFake", myselfServerPath)
             wsDef.LastLine().InsertAfter("{0}/anf.cmd: anf.cmd", myselfServerPath)
+            if settingsServerPath <> null then
+                wsDef.LastLine().InsertAfter("{0}/{1}: {1}", settingsServerPath, settingsFile.Name)
             wsDef.Save()
         else
             MyBuild.Failed("Workspace already contains AnFake mapping.")
@@ -94,8 +103,13 @@ Tfs.UseItDeferred()
             Files.Copy(~~"[AnFake]/anf.cmd", dstPath / "anf.cmd")
             TfsWorkspace.PendAdd(anfDstPath % "**/*")
             TfsWorkspace.PendAdd(dstPath % "anf.cmd")
+        
+        if settingsServerPath <> null && not <| settingsFile.Exists() then
+            "{}".AsTextDoc().SaveTo(settingsFile)
+            TfsWorkspace.PendAdd(dstPath % settingsFile.Name)
     
         MyBuild.SaveProp("AnFake.TfsPath")
+        MyBuild.SaveProp("AnFake.SettingsTfsPath")
 
         Trace.InfoFormat("Folder '{0}' is ready to use AnFake. Carefully review all pended chages before commit!", dstPath)
     else
