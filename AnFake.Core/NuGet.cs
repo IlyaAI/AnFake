@@ -6,6 +6,10 @@ using AnFake.Api;
 
 namespace AnFake.Core
 {
+	/// <summary>
+	///		Represents NuGet package manager tool.
+	/// </summary>
+	/// <seealso cref="http://docs.nuget.org/docs/reference/command-line-reference"/>
 	public static class NuGet
 	{
 		private static readonly string[] Locations =
@@ -13,17 +17,59 @@ namespace AnFake.Core
 			".nuget/NuGet.exe"
 		};
 
+		/// <summary>
+		///		NuGet parameters.
+		/// </summary>
 		public sealed class Params
 		{
+			/// <summary>
+			///		Version of package to be installed.
+			/// </summary>
 			public string Version;
+
+			/// <summary>
+			///		Output folder for installed package. Default: 'packages'
+			/// </summary>
 			public FileSystemPath OutputDirectory;
+
+			/// <summary>
+			///		Whether to include referenced projects into package or not.
+			/// </summary>
 			public bool IncludeReferencedProjects;
+
+			/// <summary>
+			///		Do not perform package analysis (i.e. disables warnings).
+			/// </summary>
 			public bool NoPackageAnalysis;
+
+			/// <summary>
+			///		Do not exclude folders started from dot.
+			/// </summary>			
 			public bool NoDefaultExcludes;
+
+			/// <summary>
+			///		Access key for package push.
+			/// </summary>
 			public string AccessKey;
+
+			/// <summary>
+			///		Package source URL.
+			/// </summary>
 			public string SourceUrl;
+
+			/// <summary>
+			///		Timeout for NuGet operation. Default: TimeSpan.MaxValue
+			/// </summary>
 			public TimeSpan Timeout;
+
+			/// <summary>
+			///		Path to 'nuget.exe'. Default: '.nuget/NuGet.exe'
+			/// </summary>
 			public FileSystemPath ToolPath;
+
+			/// <summary>
+			///		Additional nuget arguments passed as is.
+			/// </summary>
 			public string ToolArguments;
 
 			internal Params()
@@ -32,12 +78,19 @@ namespace AnFake.Core
 				Timeout = TimeSpan.MaxValue;				
 			}
 
+			/// <summary>
+			///		Clones parameters.
+			/// </summary>
+			/// <returns>copy of original parameters</returns>
 			public Params Clone()
 			{
 				return (Params) MemberwiseClone();
 			}
 		}
 
+		/// <summary>
+		///		Default NuGet parameters.
+		/// </summary>
 		public static Params Defaults { get; private set; }
 
 		static NuGet()
@@ -50,6 +103,20 @@ namespace AnFake.Core
 			};
 		}
 
+		/// <summary>
+		///		Equals to 'nuget.exe install'.
+		/// </summary>		
+		/// <param name="packageId">id of package to be installed</param>
+		/// <param name="setParams">action which overrides default parameters</param>
+		/// <seealso cref="http://docs.nuget.org/docs/reference/command-line-reference"/>
+		/// <example>
+		/// <code>
+		///		NuGet.Install(
+        ///			"NUnitTestAdapter",
+        ///			(fun p -> 
+        ///				p.Version &lt;- "1.2"))
+		/// </code>
+		/// </example>
 		public static void Install(string packageId, Action<Params> setParams)
 		{
 			if (String.IsNullOrEmpty(packageId))
@@ -85,6 +152,11 @@ namespace AnFake.Core
 				.FailIfExitCodeNonZero(String.Format("NuGet.Install failed with exit code {0}. Package: {1}", result.ExitCode, packageId));
 		}
 
+		/// <summary>
+		///		Creates package spec of version 2.0
+		/// </summary>
+		/// <param name="setMeta">action which sets package metadata</param>
+		/// <returns>package spec instance</returns>
 		public static NuSpec.v20.Package Spec20(Action<NuSpec.v20.Metadata> setMeta)
 		{
 			var pkg = new NuSpec.v20.Package { Metadata = new NuSpec.v20.Metadata() };
@@ -94,6 +166,11 @@ namespace AnFake.Core
 			return pkg;
 		}
 
+		/// <summary>
+		///		Creates package spec of version 2.5
+		/// </summary>
+		/// <param name="setMeta">action which sets package metadata</param>
+		/// <returns>package spec instance</returns>
 		public static NuSpec.v25.Package Spec25(Action<NuSpec.v25.Metadata> setMeta)
 		{
 			var pkg = new NuSpec.v25.Package { Metadata = new NuSpec.v25.Metadata() };
@@ -103,21 +180,91 @@ namespace AnFake.Core
 			return pkg;			
 		}
 
+		/// <summary>
+		///		Equals to 'nuget.exe pack'.
+		/// </summary>
+		/// <remarks>
+		///		Files to be packed must be specified via <c>AddFiles</c> on package spec.
+		///		Package will be created in given destination folder.
+		/// </remarks>
+		/// <param name="nuspec">package spec returned by <see cref="Spec20"/> or <see cref="Spec25"/></param>
+		/// <param name="dstFolder">output folder for created package</param>
+		/// <returns>file item representing created package</returns>
+		/// <seealso cref="http://docs.nuget.org/docs/reference/command-line-reference"/>
 		public static FileItem Pack(NuSpec.IPackage nuspec, FileSystemPath dstFolder)
 		{
 			return Pack(nuspec, dstFolder, dstFolder, p => { });
 		}
 
+		/// <summary>
+		///		Equals to 'nuget.exe pack'.
+		/// </summary>
+		/// <remarks>
+		///		Files to be packed must be specified via <c>AddFiles</c> on package spec.
+		///		Package will be created in given destination folder.
+		/// </remarks>
+		/// <param name="nuspec">package spec returned by <see cref="Spec20"/> or <see cref="Spec25"/></param>
+		/// <param name="dstFolder">output folder for created package</param>
+		/// <param name="setParams">action which overrides default parameters</param>
+		/// <returns>file item representing created package</returns>
+		/// <seealso cref="http://docs.nuget.org/docs/reference/command-line-reference"/>
 		public static FileItem Pack(NuSpec.IPackage nuspec, FileSystemPath dstFolder, Action<Params> setParams)
 		{
 			return Pack(nuspec, dstFolder, dstFolder, setParams);
 		}
 
+		/// <summary>
+		///		Equals to 'nuget.exe pack'.
+		/// </summary>
+		/// <remarks>
+		///		Files to be packed will be taken from specified source folder.
+		///		Package will be created in given destination folder.
+		/// </remarks>
+		/// <param name="nuspec">package spec returned by <see cref="Spec20"/> or <see cref="Spec25"/></param>
+		/// <param name="srcFolder">source folder containing files to be packed</param>
+		/// <param name="dstFolder">output folder for created package</param>
+		/// <returns>file item representing created package</returns>
+		/// <seealso cref="http://docs.nuget.org/docs/reference/command-line-reference"/>
 		public static FileItem Pack(NuSpec.IPackage nuspec, FileSystemPath srcFolder, FileSystemPath dstFolder)
 		{
 			return Pack(nuspec, srcFolder, dstFolder, p => { });
 		}
 
+		/// <summary>
+		///		Equals to 'nuget.exe pack'.
+		/// </summary>
+		/// <remarks>
+		///		Files to be packed will be taken from specified source folder.
+		///		Package will be created in given destination folder.
+		/// </remarks>
+		/// <param name="nuspec">package spec returned by <see cref="Spec20"/> or <see cref="Spec25"/></param>
+		/// <param name="srcFolder">source folder containing files to be packed</param>
+		/// <param name="dstFolder">output folder for created package</param>
+		/// <param name="setParams">action which overrides default parameters</param>
+		/// <returns>file item representing created package</returns>
+		/// <seealso cref="http://docs.nuget.org/docs/reference/command-line-reference"/>
+		/// <example>
+		/// <code>
+		///		let nugetFiles = 
+		///			~~".out" % "*.dll"
+		///			+ "*.exe"
+		///			+ "*.config"
+		/// 
+		///		let nuspec = NuGet.Spec25(fun meta -> 
+        ///			meta.Id &lt;- "AnFake"
+        ///			meta.Version &lt;- version
+        ///			meta.Authors &lt;- "Ilya A. Ivanov"
+        ///			meta.Description &lt;- "AnFake: Another F# Make"
+		///		)
+		///
+		///		nuspec.AddFiles(nugetFiles, "")
+		///
+		///		NuGet.Pack(nuspec, ~~".out", fun p -> 
+        ///			p.NoPackageAnalysis &lt;- true
+        ///			p.NoDefaultExcludes &lt;- true)
+        ///		|> ignore
+		/// </code>
+		/// </example>
 		public static FileItem Pack(NuSpec.IPackage nuspec, FileSystemPath srcFolder, FileSystemPath dstFolder, Action<Params> setParams)
 		{
 			if (nuspec == null)
@@ -169,6 +316,21 @@ namespace AnFake.Core
 			return pkgPath.AsFile();
 		}		
 
+		/// <summary>
+		///		Equals to 'nuget.exe push'.
+		/// </summary>
+		/// <param name="package">path to package to be pushed</param>
+		/// <param name="setParams">action which overrides default parameters</param>
+		/// <seealso cref="http://docs.nuget.org/docs/reference/command-line-reference"/>
+		/// <example>
+		/// <code>
+		///		NuGet.Push(
+        ///			~~".out" / "AnFake.0.9.nupkg",
+        ///			fun p -> 
+        ///				p.AccessKey &lt;- "YOUR ACCESS KEY"
+        ///				p.SourceUrl &lt;- "SOURCE URL HERE")		
+		/// </code>
+		/// </example>
 		public static void Push(FileSystemPath package, Action<Params> setParams)
 		{
 			if (package == null)

@@ -76,7 +76,7 @@ namespace AnFake.Core
 			var resultPath = "TestResults".AsPath();
 			if (parameters.SettingsPath != null && ".runsettings".Equals(parameters.SettingsPath.Ext, StringComparison.OrdinalIgnoreCase))
 			{
-				var resultsDirectory = parameters.SettingsPath.AsXmlDoc()
+				var resultsDirectory = parameters.SettingsPath.AsFile().AsXmlDoc()
 					.ValueOf("RunSettings/RunConfiguration/ResultsDirectory");
 
 				if (!String.IsNullOrEmpty(resultsDirectory))

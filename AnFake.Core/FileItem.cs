@@ -76,9 +76,16 @@ namespace AnFake.Core
 			return File.Exists(_path.Full);
 		}
 
-		public void Append(string format, params object[] args)
+		public void SetReadOnly(bool readOnly)
 		{
-			File.AppendAllText(_path.Full, String.Format(format, args));
+			if (readOnly)
+			{
+				Info.Attributes |= FileAttributes.ReadOnly;
+			}
+			else
+			{
+				Info.Attributes &= ~FileAttributes.ReadOnly;
+			}			
 		}
 
 		public override string ToString()
