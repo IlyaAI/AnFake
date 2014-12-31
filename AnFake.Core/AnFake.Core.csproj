@@ -67,6 +67,7 @@
     <Compile Include="NuSpec\v20\Metadata.cs" />
     <Compile Include="NuSpec\v20\Package.cs" />
     <Compile Include="NuSpec\v20\Reference.cs" />
+    <Compile Include="NullableExtension.cs" />
     <Compile Include="VsTest.cs" />
     <Compile Include="Zip.cs" />
     <Compile Include="AssemblyInfo.cs" />

@@ -54,7 +54,52 @@ namespace AnFake.Plugins.Tfs2012
 
 				return name => !usedNames.Contains(name);
 			}
-		}		
+		}
+
+		public static void Create(ServerPath serverPath, FileSystemPath localPath, string workspaceName)
+		{
+			Create(serverPath, localPath, workspaceName, p => { });
+		}
+
+		public static void Create(ServerPath serverPath, FileSystemPath localPath, string workspaceName, Action<Params> setParams)
+		{
+			if (serverPath == null)
+				throw new ArgumentException("TfsWorkspace.Create(serverPath, localPath, workspaceName[, setParams]): serverPath must not be null");
+			if (!serverPath.IsRooted)
+				throw new ArgumentException("TfsWorkspace.Create(serverPath, localPath, workspaceName[, setParams]): serverPath must be an absolute path");
+
+			if (localPath == null)
+				throw new ArgumentException("TfsWorkspace.Create(serverPath, localPath, workspaceName[, setParams]): localPath must not be null");
+			
+			if (String.IsNullOrEmpty(workspaceName))
+				throw new ArgumentException("TfsWorkspace.Create(serverPath, localPath, workspaceName[, setParams]): workspaceName must not be null or empty");
+
+			if (setParams == null)
+				throw new ArgumentException("TfsWorkspace.Create(serverPath, localPath, workspaceName, setParams): setParams must not be null");
+
+			var ws = FindWorkspace(workspaceName);
+			if (ws != null)
+				throw new InvalidConfigurationException(String.Format("Unable to create workspace '{0}' because it already exists.", workspaceName));
+
+			var parameters = Defaults.Clone();
+			setParams(parameters);
+
+			EnsureWorkspaceFile(parameters);			
+
+			Trace.InfoFormat("TfsWorkspace.Create\n ServerPath: {0}\n LocalPath: {1}\n Workspace: {2} (from '{3}')",
+				serverPath, localPath, workspaceName, parameters.WorkspaceFile);
+
+			var wsFile = LocateWorkspaceFile(localPath, parameters.WorkspaceFile);
+			var wsDesc = GetTextContent(wsFile);
+			var mappings = VcsMappings.Parse(wsDesc, serverPath.Full, localPath.Full);
+
+			TraceMappings(mappings);
+
+			ws = Vcs.CreateWorkspace(workspaceName, GetCurrentUser(), String.Format("AnFake: {0} => {1}", serverPath, localPath), mappings);
+			Trace.InfoFormat("Workspace '{0}' successfully created for '{1}'.", workspaceName, GetCurrentUser());
+
+			UpdateFiles(ws);
+		}
 
 		public static void Checkout(ServerPath serverPath, FileSystemPath localPath, string workspaceName)
 		{
@@ -319,10 +364,10 @@ namespace AnFake.Plugins.Tfs2012
 				Trace.DebugFormat("  {0}", path);
 			}
 
-			ws.PendAdd(
+			var pended = ws.PendAdd(
 				filePathes.Select(x => x.Full).ToArray());
 
-			Trace.InfoFormat("{0} file(s) pended for add.", filePathes.Length);
+			Trace.InfoFormat("{0} file(s) pended for add.", pended);
 		}
 
 		public static void Undo(IEnumerable<FileItem> files)

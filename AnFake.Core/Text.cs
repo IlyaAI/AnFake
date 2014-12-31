@@ -14,9 +14,6 @@ namespace AnFake.Core
 	/// </summary>
 	public static class Text
 	{
-		private const char Lf = '\n';
-		private const char Cr = '\r';
-
 		/// <summary>
 		///     Represents line in text document.
 		/// </summary>
@@ -139,6 +136,9 @@ namespace AnFake.Core
 		/// <summary>
 		///     Represents text document.
 		/// </summary>
+		/// <remarks>
+		///		The TextDoc is agnostic to line separators from input file (accepted '\n', '\r' and '\r\n') and always normalizes them using <c>Environment.NewLine</c>.
+		/// </remarks>
 		public sealed class TextDoc
 		{
 			private readonly FileItem _file;
@@ -153,27 +153,37 @@ namespace AnFake.Core
 				using (var reader = new StreamReader(file.Path.Full))
 				{
 					_encoding = reader.CurrentEncoding;
-					_text = reader.ReadToEnd();
+
+					LoadLines(reader);
 				}
 			}
 
-			internal TextDoc(string text)
+			internal TextDoc(Encoding encoding, TextReader reader)
 			{
 				_file = null;
-				_text = text;
-				_encoding = Encoding.UTF8;
+				_encoding = encoding;
+
+				LoadLines(reader);
 			}
+
+			internal TextDoc(string text)
+				: this(Encoding.UTF8, new StringReader(text))
+			{				
+			}						
 
 			/// <summary>
 			///     Document content as whole text (not null).
 			/// </summary>
+			/// <remarks>
+			///		Lines are separated by <c>Environment.NewLine</c>.
+			/// </remarks>
 			public string Text
 			{
 				get { return GetText(); }
 			}
 
 			/// <summary>
-			///     Document content splitted per lines (not null).
+			///     Document content splitted per lines (not null). Line separator not included.
 			/// </summary>
 			public IEnumerable<string> Lines
 			{
@@ -397,7 +407,7 @@ namespace AnFake.Core
 			{
 				if (_lines == null)
 				{
-					_lines = new LinkedList<string>(_text.GetLines());
+					LoadLines(new StringReader(_text));
 				}
 
 				if (writable)
@@ -412,8 +422,27 @@ namespace AnFake.Core
 			{
 				_lines = null;
 			}
+
+			private void LoadLines(TextReader reader)
+			{
+				_lines = new LinkedList<string>();
+
+				string line;
+				while ((line = reader.ReadLine()) != null)
+				{
+					_lines.AddLast(line);
+				}
+
+				if (_lines.Count == 0)
+				{
+					_lines.AddLast(String.Empty);
+				}
+			}
 		}
 
+		/// <summary>
+		///		Helper class for support multi-occurances replacement.
+		/// </summary>
 		private sealed class TextReplacer
 		{
 			private readonly string _original;
@@ -468,6 +497,7 @@ namespace AnFake.Core
 		/// </summary>
 		/// <param name="file">file to be loaded as text (not null)</param>
 		/// <returns>TextDoc instance</returns>
+		/// <seealso cref="TextDoc"/>
 		public static TextDoc AsTextDoc(this FileItem file)
 		{
 			if (file == null)
@@ -481,6 +511,7 @@ namespace AnFake.Core
 		/// </summary>
 		/// <param name="text">string to be presented as document (not null)</param>
 		/// <returns>TextDoc instance</returns>
+		/// <seealso cref="TextDoc"/>
 		public static TextDoc AsTextDoc(this string text)
 		{
 			if (text == null)
@@ -493,7 +524,7 @@ namespace AnFake.Core
 		///     Splits given text to the lines.
 		/// </summary>
 		/// <remarks>
-		///     Method is agnostic to line separators.
+		///     Method is agnostic to line separators (accepted '\n', '\r' and '\r\n'). Returned lines don't include separator itself.
 		/// </remarks>
 		/// <param name="text">text to be splitted (not null)</param>
 		/// <returns>sequence of lines</returns>
@@ -502,20 +533,16 @@ namespace AnFake.Core
 			if (text == null)
 				throw new ArgumentException("Text.GetLines(text): text must not be null");
 
-			var start = 0;
-			do
+			if (text.Length == 0)
+				yield return String.Empty;
+
+			var reader = new StringReader(text);
+			
+			string line;
+			while ((line = reader.ReadLine()) != null)
 			{
-				var index = text.IndexOfAny(new[] {Lf, Cr}, start);
-				if (index < 0) index = text.Length;
-
-				yield return text.Substring(start, index - start);
-
-				if (index + 1 < text.Length
-					&& ((text[index] == Lf && text[index + 1] == Cr)
-						|| (text[index] == Cr && text[index + 1] == Lf))) index++;
-
-				start = index + 1;
-			} while (start < text.Length);
+				yield return line;
+			}
 		}
 
 		/// <summary>
@@ -532,6 +559,56 @@ namespace AnFake.Core
 				throw new ArgumentException("Text.Join(lines): lines must not be null");
 
 			return String.Join(Environment.NewLine, lines);
+		}
+
+		/// <summary>
+		///		Writes text to specified file.
+		/// </summary>
+		/// <remarks>
+		///		If file already exists it will be overwritten. Text is always written in UTF8 encoding and with normalized line endings.
+		/// </remarks>
+		/// <param name="file">file to write to (not null)</param>
+		/// <param name="text">text to be written (not null)</param>
+		public static void WriteTo(FileItem file, string text)
+		{
+			if (file == null)
+				throw new ArgumentException("Text.WriteTo(file, text): file must not be null");
+			if (text == null)
+				throw new ArgumentException("Text.WriteTo(file, text): text must not be null");
+
+			using (var writer = new StreamWriter(file.Path.Full, false, Encoding.UTF8))
+			{
+				foreach (var line in text.GetLines())
+				{
+					writer.WriteLine(line);
+				}
+			}
+		}
+
+		/// <summary>
+		///		Reads text from specified file.
+		/// </summary>
+		/// <remarks>
+		///		If file doesn't exist then exception will be thrown. Text is always read with normalized line endings.
+		/// </remarks>
+		/// <param name="file">file to read from</param>
+		/// <returns>text</returns>
+		public static string ReadFrom(FileItem file)
+		{
+			if (file == null)
+				throw new ArgumentException("Text.ReadFrom(file, text): file must not be null");
+
+			var sb = new StringBuilder(512);
+			using (var reader = new StreamReader(file.Path.Full))
+			{
+				string line;
+				while ((line = reader.ReadLine()) != null)
+				{
+					sb.AppendLine(line);
+				}				
+			}
+
+			return sb.ToString();
 		}
 
 		private static Regex Rx(string pattern, bool ignoreCase)

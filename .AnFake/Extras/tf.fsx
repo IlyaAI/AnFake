@@ -26,6 +26,14 @@ let serviceNames =
         "features"
     ]
 
+let getProductName (serverPath: ServerPath) =
+    serverPath
+        .Split()
+        .Reverse()
+        .Skip(1)
+        .Except(serviceNames, StringComparer.OrdinalIgnoreCase)
+        .FirstOrDefault()
+
 Tfs.UseItDeferred()
 
 "Build" => (fun _ ->
@@ -188,6 +196,59 @@ Tfs.UseItDeferred()
 )
 
 "SetUpTeamProjects" ==> "Checkout" ==> "co"
+
+"Checkin" => (fun _ ->
+    let mutable needConfirmation = false
+
+    let serverPath = 
+        if MyBuild.HasProp("__1") then
+            MyBuild.GetProp("__1").AsServerPath()
+        else
+            MyBuild.Failed("Required parameter <server-path> is missed.")
+            null    
+
+    let productName = getProductName(serverPath)
+    if productName = null && not <| MyBuild.HasProp("__2") && not <| MyBuild.HasProp("__3") then
+        MyBuild.Failed("Unable to auto-detect product name. Please, specify <local-path> and <workspace-name> explicitly.")
+
+    let localPath = 
+        if MyBuild.HasProp("__2") then
+            curDir / MyBuild.GetProp("__2")
+        else            
+            curDir
+
+    let workspaceName =
+        if MyBuild.HasProp("__3") then
+            MyBuild.GetProp("__3")
+        else
+            needConfirmation <- true
+            NameGen.Generate(
+                String.Format("{0}.{1}", productName, localPath.LastName),
+                TfsWorkspace.UniqueName
+            )
+
+    if needConfirmation then
+        let confirmed = 
+            UserInterop.Confirm(
+                String.Format("Checkin \"{0}\" \"{1}\" \"{2}\"", serverPath, localPath, workspaceName)
+            )
+        if not confirmed then
+            MyBuild.Failed("Operation cancelled.")
+    
+    TfsWorkspace.Create(serverPath, localPath, workspaceName)
+
+    let srcFiles =
+        localPath % "**/*"
+        - "**/bin/**/*"
+        - "**/obj/**/*"
+        - "*.suo"
+
+    TfsWorkspace.PendAdd(srcFiles)
+
+    Trace.InfoFormat("Folder '{0}' is ready to check-in. Carefully review all pended chages before commit!", localPath)
+)
+
+"SetUpTeamProjects" ==> "Checkin" ==> "ci"
 
 "SyncLocal" => (fun _ ->
     let localPath = 

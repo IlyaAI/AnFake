@@ -7,6 +7,11 @@ namespace AnFake.Core
 	{
 		private readonly static Lazy<IBuildServer> Instance 
 			= new Lazy<IBuildServer>(Plugin.Get<IBuildServer>);
+
+		public static bool IsLocal
+		{
+			get { return Instance.Value is LocalBuildServer; }
+		}
 		
 		public static FileSystemPath DropLocation
 		{

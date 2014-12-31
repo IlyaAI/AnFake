@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AnFake.Core.Test
@@ -7,6 +8,33 @@ namespace AnFake.Core.Test
 	public class TextDocTest
 	{
 		public static readonly string Eol = Environment.NewLine;
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void TextGetLines_should_return_single_empty_line_on_empty_string()
+		{
+			// arrange
+			
+			// act
+			var lines = "".GetLines().ToArray();
+
+			// assert
+			Assert.AreEqual(1, lines.Length);
+			Assert.AreEqual("", lines[0]);
+		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void TextDoc_should_normalize_line_endings()
+		{
+			// arrange
+			
+			// act
+			var doc = "l1\nl2\rl3\r\nl4".AsTextDoc();
+
+			// assert
+			Assert.AreEqual(String.Format("l1{0}l2{0}l3{0}l4", Eol), doc.Text);
+		}
 
 		[TestCategory("Unit")]
 		[TestMethod]

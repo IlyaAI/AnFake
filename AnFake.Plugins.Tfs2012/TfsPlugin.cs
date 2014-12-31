@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -14,7 +13,7 @@ using Microsoft.TeamFoundation.VersionControl.Client;
 
 namespace AnFake.Plugins.Tfs2012
 {
-	internal sealed class TfsPlugin : Core.Integration.IVersionControl
+	internal sealed class TfsPlugin : Core.Integration.IVersionControl, Core.Integration.IBuildServer
 	{
 		private const string SectionKey = "AnFake";
 		private const string SectionHeader = "AnFake Summary";
@@ -157,6 +156,20 @@ namespace AnFake.Plugins.Tfs2012
 
 		//
 
+		// IBuildServer members
+
+		public FileSystemPath DropLocation
+		{
+			get { return Build.DropLocation.AsPath(); }
+		}
+
+		public FileSystemPath LogsLocation
+		{
+			get { return _logsDropPath; }
+		}
+
+		//
+
 		private void OnMessage(object sender, TraceMessage message)
 		{
 			switch (message.Level)
@@ -221,10 +234,10 @@ namespace AnFake.Plugins.Tfs2012
 
 			try
 			{
-				var outFile = LocalTemp.AsPath() / String.Format("{0}.{1}", test.Suite, test.Name).MakeUnique(".txt");
-				File.WriteAllText(outFile.Full, test.Output);
+				var outPath = LocalTemp.AsPath() / String.Format("{0}.{1}", test.Suite, test.Name).MakeUnique(".txt");
+				Text.WriteTo(outPath.AsFile(), test.Output);
 
-				test.Links.Add(new Hyperlink(outFile.Full, "Output"));
+				test.Links.Add(new Hyperlink(outPath.Full, "Output"));
 			}
 			catch (Exception e)
 			{
@@ -361,13 +374,27 @@ namespace AnFake.Plugins.Tfs2012
 			if (links.Count == 0)
 				return sb;
 
+			var startedAt = sb.Length;
 			sb.Append(prefix);
+
+			var prevLength = sb.Length;
 			AppendLink(sb, links[0]);
 
 			for (var i = 1; i < links.Count; i++)
 			{
-				sb.Append(separator);
+				if (sb.Length > prevLength)
+				{
+					sb.Append(separator);
+				}
+
+				prevLength = sb.Length;
 				AppendLink(sb, links[i]);
+			}
+
+			// if no one link generated then remove prefix
+			if (sb.Length - startedAt == prefix.Length)
+			{
+				sb.Remove(startedAt, sb.Length - startedAt);
 			}
 
 			return sb;
