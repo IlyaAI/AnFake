@@ -7,13 +7,13 @@ namespace AnFake.Core
 {
 	public sealed class Snapshot : IDisposable
 	{
-		class SnapshotInfo
+		public sealed class SavedFile
 		{
-			public readonly string Path;
+			public readonly FileSystemPath Path;
 			public readonly DateTime LastModified;			
 			public readonly FileAttributes Attributes;
 
-			public SnapshotInfo(string path, DateTime lastModified, FileAttributes attributes)
+			public SavedFile(FileSystemPath path, DateTime lastModified, FileAttributes attributes)
 			{
 				Path = path;
 				LastModified = lastModified;				
@@ -21,7 +21,7 @@ namespace AnFake.Core
 			}
 		}
 
-		private readonly IList<SnapshotInfo> _originalFiles = new List<SnapshotInfo>();
+		private readonly IList<SavedFile> _originalFiles = new List<SavedFile>();
 		private readonly string _snapshotBasePath;
 
 		public Snapshot()
@@ -39,9 +39,16 @@ namespace AnFake.Core
 			var attributes = fi.Attributes;
 
 			Trace.DebugFormat("Snapshot.Save: {0} => {1}", fullPath, snapshotPath);
-			fi.CopyTo(snapshotPath);			
+			fi.CopyTo(snapshotPath);
 
-			_originalFiles.Add(new SnapshotInfo(fullPath, lastModified, attributes));
+			var fs = new SavedFile(filePath, lastModified, attributes);
+
+			_originalFiles.Add(fs);
+
+			if (FileSaved != null)
+			{
+				FileSaved.Invoke(this, fs);
+			}
 		}
 
 		public void Revert()
@@ -53,12 +60,17 @@ namespace AnFake.Core
 					var originalFile = _originalFiles[index];
 					var snapshotPath = Path.Combine(_snapshotBasePath, String.Format("{0:X8}", index));
 
-					FileSystem.DeleteFile(originalFile.Path.AsPath());
+					FileSystem.DeleteFile(originalFile.Path);
 					
 					var fi = new FileInfo(snapshotPath);
-					fi.MoveTo(originalFile.Path);					
-					fi.LastWriteTimeUtc = originalFile.LastModified;					
+					fi.MoveTo(originalFile.Path.Full);					
 					fi.Attributes = originalFile.Attributes;
+					// It isn't neccessary to restore LastWriteTime manually, becasue is's preserved by CopyTo/MoveTo function.
+
+					if (FileReverted != null)
+					{
+						FileReverted.Invoke(this, originalFile);
+					}
 				}
 				catch (Exception e)
 				{
@@ -73,6 +85,9 @@ namespace AnFake.Core
 		{
 			Cleanup();			
 		}
+
+		public static event EventHandler<SavedFile> FileSaved;
+		public static event EventHandler<SavedFile> FileReverted;		
 
 		private void Cleanup()
 		{

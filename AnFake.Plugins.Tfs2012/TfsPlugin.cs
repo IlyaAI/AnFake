@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
 using AnFake.Api;
@@ -15,9 +14,12 @@ namespace AnFake.Plugins.Tfs2012
 {
 	internal sealed class TfsPlugin : Core.Integration.IVersionControl, Core.Integration.IBuildServer
 	{
-		private const string SectionKey = "AnFake";
-		private const string SectionHeader = "AnFake Summary";
-		private const int SectionPriority = 199;
+		private const string SummaryKey = "AnFakeSummary";
+		private const string SummaryHeader = "AnFake Summary";
+		private const int SummaryPriority = 199;
+		private const string OverviewKey = "AnFakeOverview";
+		private const string OverviewHeader = "Overview";
+		private const int OverviewPriority = 150;
 		private const string LocalTemp = ".tmp";
 
 		private readonly TfsTeamProjectCollection _teamProjectCollection;
@@ -100,6 +102,9 @@ namespace AnFake.Plugins.Tfs2012
 				_build = null;
 				_tracker = null;
 			}
+
+			Snapshot.FileSaved += OnFileSaved;
+			Snapshot.FileReverted += OnFileReverted;
 		}		
 
 		public TfsTeamProjectCollection TeamProjectCollection
@@ -170,6 +175,47 @@ namespace AnFake.Plugins.Tfs2012
 
 		//
 
+		//
+		// TFS is too "smart" and treats files as changed even its content fully identical to server's item,
+		// so we query pending changes when file is saved to snapshot and remember it if no such changes. 
+		// Then when file is reverted we perfrom TFS Undo operation if it hadn't changes before.
+		//
+
+		private readonly ISet<Snapshot.SavedFile> _unchangedFiles = new HashSet<Snapshot.SavedFile>();
+
+		private void OnFileSaved(object sender, Snapshot.SavedFile savedFile)
+		{
+			var ws = Vcs.TryGetWorkspace(savedFile.Path.Full);
+			if (ws == null)
+				return;
+
+			var pendingSets = ws.QueryPendingSets(
+				new[] { savedFile.Path.Full },
+				RecursionType.None,
+				ws.Name,
+				ws.OwnerName,
+				false);
+
+			if (pendingSets.Length == 0)
+			{
+				_unchangedFiles.Add(savedFile);
+			}
+		}
+
+		private void OnFileReverted(object sender, Snapshot.SavedFile savedFile)
+		{
+			if (!_unchangedFiles.Remove(savedFile))
+				return;
+
+			var ws = Vcs.TryGetWorkspace(savedFile.Path.Full);
+			if (ws == null)
+				return;
+
+			ws.Undo(savedFile.Path.Full, RecursionType.None);			
+		}		
+
+		//
+
 		private void OnMessage(object sender, TraceMessage message)
 		{
 			switch (message.Level)
@@ -196,11 +242,11 @@ namespace AnFake.Plugins.Tfs2012
 			}
 
 			//
-			// To prevent too active TFS accessing we save messages just once in 5s.			
+			// To prevent too active TFS accessing we save messages just once in 200ms.			
 			// Some of the last messages might not be saved by this method but OnTargetFinished handler saves the rest in anyway.
 			//
 			var now = Environment.TickCount;
-			if (now - _lastSaved >= 5000)
+			if (now - _lastSaved >= 200)
 			{
 				_tracker.Save();
 				_lastSaved = now;
@@ -209,20 +255,45 @@ namespace AnFake.Plugins.Tfs2012
 
 		private void OnBuildStarted(object sender, MyBuild.RunDetails details)
 		{
+			Trace.Info(">>> TfsPlugin.OnBuildStarted");
+
 			Folders.Create(LocalTemp);
 
-			if (String.IsNullOrEmpty(_build.DropLocation))
-				return;
+			var rdpPath = LocalTemp.AsPath() / Environment.MachineName + ".rdp";
+			Text.WriteTo(rdpPath.AsFile(), String.Format("full address:s:{0}", Environment.MachineName));
 
-			_logsDropPath = _build.DropLocation.AsPath() / "logs";
-			if (SafeOp.Try(Folders.Clean, _logsDropPath))
-				return;
+			var overview = new StringBuilder(256);
+			overview
+				.AppendFormat("Build Agent: [{0}]({1})", Environment.MachineName, rdpPath.ToUnc()).AppendLine()
+				.AppendFormat("Build Folder: [{0}]({1})", MyBuild.Current.Path.Full, MyBuild.Current.Path.ToUnc()).AppendLine()
+				.Append("Drop Folder: ");
 
-			_logsDropPath = null;
+			if (!String.IsNullOrEmpty(_build.DropLocation))
+			{
+				overview.AppendFormat("[{0}]({0})", _build.DropLocation);
+			}
+			else
+			{
+				overview.Append("(none)");
+			}
 
-			_build.Information.AddCustomSummaryInformation(
-				"(!) Drop location is inaccessible, logs will be unavailable.",
-				SectionKey, SectionHeader, SectionPriority);
+			_build.Information
+				.AddCustomSummaryInformation(overview.ToString(), OverviewKey, OverviewHeader, OverviewPriority);
+
+			if (!String.IsNullOrEmpty(_build.DropLocation))
+			{
+				_logsDropPath = _build.DropLocation.AsPath()/"logs";
+				if (!SafeOp.Try(Folders.Clean, _logsDropPath))
+				{
+					_logsDropPath = null;
+
+					_build.Information.AddCustomSummaryInformation(
+						"(!) Drop location is inaccessible, logs will be unavailable.",
+						SummaryKey, SummaryHeader, SummaryPriority);					
+				}
+			}
+
+			Trace.Info("<<< TfsPlugin.OnBuildStarted");
 
 			_build.Information.Save();
 		}
@@ -247,6 +318,8 @@ namespace AnFake.Plugins.Tfs2012
 
 		private void OnTargetFinished(object sender, Target.RunDetails details)
 		{
+			Trace.Info(">>> TfsPlugin.OnTargetFinished");
+
 			var topTarget = (Target) sender;
 			var summary = new StringBuilder(512);			
 
@@ -259,7 +332,7 @@ namespace AnFake.Plugins.Tfs2012
 						target.State.ToHumanReadable().ToUpperInvariant());
 
 				_build.Information
-					.AddCustomSummaryInformation(summary.ToString(), SectionKey, SectionHeader, SectionPriority);
+					.AddCustomSummaryInformation(summary.ToString(), SummaryKey, SummaryHeader, SummaryPriority);
 
 				foreach (var message in target.Messages.Where(x => x.Level == TraceMessageLevel.Summary))
 				{
@@ -270,7 +343,7 @@ namespace AnFake.Plugins.Tfs2012
 					JoinLinks(summary, message.Links);
 					
 					_build.Information
-						.AddCustomSummaryInformation(summary.ToString(), SectionKey, SectionHeader, SectionPriority);
+						.AddCustomSummaryInformation(summary.ToString(), SummaryKey, SummaryHeader, SummaryPriority);
 				}
 
 				_hasBuildErrorsOrWarns |= 
@@ -286,18 +359,21 @@ namespace AnFake.Plugins.Tfs2012
 					topTarget.State.ToHumanReadable().ToUpperInvariant());
 
 			_build.Information
-				.AddCustomSummaryInformation(new string('=', 48), SectionKey, SectionHeader, SectionPriority);
+				.AddCustomSummaryInformation(new string('=', 48), SummaryKey, SummaryHeader, SummaryPriority);
 			_build.Information
-				.AddCustomSummaryInformation(summary.ToString(), SectionKey, SectionHeader, SectionPriority);
+				.AddCustomSummaryInformation(summary.ToString(), SummaryKey, SummaryHeader, SummaryPriority);
 			_build.Information
-				.AddCustomSummaryInformation(" ", SectionKey, SectionHeader, SectionPriority);
+				.AddCustomSummaryInformation(" ", SummaryKey, SummaryHeader, SummaryPriority);
 
-			_build.Information
-				.Save();			
+			_build.Information.Save();
+
+			Trace.Info("<<< TfsPlugin.OnTargetFinished");
 		}		
 
 		private void OnBuildFinished(object sender, MyBuild.RunDetails details)
 		{
+			Trace.Info(">>> TfsPlugin.OnBuildFinished");
+
 			if (_logsDropPath != null)
 			{
 				var buildLog = AppendLink(
@@ -309,7 +385,7 @@ namespace AnFake.Plugins.Tfs2012
 				{
 					_build.LogLocation = (_logsDropPath / "build.log").Full;
 					_build.Information
-						.AddCustomSummaryInformation(buildLog.ToString(), SectionKey, SectionHeader, SectionPriority);					
+						.AddCustomSummaryInformation(buildLog.ToString(), SummaryKey, SummaryHeader, SummaryPriority);					
 				}
 			}			
 
@@ -319,24 +395,26 @@ namespace AnFake.Plugins.Tfs2012
 				{
 					_build.Information.AddCustomSummaryInformation(
 						"(!) There are troubles accessing drop location, some logs are unavailable.",
-						SectionKey, SectionHeader, SectionPriority);
+						SummaryKey, SummaryHeader, SummaryPriority);
 				}
 			}
 			else
 			{
 				_build.Information.AddCustomSummaryInformation(
 					"Hint: set up drop location to get access to complete build logs.",
-					SectionKey, SectionHeader, SectionPriority);
+					SummaryKey, SummaryHeader, SummaryPriority);
 			}
 
 			if (_hasBuildErrorsOrWarns)
 			{
 				_build.Information.AddCustomSummaryInformation(
 					"See the section below for error/warning list.",
-					SectionKey, SectionHeader, SectionPriority);
-			}
+					SummaryKey, SummaryHeader, SummaryPriority);
+			}			
 
-			_build.Information.Save();			
+			Trace.Info("<<< TfsPlugin.OnBuildFinished");
+
+			_build.Information.Save();
 			_build.FinalizeStatus(AsTfsBuildStatus(details.Status));
 		}
 

@@ -87,7 +87,7 @@ namespace AnFake.Core
 		{
 			get { return Path.IsPathRooted(_value); }
 		}
-
+		
 		/// <summary>
 		///		String representation of path as was specified.
 		/// </summary>
@@ -203,7 +203,7 @@ namespace AnFake.Core
 		}
 
 		/// <summary>
-		///		Parent folder. If path is root or just file name then exception is throws.
+		///		Parent folder. If path is root or just file name then exception is thrown.
 		/// </summary>
 		/// <example>
 		/// C:\Projects\MySolution\build.fsx
@@ -239,7 +239,7 @@ namespace AnFake.Core
 		///		Converts this path to relative against given base.
 		/// </summary>
 		/// <param name="basePath"></param>
-		/// <returns></returns>
+		/// <returns>relative path</returns>
 		public FileSystemPath ToRelative(FileSystemPath basePath)
 		{
 			if (basePath == null)
@@ -253,6 +253,36 @@ namespace AnFake.Core
 				: this;
 		}
 
+		/// <summary>
+		///		Converts this path to UNC path.
+		/// </summary>		
+		/// <returns>UNC path</returns>
+		public FileSystemPath ToUnc()
+		{
+			var full = Path.GetFullPath(Full);
+			
+			if (full.Length < 2)
+				throw new InvalidOperationException(String.Format("Path too short to be converted to UNC: '{0}'", full));
+
+			if (full[0] == Path.DirectorySeparatorChar && full[1] == Path.DirectorySeparatorChar)
+				return new FileSystemPath(full, true);
+
+			if (full[1] != ':' || !(full[0] >= 'A' && full[0] <= 'Z' || full[0] >= 'a' && full[0] <= 'z'))
+				throw new InvalidOperationException(String.Format("Don't know how to convert to UNC: '{0}'", full));
+
+			var unc = new StringBuilder(full.Length + 64);
+			unc.Append(Path.DirectorySeparatorChar).Append(Path.DirectorySeparatorChar)
+				.Append(Environment.MachineName).Append(Path.DirectorySeparatorChar)
+				.Append(full[0]).Append('$')
+				.Append(full.Substring(2));
+
+			return new FileSystemPath(unc.ToString(), true);
+		}
+
+		/// <summary>
+		///		Splits path onto steps.
+		/// </summary>
+		/// <returns>array of path steps</returns>
 		public string[] Split()
 		{
 			return _value.Split(Path.DirectorySeparatorChar);

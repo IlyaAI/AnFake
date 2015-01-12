@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Reflection;
 using AnFake.Core.Exceptions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -17,6 +16,22 @@ namespace AnFake.Core.Test
 			Assert.AreEqual("\\root\\path", "/root/path".AsPath().Spec);
 			Assert.AreEqual("root\\path\\", "root/path/".AsPath().Spec);
 			Assert.AreEqual("file", "file".AsPath().Spec);
+		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void FileSystemPath_should_convert_to_unc()
+		{
+			// act & assert
+			Assert.AreEqual(@"\\" + Environment.MachineName + @"\c$\root\path", "c:/root/path".AsPath().ToUnc().Spec);			
+		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void FileSystemPath_should_return_unc_if_already_unc()
+		{
+			// act & assert
+			Assert.AreEqual(@"\\host\share", "//host/share".AsPath().ToUnc().Spec);
 		}
 
 		[TestCategory("Unit")]

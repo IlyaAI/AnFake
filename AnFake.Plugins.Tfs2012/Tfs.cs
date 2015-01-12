@@ -1,6 +1,5 @@
 ﻿using System;
 using AnFake.Core;
-using AnFake.Core.Integration;
 using Microsoft.TeamFoundation.Build.Client;
 
 namespace AnFake.Plugins.Tfs2012
@@ -24,7 +23,8 @@ namespace AnFake.Plugins.Tfs2012
 			else
 			{
 				Plugin.Register<TfsPlugin>()
-					.As<IVersionControl>()
+					.As<Core.Integration.IVersionControl>()
+					.As<Core.Integration.IBuildServer>()
 					.AsSelf();
 
 				_registered = true;
@@ -43,7 +43,8 @@ namespace AnFake.Plugins.Tfs2012
 				return;
 
 			Plugin.RegisterDeferred<TfsPlugin>()
-				.As<IVersionControl>()
+				.As<Core.Integration.IVersionControl>()
+				.As<Core.Integration.IBuildServer>()
 				.AsSelf();
 
 			_registered = true;

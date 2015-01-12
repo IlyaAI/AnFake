@@ -268,5 +268,33 @@ namespace AnFake.Core.Test
 			Assert.AreEqual("FiLe-1.txt", files[1].RelPath.Spec);
 			Assert.AreEqual("fIlE-2.Txt", files[2].RelPath.Spec);
 		}
+
+		[TestCategory("Functional")]
+		[TestMethod]
+		public void FileSet_should_accepts_ending_double_asterisks()
+		{
+			// arrange
+			var fs = "Data/FileSet/**".AsFileSet();
+
+			// act
+			var files = fs.ToList();
+
+			// assert
+			Assert.AreEqual(9, files.Count);
+		}
+
+		[TestCategory("Functional")]
+		[TestMethod]
+		public void FileSet_should_accepts_ending_double_asterisks_in_base_path()
+		{
+			// arrange
+			var fs = "*".AsFileSetFrom("Data/FileSet/**");
+
+			// act
+			var files = fs.ToList();
+
+			// assert
+			Assert.AreEqual(6, files.Count);
+		}
 	}
 }

@@ -218,6 +218,11 @@ namespace AnFake.Core
 						if (!Directory.Exists(path))
 							break;
 
+						if (i + 1 == steps.Length)
+						{
+							results.AddRange(enumerateEntries(path, "*", SearchOption.AllDirectories).Select(AsPath));
+						}
+						else
 						if (i + 2 == steps.Length)
 						{
 							results.AddRange(enumerateEntries(path, steps[i + 1], SearchOption.AllDirectories).Select(AsPath));
@@ -279,8 +284,11 @@ namespace AnFake.Core
 						Trace.DebugFormat("FileSystem.Delete: {0}", path);
 						eraser(path.Full);
 					}
-					catch (IOException e)
+					catch (Exception e)
 					{
+						if (!(e is IOException) && !(e is UnauthorizedAccessException))
+							throw;
+
 						Trace.DebugFormat("FileSystem.Delete: Unable to delete file system entry. Operation deferred.\n  Path: {0}\n  Reason: {1}", path, e.Message);
 
 						deferred.Add(path);

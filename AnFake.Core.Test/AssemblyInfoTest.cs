@@ -17,7 +17,7 @@ namespace AnFake.Core.Test
 			Files.Copy("Data/AssemblyInfo.test.cs", "Data/AssemblyInfo.t1.cs", true);
 
 			// act
-			AssemblyInfo.Embed(
+			var snapshot = AssemblyInfo.Embed(
 				"Data/AssemblyInfo.t1.cs".AsFileSet(),
 				p =>
 				{
@@ -32,6 +32,7 @@ namespace AnFake.Core.Test
 					p.Version = new Version(0, 9, 2, 5);
 					p.FileVersion = new Version(0, 9, 2, 7);
 				});
+			snapshot.Dispose();
 
 			// assert
 			var actual = File.ReadAllText("Data/AssemblyInfo.t1.cs");
