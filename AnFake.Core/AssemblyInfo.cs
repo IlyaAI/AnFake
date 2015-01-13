@@ -75,9 +75,20 @@ namespace AnFake.Core
 
 		public static void EmbedTemporary(IEnumerable<FileItem> files, Action<Params> setParams)
 		{
-			var snapshot = Embed(files, setParams);
+			var snapshot = (Snapshot) null;
+			//
+			// We must subscribe on finalization before call Embed() because 
+			// Embed itself also subscribes on finalization and does dispose.
+			//
+			// ReSharper disable AccessToModifiedClosure
+			Target.CurrentFinalized += (s, r) =>
+			{
+				if (snapshot != null)
+					snapshot.Revert();
+			};
+			// ReSharper restore AccessToModifiedClosure
 
-			Target.CurrentFinalized += (s, r) => snapshot.Revert();
+			snapshot = Embed(files, setParams);
 		}
 
 		public static Snapshot Embed(IEnumerable<FileItem> files, Action<Params> setParams)
@@ -132,6 +143,8 @@ namespace AnFake.Core
 				snapshot.Revert();
 				throw;
 			}
+
+			Target.CurrentFinalized += (s, r) => snapshot.Dispose();
 
 			Trace.InfoFormat("Assembly info embedded. {0} warning(s)", warnings);
 

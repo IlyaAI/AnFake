@@ -609,7 +609,7 @@ namespace AnFake.Core
 			}
 			catch (Exception e)
 			{
-				var error = (e as AnFakeException) ?? new AnFakeWrapperException(e);
+				var error = AnFakeException.Wrap(e);
 
 				Trace.Error(error);
 

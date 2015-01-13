@@ -262,23 +262,26 @@ namespace AnFake.Plugins.Tfs2012
 			var rdpPath = LocalTemp.AsPath() / Environment.MachineName + ".rdp";
 			Text.WriteTo(rdpPath.AsFile(), String.Format("full address:s:{0}", Environment.MachineName));
 
-			var overview = new StringBuilder(256);
-			overview
-				.AppendFormat("Build Agent: [{0}]({1})", Environment.MachineName, rdpPath.ToUnc()).AppendLine()
-				.AppendFormat("Build Folder: [{0}]({1})", MyBuild.Current.Path.Full, MyBuild.Current.Path.ToUnc()).AppendLine()
-				.Append("Drop Folder: ");
+			_build.Information.AddCustomSummaryInformation(
+				String.Format("Build Agent: [{0}]({1})", Environment.MachineName, rdpPath.ToUnc()), 
+				OverviewKey, OverviewHeader, OverviewPriority);
+
+			_build.Information.AddCustomSummaryInformation(
+				String.Format("Build Folder: [{0}]({1})", MyBuild.Current.Path.Full, MyBuild.Current.Path.ToUnc()),
+				OverviewKey, OverviewHeader, OverviewPriority);
 
 			if (!String.IsNullOrEmpty(_build.DropLocation))
 			{
-				overview.AppendFormat("[{0}]({0})", _build.DropLocation);
+				_build.Information.AddCustomSummaryInformation(
+					String.Format("Drop Folder: [{0}]({0})", _build.DropLocation),
+					OverviewKey, OverviewHeader, OverviewPriority);			
 			}
 			else
 			{
-				overview.Append("(none)");
-			}
-
-			_build.Information
-				.AddCustomSummaryInformation(overview.ToString(), OverviewKey, OverviewHeader, OverviewPriority);
+				_build.Information.AddCustomSummaryInformation(
+					"Drop Folder: (none)",
+					OverviewKey, OverviewHeader, OverviewPriority);				
+			}			
 
 			if (!String.IsNullOrEmpty(_build.DropLocation))
 			{
@@ -312,7 +315,7 @@ namespace AnFake.Plugins.Tfs2012
 			}
 			catch (Exception e)
 			{
-				Log.WarnFormat("TfsPlugin.OnTestFailed: {0}", e.Message);
+				Log.WarnFormat("TfsPlugin.OnTestFailed: {0}", AnFakeException.ToString(e));
 			}					
 		}
 

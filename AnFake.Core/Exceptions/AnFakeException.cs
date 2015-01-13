@@ -9,8 +9,7 @@ namespace AnFake.Core.Exceptions
 	{
 		private readonly string _details;
 		private string _formattedMessage;
-		private string _stackTrace;
-		private bool _insideScript;
+		private string _stackTrace;		
 
 		protected AnFakeException(string message) : base(message)
 		{
@@ -39,8 +38,11 @@ namespace AnFake.Core.Exceptions
 		{
 			get
 			{
-				DoFormat();				
-				return _insideScript ? null : _stackTrace;
+				if (StackTraceMode != StackTraceMode.Full) 
+					return null;
+
+				DoFormat();
+				return _stackTrace;
 			}
 		}
 
@@ -67,8 +69,7 @@ namespace AnFake.Core.Exceptions
 			msgBuilder.Append(InnerException != null ? InnerException.Message : base.Message);
 
 			var stackTrace = new StackTrace(InnerException ?? this, true);
-			_insideScript = false;
-
+			
 			if (MyBuild.Current != null && MyBuild.Current.ScriptFile != null)
 			{
 				var frames = stackTrace.GetFrames();
@@ -83,8 +84,7 @@ namespace AnFake.Core.Exceptions
 
 					if (scriptFrame != null)
 					{
-						msgBuilder.Append(" @@ ").Append(scriptName).Append(' ').Append(scriptFrame.GetFileLineNumber());
-						_insideScript = true;
+						msgBuilder.Append(" @@ ").Append(scriptName).Append(' ').Append(scriptFrame.GetFileLineNumber());			
 					}
 				}
 			}
@@ -104,9 +104,21 @@ namespace AnFake.Core.Exceptions
 		{
 			DoFormat();
 
-			return _insideScript
+			return StackTraceMode == StackTraceMode.ScriptOnly
 				? _formattedMessage
 				: _formattedMessage + Environment.NewLine + _stackTrace;
+		}
+
+		public static StackTraceMode StackTraceMode { get; set; }
+
+		public static AnFakeException Wrap(Exception e)
+		{
+			return e as AnFakeException ?? new AnFakeWrapperException(e);
+		}
+
+		public static string ToString(Exception e)
+		{
+			return Wrap(e).ToString();
 		}
 	}
 }

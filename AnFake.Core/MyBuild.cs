@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using AnFake.Api;
 using AnFake.Core.Exceptions;
 
@@ -24,6 +25,7 @@ namespace AnFake.Core
 			public readonly FileItem ScriptFile;
 			public readonly string[] Targets;
 			public readonly Verbosity Verbosity;
+			public readonly Version AnFakeVersion;
 
 			internal Params(FileSystemPath path, FileItem logFile, FileItem scriptFile,
 				Verbosity verbosity, string[] targets, IDictionary<string, string> properties)
@@ -34,6 +36,11 @@ namespace AnFake.Core
 				Targets = targets;
 				Properties = properties;
 				Verbosity = verbosity;
+
+				AnFakeVersion = typeof (MyBuild).Assembly
+					.GetCustomAttribute<AssemblyFileVersionAttribute>()
+					.Version
+					.AsVersion();
 			}
 		}
 
@@ -159,7 +166,7 @@ namespace AnFake.Core
 			}			
 
 			try
-			{
+			{				
 				Api.Trace.Info("Validating targets...");
 				// intentionally make an array to validate all targets are exists
 				var requestedTargets = Current.Targets
@@ -180,10 +187,9 @@ namespace AnFake.Core
 			catch (Exception e)
 			{
 				status = Status.Failed;
-
-				var error = (e as AnFakeException) ?? new AnFakeWrapperException(e);
+				
 				// do the best efforts to notify observers via Tracer				
-				SafeOp.Try(Api.Trace.Error, error);
+				SafeOp.Try(Api.Trace.Error, AnFakeException.Wrap(e));
 			}
 
 			status = GetFinalStatus(status, executedTargets);

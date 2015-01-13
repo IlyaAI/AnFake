@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using AnFake.Api;
 using AnFake.Core;
+using AnFake.Core.Exceptions;
 using AnFake.Logging;
 using AnFake.Scripting;
 
@@ -32,7 +33,7 @@ namespace AnFake
 			
 			if (args.Length == 0)
 			{
-				Console.WriteLine("Usage: AnFake.exe [<script>] [<target>] ... [<name>=<value>] ...");
+				Console.WriteLine("Usage: AnFake.exe [<script>] [<target>] ... [<name>=<value>] ... [-dbg] [-stack]");
 				Console.WriteLine("  <script>       Path to build script. Optional. Default 'build.fsx'");
 				Console.WriteLine("                 Script must have either .fsx (F#) or .csx (C#) extension.");
 				Console.WriteLine("                 If relative path is specified it's evaluated against current directory.");
@@ -41,6 +42,11 @@ namespace AnFake
 				Console.WriteLine("");
 				Console.WriteLine("  <name>=<value> Additional build parameters. Optional. Multiple.");
 				Console.WriteLine("                 Multiple pairs might be specified via space separator.");
+				Console.WriteLine("  -dbg           Attach debugger just after AnFake start.");
+				Console.WriteLine("");
+				Console.WriteLine("  -stack         Enables full stack traces for thrown exception.");
+				Console.WriteLine("                 By default only position in build.fsx is available.");
+				Console.WriteLine("                 This option might be useful when debugging plugins.");
 				Console.WriteLine("");
 				Console.WriteLine("All arguments are optional but at least one must be specified.");
 				Console.WriteLine("");
@@ -162,6 +168,12 @@ namespace AnFake
 					continue;
 				}
 
+				if (arg == "-stack" || arg == "/stack")
+				{
+					AnFakeException.StackTraceMode = StackTraceMode.Full;
+					continue;
+				}
+
 				if (propMode)
 				{
 					options.Properties.Add("__" + propIndex++, arg.Trim());
@@ -264,11 +276,11 @@ namespace AnFake
 				FileSystemPath.Base = scriptFile.Folder;
 
 				Api.Trace.Info("Configuring build...");
-				Api.Trace.InfoFormat("BuildPath : {0}", options.BuildPath);
-				Api.Trace.InfoFormat("LogFile   : {0}", logFile);
-				Api.Trace.InfoFormat("ScriptFile: {0}", scriptFile);
-				Api.Trace.InfoFormat("Targets   : {0}", String.Join(" ", options.Targets));
-				Api.Trace.InfoFormat("Parameters:\n  {0}", String.Join("\n  ", options.Properties.Select(x => x.Key + " = " + x.Value)));
+				Api.Trace.InfoFormat("BuildPath    : {0}", options.BuildPath);
+				Api.Trace.InfoFormat("LogFile      : {0}", logFile);
+				Api.Trace.InfoFormat("ScriptFile   : {0}", scriptFile);
+				Api.Trace.InfoFormat("Targets      : {0}", String.Join(" ", options.Targets));
+				Api.Trace.InfoFormat("Parameters   :\n  {0}", String.Join("\n  ", options.Properties.Select(x => x.Key + " = " + x.Value)));
 
 				if (!scriptFile.Exists())
 				{
@@ -291,6 +303,8 @@ namespace AnFake
 						options.Targets.ToArray(),
 						options.Properties);
 
+				Api.Trace.InfoFormat("AnFakeVersion: {0}", MyBuild.Current.AnFakeVersion);
+
 				evaluator.Evaluate(scriptFile);
 
 				Api.Trace.Info("Configuring plugins...");
@@ -303,7 +317,7 @@ namespace AnFake
 			}
 			catch (Exception e)
 			{				
-				Log.Error(e);
+				Log.Error(AnFakeException.Wrap(e));
 				return (int) MyBuild.Status.Unknown;
 			}
 		}

@@ -9,6 +9,12 @@ namespace AnFake.Core.Test
 	[TestClass]
 	public class AssemblyInfoTest
 	{
+		[TestCleanup]
+		public void Cleanup()
+		{
+			Target.Reset();
+		}
+
 		[TestCategory("Functional")]
 		[TestMethod]
 		public void AssemblyInfo_should_embed_all_non_null_properties()
@@ -17,7 +23,7 @@ namespace AnFake.Core.Test
 			Files.Copy("Data/AssemblyInfo.test.cs", "Data/AssemblyInfo.t1.cs", true);
 
 			// act
-			var snapshot = AssemblyInfo.Embed(
+			"Test".AsTarget().Do(() => AssemblyInfo.Embed(
 				"Data/AssemblyInfo.t1.cs".AsFileSet(),
 				p =>
 				{
@@ -31,8 +37,7 @@ namespace AnFake.Core.Test
 					p.Culture = "en";
 					p.Version = new Version(0, 9, 2, 5);
 					p.FileVersion = new Version(0, 9, 2, 7);
-				});
-			snapshot.Dispose();
+				})).Run();
 
 			// assert
 			var actual = File.ReadAllText("Data/AssemblyInfo.t1.cs");
@@ -49,13 +54,12 @@ namespace AnFake.Core.Test
 			Files.Copy("Data/AssemblyInfo.test.cs", "Data/AssemblyInfo.t2.cs", true);
 
 			// act
-			AssemblyInfo.Embed(
+			"Test".AsTarget().Do(() => AssemblyInfo.EmbedTemporary(			
 				"Data/AssemblyInfo.t2.cs".AsFileSet(),
 				p =>
 				{
 					p.Title = "AnFake.Core.Test";					
-				})
-				.Revert();
+				}));
 
 			// assert
 			var actual = File.ReadAllText("Data/AssemblyInfo.t2.cs");

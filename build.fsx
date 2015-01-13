@@ -55,8 +55,8 @@ let version = "0.9".AsVersion()
     Folders.Clean out
 )
 
-"Compile" => (fun _ ->
-    AssemblyInfo.EmbedTemporary(
+"EmbedAssemblyInfo" => (fun _ ->
+    AssemblyInfo.Embed(
         !!"*/Properties/AssemblyInfo.cs",
         fun p -> 
             p.Title <- "AnFake /Another F# Make/ runtime component"
@@ -64,8 +64,10 @@ let version = "0.9".AsVersion()
             p.Description <- "AnFake: Another F# Make"
             p.Copyright <- String.Format("Ilya A. Ivanov {0}", DateTime.Now.Year)
             p.Version <- version
-        )
+        ) |> ignore    
+)
 
+"Compile" => (fun _ ->
     MsBuild.BuildRelease(product, productOut)
 
     Files.Copy(cmds, productOut, true)
@@ -118,5 +120,7 @@ let version = "0.9".AsVersion()
         p.NoDefaultExcludes <- true)
         |> ignore
 )
+
+"Compile" <== ["EmbedAssemblyInfo"]
 
 "Build" <== ["Compile"; "Custom.ZipHtmlSummary"; "Test.Unit"]

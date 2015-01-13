@@ -32,24 +32,20 @@ namespace AnFake.Api
 		public event EventHandler<TraceMessage> MessageReceiving
 		{
 			add
-			{
-				throw new NotSupportedException("NoopTracer.MessageReceiving not supported.");
+			{				
 			}
 			remove
-			{
-				throw new NotSupportedException("NoopTracer.MessageReceiving not supported.");
+			{			
 			}
 		}
 
 		public event EventHandler<TraceMessage> MessageReceived
 		{
 			add
-			{
-				throw new NotSupportedException("NoopTracer.MessageReceived not supported.");
+			{			
 			}
 			remove
-			{
-				throw new NotSupportedException("NoopTracer.MessageReceived not supported.");
+			{			
 			}
 		}
 	}

@@ -88,6 +88,20 @@ namespace AnFake.Core
 			return Exclude(wildcardedPath.AsPath());
 		}
 
+		public FileSet Exclude(FileSet otherFiles)
+		{
+			if (otherFiles == null)
+				throw new ArgumentException("FileSet.Exclude(otherFiles): otherFiles must not be null");
+
+			_patterns.AddRange(
+				otherFiles._patterns.Select(
+					x => x.Type == PatternType.Include
+						? new Pattern(PatternType.Exclude, x.WildcardedPath, x.BasePath)
+						: new Pattern(PatternType.Include, x.WildcardedPath, x.BasePath)));
+
+			return this;
+		}
+
 		public FileSet From(FileSystemPath basePath)
 		{
 			if (basePath == null)
@@ -164,6 +178,11 @@ namespace AnFake.Core
 		public static FileSet operator -(FileSet files, string wildcardedPath)
 		{
 			return files.Exclude(wildcardedPath);
+		}
+
+		public static FileSet operator -(FileSet files, FileSet otherFiles)
+		{
+			return files.Exclude(otherFiles);
 		}
 
 		private static void MergeFiles(PatternType mergeType, FileSystemPath basePath, IEnumerable<FileSystemPath> src, ICollection<FileItem> dst)

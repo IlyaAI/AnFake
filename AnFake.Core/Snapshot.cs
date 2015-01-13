@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using AnFake.Api;
+using AnFake.Core.Exceptions;
 
 namespace AnFake.Core
 {
@@ -74,7 +75,7 @@ namespace AnFake.Core
 				}
 				catch (Exception e)
 				{
-					Trace.WarnFormat("Snapshot.Revert: {0}", e.Message);
+					Trace.WarnFormat("Snapshot.Revert: {0}", AnFakeException.ToString(e));
 				}
 			}
 
@@ -102,7 +103,7 @@ namespace AnFake.Core
 			}
 			catch (Exception e)
 			{
-				Trace.WarnFormat("Snapshot.Cleanup: {0}", e.Message);
+				Trace.WarnFormat("Snapshot.Cleanup: {0}", AnFakeException.ToString(e));
 			}
 		}
 	}

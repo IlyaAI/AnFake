@@ -52,6 +52,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ArgsExtension.cs" />
+    <Compile Include="Exceptions\StackTraceMode.cs" />
     <Compile Include="Integration\IBuildServer.cs" />
     <Compile Include="BuildServer.cs" />
     <Compile Include="Integration\Tests\IMsTrxPostProcessor.cs" />
