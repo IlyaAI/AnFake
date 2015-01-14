@@ -1,19 +1,12 @@
 ﻿#r ".AnFake/AnFake.Api.dll"
 #r ".AnFake/AnFake.Core.dll"
 #r ".AnFake/AnFake.Fsx.dll"
-#r ".AnFake/Plugins/AnFake.Plugins.Tfs2012.dll"
-#r ".AnFake/Plugins/AnFake.Plugins.HtmlSummary.dll"
 
 open System
 open System.Linq
 open AnFake.Api
 open AnFake.Core
 open AnFake.Fsx.Dsl
-open AnFake.Plugins.Tfs2012
-open AnFake.Plugins.HtmlSummary
-
-//Tfs.UseIt()
-HtmlSummary.UseIt()
 
 let out = ~~".out"
 let productOut = out / "product"
@@ -26,6 +19,8 @@ let plugins =
     + "AnFake.Plugins.HtmlSummary/*.csproj"
 let extras = ~~".AnFake/Extras" % "*"
 let cmds = ~~".AnFake" % "*.cmd"
+let xaml = ~~"AnFake.Integration.Tfs2012.Template" % "AnFakeTemplate.xaml"
+let buildTmpls = ~~".AnFake" % "*.tmpl.fsx" + "*.tmpl.csx"
 let fsharp = 
     ~~"[ProgramFilesX86]/Reference Assemblies/Microsoft/FSharp/.NETFramework/v4.0/4.3.1.0" % "FSharp.Core.dll"
     + "FSharp.Core.optdata"
@@ -36,15 +31,23 @@ let nugetFiles =
     + "AnFake.exe.config"
     + "*.cmd"
     + "*.dll"
+    + "*.tmpl.fsx"
+    + "*.tmpl.csx"
     + "AnFake.*.xml"
     + "FSharp.Core.optdata"
     + "FSharp.Core.sigdata"
     + "Extras/*"
     + "Plugins/AnFake.Integration.Tfs2012.dll"
+    + "Plugins/AnFakeTemplate.xaml"
     + "Plugins/AnFake.Plugins.Tfs2012.dll"
     + "Plugins/AnFake.Plugins.HtmlSummary.dll"
     + "Plugins/AnFake.Plugins.HtmlSummary.zip"
-let version = "0.9".AsVersion()
+
+let productName = "AnFake"
+let productTitle = "AnFake /Another F# Make/ runtime component"
+let productDescription = "AnFake: Another F# Make"
+let productAuthor = "Ilya A. Ivanov"
+let productVersion = "0.9".AsVersion()
 
 "Clean" => (fun _ ->    
     let obj = !!!"*/obj"
@@ -59,11 +62,11 @@ let version = "0.9".AsVersion()
     AssemblyInfo.Embed(
         !!"*/Properties/AssemblyInfo.cs",
         fun p -> 
-            p.Title <- "AnFake /Another F# Make/ runtime component"
-            p.Product <- "AnFake"
-            p.Description <- "AnFake: Another F# Make"
-            p.Copyright <- String.Format("Ilya A. Ivanov {0}", DateTime.Now.Year)
-            p.Version <- version
+            p.Title <- productTitle
+            p.Product <- productName
+            p.Description <- productDescription
+            p.Copyright <- String.Format("{0} {1}", productAuthor, DateTime.Now.Year)
+            p.Version <- productVersion
         ) |> ignore    
 )
 
@@ -72,10 +75,12 @@ let version = "0.9".AsVersion()
 
     Files.Copy(cmds, productOut, true)
     Files.Copy(fsharp, productOut, true)
+    Files.Copy(buildTmpls, productOut, true)
 
     MsBuild.BuildRelease(plugins, pluginsOut)
 
     Files.Copy(extras, extrasOut, true)
+    Files.Copy(xaml, pluginsOut, true)
 
     MsBuild.BuildRelease(tests, testsOut)
 )
@@ -107,18 +112,21 @@ let version = "0.9".AsVersion()
         MyBuild.Failed("There are FSharp.Core.dll, FSharp.Core.optdata and FSharp.Core.sigdata files must present in .out/product")
 
     let nuspec = NuGet.Spec25(fun meta -> 
-        meta.Id <- "AnFake"
-        meta.Version <- version
-        meta.Authors <- "Ilya A. Ivanov"
-        meta.Description <- "AnFake: Another F# Make"
+        meta.Id <- productName
+        meta.Version <- productVersion
+        meta.Authors <- productAuthor
+        meta.Description <- productDescription
     )
 
     nuspec.AddFiles(nugetFiles, "")
 
-    NuGet.Pack(nuspec, out, fun p -> 
+    let nupkg = NuGet.Pack(nuspec, out, fun p -> 
         p.NoPackageAnalysis <- true
         p.NoDefaultExcludes <- true)
-        |> ignore
+
+    NuGet.Push(nupkg, fun p -> 
+        p.AccessKey <- MyBuild.GetProp("NuGet.AccessKey")
+        p.SourceUrl <- MyBuild.GetProp("NuGet.SourceUrl"))
 )
 
 "Compile" <== ["EmbedAssemblyInfo"]

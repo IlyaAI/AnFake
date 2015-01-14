@@ -150,12 +150,19 @@ namespace AnFake.Core
 			{
 				_file = file;
 
-				using (var reader = new StreamReader(file.Path.Full))
+				if (file.Exists())
 				{
-					_encoding = reader.CurrentEncoding;
-
-					LoadLines(reader);
+					using (var reader = new StreamReader(file.Path.Full))
+					{
+						_encoding = reader.CurrentEncoding;
+						LoadLines(reader);
+					}
 				}
+				else
+				{
+					_encoding = Encoding.UTF8;
+					LoadEmpty();
+				}				
 			}
 
 			internal TextDoc(Encoding encoding, TextReader reader)
@@ -378,15 +385,27 @@ namespace AnFake.Core
 			}
 
 			/// <summary>
-			///		Saves changes to specified file.
+			/// 		Saves changes to specified file.
 			/// </summary>
 			/// <param name="file">file to save to (not null)</param>
 			public void SaveTo(FileItem file)
 			{
-				if (file == null)
-					throw new ArgumentException("TextDoc.SaveTo(file): file must not be null");
+				SaveTo(file, _encoding);
+			}
 
-				using (var writer = new StreamWriter(file.Path.Full, false, _encoding))
+			///  <summary>
+			/// 		Saves changes to specified file.
+			///  </summary>
+			///  <param name="file">file to save to (not null)</param>
+			/// <param name="encoding">encoding to write with</param>
+			public void SaveTo(FileItem file, Encoding encoding)
+			{
+				if (file == null)
+					throw new ArgumentException("TextDoc.SaveTo(file[, encoding]): file must not be null");
+				if (encoding == null)
+					throw new ArgumentException("TextDoc.SaveTo(file, encoding): encoding must not be null");
+
+				using (var writer = new StreamWriter(file.Path.Full, false, encoding))
 				{
 					writer.Write(GetText());
 				}
@@ -437,6 +456,12 @@ namespace AnFake.Core
 				{
 					_lines.AddLast(String.Empty);
 				}
+			}
+
+			private void LoadEmpty()
+			{
+				_lines = new LinkedList<string>();
+				_lines.AddLast(String.Empty);
 			}
 		}
 
@@ -561,22 +586,35 @@ namespace AnFake.Core
 			return String.Join(Environment.NewLine, lines);
 		}
 
-		/// <summary>
-		///		Writes text to specified file.
-		/// </summary>
-		/// <remarks>
-		///		If file already exists it will be overwritten. Text is always written in UTF8 encoding and with normalized line endings.
-		/// </remarks>
-		/// <param name="file">file to write to (not null)</param>
-		/// <param name="text">text to be written (not null)</param>
+		///  <summary>
+		/// 		Equals to <see cref="WriteTo(AnFake.Core.FileItem,string)">WriteTo(file, text, Encoding.UTF8)</see>.
+		///  </summary>		
+		///  <param name="file">file to write to (not null)</param>
+		///  <param name="text">text to be written (not null)</param>		
 		public static void WriteTo(FileItem file, string text)
 		{
-			if (file == null)
-				throw new ArgumentException("Text.WriteTo(file, text): file must not be null");
-			if (text == null)
-				throw new ArgumentException("Text.WriteTo(file, text): text must not be null");
+			WriteTo(file, text, Encoding.UTF8);
+		}
 
-			using (var writer = new StreamWriter(file.Path.Full, false, Encoding.UTF8))
+		///  <summary>
+		/// 		Writes text to specified file.
+		///  </summary>
+		///  <remarks>
+		/// 		If file already exists it will be overwritten. Text is always written in UTF8 encoding and with normalized line endings.
+		///  </remarks>
+		///  <param name="file">file to write to (not null)</param>
+		///  <param name="text">text to be written (not null)</param>
+		/// <param name="encoding">encoding to write with (not null)</param>
+		public static void WriteTo(FileItem file, string text, Encoding encoding)
+		{
+			if (file == null)
+				throw new ArgumentException("Text.WriteTo(file, text[, encoding]): file must not be null");
+			if (text == null)
+				throw new ArgumentException("Text.WriteTo(file, text[, encoding]): text must not be null");
+			if (encoding == null)
+				throw new ArgumentException("Text.WriteTo(file, text, encoding): encoding must not be null");
+
+			using (var writer = new StreamWriter(file.Path.Full, false, encoding))
 			{
 				foreach (var line in text.GetLines())
 				{

@@ -203,5 +203,20 @@ namespace AnFake.Core.Test
 			// assert
 			Assert.AreEqual("groupA1-groupB2 groupC1-groupD2", doc.Text);
 		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void TextDoc_should_be_empty_on_non_existing_file()
+		{
+			// arrange
+			
+
+			// act
+			var doc = "Data/doc.txt".AsFile().AsTextDoc();
+
+			// assert
+			Assert.AreEqual(1, doc.Lines.Count());
+			Assert.AreEqual(String.Empty, doc.Lines.First());
+		}
 	}
 }

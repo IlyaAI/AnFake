@@ -38,10 +38,19 @@
     </x:Property>
     <x:Property Name="AnFakeScript" Type="InArgument(x:String)" />
     <x:Property Name="AnFakePath" Type="InArgument(x:String)" />
+    <x:Property Name="Metadata" Type="mtbw:ProcessParameterMetadataCollection" />
   </x:Members>
   <this:Process.GetVersion>
     <InArgument x:TypeArguments="x:String" />
   </this:Process.GetVersion>
+  <this:Process.Metadata>
+    <mtbw:ProcessParameterMetadataCollection>
+      <mtbw:ProcessParameterMetadata BrowsableWhen="Always" Category="#900 AnFake" Description="AnFake targets to be executed. Multiple values separated by space are allowed." DisplayName="AnFakeTargets" ParameterName="AnFakeTargets" Required="True" />
+      <mtbw:ProcessParameterMetadata BrowsableWhen="Always" Category="#900 AnFake" Description="Additional AnFake properties to be passed to build script in form of &lt;name&gt;=&lt;value&gt;." DisplayName="AnFakeProperties" ParameterName="AnFakeProperties" />
+      <mtbw:ProcessParameterMetadata Category="#900 AnFake" Description="Build script file." DisplayName="AnFakeScript" ParameterName="AnFakeScript" Required="True" />
+      <mtbw:ProcessParameterMetadata Category="#900 AnFake" Description="Path to AnFake.exe" DisplayName="AnFakePath" ParameterName="AnFakePath" Required="True" />
+    </mtbw:ProcessParameterMetadataCollection>
+  </this:Process.Metadata>
   <mva:VisualBasic.Settings>
     <x:Null />
   </mva:VisualBasic.Settings>
@@ -139,7 +148,7 @@
       </Sequence>
       <ait:InvokeAnFake BuildDetail="[BuildDetail]" BuildDirectory="[BuildDirectory]" CleanWorkspace="[CleanWorkspace]" sap2010:WorkflowViewState.IdRef="InvokeAnFake_1" PrivateDropLocation="[PrivateDropLocation]" Properties="[AnFakeProperties]" Script="[AnFakeScript]" Targets="[AnFakeTargets]" ToolPath="[AnFakePath]" Verbosity="[Verbosity]" />
     </mtbwa:AgentScope>
-    <sads:DebugSymbol.Symbol>d0pDOlxQcm9qZWN0c1xBbkZha2VcQW5GYWtlLkludGVncmF0aW9uLlRmczIwMTIuVGVtcGxhdGVcQW5GYWtlVGVtcGxhdGUueGFtbEQB/gUBhAYBCQHVBAGVBQEIAa0CAbwEAQcB8wYBhgcBBgGkBgGzBgEFAcIBAZACAQQBzwYB2QYBAwFlAaQBAQJbA48BDgIBAWAFYLMBAgFZYQVjHQIBVWQFjQEYAgECYKEBYLABAgFaYgdiogECAVZksQFkzgECAQdkggFkpAECAQZk3wFkigICAQRpNmlRAgEDbAd4EgIBQHkHiwESAgEbjAEHjAGLAwIBCGIyYkcCAVdtCW20AQIBUm4JbsoBAgFPbwlvlgMCAUtwCXcOAgFBegl+DgIBOn8Jf58CAgEwgAEJgAG6AQIBKYEBCYoBHwIBHIwBkgKMAaYCAgEZjAGuAowBvgICAReMAeICjAHwAgIBFYwB+wKMAYgDAgETjAEljAE0AgERjAHHAowB2AICAQ+MAUSMAVYCAQ2MAe8BjAGGAgIBC4wBZowBeAIBCW2jAW2xAQIBU261AW7HAQIBUG/MAW+TAwIBTm+0AW/FAQIBTHAXcIwBAgFCcg11GAIBQ3oXekQCATt8DXzaAQIBPH8vf0ECATh/Sn95AgE3f+sBf/gBAgE1f4oCf5wCAgEzf9IBf+MBAgExgAGxAYABtwECAS+AASqAATkCAS2AAZQBgAGgAQIBLIABeIABhQECASqBAeABgQHuAQIBJIEB+QGBAYYCAgEihwEPhwGjAgIBHXMPc/gDAgFIdA903gICAUR8NXw9AgE/fMYBfNcBAgE9hwEthwF8AgEghwGOAocBoAICAR9zkQFzkQMCAUp02gF02wICAUd0wgF00wECAUU=</sads:DebugSymbol.Symbol>
+    <sads:DebugSymbol.Symbol>d0pDOlxQcm9qZWN0c1xBbkZha2VcQW5GYWtlLkludGVncmF0aW9uLlRmczIwMTIuVGVtcGxhdGVcQW5GYWtlVGVtcGxhdGUueGFtbEQB/gUBhAYBCQHVBAGVBQEIAa0CAbwEAQcB8wYBhgcBBgGkBgGzBgEFAcIBAZACAQQBzwYB2QYBAwFlAaQBAQJkA5gBDgIBAWkFabMBAgFZagVsHQIBVW0FlgEYAgECaaEBabABAgFaawdrogECAVZtsQFtzgECAQdtggFtpAECAQZt3wFtigICAQRyNnJRAgEDdQeBARICAUCCAQeUARICARuVAQeVAdoCAgEIazJrRwIBV3YJdrQBAgFSdwl3ygECAU94CXiWAwIBS3kJgAEOAgFBgwEJhwEOAgE6iAEJiAGfAgIBMIkBCYkBugECASmKAQmTAR8CARyVAeEBlQH1AQIBGZUB/QGVAY0CAgEXlQGxApUBvwICARWVAcoClQHXAgIBE5UBJZUBNAIBEZUBlgKVAacCAgEPlQFElQFWAgENlQG+AZUB1QECAQuVAWaVAXgCAQl2owF2sQECAVN3tQF3xwECAVB4zAF4kwMCAU54tAF4xQECAUx5F3mMAQIBQnsNfhgCAUODAReDAUQCATuFAQ2FAdoBAgE8iAEviAFBAgE4iAFKiAF5AgE3iAHrAYgB+AECATWIAYoCiAGcAgIBM4gB0gGIAeMBAgExiQGxAYkBtwECAS+JASqJATkCAS2JAZQBiQGgAQIBLIkBeIkBhQECASqKAeABigHuAQIBJIoB+QGKAYYCAgEikAEPkAGjAgIBHXwPfPgDAgFIfQ993gICAUSFATWFAT0CAT+FAcYBhQHXAQIBPZABLZABfAIBIJABjgKQAaACAgEffJEBfJEDAgFKfdoBfdsCAgFHfcIBfdMBAgFF</sads:DebugSymbol.Symbol>
   </Sequence>
   <sap2010:WorkflowViewState.ViewStateManager>
     <sap2010:ViewStateManager>

@@ -89,7 +89,15 @@ namespace AnFake.Plugins.Tfs2012
 			Trace.InfoFormat("TfsWorkspace.Create\n ServerPath: {0}\n LocalPath: {1}\n Workspace: {2} (from '{3}')",
 				serverPath, localPath, workspaceName, parameters.WorkspaceFile);
 
-			var wsFile = LocateWorkspaceFile(localPath, parameters.WorkspaceFile);
+			var wsFile = (localPath / parameters.WorkspaceFile).AsFile();
+			if (!wsFile.Exists())
+			{
+				using (var writer = new StreamWriter(wsFile.Path.Full, false, Encoding.UTF8))
+				{
+					WriteWorkspaceHeader(writer);
+				}
+			}
+
 			var wsDesc = GetTextContent(wsFile);
 			var mappings = VcsMappings.Parse(wsDesc, serverPath.Full, localPath.Full);
 
@@ -242,8 +250,9 @@ namespace AnFake.Plugins.Tfs2012
 			
 			var wsFile = (localPath / parameters.WorkspaceFile).AsFile();
 			if (wsFile.Exists())
-				throw new InvalidConfigurationException(
-					String.Format("Workspace file already exists. Hint: delete it implicitly if you really want to overwrite it.\n  {0}", wsFile));
+			{
+				Files.Copy(wsFile, wsFile.Path.Full.MakeUnique().AsFile());
+			}				
 
 			var ws = Vcs.GetWorkspace(wsFile.Path.Full);
 			var serverPath = ws.GetServerItemForLocalItem(localPath.Full).AsServerPath();
@@ -254,9 +263,7 @@ namespace AnFake.Plugins.Tfs2012
 			var errors = 0;
 			using (var writer = new StreamWriter(wsFile.Path.Full, false, Encoding.UTF8))
 			{
-				writer.WriteLine("# AnFake Workspace Definition File");
-				writer.WriteLine("# Mapping '<project-root>: <local-root>' always added automatically");
-				writer.WriteLine();
+				WriteWorkspaceHeader(writer);
 
 				foreach (var workingFolder in ws.Folders)
 				{
@@ -469,6 +476,13 @@ namespace AnFake.Plugins.Tfs2012
 			}
 
 			return wsFile;
+		}
+
+		private static void WriteWorkspaceHeader(TextWriter writer)
+		{
+			writer.WriteLine("# AnFake Workspace Definition File");
+			writer.WriteLine("# Mapping '<project-root>: <local-root>' always added automatically");
+			writer.WriteLine();
 		}
 
 		private static void UpdateFiles(Workspace ws)

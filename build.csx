@@ -18,6 +18,8 @@ public sealed class BuildScript : BuildScriptSkeleton
 			+ "AnFake.Plugins.HtmlSummary/*.csproj";
 		var extras = "*".AsFileSetFrom(".AnFake/Extras");
 		var cmds = "*.cmd".AsFileSetFrom(".AnFake");
+		var xaml = "AnFakeTemplate.xaml".AsFileSetFrom("AnFake.Integration.Tfs2012.Template");
+		var buildTmpls = "*.tmpl.fsx".AsFileSetFrom(".AnFake") + "*.tmpl.csx";
 		var fsharp =
 			"[ProgramFilesX86]/Reference Assemblies/Microsoft/FSharp/.NETFramework/v4.0/4.3.1.0".AsPath()
 			%"FSharp.Core.dll"
@@ -29,15 +31,23 @@ public sealed class BuildScript : BuildScriptSkeleton
 			+ "AnFake.exe.config"
 			+ "*.cmd"
 			+ "*.dll"
+			+ "*.tmpl.fsx"
+			+ "*.tmpl.csx"
 			+ "AnFake.*.xml"			
 			+ "FSharp.Core.optdata"
 			+ "FSharp.Core.sigdata"
 			+ "Extras/*"
 			+ "Plugins/AnFake.Integration.Tfs2012.dll"
+			+ "Plugins/AnFakeTemplate.xaml"
 			+ "Plugins/AnFake.Plugins.Tfs2012.dll"
 			+ "Plugins/AnFake.Plugins.HtmlSummary.dll"
 			+ "Plugins/AnFake.Plugins.HtmlSummary.zip";
-		var version = "0.9".AsVersion();
+
+		var productName = "AnFake";
+		var productTitle = "AnFake /Another F# Make/ runtime component";
+		var productDescription = "AnFake: Another F# Make";
+		var productAuthor = "Ilya A. Ivanov";
+		var productVersion = "0.9".AsVersion();
 
 		"Clean".AsTarget().Do(() =>
 		{
@@ -49,27 +59,32 @@ public sealed class BuildScript : BuildScriptSkeleton
 			Folders.Clean(outDir);
 		});
 
-		"Compile".AsTarget().Do(() =>
+		"EmbedAssemblyInfo".AsTarget().Do(() =>
 		{
-			AssemblyInfo.EmbedTemporary(
+			AssemblyInfo.Embed(
 				"*/Properties/AssemblyInfo.cs".AsFileSet(),
 				p =>
 				{
-					p.Title = "AnFake /Another F# Make/ runtime component";
-					p.Product = "AnFake";
-					p.Description = "AnFake: Another F# Make";
-					p.Copyright = String.Format("Ilya A. Ivanov {0}", DateTime.Now.Year);
-					p.Version = version;
+					p.Title = productTitle;
+					p.Product = productName;
+					p.Description = productDescription;
+					p.Copyright = String.Format("{0} {1}", productAuthor, DateTime.Now.Year);
+					p.Version = productVersion;
 				});
+		});
 
+		"Compile".AsTarget().Do(() =>
+		{
 			MsBuild.BuildRelease(product, productOut);
 
 			Files.Copy(cmds, productOut, true);
 			Files.Copy(fsharp, productOut, true);
+			Files.Copy(buildTmpls, productOut, true);
 
 			MsBuild.BuildRelease(plugins, pluginsOut);
 
 			Files.Copy(extras, extrasOut, true);
+			Files.Copy(xaml, pluginsOut, true);
 
 			MsBuild.BuildRelease(tests, testsOut);
 		});
@@ -91,7 +106,7 @@ public sealed class BuildScript : BuildScriptSkeleton
 			MsTest.Run(
 				testsOut%"*.Test.dll",
 				p => { p.NoIsolation = true; });
-		});
+		}).SkipErrors();
 
 		"Package".AsTarget().Do(() =>
 		{
@@ -105,10 +120,10 @@ public sealed class BuildScript : BuildScriptSkeleton
 
 			var nuspec = NuGet.Spec25(meta =>
 			{
-				meta.Id = "AnFake";
-				meta.Version = version;
-				meta.Authors = "Ilya A. Ivanov";
-				meta.Description = "AnFake: Another F# Make";
+				meta.Id = productName;
+				meta.Version = productVersion;
+				meta.Authors = productAuthor;
+				meta.Description = productDescription;
 			});
 
 			nuspec.AddFiles(nugetFiles, "");
@@ -118,8 +133,15 @@ public sealed class BuildScript : BuildScriptSkeleton
 				p.NoPackageAnalysis = true;
 				p.NoDefaultExcludes = true;
 			});
+
+			//NuGet.Push(nupkg, fun p -> 
+			//	p.AccessKey <- MyBuild.GetProp("NuGet.AccessKey")
+			//	p.SourceUrl <- MyBuild.GetProp("NuGet.SourceUrl"))
 		});
-		
+
+		"Compile".AsTarget()
+			.DependsOn("EmbedAssemblyInfo");
+
 		"Build".AsTarget()
 			.DependsOn("Compile", "Custom.ZipHtmlSummary", "Test.Unit");
 	}

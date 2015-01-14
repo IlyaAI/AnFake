@@ -331,7 +331,7 @@ namespace AnFake.Core
         ///				p.SourceUrl &lt;- "SOURCE URL HERE")		
 		/// </code>
 		/// </example>
-		public static void Push(FileSystemPath package, Action<Params> setParams)
+		public static void Push(FileItem package, Action<Params> setParams)
 		{
 			if (package == null)
 				throw new ArgumentException("NuGet.Push(package, setParams): package must not be null");
@@ -352,7 +352,7 @@ namespace AnFake.Core
 
 			var args = new Args("-", " ")
 				.Command("push")
-				.Param(package.Full)
+				.Param(package.Path.Full)
 				.Param(parameters.AccessKey)
 				.Option("s", parameters.SourceUrl)
 				.Other(parameters.ToolArguments);

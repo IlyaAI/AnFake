@@ -15,6 +15,15 @@ open AnFake.Plugins.Tfs2012
 open System.Windows.Forms
 ////////////////////////////////////
 
+// Get text from Clipboard ASAP because some targets have interactive points and 
+// user can re-use clipboard to provide requested values, so we've lost initial text.
+let clipboardText =
+    if Clipboard.ContainsText() then
+        Clipboard.GetText()
+    else
+        null
+//
+
 let curDir = Folders.Current.Path;
 let serviceNames = 
     [
@@ -34,14 +43,68 @@ let getProductName (serverPath: ServerPath) =
         .Except(serviceNames, StringComparer.OrdinalIgnoreCase)
         .FirstOrDefault()
 
+let printInstallXamlUsage () =
+    Log.Info "InstallXaml <build-process-templates-path> [<build-process-custom-activities-path>]"
+    Log.Info "  Creates TFS workspace and pends AnFakeTemplate.xaml and related DLLs for addition."
+    Log.Info "    <build-process-templates-path>         Server path to BuildProcessTemplates folder."
+    Log.Info "    <build-process-custom-activities-path> Server path to CustomActivities folder."
+    Log.Info "                                           If omitted then will be evaluated as <build-process-templates-path> / 'CustomActivities'."
+    Log.Info ""
+
+let printGetStartedUsage () =
+    Log.Info "{GetStarted|gs} [<local-path>]"
+    Log.Info "  Prepares module to start using AnFake."
+    Log.Info "    <local-path>      Local path of module which is getting started."
+    Log.Info "                      If omitted current directory is used."    
+    Log.Info ""
+
+let printCheckoutUsage () =
+    Log.Info "{Checkout|co} [<server-path> [<local-path> [<workspace-name>]]]"
+    Log.Info "  Creates TFS workspace from '.workspace' file and downloads specified branch into local folder."
+    Log.Info "    <server-path>     Full TFS path of branch to be checked out."
+    Log.Info "                      If omitted AnFake tries to use value from clipboard."
+    Log.Info "    <local-path>      Local path of branch to be checked out."
+    Log.Info "                      If omitted AnFake tries to evaluate it by convention."
+    Log.Info "    <workspace-name>  Workspace name to be created for branch to be checked out."
+    Log.Info "                      If omitted AnFake tries to evaluate it by convention."
+    Log.Info ""
+
+let printSyncUsage () =
+    Log.Info "{Sync|sync} [<local-path>]"
+    Log.Info "  Updates TFS workspace using latest version of '.workspace' file from source control and gets latest items."
+    Log.Info "    <local-path>      Local path of '.workspace' file."
+    Log.Info "                      If omitted AnFake tries to locate '.workspace' file in current directory."
+    Log.Info ""
+
+let printSyncLocalUsage () =
+    Log.Info "{SyncLocal|syncl} [<local-path>]"
+    Log.Info "  Updates TFS workspace using local '.workspace' file and gets latest items from source control."
+    Log.Info "    <local-path>      Local path of '.workspace' file."
+    Log.Info "                      If omitted AnFake tries to locate '.workspace' file in current directory."
+    Log.Info ""
+
+let printCheckinUsage () =
+    Log.Info "{Checkin|ci} <server-path> [<local-path> [<workspace-name>]]"
+    Log.Info "  Creates TFS workspace with single mapping '<server-path>: <local-path>' and pends all source files for addition."
+    Log.Info "    <server-path>     Full TFS path of branch to be checked in."    
+    Log.Info "    <local-path>      Local path of branch to be checked in."
+    Log.Info "                      If omitted current directory is used."
+    Log.Info "    <workspace-name>  Workspace name to be created for branch to be checked out."
+    Log.Info "                      If omitted AnFake tries to evaluate it by convention."
+    Log.Info ""
+
 Tfs.UseItDeferred()
 
 "Build" => (fun _ ->
-    Trace.Info "Usage: AnFake.Tf[.cmd] <command> [<param>] ..."
-    Trace.Info "Supported commands:"
-    Trace.Info " {Checkout|co} <server-path> [<local-path> [<workspace-name>]]"
-    Trace.Info " {SyncLocal|syncl} [<local-path>]"
-    Trace.Info " {Sync|sync} [<local-path>]"
+    Log.Info ""
+    Log.Info "Usage: anf-tf[.cmd] <command> [<param>] ..."
+    Log.Info "COMMANDS:"
+    printInstallXamlUsage()
+    printGetStartedUsage()
+    printCheckoutUsage()
+    printSyncUsage()
+    printSyncLocalUsage()
+    printCheckinUsage()    
 
     MyBuild.Failed "Command is missed."
 )
@@ -52,7 +115,7 @@ Tfs.UseItDeferred()
             "Tfs.Uri",
             UserInterop.Prompt(
                 "TeamFoundation Collection Uri", 
-                "Please, enter an URI of Team Foundation Projects Collection, e.g. https://tf-server:8080/my-collection.\n" + 
+                "Please, enter an URI of Team Foundation Projects Collection, e.g. 'https://tf-server:8080/my-collection'.\n" + 
                 "Alternatively you can provide URI as command line parameter: \"Tfs.Uri=<your-uri>\"")
         )
     
@@ -61,14 +124,65 @@ Tfs.UseItDeferred()
     MyBuild.SaveProp("Tfs.Uri")
 )
 
+"InstallXaml" => (fun _ ->
+    if not <| MyBuild.HasProp("__1") then
+        printInstallXamlUsage()
+        MyBuild.Failed("Required parameter <build-process-templates-path> is missed.")
+
+    let processTmplPath = MyBuild.GetProp("__1").AsServerPath()
+    let customActivitiesPath =
+        if MyBuild.HasProp("__2") then
+            MyBuild.GetProp("__2").AsServerPath()
+        else
+            processTmplPath / "CustomActivities"
+
+    let workspaceName = "AnFake.Xaml".MakeUnique()
+    
+    let localPath = ~~"[Temp]" / workspaceName;
+    Folders.Clean(localPath)
+
+    let wsFile = (localPath / TfsWorkspace.Defaults.WorkspaceFile).AsFile()
+    let wsDef = wsFile.AsTextDoc();    
+    wsDef.LastLine().InsertAfter("{0}/AnFake.Api.dll: AnFake.Api.dll", customActivitiesPath)
+    wsDef.LastLine().InsertAfter("{0}/AnFake.Integration.Tfs2012.dll: AnFake.Integration.Tfs2012.dll", customActivitiesPath)
+    wsDef.Save()
+
+    TfsWorkspace.Create(processTmplPath, localPath, workspaceName)
+    
+    Files.Copy(~~"[AnFake]/AnFake.Api.dll", localPath / "AnFake.Api.dll", true)
+    Files.Copy(~~"[AnFakePlugins]/AnFake.Integration.Tfs2012.dll", localPath / "AnFake.Integration.Tfs2012.dll", true)
+    Files.Copy(~~"[AnFakePlugins]/AnFakeTemplate.xaml", localPath / "AnFakeTemplate.xaml", true)
+
+    TfsWorkspace.PendAdd(
+        [
+            (localPath / "AnFake.Api.dll").AsFile()
+            (localPath / "AnFake.Integration.Tfs2012.dll").AsFile()
+            (localPath / "AnFakeTemplate.xaml").AsFile()
+        ]
+    )
+
+    Log.InfoFormat("AnFakeTemplate is ready to be checked-in. Carefully review all pending changes in '{0}' workspace and commit them.", workspaceName)
+)
+
+"SetUpTeamProjects" ==> "InstallXaml"
+
 "GetStarted" => (fun _ ->
     if not <| MyBuild.HasProp("AnFake.TfsPath") then
         MyBuild.SetProp(
             "AnFake.TfsPath",
             UserInterop.Prompt(
                 "TFS Path to AnFake", 
-                "Please, enter a TFS path where AnFake should be stored.\n" + 
+                "Please, enter a TFS path where AnFake should be stored, e.g. '$/Infrastructure' (do not include 'AnFake' itself, this will be added automatically).\n" + 
                 "Alternatively, you can provide path as command line parameter: \"AnFake.TfsPath=<tfs-path-to-anfake>\"")
+        )
+
+    if not <| MyBuild.HasProp("AnFake.SettingsTfsPath") then
+        MyBuild.SetProp(
+            "AnFake.SettingsTfsPath",
+            UserInterop.Prompt(
+                "TFS Path to AnFake.settings.json", 
+                "Please, enter a TFS path where AnFake infrastructure settings should be stored, e.g. '$/Infrastructure/Settings/current'.\n" + 
+                "Alternatively, you can provide path as command line parameter: \"AnFake.SettingsTfsPath=<tfs-path-to-anfake-settings>\"")
         )
 
     let dstPath = 
@@ -82,12 +196,14 @@ Tfs.UseItDeferred()
     if not <| anfDstPath.AsFolder().Exists() then
         TfsWorkspace.SaveLocal(dstPath)
 
-        let myselfServerPath = MyBuild.GetProp("AnFake.TfsPath").AsServerPath()
+        let myselfServerPath = 
+            MyBuild.GetProp("AnFake.TfsPath").AsServerPath() 
+            / "AnFake" 
+            / MyBuild.Current.AnFakeVersion.ToString()
+
         let settingsServerPath = 
-            if MyBuild.HasProp("AnFake.SettingsTfsPath") then
-                MyBuild.GetProp("AnFake.SettingsTfsPath").AsServerPath()
-            else
-                null
+            MyBuild.GetProp("AnFake.SettingsTfsPath").AsServerPath()
+
         let settingsFile = (dstPath / "AnFake.settings.json").AsFile()
         
         let wsFile = (dstPath / TfsWorkspace.Defaults.WorkspaceFile).AsFile()
@@ -96,30 +212,39 @@ Tfs.UseItDeferred()
         if not <| wsDef.HasLine("\\.AnFake") then
             wsDef.LastLine().InsertAfter("{0}: .AnFake", myselfServerPath)
             wsDef.LastLine().InsertAfter("{0}/anf.cmd: anf.cmd", myselfServerPath)
-            if settingsServerPath <> null then
-                wsDef.LastLine().InsertAfter("{0}/{1}: {1}", settingsServerPath, settingsFile.Name)
+            wsDef.LastLine().InsertAfter("{0}/{1}: {1}", settingsServerPath, settingsFile.Name)
             wsDef.Save()
         else
             MyBuild.Failed("Workspace already contains AnFake mapping.")
-                
+
         TfsWorkspace.SyncLocal(dstPath)
         TfsWorkspace.PendAdd([wsFile])
 
         if not <| anfDstPath.AsFolder().Exists() then
-            let myself = ~~"[AnFake]" % "**/*" - "anf.cmd"
+            let myself = 
+                ~~"[AnFake]" % "**/*" 
+                - "anf.cmd" 
+                - "*.fsx" 
+                - "*.csx"
+                - "*.nupkg"
             Files.Copy(myself, anfDstPath)
             Files.Copy(~~"[AnFake]/anf.cmd", dstPath / "anf.cmd")
             TfsWorkspace.PendAdd(anfDstPath % "**/*")
             TfsWorkspace.PendAdd(dstPath % "anf.cmd")
         
-        if settingsServerPath <> null && not <| settingsFile.Exists() then
-            "{}".AsTextDoc().SaveTo(settingsFile)
-            TfsWorkspace.PendAdd(dstPath % settingsFile.Name)
+        if not <| settingsFile.Exists() then
+            "{}".AsTextDoc().SaveTo(settingsFile, new Text.UTF8Encoding(false))
+            TfsWorkspace.PendAdd([settingsFile])
+
+        let buildFsx = (dstPath / "build.fsx").AsFile()
+        if not <| buildFsx.Exists() then            
+            Files.Copy(~~"[AnFake]/build.tmpl.fsx", buildFsx.Path)
+            TfsWorkspace.PendAdd([buildFsx])
     
         MyBuild.SaveProp("AnFake.TfsPath")
         MyBuild.SaveProp("AnFake.SettingsTfsPath")
 
-        Trace.InfoFormat("Folder '{0}' is ready to use AnFake. Carefully review all pended chages before commit!", dstPath)
+        Log.InfoFormat("Folder '{0}' is ready to use AnFake. Carefully review all pending changes before commit!", dstPath)
     else
         MyBuild.Failed("AnFake already exists: '{0}'", dstPath)   
 )
@@ -131,11 +256,10 @@ Tfs.UseItDeferred()
 
     let serverPath =
         if not <| MyBuild.HasProp("__1") then
-            if Clipboard.ContainsText() then                
-                let text = Clipboard.GetText()
-                if text.StartsWith("$") && not <| text.Contains("\n") && not <| text.Contains("\r") then
+            if clipboardText <> null then
+                if clipboardText.StartsWith("$") && not <| clipboardText.Contains("\n") && not <| clipboardText.Contains("\r") then
                     needConfirmation <- true
-                    text.AsServerPath()
+                    clipboardText.AsServerPath()
                 else
                     null
             else
@@ -144,6 +268,7 @@ Tfs.UseItDeferred()
             MyBuild.GetProp("__1").AsServerPath()
 
     if serverPath = null then
+        printCheckoutUsage()
         MyBuild.Failed("Required parameter <server-path> is missed.\nHint: you can pass it via clipboard, simply do 'Copy' on desired value.")
 
     UserInterop.Highlight(
@@ -162,6 +287,7 @@ Tfs.UseItDeferred()
             .FirstOrDefault()
 
     if productName = null && not <| MyBuild.HasProp("__2") && not <| MyBuild.HasProp("__3") then
+        printCheckoutUsage()
         MyBuild.Failed("Unable to auto-detect product name. Please, specify <local-path> and <workspace-name> explicitly.")
 
     let localPath = 
@@ -204,11 +330,13 @@ Tfs.UseItDeferred()
         if MyBuild.HasProp("__1") then
             MyBuild.GetProp("__1").AsServerPath()
         else
+            printCheckinUsage()
             MyBuild.Failed("Required parameter <server-path> is missed.")
             null    
 
     let productName = getProductName(serverPath)
     if productName = null && not <| MyBuild.HasProp("__2") && not <| MyBuild.HasProp("__3") then
+        printCheckinUsage()
         MyBuild.Failed("Unable to auto-detect product name. Please, specify <local-path> and <workspace-name> explicitly.")
 
     let localPath = 
@@ -242,10 +370,12 @@ Tfs.UseItDeferred()
         - "**/bin/**/*"
         - "**/obj/**/*"
         - "*.suo"
+        - "*.log"
+        - "*.trace.jsx"
 
     TfsWorkspace.PendAdd(srcFiles)
 
-    Trace.InfoFormat("Folder '{0}' is ready to check-in. Carefully review all pended chages before commit!", localPath)
+    Log.InfoFormat("Folder '{0}' is ready to check-in. Carefully review all pending changes in '{1}' workspace and commit them.", localPath, workspaceName)
 )
 
 "SetUpTeamProjects" ==> "Checkin" ==> "ci"

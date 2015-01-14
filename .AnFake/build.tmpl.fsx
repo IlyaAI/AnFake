@@ -1,12 +1,7 @@
-﻿//#r ".AnFake/AnFake.Api.dll"
-//#r ".AnFake/AnFake.Core.dll"
-//#r ".AnFake/AnFake.Fsx.dll"
-//#r ".AnFake/Plugins/AnFake.Plugins.Tfs2012.dll"
-
-#r "AnFake.Api.dll"
-#r "AnFake.Core.dll"
-#r "AnFake.Fsx.dll"
-#r "Plugins/AnFake.Plugins.Tfs2012.dll"
+﻿#r ".AnFake/AnFake.Api.dll"
+#r ".AnFake/AnFake.Core.dll"
+#r ".AnFake/AnFake.Fsx.dll"
+#r ".AnFake/Plugins/AnFake.Plugins.Tfs2012.dll"
 
 open System
 open System.Linq
