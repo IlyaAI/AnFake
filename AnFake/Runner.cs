@@ -37,11 +37,13 @@ namespace AnFake
 				Console.WriteLine("  <script>       Path to build script. Optional. Default 'build.fsx'");
 				Console.WriteLine("                 Script must have either .fsx (F#) or .csx (C#) extension.");
 				Console.WriteLine("                 If relative path is specified it's evaluated against current directory.");
+				Console.WriteLine("");
 				Console.WriteLine("  <target>       Target to run. Optional. Multiple. Default 'Build'");
 				Console.WriteLine("                 Multiple targets might be specified via space separator.");
 				Console.WriteLine("");
 				Console.WriteLine("  <name>=<value> Additional build parameters. Optional. Multiple.");
 				Console.WriteLine("                 Multiple pairs might be specified via space separator.");
+				Console.WriteLine("");
 				Console.WriteLine("  -dbg           Attach debugger just after AnFake start.");
 				Console.WriteLine("");
 				Console.WriteLine("  -stack         Enables full stack traces for thrown exception.");
@@ -111,7 +113,7 @@ namespace AnFake
 				{
 					foreach (var setting in new Settings(localSettings))
 					{
-						options.Properties.Add(setting.Key, setting.Value);
+						options.Properties[setting.Key] = setting.Value;
 					}
 				}
 			}
@@ -125,7 +127,7 @@ namespace AnFake
 			{
 				foreach (var setting in Settings.Current)
 				{
-					options.Properties.Add(setting.Key, setting.Value);
+					options.Properties[setting.Key] = setting.Value;
 				}
 			}
 			catch (Exception e)
@@ -152,7 +154,7 @@ namespace AnFake
 				{
 					var index = arg.IndexOf("=", StringComparison.InvariantCulture);
 
-					options.Properties.Add(arg.Substring(0, index).Trim(), arg.Substring(index + 1).Trim());
+					options.Properties[arg.Substring(0, index).Trim()] = arg.Substring(index + 1).Trim();
 					continue;
 				}
 

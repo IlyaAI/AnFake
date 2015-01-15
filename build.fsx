@@ -1,4 +1,4 @@
-﻿#r ".AnFake/AnFake.Api.dll"
+﻿#r ".AnFake/AnFake.Api.v1.dll"
 #r ".AnFake/AnFake.Core.dll"
 #r ".AnFake/AnFake.Fsx.dll"
 
@@ -19,7 +19,7 @@ let plugins =
     + "AnFake.Plugins.HtmlSummary/*.csproj"
 let extras = ~~".AnFake/Extras" % "*"
 let cmds = ~~".AnFake" % "*.cmd"
-let xaml = ~~"AnFake.Integration.Tfs2012.Template" % "AnFakeTemplate.xaml"
+let xaml = ~~"AnFake.Integration.Tfs2012.Template/AnFakeTemplate.xaml"
 let buildTmpls = ~~".AnFake" % "*.tmpl.fsx" + "*.tmpl.csx"
 let fsharp = 
     ~~"[ProgramFilesX86]/Reference Assemblies/Microsoft/FSharp/.NETFramework/v4.0/4.3.1.0" % "FSharp.Core.dll"
@@ -37,8 +37,8 @@ let nugetFiles =
     + "FSharp.Core.optdata"
     + "FSharp.Core.sigdata"
     + "Extras/*"
-    + "Plugins/AnFake.Integration.Tfs2012.dll"
-    + "Plugins/AnFakeTemplate.xaml"
+    + "Plugins/AnFake.Integration.Tfs2012.*.dll"
+    + "Plugins/AnFakeTemplate.*.xaml"
     + "Plugins/AnFake.Plugins.Tfs2012.dll"
     + "Plugins/AnFake.Plugins.HtmlSummary.dll"
     + "Plugins/AnFake.Plugins.HtmlSummary.zip"
@@ -47,7 +47,14 @@ let productName = "AnFake"
 let productTitle = "AnFake /Another F# Make/ runtime component"
 let productDescription = "AnFake: Another F# Make"
 let productAuthor = "Ilya A. Ivanov"
-let productVersion = "0.9".AsVersion()
+let productVersion = "1.0.1".AsVersion()
+
+//
+// IMPORTANT! 
+// If apiVersion changed then xamlVersion MUST BE incremented too
+//
+let apiVersion = "1"
+let xamlVersion = "1" 
 
 "Clean" => (fun _ ->    
     let obj = !!!"*/obj"
@@ -80,7 +87,7 @@ let productVersion = "0.9".AsVersion()
     MsBuild.BuildRelease(plugins, pluginsOut)
 
     Files.Copy(extras, extrasOut, true)
-    Files.Copy(xaml, pluginsOut, true)
+    Files.Copy(xaml, pluginsOut / String.Format("AnFakeTemplate.v{0}.xaml", xamlVersion), true)
 
     MsBuild.BuildRelease(tests, testsOut)
 )
@@ -127,6 +134,54 @@ let productVersion = "0.9".AsVersion()
     NuGet.Push(nupkg, fun p -> 
         p.AccessKey <- MyBuild.GetProp("NuGet.AccessKey")
         p.SourceUrl <- MyBuild.GetProp("NuGet.SourceUrl"))
+)
+
+"SetApiVersion" => (fun _ ->
+    let files =
+        [
+            "AnFake.Api/AnFake.Api.csproj", 
+                [
+                    @"<AssemblyName>AnFake\.Api\.v(\d+)</AssemblyName>"
+                ]
+            "AnFake.Integration.Tfs2012.Template/AnFake.Integration.Tfs2012.Template.csproj",
+                [                    
+                    @"<HintPath>\.\.\\\.AnFake\\AnFake.Api\.v(\d+)\.dll</HintPath>"
+                ]            
+        ]
+
+    for (path, patterns) in files do
+        let doc = path.AsFile().AsTextDoc()
+
+        for pattern in patterns do
+            doc.Replace(pattern, fun i v -> if i = 1 then apiVersion else null)
+
+        doc.Save()    
+)
+
+"SetXamlVersion" => (fun _ ->
+    let files =
+        [
+            "AnFake.Integration.Tfs2012/AnFake.Integration.Tfs2012.csproj", 
+                [
+                    @"<AssemblyName>AnFake\.Integration\.Tfs2012\.v(\d+)</AssemblyName>"
+                ]
+            "AnFake.Integration.Tfs2012.Template/AnFake.Integration.Tfs2012.Template.csproj",
+                [                    
+                    @"<HintPath>\.\.\\\.AnFake\\Plugins\\AnFake.Integration\.Tfs2012\.v(\d+)\.dll</HintPath>"
+                ]
+            "AnFake.Integration.Tfs2012.Template/AnFakeTemplate.xaml",
+                [
+                    @"clr-namespace:AnFake\.Integration\.Tfs2012;assembly=AnFake\.Integration\.Tfs2012\.v(\d+)"
+                ]
+        ]
+
+    for (path, patterns) in files do
+        let doc = path.AsFile().AsTextDoc()
+
+        for pattern in patterns do
+            doc.Replace(pattern, fun i v -> if i = 1 then xamlVersion else null)
+
+        doc.Save()    
 )
 
 "Compile" <== ["EmbedAssemblyInfo"]

@@ -31,11 +31,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AnFake.Api">
-      <HintPath>..\.AnFake\AnFake.Api.dll</HintPath>
+      <HintPath>..\.AnFake\AnFake.Api.v1.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="AnFake.Integration.Tfs2012">
-      <HintPath>..\.AnFake\Plugins\AnFake.Integration.Tfs2012.dll</HintPath>
+      <HintPath>..\.AnFake\Plugins\AnFake.Integration.Tfs2012.v1.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Microsoft.TeamFoundation.Build.Client, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />

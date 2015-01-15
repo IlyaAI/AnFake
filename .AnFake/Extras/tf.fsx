@@ -1,4 +1,4 @@
-﻿#r "../AnFake.Api.dll"
+﻿#r "../AnFake.Api.v1.dll"
 #r "../AnFake.Core.dll"
 #r "../AnFake.Fsx.dll"
 #r "../Plugins/AnFake.Plugins.Tfs2012.dll"
@@ -139,26 +139,25 @@ Tfs.UseItDeferred()
     let workspaceName = "AnFake.Xaml".MakeUnique()
     
     let localPath = ~~"[Temp]" / workspaceName;
+    let activitiesLocalPath = localPath / "CustomActivities"
     Folders.Clean(localPath)
+    Folders.Create(activitiesLocalPath)
 
     let wsFile = (localPath / TfsWorkspace.Defaults.WorkspaceFile).AsFile()
     let wsDef = wsFile.AsTextDoc();    
-    wsDef.LastLine().InsertAfter("{0}/AnFake.Api.dll: AnFake.Api.dll", customActivitiesPath)
-    wsDef.LastLine().InsertAfter("{0}/AnFake.Integration.Tfs2012.dll: AnFake.Integration.Tfs2012.dll", customActivitiesPath)
+    wsDef.LastLine().InsertAfter("{0}: CustomActivities", customActivitiesPath)    
     wsDef.Save()
 
     TfsWorkspace.Create(processTmplPath, localPath, workspaceName)
     
-    Files.Copy(~~"[AnFake]/AnFake.Api.dll", localPath / "AnFake.Api.dll", true)
-    Files.Copy(~~"[AnFakePlugins]/AnFake.Integration.Tfs2012.dll", localPath / "AnFake.Integration.Tfs2012.dll", true)
-    Files.Copy(~~"[AnFakePlugins]/AnFakeTemplate.xaml", localPath / "AnFakeTemplate.xaml", true)
+    Files.Copy(~~"[AnFakePlugins]" % "AnFakeTemplate.*.xaml", localPath, true)
+    Files.Copy(~~"[AnFake]" % "AnFake.Api.*.dll", activitiesLocalPath, true)
+    Files.Copy(~~"[AnFakePlugins]" % "AnFake.Integration.Tfs2012.*.dll", activitiesLocalPath, true)    
 
+    TfsWorkspace.PendAdd(localPath % "AnFakeTemplate.*.xaml")
     TfsWorkspace.PendAdd(
-        [
-            (localPath / "AnFake.Api.dll").AsFile()
-            (localPath / "AnFake.Integration.Tfs2012.dll").AsFile()
-            (localPath / "AnFakeTemplate.xaml").AsFile()
-        ]
+        activitiesLocalPath % "AnFake.Api.*.dll"
+        + "AnFake.Integration.Tfs2012.*.dll"
     )
 
     Log.InfoFormat("AnFakeTemplate is ready to be checked-in. Carefully review all pending changes in '{0}' workspace and commit them.", workspaceName)
@@ -227,6 +226,7 @@ Tfs.UseItDeferred()
                 - "*.fsx" 
                 - "*.csx"
                 - "*.nupkg"
+                - "Plugins/*.xaml"
             Files.Copy(myself, anfDstPath)
             Files.Copy(~~"[AnFake]/anf.cmd", dstPath / "anf.cmd")
             TfsWorkspace.PendAdd(anfDstPath % "**/*")
@@ -278,13 +278,7 @@ Tfs.UseItDeferred()
         "Simply select project root in Source Control Explorer, click on 'Source location' and press Ctrl+C then re-run command."
     )
 
-    let productName = 
-        serverPath
-            .Split()
-            .Reverse()
-            .Skip(1)
-            .Except(serviceNames, StringComparer.OrdinalIgnoreCase)
-            .FirstOrDefault()
+    let productName = getProductName(serverPath)
 
     if productName = null && not <| MyBuild.HasProp("__2") && not <| MyBuild.HasProp("__3") then
         printCheckoutUsage()
@@ -351,7 +345,7 @@ Tfs.UseItDeferred()
         else
             needConfirmation <- true
             NameGen.Generate(
-                String.Format("{0}.{1}", productName, localPath.LastName),
+                String.Format("{0}.{1}", productName, serverPath.LastName),
                 TfsWorkspace.UniqueName
             )
 
@@ -403,3 +397,4 @@ Tfs.UseItDeferred()
 )
 
 "SetUpTeamProjects" ==> "Sync"
+

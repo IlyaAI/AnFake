@@ -107,7 +107,7 @@ namespace AnFake.Plugins.Tfs2012
 			Trace.InfoFormat("Workspace '{0}' successfully created for '{1}'.", workspaceName, GetCurrentUser());
 
 			UpdateFiles(ws);
-		}
+		}		
 
 		public static void Checkout(ServerPath serverPath, FileSystemPath localPath, string workspaceName)
 		{

@@ -367,6 +367,8 @@ namespace AnFake.Core
 			result
 				.FailIfAnyError("Target terminated due to NuGet errors.")
 				.FailIfExitCodeNonZero(String.Format("NuGet.Push failed with exit code {0}. Package: {1}", result.ExitCode, package));
+
+			Trace.SummaryFormat("NuGet.Push: {0} @ {1}", package.Name, parameters.SourceUrl);
 		}
 
 		private static void EnsureToolPath(Params parameters)

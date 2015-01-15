@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>AnFake.Integration.Tfs2012</RootNamespace>
-    <AssemblyName>AnFake.Integration.Tfs2012</AssemblyName>
+    <AssemblyName>AnFake.Integration.Tfs2012.v1</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -58,7 +58,7 @@
     <ProjectReference Include="..\AnFake.Api\AnFake.Api.csproj">
       <Project>{e08fa8a9-33d4-4f27-b29e-c9388a291c45}</Project>
       <Name>AnFake.Api</Name>
-      <Private>True</Private>
+      <Private>False</Private>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
