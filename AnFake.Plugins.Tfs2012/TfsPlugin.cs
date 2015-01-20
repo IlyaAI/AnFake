@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Principal;
 using System.Text;
 using AnFake.Api;
 using AnFake.Core;
@@ -31,7 +32,7 @@ namespace AnFake.Plugins.Tfs2012
 		private FileSystemPath _logsDropPath;
 		private bool _hasDropErrors;
 		private bool _hasBuildErrorsOrWarns;
-		//private int _lastSaved;
+		private bool _isInfoCacheUpToDate;
 
 		public TfsPlugin()
 		{
@@ -128,9 +129,64 @@ namespace AnFake.Plugins.Tfs2012
 			get { return _vcs ?? (_vcs = _teamProjectCollection.GetService<VersionControlServer>()); }
 		}
 
+		public Workspace FindWorkspace(FileSystemPath localPath)
+		{
+			var ws = Vcs.TryGetWorkspace(localPath.Full);
+			if (ws != null || _isInfoCacheUpToDate)
+				return ws;
+
+			Trace.InfoFormat("TfsPlugin: unable to find workspace for local path, trying to update info cache...\n  LocalPath: {0}", localPath.Full);
+
+			Workstation.Current.UpdateWorkspaceInfoCache(Vcs, GetCurrentUser());
+			_isInfoCacheUpToDate = true;
+
+			ws = Vcs.TryGetWorkspace(localPath.Full);
+
+			Trace.Info(
+				ws != null 
+					? "TfsPlugin: workspace info cache successfully updated." 
+					: "TfsPlugin: workspace info cache updated but this didn't help.");
+
+			return ws;
+		}
+
+		public Workspace GetWorkspace(FileSystemPath localPath)
+		{
+			var ws = FindWorkspace(localPath);
+			if (ws == null)
+				throw new InvalidConfigurationException(String.Format("There is no working folder mapping for '{0}'.", localPath.Full));
+
+			return ws;
+		}
+
+		public Workspace FindWorkspace(string workspaceName)
+		{
+			try
+			{
+				var ws = Vcs.GetWorkspace(workspaceName, GetCurrentUser());
+
+				if (!ws.IsDeleted && ws.MappingsAvailable)
+					return ws;
+			}
+			catch (WorkspaceNotFoundException)
+			{
+			}
+
+			return null;
+		}
+
+		public string GetCurrentUser()
+		{
+			var identity = WindowsIdentity.GetCurrent();
+			if (identity == null)
+				throw new InvalidConfigurationException("TFS plugin requires authenticated user.");
+
+			return identity.Name;
+		}
+
 		public int LastChangesetOf(FileSystemPath path)
 		{
-			var ws = Vcs.GetWorkspace(path.Full);
+			var ws = GetWorkspace(path);
 			var queryParams = new QueryHistoryParameters(path.Full, RecursionType.Full)
 			{
 				VersionStart = new ChangesetVersionSpec(1),
@@ -346,9 +402,9 @@ namespace AnFake.Plugins.Tfs2012
 			{
 				summary
 					.Clear()
-					.AppendFormat("{0}: {1,3} error(s) {2,3} warning(s) {3,3} messages(s)  {4}",
+					.AppendFormat(@"{0}: {1,3} error(s) {2,3} warning(s) {3,3} messages(s)  {4:hh\:mm\:ss}  {5}",
 						target.Name, target.Messages.ErrorsCount, target.Messages.WarningsCount, target.Messages.SummariesCount, 
-						target.State.ToHumanReadable().ToUpperInvariant());
+						target.RunTime, target.State.ToHumanReadable().ToUpperInvariant());
 
 				_build.Information
 					.AddCustomSummaryInformation(summary.ToString(), SummaryKey, SummaryHeader, SummaryPriority);

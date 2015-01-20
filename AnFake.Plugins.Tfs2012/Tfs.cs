@@ -50,6 +50,13 @@ namespace AnFake.Plugins.Tfs2012
 			_registered = true;
 		}
 
+		private static TfsPlugin _impl;
+
+		private static TfsPlugin Impl
+		{
+			get { return _impl ?? (_impl = Plugin.Get<TfsPlugin>()); }
+		}
+
 		/// <summary>
 		///		Represents build details provided by Tfs.
 		/// </summary>
@@ -89,7 +96,7 @@ namespace AnFake.Plugins.Tfs2012
 		/// </summary>
 		public static BuildDetail Build
 		{
-			get { return _build ?? (_build = new BuildDetail(Plugin.Get<TfsPlugin>().Build)); }
+			get { return _build ?? (_build = new BuildDetail(Impl.Build)); }
 		}
 
 		/// <summary>
@@ -108,7 +115,7 @@ namespace AnFake.Plugins.Tfs2012
 		/// <returns></returns>
 		public static int LastChangesetOf(FileSystemPath path)
 		{
-			return Plugin.Get<TfsPlugin>().LastChangesetOf(path);
+			return Impl.LastChangesetOf(path);
 		}		
 
 		/// <summary>

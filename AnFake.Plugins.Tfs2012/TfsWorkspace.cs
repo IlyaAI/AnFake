@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Principal;
 using System.Text;
 using AnFake.Api;
 using AnFake.Core;
@@ -38,18 +37,23 @@ namespace AnFake.Plugins.Tfs2012
 			Defaults = new Params();
 		}
 
-		private static VersionControlServer _vcs;
+		private static TfsPlugin _impl;
+
+		private static TfsPlugin Impl
+		{
+			get { return _impl ?? (_impl = Plugin.Get<TfsPlugin>()); }
+		}
 
 		private static VersionControlServer Vcs
 		{
-			get { return _vcs ?? (_vcs = Plugin.Get<TfsPlugin>().Vcs); }
+			get { return Impl.Vcs; }
 		}
 
 		public static Predicate<string> UniqueName
 		{
 			get
 			{
-				var usedNames = Vcs.QueryWorkspaces(null, GetCurrentUser(), null)
+				var usedNames = Vcs.QueryWorkspaces(null, Impl.GetCurrentUser(), null)
 					.ToLookup(x => x.Name);
 
 				return name => !usedNames.Contains(name);
@@ -58,7 +62,7 @@ namespace AnFake.Plugins.Tfs2012
 
 		public static void UpdateInfoCache()
 		{
-			Workstation.Current.UpdateWorkspaceInfoCache(Vcs, GetCurrentUser());
+			Workstation.Current.UpdateWorkspaceInfoCache(Vcs, Impl.GetCurrentUser());
 		}
 
 		public static void Create(ServerPath serverPath, FileSystemPath localPath, string workspaceName)
@@ -82,7 +86,7 @@ namespace AnFake.Plugins.Tfs2012
 			if (setParams == null)
 				throw new ArgumentException("TfsWorkspace.Create(serverPath, localPath, workspaceName, setParams): setParams must not be null");
 
-			var ws = FindWorkspace(workspaceName);
+			var ws = Impl.FindWorkspace(workspaceName);
 			if (ws != null)
 				throw new InvalidConfigurationException(String.Format("Unable to create workspace '{0}' because it already exists.", workspaceName));
 
@@ -108,8 +112,8 @@ namespace AnFake.Plugins.Tfs2012
 
 			TraceMappings(mappings);
 
-			ws = Vcs.CreateWorkspace(workspaceName, GetCurrentUser(), String.Format("AnFake: {0} => {1}", serverPath, localPath), mappings);
-			Trace.InfoFormat("Workspace '{0}' successfully created for '{1}'.", workspaceName, GetCurrentUser());
+			ws = Vcs.CreateWorkspace(workspaceName, Impl.GetCurrentUser(), String.Format("AnFake: {0} => {1}", serverPath, localPath), mappings);
+			Trace.InfoFormat("Workspace '{0}' successfully created for '{1}'.", workspaceName, Impl.GetCurrentUser());
 
 			UpdateFiles(ws);
 		}		
@@ -137,7 +141,7 @@ namespace AnFake.Plugins.Tfs2012
 			if (setParams == null)
 				throw new ArgumentException("TfsWorkspace.Checkout(serverPath, localPath, workspaceName, setParams): setParams must not be null");
 
-			var ws = FindWorkspace(workspaceName);			
+			var ws = Impl.FindWorkspace(workspaceName);			
 			if (ws != null)
 				throw new InvalidConfigurationException(String.Format("TfsWorkspace.Checkout intended for initial downloading only but workspace '{0}' already exists.", workspaceName));
 
@@ -156,8 +160,8 @@ namespace AnFake.Plugins.Tfs2012
 
 			TraceMappings(mappings);
 
-			ws = Vcs.CreateWorkspace(workspaceName, GetCurrentUser(), String.Format("AnFake: {0} => {1}", serverPath, localPath), mappings);
-			Trace.InfoFormat("Workspace '{0}' successfully created for '{1}'.", workspaceName, GetCurrentUser());
+			ws = Vcs.CreateWorkspace(workspaceName, Impl.GetCurrentUser(), String.Format("AnFake: {0} => {1}", serverPath, localPath), mappings);
+			Trace.InfoFormat("Workspace '{0}' successfully created for '{1}'.", workspaceName, Impl.GetCurrentUser());
 
 			UpdateFiles(ws);
 		}
@@ -184,7 +188,7 @@ namespace AnFake.Plugins.Tfs2012
 
 			Trace.InfoFormat("TfsWorkspace.Sync: {0}", localPath);
 
-			var ws = Vcs.GetWorkspace(wsFile.Path.Full);
+			var ws = Impl.GetWorkspace(wsFile.Path);
 			var wsPath = ws.GetServerItemForLocalItem(wsFile.Path.Full).AsServerPath();
 
 			Trace.DebugFormat("Synchronizing workspace: {0} => {1}", wsPath, ws.Name);
@@ -221,7 +225,7 @@ namespace AnFake.Plugins.Tfs2012
 
 			Trace.InfoFormat("TfsWorkspace.SyncLocal: {0}", localPath);
 
-			var ws = Vcs.GetWorkspace(wsFile.Path.Full);
+			var ws = Impl.GetWorkspace(wsFile.Path);
 			var serverPath = ws.GetServerItemForLocalItem(localPath.Full).AsServerPath();
 
 			Trace.DebugFormat("Synchronizing workspace: {0} => {1}", wsFile, ws.Name);
@@ -257,9 +261,9 @@ namespace AnFake.Plugins.Tfs2012
 			if (wsFile.Exists())
 			{
 				Files.Copy(wsFile, wsFile.Path.Full.MakeUnique().AsFile());
-			}				
+			}
 
-			var ws = Vcs.GetWorkspace(wsFile.Path.Full);
+			var ws = Impl.GetWorkspace(wsFile.Path);
 			var serverPath = ws.GetServerItemForLocalItem(localPath.Full).AsServerPath();
 
 			Trace.InfoFormat("TfsWorkspace.SaveLocal:\n  WorkspaceFile: {0}\n  ServerRoot: {1}\n  LocalRoot: {2}", 
@@ -348,15 +352,7 @@ namespace AnFake.Plugins.Tfs2012
 				throw new TargetFailureException("TfsWorkspace.SaveLocal failed due to incompatibilities in workspace.");
 			
 			Trace.InfoFormat("Workspace '{0}' successfully saved.", ws.Name);
-		}
-
-		public static bool IsLocal(FileSystemPath localPath)
-		{
-			if (localPath == null)
-				throw new ArgumentException("TfsWorkspace.IsLocal(localPath): localPath must not be null");
-
-			return Vcs.TryGetWorkspace(localPath.Full) != null;
-		}
+		}		
 
 		public static void PendAdd(IEnumerable<FileItem> files)
 		{
@@ -367,7 +363,7 @@ namespace AnFake.Plugins.Tfs2012
 				.Select(x => x.Path)
 				.ToArray();
 
-			var ws = Vcs.GetWorkspace(filePathes[0].Full);
+			var ws = Impl.GetWorkspace(filePathes[0]);
 			
 			Trace.InfoFormat("TfsWorkspace.PendAdd");
 
@@ -389,7 +385,7 @@ namespace AnFake.Plugins.Tfs2012
 
 			var filesArray = files.ToArray();
 
-			var ws = Vcs.GetWorkspace(filesArray[0].Path.Full);
+			var ws = Impl.GetWorkspace(filesArray[0].Path);
 			
 			Trace.InfoFormat("TfsWorkspace.Undo");
 
@@ -421,31 +417,6 @@ namespace AnFake.Plugins.Tfs2012
 						m => String.Format("{0} => {1}", 
 							m.ServerItem, 
 							m.IsCloaked ? "(cloacked)" : m.LocalItem))));
-		}
-
-		private static Workspace FindWorkspace(string workspaceName)
-		{
-			try
-			{
-				var ws = Vcs.GetWorkspace(workspaceName, GetCurrentUser());
-
-				if (!ws.IsDeleted && ws.MappingsAvailable)
-					return ws;
-			}
-			catch (WorkspaceNotFoundException)
-			{
-			}
-
-			return null;
-		}
-
-		private static string GetCurrentUser()
-		{
-			var identity = WindowsIdentity.GetCurrent();
-			if (identity == null)
-				throw new InvalidConfigurationException("TFS plugin requires authenticated user.");
-
-			return identity.Name;
 		}
 
 		private static string GetTextContent(ServerPath serverPath)
