@@ -14,7 +14,7 @@ namespace AnFake.Plugins.Tfs2012
 		/// <summary>
 		///		Activates <c>Tfs</c> plugin.
 		/// </summary>
-		public static void UseIt()
+		public static void PlugIn()
 		{
 			if (_registered)
 			{
@@ -35,9 +35,9 @@ namespace AnFake.Plugins.Tfs2012
 		///		Marks <c>Tfs</c> plugin to be activated later.
 		/// </summary>
 		/// <remarks>
-		///		This method is intended for special cases only (see Extras/tf.fsx for example). Normally you should call <c>Tfs.UseIt</c>.
+		///		This method is intended for special cases only (see Extras/tf.fsx for example). Normally you should call <c>Tfs.PlugIn</c>.
 		/// </remarks>
-		public static void UseItDeferred()
+		public static void PlugInDeferred()
 		{
 			if (_registered)
 				return;

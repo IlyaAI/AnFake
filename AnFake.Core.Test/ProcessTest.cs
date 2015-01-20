@@ -1,5 +1,6 @@
 ﻿using System;
 using AnFake.Api;
+using AnFake.Core.Exceptions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Rhino.Mocks;
 
@@ -121,6 +122,26 @@ namespace AnFake.Core.Test
 			{
 				Trace.Set(prevTracer);
 			}
+		}
+
+		[TestCategory("Functional")]
+		[TestMethod]
+		public void ProcessRun_should_throw_exception_if_file_not_found()
+		{
+			// arrange
+			
+			try
+			{
+				// act
+				Process.Run(def => def.FileName = "noname.exe".AsPath());
+
+				Assert.Fail("AnFakeException expected.");
+			}
+			catch (AnFakeException e)
+			{
+				// assert
+				Assert.IsTrue(e.Message.Contains("noname.exe"));
+			}			
 		}
 	}
 }

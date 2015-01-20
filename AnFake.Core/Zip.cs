@@ -54,6 +54,9 @@ namespace AnFake.Core
 			}
 		}
 
+		/// <summary>
+		///		Default Zip parameters.
+		/// </summary>
 		public static Params Defaults { get; private set; }
 
 		static Zip()
@@ -61,11 +64,22 @@ namespace AnFake.Core
 			Defaults = new Params();
 		}
 
+		/// <summary>
+		///		Packs specified files into zip archive.
+		/// </summary>
+		/// <param name="files">files to be packed (not null)</param>
+		/// <param name="zipFilePath">destination path of archive to be created (not null)</param>
 		public static void Pack(IEnumerable<FileItem> files, FileSystemPath zipFilePath)
 		{
 			Pack(files, zipFilePath, p => { });
 		}
 
+		/// <summary>
+		///		Packs specified files into zip archive.
+		/// </summary>
+		/// <param name="files">files to be packed (not null)</param>
+		/// <param name="zipFilePath">destination path of archive to be created (not null)</param>
+		/// <param name="setParams">action which overrides default parameters</param>
 		public static void Pack(IEnumerable<FileItem> files, FileSystemPath zipFilePath, Action<Params> setParams)
 		{
 			if (files == null)
@@ -83,14 +97,22 @@ namespace AnFake.Core
 			setParams(parameters);
 
 			Trace.Info("Zip.Pack...");
-
+			
 			using (var zip = new ZipOutputStream(new FileStream(zipFilePath.Full, FileMode.Create, FileAccess.Write)))
 			{
+				var entries = new HashSet<string>();
+
 				zip.SetLevel(parameters.Level);
 
 				foreach (var file in filesToZip)
 				{
 					Trace.DebugFormat("  {0}", file.RelPath);
+
+					if (!entries.Add(file.RelPath.Spec))
+					{
+						Trace.WarnFormat("Zip.Pack: duplicated entry '{0}'.\n  Source path: {1}",
+							file.RelPath.Spec, file.Path.Full);
+					}
 
 					var entry = new ZipEntry(file.RelPath.Spec);
 					zip.PutNextEntry(entry);
@@ -105,11 +127,22 @@ namespace AnFake.Core
 			Trace.InfoFormat("{0} file(s) zipped.", filesToZip.Length);			
 		}
 
+		/// <summary>
+		///		Unpacks specified zip archive.
+		/// </summary>
+		/// <param name="zipFilePath">zip archive path to be unpacked</param>
+		/// <param name="targetPath">target path to unpack to</param>		
 		public static void Unpack(FileSystemPath zipFilePath, FileSystemPath targetPath)
 		{
 			Unpack(zipFilePath, targetPath, p => { });
 		}
 
+		/// <summary>
+		///		Unpacks specified zip archive.
+		/// </summary>
+		/// <param name="zipFilePath">zip archive path to be unpacked</param>
+		/// <param name="targetPath">target path to unpack to</param>
+		/// <param name="setParams">action which overrides default parameters</param>
 		public static void Unpack(FileSystemPath zipFilePath, FileSystemPath targetPath, Action<Params> setParams)
 		{
 			if (zipFilePath == null)

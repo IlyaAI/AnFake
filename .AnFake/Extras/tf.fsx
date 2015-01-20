@@ -93,7 +93,7 @@ let printCheckinUsage () =
     Log.Info "                      If omitted AnFake tries to evaluate it by convention."
     Log.Info ""
 
-Tfs.UseItDeferred()
+Tfs.PlugInDeferred()
 
 "Build" => (fun _ ->
     Log.Info ""
@@ -119,7 +119,7 @@ Tfs.UseItDeferred()
                 "Alternatively you can provide URI as command line parameter: \"Tfs.Uri=<your-uri>\"")
         )
     
-    Tfs.UseIt()
+    Tfs.PlugIn()
 
     MyBuild.SaveProp("Tfs.Uri")
 )
@@ -398,3 +398,11 @@ Tfs.UseItDeferred()
 
 "SetUpTeamProjects" ==> "Sync"
 
+"ReCache" => (fun _ ->
+    Folders.Delete("[LocalApplicationData]/Microsoft/Team Foundation/4.0/Cache")
+    Log.Info("Hint: if delete operation failed ensure all instances of Visual Studio are closed.")
+
+    TfsWorkspace.UpdateInfoCache()
+)
+
+"SetUpTeamProjects" ==> "ReCache" ==> "rc"

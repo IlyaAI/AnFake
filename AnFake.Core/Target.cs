@@ -565,7 +565,11 @@ namespace AnFake.Core
 				{
 					Log.TraceMessageFormat(message.Level, "[{0,4}] {1}", ++index, message.ToString("m"));
 
-					var more = message.ToString("lfd");
+					var refs = message.ToString("lf");
+					if (refs.Length > 0)
+						Log.Text(refs);
+
+					var more = message.ToString("d");
 					if (more.Length > 0)
 						Log.Details(more);
 				}

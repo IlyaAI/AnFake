@@ -10,7 +10,7 @@ open AnFake.Core
 open AnFake.Fsx.Dsl
 open AnFake.Plugins.Tfs2012
 
-Tfs.UseIt()
+Tfs.PlugIn()
 
 let out = ~~".out"
 let productOut = out / "product"
@@ -42,6 +42,12 @@ let product =
     VsTest.Run(
         testsOut % "*.Test.dll")
 )
+
+//
+// 'Drop' target is requested when DropLocation or PrivateDropLocation is specified in TFS build definition.
+// TODO: copy final artifacts to Tfs.Build.DropLocation
+//
+"Drop" => (fun _ -> ())
 
 "Test" <== ["Test.Unit"]
 

@@ -203,6 +203,35 @@ namespace AnFake.Core
 		}
 
 		/// <summary>
+		///		Is path has parent?
+		/// </summary>
+		/// <example>
+		/// C:\Projects\MySolution\build.fsx
+		/// <code>
+		/// let path = ~~"MyProject/MyProject.csproj"
+		/// let hasParent = path.HasParent  // true
+		/// </code>
+		/// <code>
+		/// let path = ~~"solution.sln"
+		/// let hasParent = path.HasParent  // false
+		/// </code>
+		/// <code>
+		/// let path = ~~"C:/MySolution/build.fsx"
+		/// let hasPparent1 = path.HasParent               // true
+		/// let hasParent2 = path.Parent.HasParent         // true
+		/// let hasParent3 = path.Parent.Parent.HasParent  // false
+		/// </code>
+		/// </example>		
+		public bool HasParent
+		{
+			get
+			{
+				var parent = Path.GetDirectoryName(_value);
+				return !String.IsNullOrEmpty(parent);
+			}
+		}
+
+		/// <summary>
 		///		Parent folder. If path is root or just file name then exception is thrown.
 		/// </summary>
 		/// <example>

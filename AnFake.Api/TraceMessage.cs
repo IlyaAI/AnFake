@@ -101,9 +101,9 @@ namespace AnFake.Api
 						foreach (var link in _links)
 						{
 							if (sb.Length > 0)
-								sb.AppendLine().Append(' ', ident);
+								sb.AppendLine();
 							
-							sb.Append(link);
+							sb.Append(' ', ident).Append(link);
 						}
 						break;
 
@@ -111,9 +111,9 @@ namespace AnFake.Api
 						if (!String.IsNullOrEmpty(File))
 						{
 							if (sb.Length > 0)
-								sb.AppendLine().Append(' ', ident);
+								sb.AppendLine();
 
-							sb.Append(File);
+							sb.Append(' ', ident).Append(File);
 							if (Line > 0)							
 								sb.AppendFormat(" Ln: {0}", Line);
 							
@@ -124,9 +124,9 @@ namespace AnFake.Api
 						if (!String.IsNullOrEmpty(Project))
 						{
 							if (sb.Length > 0)
-								sb.AppendLine().Append(' ', ident);
+								sb.AppendLine();
 
-							sb.Append(Project);
+							sb.Append(' ', ident).Append(Project);
 						}
 						break;
 

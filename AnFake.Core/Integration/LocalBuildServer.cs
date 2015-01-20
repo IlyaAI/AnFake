@@ -8,6 +8,11 @@
 			LogsLocation = DropLocation/"logs";
 		}
 
+		public bool IsLocal
+		{
+			get { return true; }
+		}
+
 		public FileSystemPath DropLocation { get; set; }
 
 		public FileSystemPath LogsLocation { get; set; }

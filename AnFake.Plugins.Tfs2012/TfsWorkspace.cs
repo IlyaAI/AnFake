@@ -56,6 +56,11 @@ namespace AnFake.Plugins.Tfs2012
 			}
 		}
 
+		public static void UpdateInfoCache()
+		{
+			Workstation.Current.UpdateWorkspaceInfoCache(Vcs, GetCurrentUser());
+		}
+
 		public static void Create(ServerPath serverPath, FileSystemPath localPath, string workspaceName)
 		{
 			Create(serverPath, localPath, workspaceName, p => { });

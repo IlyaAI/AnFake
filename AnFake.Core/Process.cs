@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using AnFake.Api;
+using AnFake.Core.Exceptions;
 
 namespace AnFake.Core
 {
@@ -35,6 +37,9 @@ namespace AnFake.Core
 			}
 		}
 
+		/// <summary>
+		///		Process run parameters.
+		/// </summary>
 		public sealed class Params
 		{
 			public FileSystemPath FileName;
@@ -50,7 +55,7 @@ namespace AnFake.Core
 			{
 				WorkingDirectory = "".AsPath();
 				Timeout = TimeSpan.MaxValue;
-				OutputBufferCapacity = 48; // lines
+				OutputBufferCapacity = 24; // lines
 			}
 
 			public Params Clone()
@@ -59,6 +64,9 @@ namespace AnFake.Core
 			}
 		}
 
+		/// <summary>
+		///		Default process run parameters.
+		/// </summary>
 		public static Params Defaults { get; private set; }
 
 		static Process()
@@ -66,6 +74,14 @@ namespace AnFake.Core
 			Defaults = new Params();
 		}
 
+		/// <summary>
+		///		Creates and starts new process with specified parameters.
+		/// </summary>
+		/// <remarks>
+		///		The setParams action must provide at least FileName property.
+		/// </remarks>
+		/// <param name="setParams">action which overrides default parameters (not null)</param>
+		/// <returns><see cref="ProcessExecutionResult">ProcessExecutionResult</see></returns>
 		public static ProcessExecutionResult Run(Action<Params> setParams)
 		{
 			if (setParams == null)
@@ -148,6 +164,13 @@ namespace AnFake.Core
 					throw new TimeoutException(String.Format("Process isn't completed in specified time.\n  Executable: {0}\n  Timeout: {1}", process.StartInfo.FileName,
 						parameters.Timeout));
 				}
+			}
+			catch (Win32Exception e)
+			{
+				if (e.NativeErrorCode == 2)
+					throw new InvalidConfigurationException(String.Format("Unable to start process '{0}'. File not found.", parameters.FileName.Full));
+
+				throw;
 			}
 			finally
 			{

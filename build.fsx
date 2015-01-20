@@ -40,8 +40,8 @@ let nugetFiles =
     + "Plugins/AnFake.Integration.Tfs2012.*.dll"
     + "Plugins/AnFakeTemplate.*.xaml"
     + "Plugins/AnFake.Plugins.Tfs2012.dll"
-    + "Plugins/AnFake.Plugins.HtmlSummary.dll"
-    + "Plugins/AnFake.Plugins.HtmlSummary.zip"
+    //+ "Plugins/AnFake.Plugins.HtmlSummary.dll" // not ready yet
+    //+ "Plugins/AnFake.Plugins.HtmlSummary.zip"
 
 let productName = "AnFake"
 let productTitle = "AnFake /Another F# Make/ runtime component"
@@ -109,7 +109,7 @@ let xamlVersion = "1"
         fun p -> p.NoIsolation <- true)
 ) |> skipErrors
 
-"Package" => (fun _ -> 
+"Package.Pack" => (fun _ -> 
     let fsharpCore = 
         productOut % "FSharp.Core.dll"
         + "FSharp.Core.optdata"
@@ -127,9 +127,14 @@ let xamlVersion = "1"
 
     nuspec.AddFiles(nugetFiles, "")
 
-    let nupkg = NuGet.Pack(nuspec, out, fun p -> 
+    NuGet.Pack(nuspec, out, fun p -> 
         p.NoPackageAnalysis <- true
         p.NoDefaultExcludes <- true)
+        |> ignore
+)
+
+"Package.Push" => (fun _ -> 
+    let nupkg = (out / String.Format("{0}.{1}.nupkg", productName, productVersion)).AsFile()
 
     NuGet.Push(nupkg, fun p -> 
         p.AccessKey <- MyBuild.GetProp("NuGet.AccessKey")
@@ -187,3 +192,5 @@ let xamlVersion = "1"
 "Compile" <== ["EmbedAssemblyInfo"]
 
 "Build" <== ["Compile"; "Custom.ZipHtmlSummary"; "Test.Unit"]
+
+"Package" <== ["Package.Pack"; "Package.Push"]

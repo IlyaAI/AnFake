@@ -133,7 +133,7 @@ namespace AnFake.Core
 			{
 				throw new InvalidConfigurationException(
 					String.Format(
-						"There is no registered plugin which provides '{0}' interface. Hint: probably, you forgot to call UseIt() for some plugins.",
+						"There is no registered plugin which provides '{0}' interface. Hint: probably, you forgot to call PlugIn() for some plugins.",
 						typeof(TInterface).Name));
 			}
 			catch (DependencyResolutionException e)

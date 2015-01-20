@@ -31,7 +31,7 @@ namespace AnFake.Plugins.Tfs2012
 		private FileSystemPath _logsDropPath;
 		private bool _hasDropErrors;
 		private bool _hasBuildErrorsOrWarns;
-		private long _lastSaved;
+		//private int _lastSaved;
 
 		public TfsPlugin()
 		{
@@ -56,7 +56,7 @@ namespace AnFake.Plugins.Tfs2012
 				if (String.IsNullOrEmpty(activityInstanceId))
 					throw new InvalidConfigurationException("TFS plugin requires both 'Tfs.BuildUri' and 'Tfs.ActivityInstanceId' to be specified in build properties.");
 
-				var buildServer = (IBuildServer)_teamProjectCollection.GetService(typeof(IBuildServer));
+				var buildServer = (Microsoft.TeamFoundation.Build.Client.IBuildServer)_teamProjectCollection.GetService(typeof(Microsoft.TeamFoundation.Build.Client.IBuildServer));
 
 				_build = buildServer.QueryBuildsByUri(
 					new[] { new Uri(buildUri) },
@@ -163,14 +163,29 @@ namespace AnFake.Plugins.Tfs2012
 
 		// IBuildServer members
 
+		public bool IsLocal
+		{
+			get { return _build == null; }
+		}
+
 		public FileSystemPath DropLocation
 		{
-			get { return Build.DropLocation.AsPath(); }
+			get
+			{
+				return _build != null 
+					? _build.DropLocation.AsPath() 
+					: BuildServer.Local.DropLocation;
+			}
 		}
 
 		public FileSystemPath LogsLocation
 		{
-			get { return _logsDropPath; }
+			get
+			{
+				return _build != null
+					? _logsDropPath
+					: BuildServer.Local.LogsLocation;
+			}
 		}
 
 		//
@@ -245,12 +260,13 @@ namespace AnFake.Plugins.Tfs2012
 			// To prevent too active TFS accessing we save messages just once in 200ms.			
 			// Some of the last messages might not be saved by this method but OnTargetFinished handler saves the rest in anyway.
 			//
-			var now = Environment.TickCount;
+			/*var now = Environment.TickCount;
 			if (now - _lastSaved >= 200)
 			{
 				_tracker.Save();
 				_lastSaved = now;
-			}
+			}*/
+			_tracker.Save();
 		}
 
 		private void OnBuildStarted(object sender, MyBuild.RunDetails details)

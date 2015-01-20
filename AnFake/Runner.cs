@@ -87,7 +87,9 @@ namespace AnFake
 				Console.ForegroundColor = ConsoleColor.Red;
 				Console.WriteLine("AnFake failed in initiation phase. See details below.");
 				Console.WriteLine(e);
-			}			
+
+				return (int) MyBuild.Status.Unknown;
+			}
 
 			return Run(options);
 		}
@@ -174,7 +176,7 @@ namespace AnFake
 				{
 					AnFakeException.StackTraceMode = StackTraceMode.Full;
 					continue;
-				}
+				}				
 
 				if (propMode)
 				{
