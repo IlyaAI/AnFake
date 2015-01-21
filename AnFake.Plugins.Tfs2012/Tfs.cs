@@ -1,6 +1,8 @@
 ﻿using System;
 using AnFake.Core;
 using Microsoft.TeamFoundation.Build.Client;
+using Microsoft.TeamFoundation.Client;
+using Microsoft.TeamFoundation.VersionControl.Client;
 
 namespace AnFake.Plugins.Tfs2012
 {
@@ -116,7 +118,7 @@ namespace AnFake.Plugins.Tfs2012
 		public static int LastChangesetOf(FileSystemPath path)
 		{
 			return Impl.LastChangesetOf(path);
-		}		
+		}
 
 		/// <summary>
 		///		Creates <c>ServerPath</c> instance from string representation.
@@ -129,6 +131,18 @@ namespace AnFake.Plugins.Tfs2012
 				throw new ArgumentException("Tfs.AsServerPath(path): path must not be null");
 
 			return new ServerPath(path, false);
+		}
+		
+		/// <summary>
+		///		Access point to native Team Foundation API.
+		/// </summary>
+		/// <remarks>
+		///		Use this only if no appropriate high-level tools.
+		/// </remarks>
+		// ReSharper disable once InconsistentNaming
+		public static TfsTeamProjectCollection __TeamProjectCollection
+		{
+			get { return Impl.TeamProjectCollection; }
 		}
 	}
 }

@@ -339,6 +339,24 @@ namespace AnFake.Core
 				_element.Add(new System.Xml.Linq.XElement(ToXName(element), value));
 			}
 
+			/// <summary>
+			///		Appends new element as child of current one and returns element just added.
+			/// </summary>
+			/// <remarks>
+			///		Use prefixes mapped via <c>Ns</c> method to specify full element name.
+			/// </remarks>
+			/// <param name="element">element name (not null)</param>			
+			public XNode Append(string element)
+			{
+				if (element == null)
+					throw new ArgumentException("XNode.Append(element): element must not be null");
+
+				var xelem = new System.Xml.Linq.XElement(ToXName(element));
+				_element.Add(xelem);
+
+				return new XNode(xelem, _ns);
+			}
+
 			private System.Xml.Linq.XName ToXName(string name)
 			{
 				var index = name.IndexOf(':');
@@ -369,10 +387,7 @@ namespace AnFake.Core
 
 			using (var reader = XmlReader.Create(file.Path.Full))
 			{
-				var xdoc = System.Xml.Linq.XDocument.Load(reader, System.Xml.Linq.LoadOptions.PreserveWhitespace);
-
-				// ReSharper disable once AssignNullToNotNullAttribute
-				return new XDoc(file, xdoc, new XmlNamespaceManager(reader.NameTable));
+				return LoadXDoc(reader);
 			}
 		}
 
@@ -391,11 +406,35 @@ namespace AnFake.Core
 
 			using (var reader = XmlReader.Create(stream))
 			{
-				var xdoc = System.Xml.Linq.XDocument.Load(reader, System.Xml.Linq.LoadOptions.PreserveWhitespace);
-
-				// ReSharper disable once AssignNullToNotNullAttribute
-				return new XDoc(null, xdoc, new XmlNamespaceManager(reader.NameTable));
+				return LoadXDoc(reader);
 			}
+		}
+
+		/// <summary>
+		///		Loads XML document from given string.
+		/// </summary>
+		/// <remarks>
+		///		Returned document might be saved to the file or stream with <c>XDoc.SaveTo</c> method.
+		/// </remarks>
+		/// <param name="xml">string to load xml from (not null)</param>
+		/// <returns>XML document</returns>
+		public static XDoc AsXmlDoc(this string xml)
+		{
+			if (xml == null)
+				throw new ArgumentException("Xml.AsXmlDoc(xml): xml must not be null");
+
+			using (var reader = XmlReader.Create(new StringReader(xml)))
+			{
+				return LoadXDoc(reader);
+			}
+		}
+
+		private static XDoc LoadXDoc(XmlReader reader)
+		{
+			var xdoc = System.Xml.Linq.XDocument.Load(reader, System.Xml.Linq.LoadOptions.PreserveWhitespace);
+
+			// ReSharper disable once AssignNullToNotNullAttribute
+			return new XDoc(null, xdoc, new XmlNamespaceManager(reader.NameTable));
 		}
 
 		/// <summary>

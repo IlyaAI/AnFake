@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Principal;
 using System.Text;
+using System.Threading;
 using AnFake.Api;
 using AnFake.Core;
 using AnFake.Core.Exceptions;
@@ -15,6 +16,8 @@ namespace AnFake.Plugins.Tfs2012
 {
 	internal sealed class TfsPlugin : Core.Integration.IVersionControl, Core.Integration.IBuildServer
 	{
+		private static readonly TimeSpan FlushInterval = TimeSpan.FromSeconds(2);
+
 		private const string SummaryKey = "AnFakeSummary";
 		private const string SummaryHeader = "AnFake Summary";
 		private const int SummaryPriority = 199;
@@ -22,12 +25,16 @@ namespace AnFake.Plugins.Tfs2012
 		private const string OverviewHeader = "Overview";
 		private const int OverviewPriority = 150;
 		private const string LocalTemp = ".tmp";
+		
+		private readonly Object _mutex = new Object();
+		private readonly Queue<TraceMessage> _messages = new Queue<TraceMessage>();
+		private Timer _flusher;
 
 		private readonly TfsTeamProjectCollection _teamProjectCollection;
 		
 		private readonly IBuildDetail _build;
 		private readonly IBuildInformation _tracker;
-
+				
 		private VersionControlServer _vcs;
 		private FileSystemPath _logsDropPath;
 		private bool _hasDropErrors;
@@ -289,40 +296,55 @@ namespace AnFake.Plugins.Tfs2012
 
 		private void OnMessage(object sender, TraceMessage message)
 		{
-			switch (message.Level)
+			//
+			// To prevent too active TFS accessing we save messages just once in FlushInterval
+			//
+			lock (_mutex)
 			{
-				case TraceMessageLevel.Debug:
-					_tracker.AddBuildMessage(message.ToString("mfd"), BuildMessageImportance.Low, DateTime.Now);					
-					break;
-
-				case TraceMessageLevel.Info:
-					_tracker.AddBuildMessage(message.ToString("mfd"), BuildMessageImportance.Normal, DateTime.Now);
-					break;
-
-				case TraceMessageLevel.Summary:
-					_tracker.AddBuildMessage(message.ToString("mfd"), BuildMessageImportance.High, DateTime.Now);
-					break;
-
-				case TraceMessageLevel.Warning:
-					_tracker.AddBuildWarning(FormatMessage(message), DateTime.Now);
-					break;
-
-				case TraceMessageLevel.Error:
-					_tracker.AddBuildError(FormatMessage(message), DateTime.Now);
-					break;
+				_messages.Enqueue(message);
 			}
+		}
 
-			//
-			// To prevent too active TFS accessing we save messages just once in 200ms.			
-			// Some of the last messages might not be saved by this method but OnTargetFinished handler saves the rest in anyway.
-			//
-			/*var now = Environment.TickCount;
-			if (now - _lastSaved >= 200)
+		private void FlushMessages()
+		{			
+			lock (_mutex)
 			{
+				if (_tracker == null)
+				{
+					_messages.Clear();
+					return;
+				}
+
+				while (_messages.Count > 0)
+				{
+					var message = _messages.Dequeue();
+
+					switch (message.Level)
+					{
+						case TraceMessageLevel.Debug:
+							_tracker.AddBuildMessage(message.ToString("mfd"), BuildMessageImportance.Low, DateTime.Now);
+							break;
+
+						case TraceMessageLevel.Info:
+							_tracker.AddBuildMessage(message.ToString("mfd"), BuildMessageImportance.Normal, DateTime.Now);
+							break;
+
+						case TraceMessageLevel.Summary:
+							_tracker.AddBuildMessage(message.ToString("mfd"), BuildMessageImportance.High, DateTime.Now);
+							break;
+
+						case TraceMessageLevel.Warning:
+							_tracker.AddBuildWarning(FormatMessage(message), DateTime.Now);
+							break;
+
+						case TraceMessageLevel.Error:
+							_tracker.AddBuildError(FormatMessage(message), DateTime.Now);
+							break;
+					}
+				}
+
 				_tracker.Save();
-				_lastSaved = now;
-			}*/
-			_tracker.Save();
+			}
 		}
 
 		private void OnBuildStarted(object sender, MyBuild.RunDetails details)
@@ -334,43 +356,52 @@ namespace AnFake.Plugins.Tfs2012
 			var rdpPath = LocalTemp.AsPath() / Environment.MachineName + ".rdp";
 			Text.WriteTo(rdpPath.AsFile(), String.Format("full address:s:{0}", Environment.MachineName));
 
+			FlushMessages();
+
+			// flusher isn't started yet so we need not lock here
+
 			_build.Information.AddCustomSummaryInformation(
-				String.Format("Build Agent: [{0}]({1})", Environment.MachineName, rdpPath.ToUnc()), 
+			String.Format("Build Agent: [{0}]({1})", Environment.MachineName, rdpPath.ToUnc()),
 				OverviewKey, OverviewHeader, OverviewPriority);
 
 			_build.Information.AddCustomSummaryInformation(
 				String.Format("Build Folder: [{0}]({1})", MyBuild.Current.Path.Full, MyBuild.Current.Path.ToUnc()),
-				OverviewKey, OverviewHeader, OverviewPriority);
+					OverviewKey, OverviewHeader, OverviewPriority);
 
 			if (!String.IsNullOrEmpty(_build.DropLocation))
 			{
 				_build.Information.AddCustomSummaryInformation(
 					String.Format("Drop Folder: [{0}]({0})", _build.DropLocation),
-					OverviewKey, OverviewHeader, OverviewPriority);			
+						OverviewKey, OverviewHeader, OverviewPriority);
 			}
 			else
 			{
 				_build.Information.AddCustomSummaryInformation(
 					"Drop Folder: (none)",
-					OverviewKey, OverviewHeader, OverviewPriority);				
-			}			
+						OverviewKey, OverviewHeader, OverviewPriority);
+			}
 
 			if (!String.IsNullOrEmpty(_build.DropLocation))
 			{
-				_logsDropPath = _build.DropLocation.AsPath()/"logs";
+				_logsDropPath = _build.DropLocation.AsPath() / "logs";
 				if (!SafeOp.Try(Folders.Clean, _logsDropPath))
 				{
 					_logsDropPath = null;
 
 					_build.Information.AddCustomSummaryInformation(
 						"(!) Drop location is inaccessible, logs will be unavailable.",
-						SummaryKey, SummaryHeader, SummaryPriority);					
+						SummaryKey, SummaryHeader, SummaryPriority);
 				}
 			}
 
-			Trace.Info("<<< TfsPlugin.OnBuildStarted");
-
 			_build.Information.Save();
+			
+			if (_tracker != null)
+			{
+				_flusher = new Timer(x => FlushMessages(), null, FlushInterval, FlushInterval);
+			}			
+
+			Trace.Info("<<< TfsPlugin.OnBuildStarted");
 		}
 
 		private void OnTestFailed(object sender, TestResult test)
@@ -395,52 +426,57 @@ namespace AnFake.Plugins.Tfs2012
 		{
 			Trace.Info(">>> TfsPlugin.OnTargetFinished");
 
-			var topTarget = (Target) sender;
-			var summary = new StringBuilder(512);			
+			FlushMessages();
 
-			foreach (var target in details.ExecutedTargets)
+			lock (_mutex) // flusher is started so we must lock
 			{
-				summary
-					.Clear()
-					.AppendFormat(@"{0}: {1,3} error(s) {2,3} warning(s) {3,3} messages(s)  {4:hh\:mm\:ss}  {5}",
-						target.Name, target.Messages.ErrorsCount, target.Messages.WarningsCount, target.Messages.SummariesCount, 
-						target.RunTime, target.State.ToHumanReadable().ToUpperInvariant());
+				var topTarget = (Target) sender;
+				var summary = new StringBuilder(512);
 
-				_build.Information
-					.AddCustomSummaryInformation(summary.ToString(), SummaryKey, SummaryHeader, SummaryPriority);
-
-				foreach (var message in target.Messages.Where(x => x.Level == TraceMessageLevel.Summary))
+				foreach (var target in details.ExecutedTargets)
 				{
 					summary
 						.Clear()
-						.AppendFormat("    {0}", message.Message);
+						.AppendFormat(@"{0}: {1,3} error(s) {2,3} warning(s) {3,3} messages(s)  {4:hh\:mm\:ss}  {5}",
+							target.Name, target.Messages.ErrorsCount, target.Messages.WarningsCount, target.Messages.SummariesCount,
+							target.RunTime, target.State.ToHumanReadable().ToUpperInvariant());
 
-					JoinLinks(summary, message.Links);
-					
 					_build.Information
 						.AddCustomSummaryInformation(summary.ToString(), SummaryKey, SummaryHeader, SummaryPriority);
+
+					foreach (var message in target.Messages.Where(x => x.Level == TraceMessageLevel.Summary))
+					{
+						summary
+							.Clear()
+							.AppendFormat("    {0}", message.Message);
+
+						JoinLinks(summary, message.Links);
+
+						_build.Information
+							.AddCustomSummaryInformation(summary.ToString(), SummaryKey, SummaryHeader, SummaryPriority);
+					}
+
+					_hasBuildErrorsOrWarns |=
+						target.Messages.ErrorsCount > 0 ||
+						target.Messages.WarningsCount > 0;
 				}
 
-				_hasBuildErrorsOrWarns |= 
-					target.Messages.ErrorsCount > 0 || 
-					target.Messages.WarningsCount > 0;
+				summary
+					.Clear()
+					.AppendFormat(
+						"'{0}' {1}",
+						topTarget.Name,
+						topTarget.State.ToHumanReadable().ToUpperInvariant());
+
+				_build.Information
+					.AddCustomSummaryInformation(new string('=', 48), SummaryKey, SummaryHeader, SummaryPriority);
+				_build.Information
+					.AddCustomSummaryInformation(summary.ToString(), SummaryKey, SummaryHeader, SummaryPriority);
+				_build.Information
+					.AddCustomSummaryInformation(" ", SummaryKey, SummaryHeader, SummaryPriority);
+
+				_build.Information.Save();
 			}
-
-			summary
-				.Clear()
-				.AppendFormat(
-					"'{0}' {1}", 
-					topTarget.Name, 
-					topTarget.State.ToHumanReadable().ToUpperInvariant());
-
-			_build.Information
-				.AddCustomSummaryInformation(new string('=', 48), SummaryKey, SummaryHeader, SummaryPriority);
-			_build.Information
-				.AddCustomSummaryInformation(summary.ToString(), SummaryKey, SummaryHeader, SummaryPriority);
-			_build.Information
-				.AddCustomSummaryInformation(" ", SummaryKey, SummaryHeader, SummaryPriority);
-
-			_build.Information.Save();
 
 			Trace.Info("<<< TfsPlugin.OnTargetFinished");
 		}		
@@ -449,6 +485,16 @@ namespace AnFake.Plugins.Tfs2012
 		{
 			Trace.Info(">>> TfsPlugin.OnBuildFinished");
 
+			if (_flusher != null)
+			{
+				var waiter = new ManualResetEvent(false);
+				_flusher.Dispose(waiter);
+				_flusher = null;
+				waiter.WaitOne();
+			}
+
+			// flusher is stopped already so we need not lock here
+			
 			if (_logsDropPath != null)
 			{
 				var buildLog = AppendLink(
@@ -458,11 +504,11 @@ namespace AnFake.Plugins.Tfs2012
 
 				if (buildLog.Length > 0)
 				{
-					_build.LogLocation = (_logsDropPath / "build.log").Full;
+					_build.LogLocation = (_logsDropPath/"build.log").Full;
 					_build.Information
-						.AddCustomSummaryInformation(buildLog.ToString(), SummaryKey, SummaryHeader, SummaryPriority);					
+						.AddCustomSummaryInformation(buildLog.ToString(), SummaryKey, SummaryHeader, SummaryPriority);
 				}
-			}			
+			}
 
 			if (_logsDropPath != null)
 			{
@@ -485,12 +531,15 @@ namespace AnFake.Plugins.Tfs2012
 				_build.Information.AddCustomSummaryInformation(
 					"See the section below for error/warning list.",
 					SummaryKey, SummaryHeader, SummaryPriority);
-			}			
+			}
+
+			_build.Information.Save();
 
 			Trace.Info("<<< TfsPlugin.OnBuildFinished");
 
-			_build.Information.Save();
-			_build.FinalizeStatus(AsTfsBuildStatus(details.Status));
+			FlushMessages();
+
+			_build.FinalizeStatus(AsTfsBuildStatus(details.Status));		
 		}
 
 		private string DropLink(Hyperlink link, string newName = null)
