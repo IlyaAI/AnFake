@@ -40,7 +40,7 @@ namespace AnFake.Core.Test
 			// act
 			using (var snapshot = new Snapshot())
 			{
-				snapshot.Save(filePath.AsPath());
+				snapshot.Save(filePath.AsFile());
 
 				File.SetAttributes(filePath, FileAttributes.Normal);
 				File.Delete(filePath);				

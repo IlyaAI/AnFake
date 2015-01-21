@@ -6,8 +6,17 @@ using AnFake.Core.Exceptions;
 
 namespace AnFake.Core
 {
+	/// <summary>
+	///		Represents per-file basis snapshot.
+	/// </summary>
+	/// <remarks>
+	///		This helper class might be used in cases when some files modified temporary and should be reverted after build.
+	/// </remarks>
 	public sealed class Snapshot : IDisposable
 	{
+		/// <summary>
+		///		Represents saved file.
+		/// </summary>
 		public sealed class SavedFile
 		{
 			public readonly FileSystemPath Path;
@@ -25,15 +34,40 @@ namespace AnFake.Core
 		private readonly IList<SavedFile> _originalFiles = new List<SavedFile>();
 		private readonly string _snapshotBasePath;
 
+		/// <summary>
+		///		Constructs new shanshot instance.
+		/// </summary>
 		public Snapshot()
 		{
 			_snapshotBasePath = Path.Combine(Path.GetTempPath(), "AnFake".MakeUnique());
 			Directory.CreateDirectory(_snapshotBasePath);
 		}
 
-		public void Save(FileSystemPath filePath)
-		{			
-			var fullPath = filePath.Full;
+		/// <summary>
+		///		Saves given files.
+		/// </summary>
+		/// <param name="files">files to be saved (not null)</param>
+		public void Save(IEnumerable<FileItem> files)
+		{
+			if (files == null)
+				throw new ArgumentException("Snapshot.Save(files): files must not be null");
+
+			foreach (var file in files)
+			{
+				Save(file);
+			}
+		}
+
+		/// <summary>
+		///		Saves given file.
+		/// </summary>
+		/// <param name="file">file to be saved (not null)</param>
+		public void Save(FileItem file)
+		{
+			if (file == null)
+				throw new ArgumentException("Snapshot.Save(file): file must not be null");
+
+			var fullPath = file.Path.Full;
 			var snapshotPath = Path.Combine(_snapshotBasePath, String.Format("{0:X8}", _originalFiles.Count));
 			var fi = new FileInfo(fullPath);
 			var lastModified = fi.LastWriteTimeUtc;			
@@ -42,7 +76,7 @@ namespace AnFake.Core
 			Trace.DebugFormat("Snapshot.Save: {0} => {1}", fullPath, snapshotPath);
 			fi.CopyTo(snapshotPath);
 
-			var fs = new SavedFile(filePath, lastModified, attributes);
+			var fs = new SavedFile(file.Path, lastModified, attributes);
 
 			_originalFiles.Add(fs);
 
@@ -52,6 +86,12 @@ namespace AnFake.Core
 			}
 		}
 
+		/// <summary>
+		///		Reverts all files saved to this snapshot.
+		/// </summary>
+		/// <remarks>
+		///		Method never throws an exception and does the best effort to restore each file.
+		/// </remarks>
 		public void Revert()
 		{
 			for (var index = 0; index < _originalFiles.Count; index++)
@@ -82,12 +122,22 @@ namespace AnFake.Core
 			Cleanup();
 		}
 
+		/// <summary>
+		///		Clean-ups all temporary files.
+		/// </summary>
 		public void Dispose()
 		{
 			Cleanup();			
 		}
 
+		/// <summary>
+		///		Fired when file is saved.
+		/// </summary>
 		public static event EventHandler<SavedFile> FileSaved;
+
+		/// <summary>
+		///		Fired when file is reverted.
+		/// </summary>
 		public static event EventHandler<SavedFile> FileReverted;		
 
 		private void Cleanup()
