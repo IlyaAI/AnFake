@@ -94,7 +94,7 @@ namespace AnFake.Plugins.Tfs2012
 			{
 				var value = TfsBuild.Impl.GetBuildCustomField(name, null);
 				if (value == null)
-					throw new InvalidConfigurationException(String.Format("TFS build doesn't contain custom field '{0}'.", name));
+					throw new InvalidConfigurationException(String.Format("Build '{0}' doesn't contain custom field '{1}'.", _impl.BuildNumber, name));
 
 				return value;
 			}
@@ -121,9 +121,20 @@ namespace AnFake.Plugins.Tfs2012
 		/// <summary>
 		///		Current build details.
 		/// </summary>
+		/// <remarks>
+		///		An exception is thrown if build details unavailable.
+		/// </remarks>
 		public static BuildDetail Current
 		{
 			get { return _current ?? (_current = new BuildDetail(Impl.Build)); }
+		}
+
+		/// <summary>
+		///		Is TFS build details available?
+		/// </summary>
+		public static bool HasCurrent
+		{
+			get { return Impl.HasBuild; }
 		}
 
 		public static IEnumerable<BuildDetail> QueryAll(int limit)

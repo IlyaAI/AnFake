@@ -142,6 +142,11 @@ namespace AnFake.Plugins.Tfs2012
 			}
 		}
 
+		public bool HasBuild
+		{
+			get { return _build != null; }
+		}
+
 		public VersionControlServer Vcs
 		{
 			get { return _vcs ?? (_vcs = _teamProjectCollection.GetService<VersionControlServer>()); }
