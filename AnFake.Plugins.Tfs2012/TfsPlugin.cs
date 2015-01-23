@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Principal;
 using System.Text;
 using System.Threading;
 using AnFake.Api;
 using AnFake.Core;
 using AnFake.Core.Exceptions;
+using AnFake.Core.Integration;
 using AnFake.Core.Integration.Tests;
 using Microsoft.TeamFoundation.Build.Client;
 using Microsoft.TeamFoundation.Client;
@@ -18,6 +18,7 @@ namespace AnFake.Plugins.Tfs2012
 	{
 		private static readonly TimeSpan FlushInterval = TimeSpan.FromSeconds(2);
 
+		private const string CustomInformationNode = "AnFake";
 		private const string SummaryKey = "AnFakeSummary";
 		private const string SummaryHeader = "AnFake Summary";
 		private const int SummaryPriority = 199;
@@ -34,7 +35,7 @@ namespace AnFake.Plugins.Tfs2012
 		
 		private readonly IBuildDetail _build;
 		private readonly IBuildInformation _tracker;
-				
+
 		private VersionControlServer _vcs;
 		private FileSystemPath _logsDropPath;
 		private bool _hasDropErrors;
@@ -61,9 +62,6 @@ namespace AnFake.Plugins.Tfs2012
 
 			if (!String.IsNullOrEmpty(buildUri))
 			{
-				if (String.IsNullOrEmpty(activityInstanceId))
-					throw new InvalidConfigurationException("TFS plugin requires both 'Tfs.BuildUri' and 'Tfs.ActivityInstanceId' to be specified in build properties.");
-
 				var buildServer = (Microsoft.TeamFoundation.Build.Client.IBuildServer)_teamProjectCollection.GetService(typeof(Microsoft.TeamFoundation.Build.Client.IBuildServer));
 
 				_build = buildServer.QueryBuildsByUri(
@@ -73,12 +71,6 @@ namespace AnFake.Plugins.Tfs2012
 
 				if (_build == null)
 					throw new InvalidConfigurationException(String.Format("TFS plugin unable to find build '{0}'", buildUri));
-
-				var activity = InformationNodeConverters.GetActivityTracking(_build, activityInstanceId);
-				if (activity == null)
-					throw new InvalidConfigurationException(String.Format("TFS plugin unable to find Activity with InstanceId='{0}'", activityInstanceId));
-				
-				_tracker = activity.Node.Children;
 
 				if (String.IsNullOrEmpty(_build.DropLocation))
 				{
@@ -98,12 +90,21 @@ namespace AnFake.Plugins.Tfs2012
 					}
 				}
 
-				Trace.MessageReceived += OnMessage;
-				TestResultAware.Failed += OnTestFailed;
-				Target.Finished += OnTargetFinished;
+				if (!String.IsNullOrEmpty(activityInstanceId))
+				{
+					var activity = InformationNodeConverters.GetActivityTracking(_build, activityInstanceId);
+					if (activity == null)
+						throw new InvalidConfigurationException(String.Format("TFS plugin unable to find activity with InstanceId='{0}'", activityInstanceId));
 
-				MyBuild.Started += OnBuildStarted;
-				MyBuild.Finished += OnBuildFinished;
+					_tracker = activity.Node.Children;					
+
+					Trace.MessageReceived += OnMessage;
+					TestResultAware.Failed += OnTestFailed;
+					Target.Finished += OnTargetFinished;
+
+					MyBuild.Started += OnBuildStarted;
+					MyBuild.Finished += OnBuildFinished;
+				}
 			}
 			else
 			{
@@ -118,6 +119,16 @@ namespace AnFake.Plugins.Tfs2012
 		public TfsTeamProjectCollection TeamProjectCollection
 		{
 			get { return _teamProjectCollection; }
+		}
+
+		public string TeamProject
+		{
+			get
+			{
+				return _build != null
+					? _build.TeamProject
+					: MyBuild.GetProp("Tfs.TeamProject");
+			}
 		}
 
 		public IBuildDetail Build
@@ -136,6 +147,17 @@ namespace AnFake.Plugins.Tfs2012
 			get { return _vcs ?? (_vcs = _teamProjectCollection.GetService<VersionControlServer>()); }
 		}
 
+		public ServerPath SourcesRoot
+		{
+			get
+			{
+				var buildPath = MyBuild.Current.Path;
+				var ws = GetWorkspace(buildPath);
+
+				return ws.GetServerItemForLocalItem(buildPath.Full).AsServerPath();
+			}
+		}
+
 		public Workspace FindWorkspace(FileSystemPath localPath)
 		{
 			var ws = Vcs.TryGetWorkspace(localPath.Full);
@@ -144,7 +166,7 @@ namespace AnFake.Plugins.Tfs2012
 
 			Trace.InfoFormat("TfsPlugin: unable to find workspace for local path, trying to update info cache...\n  LocalPath: {0}", localPath.Full);
 
-			Workstation.Current.UpdateWorkspaceInfoCache(Vcs, GetCurrentUser());
+			Workstation.Current.UpdateWorkspaceInfoCache(Vcs, User.Current);
 			_isInfoCacheUpToDate = true;
 
 			ws = Vcs.TryGetWorkspace(localPath.Full);
@@ -170,7 +192,7 @@ namespace AnFake.Plugins.Tfs2012
 		{
 			try
 			{
-				var ws = Vcs.GetWorkspace(workspaceName, GetCurrentUser());
+				var ws = Vcs.GetWorkspace(workspaceName, User.Current);
 
 				if (!ws.IsDeleted && ws.MappingsAvailable)
 					return ws;
@@ -180,18 +202,9 @@ namespace AnFake.Plugins.Tfs2012
 			}
 
 			return null;
-		}
+		}		
 
-		public string GetCurrentUser()
-		{
-			var identity = WindowsIdentity.GetCurrent();
-			if (identity == null)
-				throw new InvalidConfigurationException("TFS plugin requires authenticated user.");
-
-			return identity.Name;
-		}
-
-		public int LastChangesetOf(FileSystemPath path)
+		public int CurrentChangesetOf(FileSystemPath path)
 		{
 			var ws = GetWorkspace(path);
 			var queryParams = new QueryHistoryParameters(path.Full, RecursionType.Full)
@@ -207,13 +220,59 @@ namespace AnFake.Plugins.Tfs2012
 				: 0;
 		}
 
+		public string GetBuildCustomField(string name, string defValue)
+		{
+			lock (_mutex)
+			{
+				var node = _build.Information
+					.GetNodesByType(CustomInformationNode)
+					.FirstOrDefault();
+
+				if (node == null)
+					return defValue;
+
+				string value;
+				return node.Fields.TryGetValue(name, out value)
+					? value
+					: defValue;
+			}			
+		}
+
+		public void SetBuildCustomField(string name, string value)
+		{
+			lock (_mutex)
+			{
+				var node = _build.Information
+					.GetNodesByType(CustomInformationNode)
+					.FirstOrDefault();
+
+				if (node == null)
+				{
+					node = _build.Information.CreateNode();
+					node.Type = CustomInformationNode;
+				}
+
+				node.Fields[name] = value;
+
+				_build.Information.Save();
+			}			
+		}
+
+		public void Save(IBuildDetail build)
+		{
+			lock (_mutex)
+			{
+				build.Save();
+			}
+		}
+
 		// IVersionControl members
 
 		public int CurrentChangesetId
 		{
 			get
 			{
-				return LastChangesetOf("".AsPath());
+				return CurrentChangesetOf(MyBuild.Current.Path);
 			}
 		}
 
@@ -361,24 +420,24 @@ namespace AnFake.Plugins.Tfs2012
 			// flusher isn't started yet so we need not lock here
 
 			_build.Information.AddCustomSummaryInformation(
-			String.Format("Build Agent: [{0}]({1})", Environment.MachineName, rdpPath.ToUnc()),
+				String.Format("Build Agent: [{0}]({1})", Environment.MachineName, rdpPath.ToUnc()),
 				OverviewKey, OverviewHeader, OverviewPriority);
 
 			_build.Information.AddCustomSummaryInformation(
 				String.Format("Build Folder: [{0}]({1})", MyBuild.Current.Path.Full, MyBuild.Current.Path.ToUnc()),
-					OverviewKey, OverviewHeader, OverviewPriority);
+				OverviewKey, OverviewHeader, OverviewPriority);
 
 			if (!String.IsNullOrEmpty(_build.DropLocation))
 			{
 				_build.Information.AddCustomSummaryInformation(
 					String.Format("Drop Folder: [{0}]({0})", _build.DropLocation),
-						OverviewKey, OverviewHeader, OverviewPriority);
+					OverviewKey, OverviewHeader, OverviewPriority);
 			}
 			else
 			{
 				_build.Information.AddCustomSummaryInformation(
 					"Drop Folder: (none)",
-						OverviewKey, OverviewHeader, OverviewPriority);
+					OverviewKey, OverviewHeader, OverviewPriority);
 			}
 
 			if (!String.IsNullOrEmpty(_build.DropLocation))
@@ -539,7 +598,7 @@ namespace AnFake.Plugins.Tfs2012
 
 			FlushMessages();
 
-			_build.FinalizeStatus(AsTfsBuildStatus(details.Status));		
+			_build.FinalizeStatus(details.Status.AsTfsBuildStatus());
 		}
 
 		private string DropLink(Hyperlink link, string newName = null)
@@ -610,24 +669,6 @@ namespace AnFake.Plugins.Tfs2012
 			JoinLinks(formatted, message.Links, "\n");
 
 			return formatted.ToString();
-		}
-
-		private static BuildStatus AsTfsBuildStatus(MyBuild.Status status)
-		{
-			switch (status)
-			{
-				case MyBuild.Status.Succeeded:
-					return BuildStatus.Succeeded;
-
-				case MyBuild.Status.PartiallySucceeded:
-					return BuildStatus.PartiallySucceeded;
-
-				case MyBuild.Status.Failed:
-					return BuildStatus.Failed;
-
-				default:
-					return BuildStatus.None;
-			}
-		}
+		}		
 	}
 }

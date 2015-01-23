@@ -1,0 +1,19 @@
+﻿delimiters "$", "$"
+
+itemTypes ::= [
+    "Bug":      "BUGFIXES",
+    "Task":     "FEATURES",
+    default:    "OTHER"
+]
+
+main(itemGroups) ::= <<
+    $itemGroups:{items|
+        <div>
+            <p><strong>$itemTypes.(items.Key)$</strong></p>
+
+            <ul>
+                $items:{item|<li><a href="$item.Uri$">$item.Id$</a> $item.Title$ $item.State$</li>}$
+            </ul>
+        </div>
+    }$
+>>

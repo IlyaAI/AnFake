@@ -18,5 +18,10 @@ namespace AnFake.Core.Internal
 				new[] {"Build"},
 				properties);
 		}
+
+		public static void Reset()
+		{
+			MyBuild.Reset();
+		}
 	}
 }

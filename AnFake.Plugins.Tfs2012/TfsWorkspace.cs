@@ -6,6 +6,7 @@ using System.Text;
 using AnFake.Api;
 using AnFake.Core;
 using AnFake.Core.Exceptions;
+using AnFake.Core.Integration;
 using AnFake.Integration.Tfs2012;
 using Microsoft.TeamFoundation.VersionControl.Client;
 
@@ -53,7 +54,7 @@ namespace AnFake.Plugins.Tfs2012
 		{
 			get
 			{
-				var usedNames = Vcs.QueryWorkspaces(null, Impl.GetCurrentUser(), null)
+				var usedNames = Vcs.QueryWorkspaces(null, User.Current, null)
 					.ToLookup(x => x.Name);
 
 				return name => !usedNames.Contains(name);
@@ -62,7 +63,7 @@ namespace AnFake.Plugins.Tfs2012
 
 		public static void UpdateInfoCache()
 		{
-			Workstation.Current.UpdateWorkspaceInfoCache(Vcs, Impl.GetCurrentUser());
+			Workstation.Current.UpdateWorkspaceInfoCache(Vcs, User.Current);
 		}
 
 		public static void Create(ServerPath serverPath, FileSystemPath localPath, string workspaceName)
@@ -112,8 +113,8 @@ namespace AnFake.Plugins.Tfs2012
 
 			TraceMappings(mappings);
 
-			ws = Vcs.CreateWorkspace(workspaceName, Impl.GetCurrentUser(), String.Format("AnFake: {0} => {1}", serverPath, localPath), mappings);
-			Trace.InfoFormat("Workspace '{0}' successfully created for '{1}'.", workspaceName, Impl.GetCurrentUser());
+			ws = Vcs.CreateWorkspace(workspaceName, User.Current, String.Format("AnFake: {0} => {1}", serverPath, localPath), mappings);
+			Trace.InfoFormat("Workspace '{0}' successfully created for '{1}'.", workspaceName, User.Current);
 
 			UpdateFiles(ws);
 		}		
@@ -160,8 +161,8 @@ namespace AnFake.Plugins.Tfs2012
 
 			TraceMappings(mappings);
 
-			ws = Vcs.CreateWorkspace(workspaceName, Impl.GetCurrentUser(), String.Format("AnFake: {0} => {1}", serverPath, localPath), mappings);
-			Trace.InfoFormat("Workspace '{0}' successfully created for '{1}'.", workspaceName, Impl.GetCurrentUser());
+			ws = Vcs.CreateWorkspace(workspaceName, User.Current, String.Format("AnFake: {0} => {1}", serverPath, localPath), mappings);
+			Trace.InfoFormat("Workspace '{0}' successfully created for '{1}'.", workspaceName, User.Current);
 
 			UpdateFiles(ws);
 		}

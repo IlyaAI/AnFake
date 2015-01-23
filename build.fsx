@@ -15,8 +15,8 @@ let extrasOut = productOut / "Extras"
 let testsOut = out / "tests"
 let product = !!"AnFake/*.csproj"
 let plugins = 
-    !!"AnFake.Plugins.Tfs2012/*.csproj"
-    + "AnFake.Plugins.HtmlSummary/*.csproj"
+    !!"AnFake.Plugins.*/*.csproj" 
+    - "AnFake.Plugins.*.Test/*.csproj"
 let extras = ~~".AnFake/Extras" % "*"
 let cmds = ~~".AnFake" % "*.cmd"
 let xaml = ~~"AnFake.Integration.Tfs2012.Template/AnFakeTemplate.xaml"
@@ -40,6 +40,8 @@ let nugetFiles =
     + "Plugins/AnFake.Integration.Tfs2012.*.dll"
     + "Plugins/AnFakeTemplate.*.xaml"
     + "Plugins/AnFake.Plugins.Tfs2012.dll"
+    + "Plugins/AnFake.Plugins.StringTemplate.dll"
+    + "Plugins/Antlr4.StringTemplate.dll"
     //+ "Plugins/AnFake.Plugins.HtmlSummary.dll" // not ready yet
     //+ "Plugins/AnFake.Plugins.HtmlSummary.zip"
 
@@ -47,7 +49,7 @@ let productName = "AnFake"
 let productTitle = "AnFake /Another F# Make/ runtime component"
 let productDescription = "AnFake: Another F# Make"
 let productAuthor = "Ilya A. Ivanov"
-let productVersion = "1.0.1".AsVersion()
+let productVersion = "1.0.2".AsVersion()
 
 //
 // IMPORTANT! 

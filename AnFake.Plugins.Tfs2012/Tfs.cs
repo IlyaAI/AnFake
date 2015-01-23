@@ -1,20 +1,18 @@
 ﻿using System;
 using AnFake.Core;
-using Microsoft.TeamFoundation.Build.Client;
 using Microsoft.TeamFoundation.Client;
-using Microsoft.TeamFoundation.VersionControl.Client;
 
 namespace AnFake.Plugins.Tfs2012
 {
 	/// <summary>
-	///		Represents tools related to Team Foundation.
+	///     Represents tools related to Team Foundation.
 	/// </summary>
 	public static class Tfs
 	{
 		private static bool _registered;
 
 		/// <summary>
-		///		Activates <c>Tfs</c> plugin.
+		///     Activates <c>Tfs</c> plugin.
 		/// </summary>
 		public static void PlugIn()
 		{
@@ -30,14 +28,15 @@ namespace AnFake.Plugins.Tfs2012
 					.AsSelf();
 
 				_registered = true;
-			}			
+			}
 		}
 
 		/// <summary>
-		///		Marks <c>Tfs</c> plugin to be activated later.
+		///     Marks <c>Tfs</c> plugin to be activated later.
 		/// </summary>
 		/// <remarks>
-		///		This method is intended for special cases only (see Extras/tf.fsx for example). Normally you should call <c>Tfs.PlugIn</c>.
+		///     This method is intended for special cases only (see Extras/tf.fsx for example). Normally you should call
+		///     <c>Tfs.PlugIn</c>.
 		/// </remarks>
 		public static void PlugInDeferred()
 		{
@@ -60,68 +59,35 @@ namespace AnFake.Plugins.Tfs2012
 		}
 
 		/// <summary>
-		///		Represents build details provided by Tfs.
-		/// </summary>
-		/// <remarks>
-		///		Really, this is a subset of <c>Microsoft.TeamFoundation.Build.Client.IBuildDetail</c> interface.
-		/// </remarks>
-		public sealed class BuildDetail
-		{
-			// ReSharper disable once MemberHidesStaticFromOuterClass
-			private readonly IBuildDetail _build;
-
-			internal BuildDetail(IBuildDetail build)
-			{
-				_build = build;
-			}
-
-			public Uri Uri
-			{
-				get { return _build.Uri; }
-			}
-
-			public string SourceVersion
-			{
-				get { return _build.SourceGetVersion; }
-			}
-
-			public FileSystemPath DropLocation
-			{
-				get { return _build.DropLocation.AsPath(); }
-			}
-		}
-
-		private static BuildDetail _build;
-
-		/// <summary>
-		///		Current build details.
-		/// </summary>
-		public static BuildDetail Build
-		{
-			get { return _build ?? (_build = new BuildDetail(Impl.Build)); }
-		}
-
-		/// <summary>
-		///		The last changeset number for build path.
+		///     Sources root server path.
 		/// </summary>
 		/// <returns></returns>
-		public static int LastChangeset()
+		public static ServerPath SourcesRoot
 		{
-			return LastChangesetOf("".AsPath());
+			get { return Impl.SourcesRoot; }
 		}
 
 		/// <summary>
-		///		The last changeset number for specified path.
+		///     The current changeset number for build path.
+		/// </summary>
+		/// <returns></returns>
+		public static int CurrentChangesetId
+		{
+			get { return Impl.CurrentChangesetId; }			
+		}
+
+		/// <summary>
+		///     The current changeset number for specified path.
 		/// </summary>
 		/// <param name="path"></param>
 		/// <returns></returns>
-		public static int LastChangesetOf(FileSystemPath path)
+		public static int CurrentChangesetOf(FileSystemPath path)
 		{
-			return Impl.LastChangesetOf(path);
+			return Impl.CurrentChangesetOf(path);
 		}
 
 		/// <summary>
-		///		Creates <c>ServerPath</c> instance from string representation.
+		///     Creates <c>ServerPath</c> instance from string representation.
 		/// </summary>
 		/// <param name="path"></param>
 		/// <returns></returns>
@@ -132,12 +98,12 @@ namespace AnFake.Plugins.Tfs2012
 
 			return new ServerPath(path, false);
 		}
-		
+
 		/// <summary>
-		///		Access point to native Team Foundation API.
+		///     Access point to native Team Foundation API.
 		/// </summary>
 		/// <remarks>
-		///		Use this only if no appropriate high-level tools.
+		///     Use this only if no appropriate high-level tools.
 		/// </remarks>
 		// ReSharper disable once InconsistentNaming
 		public static TfsTeamProjectCollection __TeamProjectCollection

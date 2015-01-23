@@ -45,7 +45,7 @@ let product =
 
 //
 // 'Drop' target is requested when DropLocation or PrivateDropLocation is specified in TFS build definition.
-// TODO: copy final artifacts to Tfs.Build.DropLocation
+// TODO: copy final artifacts to TfsBuild.Current.DropLocation
 //
 "Drop" => (fun _ -> ())
 

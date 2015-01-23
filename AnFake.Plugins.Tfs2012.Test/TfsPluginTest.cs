@@ -29,11 +29,21 @@ namespace AnFake.Plugins.Tfs2012.Test
 			Build = definition.CreateManualBuild(
 				new Random().Next().ToString(CultureInfo.InvariantCulture),
 				DropLocation);
+
+			MyBuildTesting.Initialize(
+				new Dictionary<string, string>
+				{					
+					{"Tfs.Uri", TfsUri},
+					{"Tfs.BuildUri", Build.Uri.ToString()},
+					{"Tfs.ActivityInstanceId", "0001"}
+				});
 		}
 
 		[TestCleanup]
 		public void Cleanup()
 		{
+			MyBuildTesting.Reset();
+
 			Trace.Set(PrevTracer);
 
 			if (Build != null)
@@ -52,15 +62,7 @@ namespace AnFake.Plugins.Tfs2012.Test
 			Build.Information
 				.AddActivityTracking("0001", "Sequence", "General");
 			Build.Information
-				.Save();
-
-			MyBuildTesting.Initialize(
-				new Dictionary<string, string>
-				{					
-					{"Tfs.Uri", TfsUri},
-					{"Tfs.BuildUri", Build.Uri.ToString()},
-					{"Tfs.ActivityInstanceId", "0001"}
-				});
+				.Save();			
 
 			// ReSharper disable once ObjectCreationAsStatement
 			new TfsPlugin();

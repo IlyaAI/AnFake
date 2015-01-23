@@ -3,11 +3,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{CF2C4AB6-7FA0-4E49-A151-53BEE29B9BD0}</ProjectGuid>
+    <ProjectGuid>{AE3C99AE-AF7D-40B2-A356-C73E0C68311B}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AnFake.Plugins.Tfs2012.Test</RootNamespace>
-    <AssemblyName>AnFake.Plugins.Tfs2012.Test</AssemblyName>
+    <RootNamespace>AnFake.Plugins.StringTemplate.Test</RootNamespace>
+    <AssemblyName>AnFake.Plugins.StringTemplate.Test</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -35,9 +35,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.TeamFoundation.Build.Client, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
-    <Reference Include="Microsoft.TeamFoundation.Client, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
-    <Reference Include="Microsoft.TeamFoundation.VersionControl.Client, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="System" />
   </ItemGroup>
   <Choose>
@@ -53,32 +50,14 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="TfsWorkItemTest.cs" />
-    <Compile Include="TfsPluginTest.cs" />
+    <Compile Include="STTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TfsTestSuite.cs" />
-    <Compile Include="VcsMappingsTest.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\AnFake.Api\AnFake.Api.csproj">
-      <Project>{E08FA8A9-33D4-4F27-B29E-C9388A291C45}</Project>
-      <Name>AnFake.Api</Name>
+    <ProjectReference Include="..\AnFake.Plugins.StringTemplate\AnFake.Plugins.StringTemplate.csproj">
+      <Project>{7F7B7F43-BB9A-4BAF-9107-682C7D217CC1}</Project>
+      <Name>AnFake.Plugins.StringTemplate</Name>
     </ProjectReference>
-    <ProjectReference Include="..\AnFake.Core\AnFake.Core.csproj">
-      <Project>{86C27076-A445-433B-BB89-E265EF9A74D8}</Project>
-      <Name>AnFake.Core</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\AnFake.Integration.Tfs2012\AnFake.Integration.Tfs2012.csproj">
-      <Project>{F01FCA16-6B92-4C23-8365-EDD614405267}</Project>
-      <Name>AnFake.Integration.Tfs2012</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\AnFake.Plugins.Tfs2012\AnFake.Plugins.Tfs2012.csproj">
-      <Project>{04165D1B-FA7D-4841-BA24-1D5377BDF955}</Project>
-      <Name>AnFake.Plugins.Tfs2012</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Data\" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

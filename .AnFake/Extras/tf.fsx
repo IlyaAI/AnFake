@@ -35,6 +35,14 @@ let serviceNames =
         "features"
     ]
 
+let anfakeFiles =
+    ~~"[AnFake]" % "**/*" 
+    - "anf.cmd" 
+    - "*.fsx" 
+    - "*.csx"
+    - "*.nupkg"
+    - "Plugins/*.xaml"
+
 let getProductName (serverPath: ServerPath) =
     serverPath
         .Split()
@@ -220,14 +228,7 @@ Tfs.PlugInDeferred()
         TfsWorkspace.PendAdd([wsFile])
 
         if not <| anfDstPath.AsFolder().Exists() then
-            let myself = 
-                ~~"[AnFake]" % "**/*" 
-                - "anf.cmd" 
-                - "*.fsx" 
-                - "*.csx"
-                - "*.nupkg"
-                - "Plugins/*.xaml"
-            Files.Copy(myself, anfDstPath)
+            Files.Copy(anfakeFiles, anfDstPath)
             Files.Copy(~~"[AnFake]/anf.cmd", dstPath / "anf.cmd")
             TfsWorkspace.PendAdd(anfDstPath % "**/*")
             TfsWorkspace.PendAdd(dstPath % "anf.cmd")
@@ -250,6 +251,49 @@ Tfs.PlugInDeferred()
 )
 
 "SetUpTeamProjects" ==> "GetStarted" ==> "gs"
+
+"Upgrade" => (fun _ ->
+    let dstPath = 
+        if MyBuild.HasProp("__1") then
+            curDir / MyBuild.GetProp("__1")
+        else
+            curDir
+
+    let anfDstPath = dstPath  / ".AnFake";
+
+    if not <| anfDstPath.AsFolder().Exists() then
+        MyBuild.Failed("AnFake doesn't exists. Use 'GetStarted' for initial setup.")
+
+    Folders.Delete(anfDstPath)
+
+    let myselfServerPath = 
+        MyBuild.GetProp("AnFake.TfsPath").AsServerPath() 
+        / "AnFake"
+        / MyBuild.Current.AnFakeVersion.ToString()
+
+    let wsFile = (dstPath / TfsWorkspace.Defaults.WorkspaceFile).AsFile()
+    let wsDef = wsFile.AsTextDoc();
+
+    wsDef.MatchedLine(@"/AnFake/\d+\.\d+(?:\.\d+)?[ ]*:[ ]*\.AnFake")
+        .Replace("{0}: .AnFake", myselfServerPath)
+
+    wsDef.MatchedLine(@"/AnFake/\d+\.\d+(?:\.\d+)?/anf\.cmd[ ]*:[ ]*anf\.cmd")
+        .Replace("{0}/anf.cmd: anf.cmd", myselfServerPath)
+
+    wsDef.Save()
+    
+    TfsWorkspace.SyncLocal(dstPath)
+    
+    if not <| (anfDstPath / "AnFake.exe").AsFile().Exists() then
+        Files.Copy(anfakeFiles, anfDstPath)
+        Files.Copy(~~"[AnFake]/anf.cmd", dstPath / "anf.cmd", true)
+        TfsWorkspace.PendAdd(anfDstPath % "**/*")
+        TfsWorkspace.PendAdd(dstPath % "anf.cmd")
+
+    Log.InfoFormat("Folder '{0}' is upgraded to use AnFake v.{1}. Carefully review all pending changes and commit them.", dstPath, myselfServerPath.LastName)
+)
+
+"SetUpTeamProjects" ==> "Upgrade"
 
 "Checkout" => (fun _ ->
     let mutable needConfirmation = false

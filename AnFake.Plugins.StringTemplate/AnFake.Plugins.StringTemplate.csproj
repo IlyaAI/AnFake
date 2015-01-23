@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{04165D1B-FA7D-4841-BA24-1D5377BDF955}</ProjectGuid>
+    <ProjectGuid>{7F7B7F43-BB9A-4BAF-9107-682C7D217CC1}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AnFake.Plugins.Tfs2012</RootNamespace>
-    <AssemblyName>AnFake.Plugins.Tfs2012</AssemblyName>
+    <RootNamespace>AnFake.Plugins.StringTemplate</RootNamespace>
+    <AssemblyName>AnFake.Plugins.StringTemplate</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
@@ -32,14 +32,11 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.TeamFoundation.Build.Client, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
-    <Reference Include="Microsoft.TeamFoundation.Client, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
-    <Reference Include="Microsoft.TeamFoundation.Common, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
-    <Reference Include="Microsoft.TeamFoundation.VersionControl.Client, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
-    <Reference Include="Microsoft.TeamFoundation.WorkItemTracking.Client, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Antlr4.StringTemplate">
+      <HintPath>..\packages\Antlr4.StringTemplate.4.0.6.9004\lib\net35\Antlr4.StringTemplate.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Security" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -47,30 +44,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BuildStatusConverter.cs" />
-    <Compile Include="ServerPath.cs" />
-    <Compile Include="TfsWorkItem.cs" />
-    <Compile Include="TfsBuild.cs" />
-    <Compile Include="Tfs.cs" />
-    <Compile Include="TfsChangeset.cs" />
-    <Compile Include="TfsWorkspace.cs" />
-    <Compile Include="TfsPlugin.cs" />
+    <Compile Include="ST.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\AnFake.Api\AnFake.Api.csproj">
-      <Project>{E08FA8A9-33D4-4F27-B29E-C9388A291C45}</Project>
-      <Name>AnFake.Api</Name>
-      <Private>False</Private>
-    </ProjectReference>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\AnFake.Core\AnFake.Core.csproj">
       <Project>{86C27076-A445-433B-BB89-E265EF9A74D8}</Project>
       <Name>AnFake.Core</Name>
-      <Private>False</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\AnFake.Integration.Tfs2012\AnFake.Integration.Tfs2012.csproj">
-      <Project>{F01FCA16-6B92-4C23-8365-EDD614405267}</Project>
-      <Name>AnFake.Integration.Tfs2012</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

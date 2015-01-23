@@ -387,7 +387,7 @@ namespace AnFake.Core
 
 			using (var reader = XmlReader.Create(file.Path.Full))
 			{
-				return LoadXDoc(reader);
+				return LoadXDoc(reader, file);
 			}
 		}
 
@@ -429,12 +429,12 @@ namespace AnFake.Core
 			}
 		}
 
-		private static XDoc LoadXDoc(XmlReader reader)
+		private static XDoc LoadXDoc(XmlReader reader, FileItem file = null)
 		{
 			var xdoc = System.Xml.Linq.XDocument.Load(reader, System.Xml.Linq.LoadOptions.PreserveWhitespace);
 
 			// ReSharper disable once AssignNullToNotNullAttribute
-			return new XDoc(null, xdoc, new XmlNamespaceManager(reader.NameTable));
+			return new XDoc(file, xdoc, new XmlNamespaceManager(reader.NameTable));
 		}
 
 		/// <summary>

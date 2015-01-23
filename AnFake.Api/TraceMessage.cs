@@ -9,7 +9,7 @@ namespace AnFake.Api
 	///     Represents typed message of build trace.
 	/// </summary>
 	[DataContract(Name = "Generic", Namespace = "")]
-	public class TraceMessage : IFormattable
+	public sealed class TraceMessage : IFormattable
 	{
 		private List<Hyperlink> _links;
 

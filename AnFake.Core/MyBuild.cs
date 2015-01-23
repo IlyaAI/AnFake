@@ -115,6 +115,16 @@ namespace AnFake.Core
 			}
 		}
 
+		internal static void Reset()
+		{
+			Current = null;
+			Started = null;
+			Finished = null;			
+
+			_initialized = null;
+			_isInitialized = false;
+		}
+
 		/// <summary>
 		///     Fired when build is initialized.
 		/// </summary>
