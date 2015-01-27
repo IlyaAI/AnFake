@@ -10,12 +10,12 @@ namespace AnFake.Api
 
 		void Write(TraceMessage message);
 
-		void StartTrackExternal();
-
-		void StopTrackExternal();
+		bool TrackExternal(Func<TimeSpan, bool> externalWait, TimeSpan timeout);
 
 		event EventHandler<TraceMessage> MessageReceiving;
 
 		event EventHandler<TraceMessage> MessageReceived;
+
+		event EventHandler Idle;
 	}
 }

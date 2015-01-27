@@ -13,9 +13,7 @@ namespace AnFake.Api
 		private TraceMessageLevel _threshold = TraceMessageLevel.Info;
 		private TimeSpan _trackingInterval = TimeSpan.FromSeconds(5);
 		private TimeSpan _retryInterval = TimeSpan.FromMilliseconds(50);
-		private int _maxRetries = 20;
-		private Thread _tracker;
-		private ManualResetEventSlim _trackStopEvent;
+		private int _maxRetries = 20;		
 		
 		public JsonFileTracer(string logFile, bool append)
 		{
@@ -70,10 +68,7 @@ namespace AnFake.Api
 		public void Write(TraceMessage message)
 		{
 			if (message == null)
-				throw new ArgumentException("ITracer.Write(message): message must not be null");
-
-			if (_tracker != null)
-				throw new InvalidOperationException("Tracking of external messages is active. Hint: check parity of Start/StopTrackExternal methods.");
+				throw new ArgumentException("ITracer.Write(message): message must not be null");			
 
 			if (message.Level < _threshold)
 				return;
@@ -101,92 +96,69 @@ namespace AnFake.Api
 			}
 		}		
 
-		public void StartTrackExternal()
+		public bool TrackExternal(Func<TimeSpan, bool> externalWait, TimeSpan timeout)
 		{
-			if (_tracker != null)
-				throw new InvalidOperationException("Tracking of external messages activated already. Hint: check parity of Start/StopTrackExternal methods.");
-
-			long processedLength;
+			var processedLength = 0L;
 			using (var log = OpenLog(FileMode.Append, FileAccess.Write, MaxRetries))
 			{
 				processedLength = log.Length;
 			}
 
-			_trackStopEvent = new ManualResetEventSlim();
-			_tracker = new Thread(() =>
+			var totalTime = TimeSpan.Zero;
+			var waitTime = _trackingInterval;
+			var completed = false;
+			while (!completed && totalTime < timeout)
 			{
-				try
+				completed = externalWait(waitTime);
+				totalTime += waitTime;
+
+				var log = completed
+					? OpenLog(FileMode.Open, FileAccess.ReadWrite, MaxRetries)
+					: TryOpenLog(FileMode.Open, FileAccess.ReadWrite);
+
+				if (log == null)
 				{
-					var sleepTime = _trackingInterval;
-					var interrupted = false;
-					while (!interrupted)
+					waitTime = _retryInterval;
+					continue;
+				}
+
+				var reader = new JsonTraceReader();
+				using (log)
+				{
+					if (processedLength >= log.Length)
+						continue;
+
+					processedLength = reader.ReadFrom(log, processedLength);
+				}
+
+				if (MessageReceived != null)
+				{
+					TraceMessage message;
+					while ((message = reader.Next()) != null)
 					{
-						interrupted = _trackStopEvent.Wait(sleepTime);
-						
-						var log = interrupted 
-							? OpenLog(FileMode.Open, FileAccess.ReadWrite, MaxRetries)
-							: TryOpenLog(FileMode.Open, FileAccess.ReadWrite);
-
-						if (log == null)
+						if (message.Level >= _threshold)
 						{
-							sleepTime = _retryInterval;
-							continue;
+							MessageReceived.Invoke(this, message);
 						}
-
-						var reader = new JsonTraceReader();
-						using (log)
-						{
-							if (processedLength >= log.Length)
-								continue;
-
-							processedLength = reader.ReadFrom(log, processedLength);
-						}
-
-						if (MessageReceived != null)
-						{
-							TraceMessage message;
-							while ((message = reader.Next()) != null)
-							{
-								if (message.Level >= _threshold)
-								{
-									MessageReceived.Invoke(this, message);
-								}
-							}
-						}
-
-						sleepTime = _trackingInterval;
 					}
-				}				
-				catch (Exception e)
+				}
+
+				if (Idle != null)
 				{
-					Log.Error("Tracking of external messages has failed. Some messages might be skipped.", e);					
-				}				
-			});		
-	
-			_tracker.Start();
-		}
+					Idle.Invoke(this, null);
+				}
 
-		public void StopTrackExternal()
-		{
-			if (_tracker == null)
-				return;
-
-			_trackStopEvent.Set();
-			if (!_tracker.Join(_trackingInterval))
-			{
-				Log.WarnFormat(
-					"JsonFileTracer.StopTrackExternal: tracking thread is not finished in {0}ms. Concurrency issues are possible futher.", 
-					_trackingInterval.TotalMilliseconds);
+				waitTime = _trackingInterval;
 			}
-			_tracker = null;
 
-			_trackStopEvent.Dispose();
-			_trackStopEvent = null;
+			return completed;
 		}
 
 		public event EventHandler<TraceMessage> MessageReceiving;
 
 		public event EventHandler<TraceMessage> MessageReceived;
+
+		public event EventHandler Idle;
 
 		private static XmlObjectSerializer InitSerializer()
 		{

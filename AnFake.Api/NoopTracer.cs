@@ -19,16 +19,11 @@ namespace AnFake.Api
 		{			
 		}
 
-		public void StartTrackExternal()
+		public bool TrackExternal(Func<TimeSpan, bool> externalWait, TimeSpan timeout)
 		{
-			throw new NotSupportedException("NoopTracer.StartTrackExternal() not supported.");
+			throw new NotSupportedException("NoopTracer.TrackExternal() not supported.");
 		}
-
-		public void StopTrackExternal()
-		{
-			throw new NotSupportedException("NoopTracer.StopTrackExternal() not supported.");
-		}
-
+		
 		public event EventHandler<TraceMessage> MessageReceiving
 		{
 			add
@@ -46,6 +41,16 @@ namespace AnFake.Api
 			}
 			remove
 			{			
+			}
+		}
+
+		public event EventHandler Idle
+		{
+			add
+			{
+			}
+			remove
+			{
 			}
 		}
 	}

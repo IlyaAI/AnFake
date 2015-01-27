@@ -106,25 +106,18 @@ namespace AnFake.Api
 			Message(new TraceMessage(TraceMessageLevel.Error, String.Format(format, args)) {Details = e.StackTrace});
 		}
 
-		public static void StartTrackExternal()
+		public static bool TrackExternal(Func<TimeSpan, bool> externalWait, TimeSpan timeout)
 		{
 			Tracer.MessageReceived += OnMessageReceived;
 			try
 			{
-				Tracer.StartTrackExternal();
+				return Tracer.TrackExternal(externalWait, timeout);
 			}
-			catch (Exception)
+			finally 
 			{
-				Tracer.MessageReceived -= OnMessageReceived;
-				throw;
+				Tracer.MessageReceived -= OnMessageReceived;				
 			}
-		}
-
-		public static void StopTrackExternal()
-		{
-			Tracer.StopTrackExternal();
-			Tracer.MessageReceived -= OnMessageReceived;			
-		}
+		}		
 
 		public static event EventHandler<TraceMessage> MessageReceiving
 		{
@@ -136,6 +129,12 @@ namespace AnFake.Api
 		{
 			add { Tracer.MessageReceived += value; }
 			remove { Tracer.MessageReceived -= value; }
+		}
+
+		public static event EventHandler Idle
+		{
+			add { Tracer.Idle += value; }
+			remove { Tracer.Idle -= value; }
 		}
 
 		public static ITracer NewTracer(Uri uri)

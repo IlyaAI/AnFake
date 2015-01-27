@@ -33,6 +33,11 @@ namespace AnFake.Core.Internal
 			registrator();
 
 			Plugin.Configure();
-		}		
+		}
+
+		public static void RunTarget(string name)
+		{
+			name.AsTarget().Run();
+		}
 	}
 }

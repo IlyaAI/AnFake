@@ -170,23 +170,44 @@ namespace AnFake.Api.Test
 			};
 			var external = new JsonFileTracer("external.log.jsx", true);
 			
-			// act & assert			
-			tracer.StartTrackExternal();
-			try
-			{
-				external.Write(new TraceMessage(TraceMessageLevel.Warning, "Warning"));
-				external.Write(new TraceMessage(TraceMessageLevel.Error, "Error"));
-				external.Write(new TraceMessage(TraceMessageLevel.Info, "Info"));
-				
-				Thread.Sleep(200);
+			// act
+			tracer.TrackExternal(
+				t => {
+					external.Write(new TraceMessage(TraceMessageLevel.Warning, "Warning"));
+					external.Write(new TraceMessage(TraceMessageLevel.Error, "Error"));
+					external.Write(new TraceMessage(TraceMessageLevel.Info, "Info"));
 
-				Assert.AreEqual(1, warnings);
-				Assert.AreEqual(1, errors);
-			}
-			finally
+					return true;
+				}, 
+				TimeSpan.FromMilliseconds(1000));
+			
+			// assert
+			Assert.AreEqual(1, warnings);
+			Assert.AreEqual(1, errors);						
+		}
+
+		[TestCategory("Functional")]
+		[TestMethod]
+		public void JsonFileTracer_should_return_false_after_timeout()
+		{
+			// arrange
+			var tracer = new JsonFileTracer("external.log.jsx", false)
 			{
-				tracer.StopTrackExternal();
-			}			
-		}		
+				TrackingInterval = TimeSpan.FromMilliseconds(25),
+				RetryInterval = TimeSpan.FromMilliseconds(10)
+			};
+			
+			// act
+			var ret = tracer.TrackExternal(
+				t =>
+				{
+					Thread.Sleep(t);
+					return false;
+				},
+				TimeSpan.FromMilliseconds(10));
+
+			// assert
+			Assert.IsFalse(ret);			
+		}
 	}
 }

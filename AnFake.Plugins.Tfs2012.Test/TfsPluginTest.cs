@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using AnFake.Api;
+using AnFake.Core;
 using AnFake.Core.Internal;
 using Microsoft.TeamFoundation.Build.Client;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -20,6 +22,10 @@ namespace AnFake.Plugins.Tfs2012.Test
 			PrevTracer = Trace.Set(new BypassTracer());
 
 			Build = CreateTestBuild();
+			Build.Information
+				.AddActivityTracking("0001", "Sequence", "General");
+			Build.Information
+				.Save();
 
 			MyBuildTesting.Initialize(
 				new Dictionary<string, string>
@@ -28,6 +34,13 @@ namespace AnFake.Plugins.Tfs2012.Test
 					{"Tfs.BuildUri", Build.Uri.ToString()},
 					{"Tfs.ActivityInstanceId", "0001"}
 				});
+
+			MyBuildTesting.ConfigurePlugins(PluginsRegistrator);
+		}
+
+		private static void PluginsRegistrator()
+		{
+			Plugin.Register<TfsPlugin>().AsSelf();
 		}
 
 		[TestCleanup]
@@ -46,26 +59,22 @@ namespace AnFake.Plugins.Tfs2012.Test
 		public void TfsPlugin_should_track_messages()
 		{
 			// arrange			
-			Build.Information
-				.AddActivityTracking("0001", "Sequence", "General");
-			Build.Information
-				.Save();
-
-			// ReSharper disable once ObjectCreationAsStatement
-			new TfsPlugin();
+			"Test".AsTarget().Do(() =>
+			{
+				Trace.Message(new TraceMessage(TraceMessageLevel.Debug, "Debug"));
+				Trace.Message(new TraceMessage(TraceMessageLevel.Info, "Info"));
+				Trace.Message(new TraceMessage(TraceMessageLevel.Warning, "Warning"));
+				Trace.Message(new TraceMessage(TraceMessageLevel.Error, "Error"));				
+			}).SkipErrors();
 
 			// act
-			Trace.Message(new TraceMessage(TraceMessageLevel.Debug, "Debug"));
-			Trace.Message(new TraceMessage(TraceMessageLevel.Info, "Info"));
-			Trace.Message(new TraceMessage(TraceMessageLevel.Warning, "Warning"));
-			Trace.Message(new TraceMessage(TraceMessageLevel.Error, "Error"));			
+			MyBuildTesting.RunTarget("Test");
 
 			// assert
-			Build.Refresh(new[] {"*"}, QueryOptions.All);
-			Assert.AreEqual(1, Build.Information.Nodes.Length);
+			Build.Refresh(new[] { "*" }, QueryOptions.All);
 
-			Assert.AreEqual("ActivityTracking", Build.Information.Nodes[0].Type);
-			Assert.AreEqual(4, Build.Information.Nodes[0].Children.Nodes.Length);			
+			var trackingNode = Build.Information.Nodes.First(x => x.Type == "ActivityTracking");
+			Assert.IsTrue(trackingNode.Children.Nodes.Length >= 4, "At least 4 messages must be tracked.");
 		}
 	}
 }

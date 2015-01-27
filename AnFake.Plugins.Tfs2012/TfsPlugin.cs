@@ -16,7 +16,7 @@ namespace AnFake.Plugins.Tfs2012
 {
 	internal sealed class TfsPlugin : Core.Integration.IVersionControl, Core.Integration.IBuildServer, IDisposable
 	{
-		private static readonly TimeSpan FlushInterval = TimeSpan.FromSeconds(2);
+		private const long FlushIntervalMs = 2000;
 
 		private const string CustomInformationNode = "AnFake";
 		private const string SummaryKey = "AnFakeSummary";
@@ -27,10 +27,9 @@ namespace AnFake.Plugins.Tfs2012
 		private const int OverviewPriority = 150;
 		private const string LocalTemp = ".tmp";
 		
-		private readonly Object _mutex = new Object();
 		private readonly Queue<TraceMessage> _messages = new Queue<TraceMessage>();
-		private Timer _flusher;
-
+		private long _lastFlushed;
+		
 		private readonly TfsTeamProjectCollection _teamProjectCollection;
 		
 		private readonly IBuildDetail _build;
@@ -95,9 +94,11 @@ namespace AnFake.Plugins.Tfs2012
 					if (activity == null)
 						throw new InvalidConfigurationException(String.Format("TFS plugin unable to find activity with InstanceId='{0}'", activityInstanceId));
 
-					_tracker = activity.Node.Children;					
+					_tracker = activity.Node.Children;
 
-					Trace.MessageReceived += OnMessage;
+					Trace.MessageReceived += OnTraceMessage;
+					Trace.Idle += OnTraceIdle;
+
 					TestResultAware.Failed += OnTestFailed;
 					Target.Finished += OnTargetFinished;
 
@@ -119,7 +120,9 @@ namespace AnFake.Plugins.Tfs2012
 
 		public void Dispose()
 		{
-			Trace.MessageReceived -= OnMessage;
+			Trace.MessageReceived -= OnTraceMessage;
+			Trace.Idle -= OnTraceIdle;
+
 			TestResultAware.Failed -= OnTestFailed;
 			Target.Finished -= OnTargetFinished;
 
@@ -259,49 +262,33 @@ namespace AnFake.Plugins.Tfs2012
 
 		public string GetBuildCustomField(string name, string defValue)
 		{
-			lock (_mutex)
-			{
-				var node = _build.Information
-					.GetNodesByType(CustomInformationNode)
-					.FirstOrDefault();
+			var node = _build.Information
+				.GetNodesByType(CustomInformationNode)
+				.FirstOrDefault();
 
-				if (node == null)
-					return defValue;
+			if (node == null)
+				return defValue;
 
-				string value;
-				return node.Fields.TryGetValue(name, out value)
-					? value
-					: defValue;
-			}			
+			string value;
+			return node.Fields.TryGetValue(name, out value)
+				? value
+				: defValue;			
 		}
 
 		public void SetBuildCustomField(string name, string value)
-		{
-			lock (_mutex)
+		{			
+			var node = _build.Information
+				.GetNodesByType(CustomInformationNode)
+				.FirstOrDefault();
+
+			if (node == null)
 			{
-				var node = _build.Information
-					.GetNodesByType(CustomInformationNode)
-					.FirstOrDefault();
-
-				if (node == null)
-				{
-					node = _build.Information.CreateNode();
-					node.Type = CustomInformationNode;
-				}
-
-				node.Fields[name] = value;
-				
-				_build.Information.Save();
-			}			
-		}
-
-		public void Save(IBuildDetail build)
-		{
-			lock (_mutex)
-			{
-				build.Save();
+				node = _build.Information.CreateNode();
+				node.Type = CustomInformationNode;
 			}
-		}
+
+			node.Fields[name] = value;						
+		}		
 
 		// IVersionControl members
 
@@ -416,57 +403,63 @@ namespace AnFake.Plugins.Tfs2012
 
 		//
 
-		private void OnMessage(object sender, TraceMessage message)
+		//
+		// To prevent too active TFS accessing we save messages just once in FlushIntervalMs
+		// See alse OnTraceIdle and FlushMessages
+		//
+		private void OnTraceMessage(object sender, TraceMessage message)
 		{
-			//
-			// To prevent too active TFS accessing we save messages just once in FlushInterval
-			//
-			lock (_mutex)
-			{
-				_messages.Enqueue(message);
-			}
+			_messages.Enqueue(message);			
+		}
+
+		private void OnTraceIdle(object sender, EventArgs dummy)
+		{
+			var now = Environment.TickCount;
+			if (_lastFlushed + FlushIntervalMs > now) 
+				return;
+
+			FlushMessages();
+			
+			_lastFlushed = now;
 		}
 
 		private void FlushMessages()
-		{			
-			lock (_mutex)
+		{
+			if (_tracker == null)
 			{
-				if (_tracker == null)
-				{
-					_messages.Clear();
-					return;
-				}
-
-				while (_messages.Count > 0)
-				{
-					var message = _messages.Dequeue();
-
-					switch (message.Level)
-					{
-						case TraceMessageLevel.Debug:
-							_tracker.AddBuildMessage(message.ToString("mfd"), BuildMessageImportance.Low, DateTime.Now);
-							break;
-
-						case TraceMessageLevel.Info:
-							_tracker.AddBuildMessage(message.ToString("mfd"), BuildMessageImportance.Normal, DateTime.Now);
-							break;
-
-						case TraceMessageLevel.Summary:
-							_tracker.AddBuildMessage(message.ToString("mfd"), BuildMessageImportance.High, DateTime.Now);
-							break;
-
-						case TraceMessageLevel.Warning:
-							_tracker.AddBuildWarning(FormatMessage(message), DateTime.Now);
-							break;
-
-						case TraceMessageLevel.Error:
-							_tracker.AddBuildError(FormatMessage(message), DateTime.Now);
-							break;
-					}
-				}
-
-				_tracker.Save();
+				_messages.Clear();
+				return;
 			}
+
+			while (_messages.Count > 0)
+			{
+				var message = _messages.Dequeue();
+
+				switch (message.Level)
+				{
+					case TraceMessageLevel.Debug:
+						_tracker.AddBuildMessage(message.ToString("mfd"), BuildMessageImportance.Low, DateTime.Now);
+						break;
+
+					case TraceMessageLevel.Info:
+						_tracker.AddBuildMessage(message.ToString("mfd"), BuildMessageImportance.Normal, DateTime.Now);
+						break;
+
+					case TraceMessageLevel.Summary:
+						_tracker.AddBuildMessage(message.ToString("mfd"), BuildMessageImportance.High, DateTime.Now);
+						break;
+
+					case TraceMessageLevel.Warning:
+						_tracker.AddBuildWarning(FormatMessage(message), DateTime.Now);
+						break;
+
+					case TraceMessageLevel.Error:
+						_tracker.AddBuildError(FormatMessage(message), DateTime.Now);
+						break;
+				}
+			}
+
+			_tracker.Save();			
 		}
 
 		private TfsBuildSummarySection GetOverviewSection()
@@ -489,8 +482,6 @@ namespace AnFake.Plugins.Tfs2012
 			Text.WriteTo(rdpPath.AsFile(), String.Format("full address:s:{0}", Environment.MachineName));
 
 			FlushMessages();
-
-			// flusher isn't started yet so we need not lock here
 
 			var overview = GetOverviewSection();
 
@@ -524,11 +515,6 @@ namespace AnFake.Plugins.Tfs2012
 				}
 			}			
 			
-			if (_tracker != null)
-			{
-				_flusher = new Timer(x => FlushMessages(), null, FlushInterval, FlushInterval);
-			}			
-
 			Trace.Info("<<< TfsPlugin.OnBuildStarted");
 		}
 
@@ -556,61 +542,48 @@ namespace AnFake.Plugins.Tfs2012
 
 			FlushMessages();
 
-			lock (_mutex) // flusher is started so we must lock
+			var topTarget = (Target) sender;
+			var summary = GetSummarySection();
+
+			foreach (var target in details.ExecutedTargets)
 			{
-				var topTarget = (Target) sender;
-				var summary = GetSummarySection();
+				summary						
+					.AppendFormat(@"{0}: {1,3} error(s) {2,3} warning(s) {3,3} messages(s)  {4:hh\:mm\:ss}  {5}",
+						target.Name, target.Messages.ErrorsCount, target.Messages.WarningsCount, target.Messages.SummariesCount,
+						target.RunTime, target.State.ToHumanReadable().ToUpperInvariant())
+					.Push();
 
-				foreach (var target in details.ExecutedTargets)
+				foreach (var message in target.Messages.Where(x => x.Level == TraceMessageLevel.Summary))
 				{
-					summary						
-						.AppendFormat(@"{0}: {1,3} error(s) {2,3} warning(s) {3,3} messages(s)  {4:hh\:mm\:ss}  {5}",
-							target.Name, target.Messages.ErrorsCount, target.Messages.WarningsCount, target.Messages.SummariesCount,
-							target.RunTime, target.State.ToHumanReadable().ToUpperInvariant())
-						.Push();
-
-					foreach (var message in target.Messages.Where(x => x.Level == TraceMessageLevel.Summary))
-					{
-						summary							
-							.AppendFormat("    {0}", message.Message)
-							.AppendLinks(message.Links)
-							.Push();						
-					}
-
-					_hasBuildErrorsOrWarns |=
-						target.Messages.ErrorsCount > 0 ||
-						target.Messages.WarningsCount > 0;
+					summary							
+						.AppendFormat("    {0}", message.Message)
+						.AppendLinks(message.Links)
+						.Push();						
 				}
 
-				summary.Append(new String('=', 48)).Push();
-				summary
-					.AppendFormat(
-						"'{0}' {1}",
-						topTarget.Name,
-						topTarget.State.ToHumanReadable().ToUpperInvariant())
-					.Push();
-				summary.Append(" ").Push()
-					.Save();
-
-				_hasDropErrors |= summary.HasDropErrors;
+				_hasBuildErrorsOrWarns |=
+					target.Messages.ErrorsCount > 0 ||
+					target.Messages.WarningsCount > 0;
 			}
 
+			summary.Append(new String('=', 48)).Push();
+			summary
+				.AppendFormat(
+					"'{0}' {1}",
+					topTarget.Name,
+					topTarget.State.ToHumanReadable().ToUpperInvariant())
+				.Push();
+			summary.Append(" ").Push()
+				.Save();
+
+			_hasDropErrors |= summary.HasDropErrors;
+			
 			Trace.Info("<<< TfsPlugin.OnTargetFinished");
 		}		
 
 		private void OnBuildFinished(object sender, MyBuild.RunDetails details)
 		{
-			Trace.Info(">>> TfsPlugin.OnBuildFinished");
-
-			if (_flusher != null)
-			{
-				var waiter = new ManualResetEvent(false);
-				_flusher.Dispose(waiter);
-				_flusher = null;
-				waiter.WaitOne();
-			}
-
-			// flusher is stopped already so we need not lock here
+			Trace.Info(">>> TfsPlugin.OnBuildFinished");			
 
 			var summary = GetSummarySection();
 			

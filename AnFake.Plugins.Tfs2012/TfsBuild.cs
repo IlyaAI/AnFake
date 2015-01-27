@@ -100,11 +100,7 @@ namespace AnFake.Plugins.Tfs2012
 			public string Quality
 			{
 				get { return _impl.Quality; }
-				set
-				{
-					_impl.Quality = value;
-					TfsBuild.Impl.Save(_impl);
-				}
+				set { _impl.Quality = value; }
 			}
 
 			public MyBuild.Status Status
@@ -139,6 +135,12 @@ namespace AnFake.Plugins.Tfs2012
 			public void SetCustomField(string name, string value)
 			{
 				TfsBuild.Impl.SetBuildCustomField(name, value);
+			}
+
+			public void Save()
+			{
+				_impl.Information.Save();
+				_impl.Save();
 			}
 
 			// ReSharper disable once MemberHidesStaticFromOuterClass

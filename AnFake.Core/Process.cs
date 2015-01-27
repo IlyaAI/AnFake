@@ -118,11 +118,7 @@ namespace AnFake.Core
 			var external = new TraceMessageCounter();
 			Api.Trace.MessageReceived += external.OnMessage;
 
-			if (parameters.TrackExternalMessages)
-			{
-				Api.Trace.StartTrackExternal();
-			}
-			else
+			if (!parameters.TrackExternalMessages)			
 			{
 				if (parameters.OnStdOut == null)				
 					parameters.OnStdOut = Api.Trace.Debug;
@@ -153,16 +149,19 @@ namespace AnFake.Core
 
 				process.BeginOutputReadLine();
 				process.BeginErrorReadLine();
+				
+				var completed = parameters.TrackExternalMessages 
+					? Api.Trace.TrackExternal(process.Wait, parameters.Timeout) 
+					: process.Wait(parameters.Timeout);
 
-				if (parameters.Timeout == TimeSpan.MaxValue)
-				{
-					process.WaitForExit();
-				}
-				else if (!process.WaitForExit((int) parameters.Timeout.TotalMilliseconds))
+				if (!completed)
 				{
 					process.Kill();
-					throw new TimeoutException(String.Format("Process isn't completed in specified time.\n  Executable: {0}\n  Timeout: {1}", process.StartInfo.FileName,
-						parameters.Timeout));
+					throw new TimeoutException(
+						String.Format(
+							"Process isn't completed in specified time.\n  Executable: {0}\n  Timeout: {1}", 
+							process.StartInfo.FileName,
+							parameters.Timeout));
 				}
 			}
 			catch (Win32Exception e)
@@ -174,11 +173,6 @@ namespace AnFake.Core
 			}
 			finally
 			{
-				if (parameters.TrackExternalMessages)
-				{
-					Api.Trace.StopTrackExternal();
-				}
-
 				Api.Trace.MessageReceived -= external.OnMessage;
 			}
 
@@ -190,6 +184,15 @@ namespace AnFake.Core
 				external.ErrorsCount, 
 				external.WarningsCount,
 				outputBuffer.ToString());
+		}
+
+		private static bool Wait(this System.Diagnostics.Process process, TimeSpan timeout)
+		{
+			if (timeout != TimeSpan.MaxValue) 
+				return process.WaitForExit((int) timeout.TotalMilliseconds);
+
+			process.WaitForExit();
+			return true;
 		}
 	}
 }
