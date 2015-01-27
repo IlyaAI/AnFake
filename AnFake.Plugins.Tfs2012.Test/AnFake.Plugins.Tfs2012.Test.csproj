@@ -53,6 +53,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="TfsBuildTest.cs" />
     <Compile Include="TfsWorkItemTest.cs" />
     <Compile Include="TfsPluginTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

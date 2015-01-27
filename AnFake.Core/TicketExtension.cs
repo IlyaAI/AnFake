@@ -24,5 +24,25 @@ namespace AnFake.Core
 		{
 			return (DateTime) ticket.GetField(name);
 		}
+
+		public static void SetStringField(this ITicket ticket, string name, string value)
+		{
+			ticket.SetField(name, value);
+		}
+
+		public static void SetIntField(this ITicket ticket, string name, int value)
+		{
+			ticket.SetField(name, value);
+		}
+
+		public static void SetBoolField(this ITicket ticket, string name, bool value)
+		{
+			ticket.SetField(name, value);
+		}
+
+		public static void SetDateField(this ITicket ticket, string name, DateTime value)
+		{
+			ticket.SetField(name, value);
+		}
 	}
 }

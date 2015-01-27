@@ -15,7 +15,7 @@ namespace AnFake.Core
 			}
 			catch (Exception e)
 			{
-				Log.Error("SafeOp.Try: {0}", e);
+				Log.Error("SafeOp.Try:", e);
 			}
 
 			return false;
@@ -31,7 +31,7 @@ namespace AnFake.Core
 			}
 			catch (Exception e)
 			{
-				Log.Error("SafeOp.Try: {0}", e);
+				Log.Error("SafeOp.Try:", e);
 			}
 
 			return false;
@@ -47,7 +47,7 @@ namespace AnFake.Core
 			}
 			catch (Exception e)
 			{
-				Log.Error("SafeOp.Try: {0}", e);
+				Log.Error("SafeOp.Try:", e);
 			}
 
 			return false;
@@ -63,7 +63,7 @@ namespace AnFake.Core
 			}
 			catch (Exception e)
 			{
-				Log.Error("SafeOp.Try: {0}", e);
+				Log.Error("SafeOp.Try:", e);
 			}
 
 			return false;

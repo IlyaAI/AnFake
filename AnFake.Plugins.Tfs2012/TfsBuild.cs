@@ -16,7 +16,20 @@ namespace AnFake.Plugins.Tfs2012
 
 		private static TfsPlugin Impl
 		{
-			get { return _impl ?? (_impl = Plugin.Get<TfsPlugin>()); }
+			get
+			{
+				if (_impl != null)
+					return _impl;
+
+				_impl = Plugin.Get<TfsPlugin>();
+				_impl.Disposed += () =>
+				{
+					_impl = null;
+					_current = null;
+				};
+
+				return _impl;
+			}
 		}
 
 		/// <summary>
@@ -36,6 +49,11 @@ namespace AnFake.Plugins.Tfs2012
 			}
 
 			public Uri Uri
+			{
+				get { return new Uri(TfsBuild.Impl.Linking.GetArtifactUrl(_impl.Uri.ToString())); }
+			}
+
+			public Uri NativeUri
 			{
 				get { return _impl.Uri; }
 			}
@@ -60,9 +78,23 @@ namespace AnFake.Plugins.Tfs2012
 				get { return _impl.SourceGetVersion; }
 			}
 
+			public bool HasDropLocation
+			{
+				get
+				{
+					return !String.IsNullOrEmpty(_impl.DropLocation);
+				}
+			}
+
 			public FileSystemPath DropLocation
 			{
-				get { return _impl.DropLocation.AsPath(); }
+				get
+				{
+					if (String.IsNullOrEmpty(_impl.DropLocation))
+						throw new InvalidConfigurationException("Drop location isn't specified.");
+
+					return _impl.DropLocation.AsPath();
+				}
 			}
 
 			public string Quality
@@ -135,6 +167,16 @@ namespace AnFake.Plugins.Tfs2012
 		public static bool HasCurrent
 		{
 			get { return Impl.HasBuild; }
+		}
+
+		public static TfsBuildSummarySection GetSummarySection(string key, string header)
+		{
+			return GetSummarySection(key, header, 150);
+		}
+
+		public static TfsBuildSummarySection GetSummarySection(string key, string header, int priority)
+		{
+			return new TfsBuildSummarySection(Impl.Build, key, header, priority, Impl.HasLogsLocation ? Impl.LogsLocation : null);
 		}
 
 		public static IEnumerable<BuildDetail> QueryAll(int limit)

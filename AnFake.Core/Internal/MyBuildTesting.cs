@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using AnFake.Api;
 
@@ -17,11 +18,21 @@ namespace AnFake.Core.Internal
 				Verbosity.Normal,
 				new[] {"Build"},
 				properties);
-		}
+		}		
 
 		public static void Reset()
 		{
+			Plugin.Reset();
 			MyBuild.Reset();
 		}
+
+		public static void ConfigurePlugins(Action registrator)
+		{
+			Plugin.Reset();
+
+			registrator();
+
+			Plugin.Configure();
+		}		
 	}
 }

@@ -176,6 +176,64 @@ namespace AnFake.Core.Test
 			Tracer.AssertWasCalled(
 				x => x.Write(
 					Arg<TraceMessage>.Matches(y => y.Level == TraceMessageLevel.Error && y.Message == "ERROR")));
-		}		
+		}
+
+		[TestCategory("Functional")]
+		[TestMethod]
+		public void TargetRun_should_do_nothing_if_target_succeeded()
+		{
+			// arrange
+			var sb = new StringBuilder();
+			"a".AsTarget().Do(() => sb.Append("a"));
+			
+			// act
+			"a".AsTarget().Run();
+			"a".AsTarget().Run();
+
+			// assert
+			Assert.AreEqual("a", sb.ToString());
+		}
+
+		[TestCategory("Functional")]
+		[TestMethod]
+		public void TargetRun_should_do_nothing_if_target_partially_succeeded()
+		{
+			// arrange
+			var sb = new StringBuilder();
+			"a".AsTarget().Do(() => sb.Append("a"));
+			"b".AsTarget().Do(() =>
+			{
+				sb.Append("b");
+				throw new Exception();
+			}).SkipErrors();
+			"a".AsTarget().DependsOn("b");
+
+			// act
+			"a".AsTarget().Run();
+			"a".AsTarget().Run();
+
+			// assert
+			Assert.AreEqual("ba", sb.ToString());
+		}
+
+		[TestCategory("Functional")]
+		[TestMethod]
+		public void TargetRun_should_do_nothing_if_target_failed()
+		{
+			// arrange
+			var sb = new StringBuilder();
+			"a".AsTarget().Do(() =>
+			{
+				sb.Append("a");
+				throw new Exception();
+			}).SkipErrors();
+
+			// act
+			"a".AsTarget().Run();
+			"a".AsTarget().Run();
+
+			// assert
+			Assert.AreEqual("a", sb.ToString());
+		}
 	}
 }

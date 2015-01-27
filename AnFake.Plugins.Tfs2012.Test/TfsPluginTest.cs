@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
+﻿using System.Collections.Generic;
 using AnFake.Api;
 using AnFake.Core.Internal;
 using Microsoft.TeamFoundation.Build.Client;
-using Microsoft.TeamFoundation.Client;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AnFake.Plugins.Tfs2012.Test
@@ -22,17 +19,11 @@ namespace AnFake.Plugins.Tfs2012.Test
 
 			PrevTracer = Trace.Set(new BypassTracer());
 
-			var teamProjectCollection = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(new Uri(TfsUri));
-			var buildServer = (IBuildServer) teamProjectCollection.GetService(typeof (IBuildServer));
-
-			var definition = buildServer.GetBuildDefinition(TeamProject, BuildDefinition);
-			Build = definition.CreateManualBuild(
-				new Random().Next().ToString(CultureInfo.InvariantCulture),
-				DropLocation);
+			Build = CreateTestBuild();
 
 			MyBuildTesting.Initialize(
 				new Dictionary<string, string>
-				{					
+				{
 					{"Tfs.Uri", TfsUri},
 					{"Tfs.BuildUri", Build.Uri.ToString()},
 					{"Tfs.ActivityInstanceId", "0001"}
@@ -46,14 +37,10 @@ namespace AnFake.Plugins.Tfs2012.Test
 
 			Trace.Set(PrevTracer);
 
-			if (Build != null)
-			{
-				Build.FinalizeStatus(BuildStatus.Failed);
-				Build.Delete(DeleteOptions.All & ~DeleteOptions.DropLocation);
-				Build = null;
-			}
+			CleanupTestBuild(Build);
+			Build = null;
 		}
-		
+
 		[TestCategory("Integration")]
 		[TestMethod]
 		public void TfsPlugin_should_track_messages()
@@ -62,7 +49,7 @@ namespace AnFake.Plugins.Tfs2012.Test
 			Build.Information
 				.AddActivityTracking("0001", "Sequence", "General");
 			Build.Information
-				.Save();			
+				.Save();
 
 			// ReSharper disable once ObjectCreationAsStatement
 			new TfsPlugin();
@@ -71,17 +58,14 @@ namespace AnFake.Plugins.Tfs2012.Test
 			Trace.Message(new TraceMessage(TraceMessageLevel.Debug, "Debug"));
 			Trace.Message(new TraceMessage(TraceMessageLevel.Info, "Info"));
 			Trace.Message(new TraceMessage(TraceMessageLevel.Warning, "Warning"));
-			Trace.Message(new TraceMessage(TraceMessageLevel.Error, "Error"));
+			Trace.Message(new TraceMessage(TraceMessageLevel.Error, "Error"));			
 
 			// assert
 			Build.Refresh(new[] {"*"}, QueryOptions.All);
-			Assert.AreEqual(2, Build.Information.Nodes.Length);
+			Assert.AreEqual(1, Build.Information.Nodes.Length);
 
 			Assert.AreEqual("ActivityTracking", Build.Information.Nodes[0].Type);
-			Assert.AreEqual(4, Build.Information.Nodes[0].Children.Nodes.Length);
-
-			Assert.AreEqual("CustomSummaryInformation", Build.Information.Nodes[1].Type);
-			Assert.AreEqual(1, Build.Information.Nodes[1].Children.Nodes.Length);
+			Assert.AreEqual(4, Build.Information.Nodes[0].Children.Nodes.Length);			
 		}
 	}
 }

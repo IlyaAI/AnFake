@@ -13,7 +13,17 @@
 			get { return true; }
 		}
 
+		public bool HasDropLocation
+		{
+			get { return true; }
+		}
+
 		public FileSystemPath DropLocation { get; set; }
+
+		public bool HasLogsLocation
+		{
+			get { return true; }
+		}
 
 		public FileSystemPath LogsLocation { get; set; }
 	}

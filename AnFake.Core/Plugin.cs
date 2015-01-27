@@ -162,9 +162,9 @@ namespace AnFake.Core
 		}
 
 		/// <summary>
-		///     Resets all registrations. Normally used for unit-test purpose only.
+		///     Resets all registrations. Normally used for test purpose only.
 		/// </summary>
-		public static void Reset()
+		internal static void Reset()
 		{
 			if (_container != null)
 			{
@@ -180,9 +180,9 @@ namespace AnFake.Core
 		/// </summary>
 		/// <remarks>
 		///     This method should be called when all plugins have been registered but before first call to <c>Plugin.Get</c> or
-		///     <c>Plugin.Find</c>
+		///     <c>Plugin.Find</c>. Normally called by runner. Also might be used to reconfigure plugins for test purpose.
 		/// </remarks>
-		public static void Configure()
+		internal static void Configure()
 		{
 			EnsureBuilder();
 

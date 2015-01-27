@@ -366,6 +366,11 @@ namespace AnFake.Core
 		/// </summary>
 		internal void Run()
 		{
+			if (_state == TargetState.Succeeded
+				|| _state == TargetState.PartiallySucceeded
+				|| _state == TargetState.Failed)
+				return;
+
 			// Prepare
 			var orderedTargets = new List<Target>();
 			ResolveDependencies(orderedTargets);

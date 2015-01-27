@@ -42,7 +42,16 @@ namespace AnFake.Plugins.Tfs2012
 
 		private static TfsPlugin Impl
 		{
-			get { return _impl ?? (_impl = Plugin.Get<TfsPlugin>()); }
+			get
+			{
+				if (_impl != null)
+					return _impl;
+
+				_impl = Plugin.Get<TfsPlugin>();
+				_impl.Disposed += () => _impl = null;
+
+				return _impl;
+			}
 		}
 
 		private static VersionControlServer Vcs

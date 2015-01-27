@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using AnFake.Plugins.Tfs2012.Test;
 using Microsoft.TeamFoundation.Build.Client;
@@ -15,6 +16,14 @@ namespace AnFake.Tfs2012.Test
 		public override void Initialize()
 		{
 			base.Initialize();
+		}
+
+		[TestMethod]
+		public void CreateBuild()
+		{
+			var buildUri = CreateTestBuild().Uri;
+
+			Trace.WriteLine("Build: " + buildUri);
 		}
 
 		[TestMethod]

@@ -1,20 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using AnFake.Api;
 using AnFake.Core;
 using AnFake.Core.Exceptions;
 using AnFake.Core.Integration;
 using AnFake.Core.Integration.Tests;
+using Microsoft.TeamFoundation;
 using Microsoft.TeamFoundation.Build.Client;
 using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.VersionControl.Client;
 
 namespace AnFake.Plugins.Tfs2012
 {
-	internal sealed class TfsPlugin : Core.Integration.IVersionControl, Core.Integration.IBuildServer
+	internal sealed class TfsPlugin : Core.Integration.IVersionControl, Core.Integration.IBuildServer, IDisposable
 	{
 		private static readonly TimeSpan FlushInterval = TimeSpan.FromSeconds(2);
 
@@ -35,8 +35,7 @@ namespace AnFake.Plugins.Tfs2012
 		
 		private readonly IBuildDetail _build;
 		private readonly IBuildInformation _tracker;
-
-		private VersionControlServer _vcs;
+		
 		private FileSystemPath _logsDropPath;
 		private bool _hasDropErrors;
 		private bool _hasBuildErrorsOrWarns;
@@ -66,7 +65,7 @@ namespace AnFake.Plugins.Tfs2012
 
 				_build = buildServer.QueryBuildsByUri(
 					new[] { new Uri(buildUri) },
-					new[] { "ActivityTracking" },
+					new[] { "ActivityTracking", CustomInformationNode },
 					QueryOptions.Definitions).Single();
 
 				if (_build == null)
@@ -114,7 +113,31 @@ namespace AnFake.Plugins.Tfs2012
 
 			Snapshot.FileSaved += OnFileSaved;
 			Snapshot.FileReverted += OnFileReverted;
-		}		
+		}
+
+		// IDisposable members
+
+		public void Dispose()
+		{
+			Trace.MessageReceived -= OnMessage;
+			TestResultAware.Failed -= OnTestFailed;
+			Target.Finished -= OnTargetFinished;
+
+			MyBuild.Started -= OnBuildStarted;
+			MyBuild.Finished -= OnBuildFinished;
+
+			Snapshot.FileSaved -= OnFileSaved;
+			Snapshot.FileReverted -= OnFileReverted;
+
+			if (Disposed != null)
+			{
+				SafeOp.Try(Disposed);
+			}
+		}
+
+		public event Action Disposed;
+
+		// Internal API
 
 		public TfsTeamProjectCollection TeamProjectCollection
 		{
@@ -131,6 +154,11 @@ namespace AnFake.Plugins.Tfs2012
 			}
 		}
 
+		public bool HasBuild
+		{
+			get { return _build != null; }
+		}
+
 		public IBuildDetail Build
 		{
 			get
@@ -142,14 +170,18 @@ namespace AnFake.Plugins.Tfs2012
 			}
 		}
 
-		public bool HasBuild
-		{
-			get { return _build != null; }
-		}
+		private VersionControlServer _vcs;
 
 		public VersionControlServer Vcs
 		{
 			get { return _vcs ?? (_vcs = _teamProjectCollection.GetService<VersionControlServer>()); }
+		}
+
+		private ILinking _linking;
+
+		public ILinking Linking
+		{
+			get { return _linking ?? (_linking = _teamProjectCollection.GetService<ILinking>()); }
 		}
 
 		public ServerPath SourcesRoot
@@ -258,7 +290,7 @@ namespace AnFake.Plugins.Tfs2012
 				}
 
 				node.Fields[name] = value;
-
+				
 				_build.Information.Save();
 			}			
 		}
@@ -286,8 +318,6 @@ namespace AnFake.Plugins.Tfs2012
 			return new TfsChangeset(Vcs.GetChangeset(changesetId));
 		}
 
-		//
-
 		// IBuildServer members
 
 		public bool IsLocal
@@ -295,13 +325,39 @@ namespace AnFake.Plugins.Tfs2012
 			get { return _build == null; }
 		}
 
+		public bool HasDropLocation
+		{
+			get
+			{
+				if (_build == null)
+					return BuildServer.Local.HasDropLocation;
+
+				return !String.IsNullOrEmpty(_build.DropLocation);
+			}
+		}
+
 		public FileSystemPath DropLocation
 		{
 			get
 			{
-				return _build != null 
-					? _build.DropLocation.AsPath() 
-					: BuildServer.Local.DropLocation;
+				if (_build == null)
+					return BuildServer.Local.DropLocation;
+
+				if (String.IsNullOrEmpty(_build.DropLocation))
+					throw new InvalidConfigurationException("Drop location is not specified.");
+
+				return _build.DropLocation.AsPath();
+			}
+		}
+
+		public bool HasLogsLocation
+		{
+			get
+			{
+				if (_build == null)
+					return BuildServer.Local.HasLogsLocation;
+
+				return _logsDropPath != null;
 			}
 		}
 
@@ -309,13 +365,15 @@ namespace AnFake.Plugins.Tfs2012
 		{
 			get
 			{
-				return _build != null
-					? _logsDropPath
-					: BuildServer.Local.LogsLocation;
-			}
-		}
+				if (_build == null)
+					return BuildServer.Local.DropLocation;
 
-		//
+				if (_logsDropPath == null)
+					throw new InvalidConfigurationException("Drop location is not specified.");
+
+				return _logsDropPath;
+			}
+		}		
 
 		//
 		// TFS is too "smart" and treats files as changed even its content fully identical to server's item,
@@ -411,6 +469,16 @@ namespace AnFake.Plugins.Tfs2012
 			}
 		}
 
+		private TfsBuildSummarySection GetOverviewSection()
+		{
+			return new TfsBuildSummarySection(_build, OverviewKey, OverviewHeader, OverviewPriority, _logsDropPath);
+		}
+
+		private TfsBuildSummarySection GetSummarySection()
+		{
+			return new TfsBuildSummarySection(_build, SummaryKey, SummaryHeader, SummaryPriority, _logsDropPath);
+		}
+
 		private void OnBuildStarted(object sender, MyBuild.RunDetails details)
 		{
 			Trace.Info(">>> TfsPlugin.OnBuildStarted");
@@ -424,26 +492,23 @@ namespace AnFake.Plugins.Tfs2012
 
 			// flusher isn't started yet so we need not lock here
 
-			_build.Information.AddCustomSummaryInformation(
-				String.Format("Build Agent: [{0}]({1})", Environment.MachineName, rdpPath.ToUnc()),
-				OverviewKey, OverviewHeader, OverviewPriority);
+			var overview = GetOverviewSection();
 
-			_build.Information.AddCustomSummaryInformation(
-				String.Format("Build Folder: [{0}]({1})", MyBuild.Current.Path.Full, MyBuild.Current.Path.ToUnc()),
-				OverviewKey, OverviewHeader, OverviewPriority);
-
+			overview.Append("Build Agent: ").AppendLink(Environment.MachineName, rdpPath.ToUnc()).Push();
+			overview.Append("Build Folder: ").AppendLink(MyBuild.Current.Path.Full, MyBuild.Current.Path.ToUnc()).Push();
+			
+			overview.Append("Drop Folder: ");
 			if (!String.IsNullOrEmpty(_build.DropLocation))
 			{
-				_build.Information.AddCustomSummaryInformation(
-					String.Format("Drop Folder: [{0}]({0})", _build.DropLocation),
-					OverviewKey, OverviewHeader, OverviewPriority);
+				overview.AppendLink(_build.DropLocation);
 			}
 			else
 			{
-				_build.Information.AddCustomSummaryInformation(
-					"Drop Folder: (none)",
-					OverviewKey, OverviewHeader, OverviewPriority);
+				overview.Append("(none)");				
 			}
+			overview
+				.Push()
+				.Save();
 
 			if (!String.IsNullOrEmpty(_build.DropLocation))
 			{
@@ -452,13 +517,12 @@ namespace AnFake.Plugins.Tfs2012
 				{
 					_logsDropPath = null;
 
-					_build.Information.AddCustomSummaryInformation(
-						"(!) Drop location is inaccessible, logs will be unavailable.",
-						SummaryKey, SummaryHeader, SummaryPriority);
+					GetSummarySection()
+						.Append("(!) Drop location is inaccessible, logs will be unavailable.")
+						.Push()
+						.Save();
 				}
-			}
-
-			_build.Information.Save();
+			}			
 			
 			if (_tracker != null)
 			{
@@ -495,29 +559,22 @@ namespace AnFake.Plugins.Tfs2012
 			lock (_mutex) // flusher is started so we must lock
 			{
 				var topTarget = (Target) sender;
-				var summary = new StringBuilder(512);
+				var summary = GetSummarySection();
 
 				foreach (var target in details.ExecutedTargets)
 				{
-					summary
-						.Clear()
+					summary						
 						.AppendFormat(@"{0}: {1,3} error(s) {2,3} warning(s) {3,3} messages(s)  {4:hh\:mm\:ss}  {5}",
 							target.Name, target.Messages.ErrorsCount, target.Messages.WarningsCount, target.Messages.SummariesCount,
-							target.RunTime, target.State.ToHumanReadable().ToUpperInvariant());
-
-					_build.Information
-						.AddCustomSummaryInformation(summary.ToString(), SummaryKey, SummaryHeader, SummaryPriority);
+							target.RunTime, target.State.ToHumanReadable().ToUpperInvariant())
+						.Push();
 
 					foreach (var message in target.Messages.Where(x => x.Level == TraceMessageLevel.Summary))
 					{
-						summary
-							.Clear()
-							.AppendFormat("    {0}", message.Message);
-
-						JoinLinks(summary, message.Links);
-
-						_build.Information
-							.AddCustomSummaryInformation(summary.ToString(), SummaryKey, SummaryHeader, SummaryPriority);
+						summary							
+							.AppendFormat("    {0}", message.Message)
+							.AppendLinks(message.Links)
+							.Push();						
 					}
 
 					_hasBuildErrorsOrWarns |=
@@ -525,21 +582,17 @@ namespace AnFake.Plugins.Tfs2012
 						target.Messages.WarningsCount > 0;
 				}
 
+				summary.Append(new String('=', 48)).Push();
 				summary
-					.Clear()
 					.AppendFormat(
 						"'{0}' {1}",
 						topTarget.Name,
-						topTarget.State.ToHumanReadable().ToUpperInvariant());
+						topTarget.State.ToHumanReadable().ToUpperInvariant())
+					.Push();
+				summary.Append(" ").Push()
+					.Save();
 
-				_build.Information
-					.AddCustomSummaryInformation(new string('=', 48), SummaryKey, SummaryHeader, SummaryPriority);
-				_build.Information
-					.AddCustomSummaryInformation(summary.ToString(), SummaryKey, SummaryHeader, SummaryPriority);
-				_build.Information
-					.AddCustomSummaryInformation(" ", SummaryKey, SummaryHeader, SummaryPriority);
-
-				_build.Information.Save();
+				_hasDropErrors |= summary.HasDropErrors;
 			}
 
 			Trace.Info("<<< TfsPlugin.OnTargetFinished");
@@ -558,46 +611,38 @@ namespace AnFake.Plugins.Tfs2012
 			}
 
 			// flusher is stopped already so we need not lock here
+
+			var summary = GetSummarySection();
 			
 			if (_logsDropPath != null)
 			{
-				var buildLog = AppendLink(
-					new StringBuilder(128),
-					new Hyperlink(MyBuild.Current.LogFile.Path.Full, "build.log"),
-					"build.log");
-
-				if (buildLog.Length > 0)
+				// Visual Studio expects predefined name 'build.log' so we need to copy with new name.
+				var buildLog = _logsDropPath / "build.log";
+				if (SafeOp.Try(Files.Copy, MyBuild.Current.LogFile.Path, buildLog, false))
 				{
-					_build.LogLocation = (_logsDropPath/"build.log").Full;
-					_build.Information
-						.AddCustomSummaryInformation(buildLog.ToString(), SummaryKey, SummaryHeader, SummaryPriority);
+					summary.AppendLink("build.log", buildLog).Push();
 				}
-			}
+				else
+				{
+					_hasDropErrors = true;
+				}
 
-			if (_logsDropPath != null)
-			{
 				if (_hasDropErrors)
 				{
-					_build.Information.AddCustomSummaryInformation(
-						"(!) There are troubles accessing drop location, some logs are unavailable.",
-						SummaryKey, SummaryHeader, SummaryPriority);
+					summary.Append("(!) There are troubles accessing drop location, some logs are unavailable.").Push();
 				}
 			}
 			else
 			{
-				_build.Information.AddCustomSummaryInformation(
-					"Hint: set up drop location to get access to complete build logs.",
-					SummaryKey, SummaryHeader, SummaryPriority);
+				summary.Append("Hint: set up drop location to get access to complete build logs.").Push();
 			}
 
 			if (_hasBuildErrorsOrWarns)
 			{
-				_build.Information.AddCustomSummaryInformation(
-					"See the section below for error/warning list.",
-					SummaryKey, SummaryHeader, SummaryPriority);
+				summary.Append("See the section below for error/warning list.").Push();
 			}
 
-			_build.Information.Save();
+			summary.Save();
 
 			Trace.Info("<<< TfsPlugin.OnBuildFinished");
 
@@ -606,72 +651,13 @@ namespace AnFake.Plugins.Tfs2012
 			_build.FinalizeStatus(details.Status.AsTfsBuildStatus());
 		}
 
-		private string DropLink(Hyperlink link, string newName = null)
-		{
-			if (_logsDropPath == null)
-				return null;
-
-			var href = (string)null;			
-			var srcPath = link.Href.AsPath();
-			var dstPath = _logsDropPath / (newName ?? srcPath.LastName);
-
-			if (dstPath.AsFile().Exists() || SafeOp.Try(Files.Copy, srcPath, dstPath, false))
-			{
-				href = dstPath.Full;
-			}
-			else
-			{
-				_hasDropErrors = true;
-			}
-
-			return href;
-		}
-
-		private StringBuilder AppendLink(StringBuilder sb, Hyperlink link, string newName = null)
-		{
-			var href = DropLink(link, newName);
-			return href != null
-				? sb.Append('[').Append(link.Label).Append("](").Append(href).Append(')')
-				: sb;
-		}
-
-		private StringBuilder JoinLinks(StringBuilder sb, List<Hyperlink> links, string prefix = " ", string separator = " | ")
-		{
-			if (links.Count == 0)
-				return sb;
-
-			var startedAt = sb.Length;
-			sb.Append(prefix);
-
-			var prevLength = sb.Length;
-			AppendLink(sb, links[0]);
-
-			for (var i = 1; i < links.Count; i++)
-			{
-				if (sb.Length > prevLength)
-				{
-					sb.Append(separator);
-				}
-
-				prevLength = sb.Length;
-				AppendLink(sb, links[i]);
-			}
-
-			// if no one link generated then remove prefix
-			if (sb.Length - startedAt == prefix.Length)
-			{
-				sb.Remove(startedAt, sb.Length - startedAt);
-			}
-
-			return sb;
-		}
-
 		private string FormatMessage(TraceMessage message)
 		{
-			var formatted = new StringBuilder(512)
-				.Append(message.ToString("mfd"));
+			var formatted = new TfsMessageBuilder(_logsDropPath)
+				.Append(message.ToString("mfd"))
+				.AppendLinks(message.Links, "\n");
 
-			JoinLinks(formatted, message.Links, "\n");
+			_hasDropErrors |= formatted.HasDropErrors;
 
 			return formatted.ToString();
 		}		

@@ -11,12 +11,22 @@
 		bool IsLocal { get; }
 
 		/// <summary>
-		///		Drop folder location.
+		///		Whether this build has drop location?
+		/// </summary>
+		bool HasDropLocation { get; }
+
+		/// <summary>
+		///		Drop folder location. Throws if not specified.
 		/// </summary>
 		FileSystemPath DropLocation { get; }
 
 		/// <summary>
-		///		Logs folder location.
+		///		Whether this build has logs folder?
+		/// </summary>
+		bool HasLogsLocation { get; }
+
+		/// <summary>
+		///		Logs folder location. Throws if not specified.
 		/// </summary>
 		FileSystemPath LogsLocation { get; }
 	}

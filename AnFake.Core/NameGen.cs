@@ -3,8 +3,14 @@ using AnFake.Core.Exceptions;
 
 namespace AnFake.Core
 {
+	/// <summary>
+	///		Represents unique name generation tool.
+	/// </summary>
 	public static class NameGen
 	{
+		/// <summary>
+		///		Name generation parameters.
+		/// </summary>
 		public sealed class Params
 		{
 			public string NameGenerationFormat;
@@ -22,6 +28,9 @@ namespace AnFake.Core
 			}
 		}
 
+		/// <summary>
+		///		Defauls name generation parameters.
+		/// </summary>
 		public static Params Defaults { get; private set; }
 
 		static NameGen()
@@ -29,11 +38,24 @@ namespace AnFake.Core
 			Defaults = new Params();
 		}
 
+		/// <summary>
+		///		Equals to <c>Generate(basicName, validator, () => {})</c>.
+		/// </summary>
+		/// <param name="basicName">basic name (not null or empty)</param>
+		/// <param name="validator">predicate which should return true if name is unique</param>
+		/// <returns>unique name</returns>
 		public static string Generate(string basicName, Predicate<string> validator)
 		{
 			return Generate(basicName, validator, p => { });
 		}
 
+		/// <summary>
+		///		Generates unique name by adding numeric suffix to 'basicName'.
+		/// </summary>
+		/// <param name="basicName">basic name (not null or empty)</param>
+		/// <param name="validator">predicate which should return true if name is unique</param>
+		/// <param name="setParams">action to override default parameters</param>
+		/// <returns>unique name</returns>
 		public static string Generate(string basicName, Predicate<string> validator, Action<Params> setParams)
 		{
 			if (String.IsNullOrEmpty(basicName))

@@ -37,6 +37,7 @@ namespace AnFake.Core
 
 					return note;
 				})
+				.OrderBy(n => n.Ordinal)
 				.GroupBy(n => n.Category);
 
 			return new Integration.Tracking.ReleaseNotes

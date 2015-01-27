@@ -1,30 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using AnFake.Api;
 using AnFake.Core;
 using AnFake.Core.Internal;
 using Microsoft.TeamFoundation.Build.Client;
+using Microsoft.TeamFoundation.Client;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AnFake.Plugins.Tfs2012.Test
 {
 	[TestClass]
-	public class TfsWorkItemTest : TfsTestSuite
+	public class TfsBuildTest : TfsTestSuite
 	{
-		public ITracer PrevTracer;
 		public IBuildDetail Build;
 
 		[TestInitialize]
 		public override void Initialize()
 		{
 			base.Initialize();
+			
+			Build = CreateTestBuild();
 
 			MyBuildTesting.Initialize(
 				new Dictionary<string, string>
-				{
+				{					
 					{"Tfs.Uri", TfsUri},
-					{"Tfs.TeamProject", TeamProject}
+					{"Tfs.BuildUri", Build.Uri.ToString()}					
 				});
 
 			MyBuildTesting.ConfigurePlugins(PluginsRegistrator);
@@ -37,36 +40,43 @@ namespace AnFake.Plugins.Tfs2012.Test
 
 		[TestCleanup]
 		public void Cleanup()
-		{			
+		{
 			MyBuildTesting.Reset();
+			
+			CleanupTestBuild(Build);
+			Build = null;
 		}
-
+		
 		[TestCategory("Integration")]
 		[TestMethod]
-		public void TfsWorkItem_should_exec_named_query()
+		public void TfsBuild_should_save_custom_fields()
 		{
-			// arrange
+			// arrange			
+			
+			// act I
+			TfsBuild.Current.SetCustomField("MyField", "Custom-Value");
 
-			// act
-			var items = TfsWorkItem.ExecNamedQuery("Shared Queries/My Work/My Tasks", "me", "Ilya Ivanov").ToArray();
+			// re-initiate			
+			MyBuildTesting.ConfigurePlugins(PluginsRegistrator);
+			
+			// act II
+			var myField = TfsBuild.Current.GetCustomField("MyField");
 			
 			// assert
-			Assert.IsTrue(items.Length > 0);
-			Assert.IsTrue(items[0].NativeId > 0);
-			Assert.AreEqual("Task", items[0].Type);
+			Assert.AreEqual("Custom-Value", myField);			
 		}
 
 		[TestCategory("Integration")]
 		[TestMethod]
-		public void TfsWorkItem_should_return_http_uri()
+		public void TfsBuild_should_return_http_uri()
 		{
 			// arrange
 
 			// act
-			var item = TfsWorkItem.ExecNamedQuery("Shared Queries/My Work/My Tasks", "me", "Ilya Ivanov").First();
+			var build = TfsBuild.QueryAll(BuildDefinition, 1).First();
 
 			// assert			
-			Assert.IsTrue(item.Uri.ToString().StartsWith("http", StringComparison.OrdinalIgnoreCase));
+			Assert.IsTrue(build.Uri.ToString().StartsWith("http", StringComparison.OrdinalIgnoreCase));
 		}
 	}
 }

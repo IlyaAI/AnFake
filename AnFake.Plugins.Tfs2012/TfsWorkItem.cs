@@ -17,7 +17,16 @@ namespace AnFake.Plugins.Tfs2012
 
 		private static TfsPlugin Impl
 		{
-			get { return _impl ?? (_impl = Plugin.Get<TfsPlugin>()); }
+			get
+			{
+				if (_impl != null)
+					return _impl;
+
+				_impl = Plugin.Get<TfsPlugin>();
+				_impl.Disposed += () => _impl = null;
+
+				return _impl;
+			}
 		}
 
 		/// <summary>
@@ -34,6 +43,11 @@ namespace AnFake.Plugins.Tfs2012
 			}
 
 			public Uri Uri
+			{
+				get { return new Uri(Impl.Linking.GetArtifactUrl(_impl.Uri.ToString())); }
+			}
+
+			public Uri NativeUri
 			{
 				get { return _impl.Uri; }
 			}
@@ -71,9 +85,22 @@ namespace AnFake.Plugins.Tfs2012
 			public object GetField(string name)
 			{
 				if (!_impl.Fields.Contains(name))
-					throw new InvalidConfigurationException(String.Format("WorkItem doesn't contain '{0}' field.", name));
+					throw new InvalidConfigurationException(String.Format("WorkItem doesn't have '{0}' field.", name));
 
 				return _impl.Fields[name].Value;
+			}
+
+			public void SetField(string name, object value)
+			{
+				if (!_impl.Fields.Contains(name))
+					throw new InvalidConfigurationException(String.Format("WorkItem doesn't have '{0}' field.", name));
+
+				_impl.Fields[name].Value = value;
+			}
+
+			public void Save()
+			{
+				_impl.Save();
 			}
 		}
 

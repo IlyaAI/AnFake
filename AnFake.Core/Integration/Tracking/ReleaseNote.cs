@@ -18,5 +18,7 @@ namespace AnFake.Core.Integration.Tracking
 		public string Summary { get; set; }
 
 		public string State { get; set; }
+
+		public int Ordinal { get; set; }
 	}
 }

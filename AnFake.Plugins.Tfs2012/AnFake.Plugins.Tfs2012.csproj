@@ -48,6 +48,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BuildStatusConverter.cs" />
+    <Compile Include="TfsMessageBuilder.cs" />
+    <Compile Include="TfsBuildSummarySection.cs" />
     <Compile Include="ServerPath.cs" />
     <Compile Include="TfsWorkItem.cs" />
     <Compile Include="TfsBuild.cs" />

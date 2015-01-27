@@ -16,6 +16,10 @@ namespace AnFake.Core.Integration.Tracking
 
 		string Reason { get; }
 
-		object GetField(string name);		
+		object GetField(string name);
+
+		void SetField(string name, object value);
+
+		void Save();
 	}
 }

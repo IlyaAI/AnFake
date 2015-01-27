@@ -87,7 +87,18 @@ namespace AnFake.Core
 		{
 			get { return Path.IsPathRooted(_value); }
 		}
-		
+
+		/// <summary>
+		///		Is this UNC path (i.e. started from // or \\ symbols)?
+		/// </summary>
+		public bool IsUnc
+		{
+			get
+			{
+				return _value.Length > 0 && _value[0] == Path.DirectorySeparatorChar && _value[1] == Path.DirectorySeparatorChar;
+			}
+		}
+
 		/// <summary>
 		///		String representation of path as was specified.
 		/// </summary>
