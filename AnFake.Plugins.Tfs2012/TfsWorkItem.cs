@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using AnFake.Core;
 using AnFake.Core.Exceptions;
+using AnFake.Core.Integration;
 using Microsoft.TeamFoundation.WorkItemTracking.Client;
 
 namespace AnFake.Plugins.Tfs2012
@@ -98,9 +99,19 @@ namespace AnFake.Plugins.Tfs2012
 				_impl.Fields[name].Value = value;
 			}
 
+			public void PartialOpen()
+			{
+				_impl.PartialOpen();
+			}
+
 			public void Save()
 			{
 				_impl.Save();
+			}
+
+			public void Close()
+			{
+				_impl.Close();
 			}
 		}
 
@@ -133,7 +144,7 @@ namespace AnFake.Plugins.Tfs2012
 				var queryFolder = queryItem as QueryFolder;
 				if (queryFolder == null || !queryFolder.Contains(step))
 					throw new InvalidConfigurationException(
-						String.Format("Query path '{0}' is incorrect.", queryPath));
+						String.Format("Query path '{0}' is eighter incorrect or inaccessible for user '{1}'.", queryPath, User.Current));
 
 				queryItem = queryFolder[step];
 			}

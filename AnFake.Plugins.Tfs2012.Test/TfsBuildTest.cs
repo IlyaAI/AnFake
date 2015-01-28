@@ -66,6 +66,24 @@ namespace AnFake.Plugins.Tfs2012.Test
 
 		[TestCategory("Integration")]
 		[TestMethod]
+		public void TfsBuild_should_return_custom_fields_in_queried_build()
+		{
+			// arrange
+			var build = TfsBuild.QueryAll(1).First();
+			build.SetCustomField("MyField", "Custom-Value");
+			build.Save();
+
+			// act
+			var myField = TfsBuild.QueryAll(1)
+				.First()
+				.GetCustomField("MyField");
+
+			// assert
+			Assert.AreEqual("Custom-Value", myField);
+		}
+
+		[TestCategory("Integration")]
+		[TestMethod]
 		public void TfsBuild_should_return_http_uri()
 		{
 			// arrange

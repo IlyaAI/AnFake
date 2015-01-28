@@ -260,9 +260,9 @@ namespace AnFake.Plugins.Tfs2012
 				: 0;
 		}
 
-		public string GetBuildCustomField(string name, string defValue)
+		public static string GetBuildCustomField(IBuildDetail build, string name, string defValue)
 		{
-			var node = _build.Information
+			var node = build.Information
 				.GetNodesByType(CustomInformationNode)
 				.FirstOrDefault();
 
@@ -275,19 +275,19 @@ namespace AnFake.Plugins.Tfs2012
 				: defValue;			
 		}
 
-		public void SetBuildCustomField(string name, string value)
+		public static void SetBuildCustomField(IBuildDetail build, string name, string value)
 		{			
-			var node = _build.Information
+			var node = build.Information
 				.GetNodesByType(CustomInformationNode)
 				.FirstOrDefault();
 
 			if (node == null)
 			{
-				node = _build.Information.CreateNode();
+				node = build.Information.CreateNode();
 				node.Type = CustomInformationNode;
 			}
 
-			node.Fields[name] = value;						
+			node.Fields[name] = value;
 		}		
 
 		// IVersionControl members
