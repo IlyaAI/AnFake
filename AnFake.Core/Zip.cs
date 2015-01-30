@@ -96,7 +96,7 @@ namespace AnFake.Core
 			var parameters = Defaults.Clone();
 			setParams(parameters);
 
-			Trace.Info("Zip.Pack...");
+			Trace.InfoFormat("Zip.Pack: {{{0}}}", files);
 			
 			using (var zip = new ZipOutputStream(new FileStream(zipFilePath.Full, FileMode.Create, FileAccess.Write)))
 			{

@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace AnFake.Core
 {
@@ -39,7 +40,7 @@ namespace AnFake.Core
 
 		internal FileSet()
 		{
-			_basePath = FileSystemPath.Base;
+			_basePath = "".AsPath();
 		}
 
 		public FileSet Include(FileSystemPath wildcardedPath)
@@ -153,6 +154,55 @@ namespace AnFake.Core
 			}
 
 			return files.Distinct().GetEnumerator();
+		}
+
+		public override string ToString()
+		{
+			if (_patterns.Count == 0)
+				return "(no files)";
+
+			var sb = new StringBuilder(128);
+			foreach (var pattern in _patterns)
+			{
+				if (sb.Length > 64)
+				{
+					sb.Append("...");
+					break;
+				}
+
+				switch (pattern.Type)
+				{
+					case PatternType.Include:
+						if (sb.Length > 0)
+						{
+							sb.Append(" + ");
+						}						
+						break;
+					case PatternType.Exclude:
+						if (sb.Length > 0)
+						{
+							sb.Append(" - ");
+						}
+						else
+						{
+							sb.Append('-');
+						}
+						break;
+				}
+
+				if (pattern.BasePath.Spec.Length == 0)
+				{
+					sb.Append("!!'").Append(pattern.WildcardedPath).Append('\'');
+					
+				}
+				else
+				{
+					sb.Append('\'').Append(pattern.BasePath).Append("' % '")
+						.Append(pattern.WildcardedPath).Append('\'');
+				}
+			}
+
+			return sb.ToString();
 		}
 
 		public static FileSet operator +(FileSet files, FileSystemPath wildcardedPath)

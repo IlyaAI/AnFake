@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace AnFake.Core
 {
@@ -69,6 +70,48 @@ namespace AnFake.Core
 			}
 
 			return folders.Distinct().GetEnumerator();
+		}
+
+		public override string ToString()
+		{
+			if (_patterns.Count == 0)
+				return "(no folders)";
+
+			var sb = new StringBuilder(128);
+			sb.Append("!!!");
+
+			foreach (var pattern in _patterns)
+			{
+				if (sb.Length > 64)
+				{
+					sb.Append("...");
+					break;
+				}
+
+				switch (pattern.Type)
+				{
+					case PatternType.Include:
+						if (sb.Length > 3)
+						{
+							sb.Append(" + ");
+						}
+						break;
+					case PatternType.Exclude:
+						if (sb.Length > 3)
+						{
+							sb.Append(" - ");
+						}
+						else
+						{
+							sb.Append('-');
+						}
+						break;
+				}
+
+				sb.Append('\'').Append(pattern.WildcardedPath).Append('\'');
+			}
+
+			return sb.ToString();
 		}
 
 		public static FolderSet operator +(FolderSet folders, FileSystemPath wildcardedPath)

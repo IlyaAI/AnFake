@@ -296,5 +296,75 @@ namespace AnFake.Core.Test
 			// assert
 			Assert.AreEqual(6, files.Count);
 		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void FileSetToString_should_return_no_files_if_empty()
+		{
+			// arrange
+			var fs = new FileSet();
+
+			// act
+			var s = fs.ToString();
+
+			// assert
+			Assert.AreEqual("(no files)", s);
+		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void FileSetToString_should_return_pattern_wo_basepath()
+		{
+			// arrange
+			var fs = "Data/*".AsFileSet();
+
+			// act
+			var s = fs.ToString();
+
+			// assert
+			Assert.AreEqual("!!'Data\\*'", s);
+		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void FileSetToString_should_return_pattern_w_basepath()
+		{
+			// arrange
+			var fs = "*.txt".AsFileSetFrom("Data");
+
+			// act
+			var s = fs.ToString();
+
+			// assert
+			Assert.AreEqual("'Data' % '*.txt'", s);
+		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void FileSetToString_should_return_multi_patterns_wo_basepath()
+		{
+			// arrange
+			var fs = "dir-A/*.txt".AsFileSet() + "dir-B/*.doc";
+
+			// act
+			var s = fs.ToString();
+
+			// assert
+			Assert.AreEqual("!!'dir-A\\*.txt' + !!'dir-B\\*.doc'", s);
+		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void FileSetToString_should_return_multi_patterns_w_basepath()
+		{
+			// arrange
+			var fs = "*.txt".AsFileSetFrom("dir-A") + "*.doc".AsFileSetFrom("dir-B");
+
+			// act
+			var s = fs.ToString();
+
+			// assert
+			Assert.AreEqual("'dir-A' % '*.txt' + 'dir-B' % '*.doc'", s);
+		}
 	}
 }
