@@ -31,7 +31,7 @@ namespace AnFake.Core.NuSpec.v25
 		/// </remarks>
 		[XmlElement("version", IsNullable = false)]
 		// ReSharper disable once InconsistentNaming
-		public string szVersion
+		public string __Version
 		{
 			get { return Version != null ? Version.ToString() : null; }
 			set { Version = new Version(value); }

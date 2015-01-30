@@ -6,7 +6,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace AnFake.Core.Test
 {
 	[TestClass]
-	public class FileSystemPath
+	public class FileSystemPathTest
 	{
 		[TestCategory("Unit")]
 		[TestMethod]

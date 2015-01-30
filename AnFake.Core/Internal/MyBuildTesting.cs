@@ -22,6 +22,7 @@ namespace AnFake.Core.Internal
 
 		public static void Reset()
 		{
+			Target.Reset();
 			Plugin.Reset();
 			MyBuild.Reset();
 		}

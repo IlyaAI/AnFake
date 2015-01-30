@@ -49,7 +49,7 @@ let productName = "AnFake"
 let productTitle = "AnFake /Another F# Make/ runtime component"
 let productDescription = "AnFake: Another F# Make"
 let productAuthor = "Ilya A. Ivanov"
-let productVersion = "1.0.2".AsVersion()
+let productVersion = "1.0.3".AsVersion()
 
 //
 // IMPORTANT! 
@@ -110,6 +110,10 @@ let xamlVersion = "1"
         testsOut % "*.Test.dll",
         fun p -> p.NoIsolation <- true)
 ) |> skipErrors
+
+"Package.Zip" => (fun _ ->    
+    Zip.Pack(nugetFiles, out / String.Format("AnFake-{0}.zip", productVersion))
+)
 
 "Package.Pack" => (fun _ -> 
     let fsharpCore = 

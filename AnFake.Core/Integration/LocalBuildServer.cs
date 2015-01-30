@@ -1,30 +1,43 @@
-﻿namespace AnFake.Core.Integration
+﻿using System;
+using System.Text;
+
+namespace AnFake.Core.Integration
 {
 	internal sealed class LocalBuildServer : IBuildServer
 	{
-		public LocalBuildServer()
-		{
-			DropLocation = ".out".AsPath();
-			LogsLocation = DropLocation/"logs";
-		}
-
 		public bool IsLocal
 		{
 			get { return true; }
 		}
 
-		public bool HasDropLocation
+		public bool CanExposeArtifacts
 		{
 			get { return true; }
 		}
 
-		public FileSystemPath DropLocation { get; set; }
-
-		public bool HasLogsLocation
+		public Uri ExposeArtifact(FileItem file, ArtifactType type)
 		{
-			get { return true; }
+			return new UriBuilder(Uri.UriSchemeFile, "") {Path = file.Path.Full}.Uri;
 		}
 
-		public FileSystemPath LogsLocation { get; set; }
+		public Uri ExposeArtifact(FolderItem folder, ArtifactType type)
+		{
+			return new UriBuilder(Uri.UriSchemeFile, "") {Path = folder.Path.Full}.Uri;
+		}
+
+		public Uri ExposeArtifact(string name, string content, Encoding encoding, ArtifactType type)
+		{
+			return new Uri("about:blank");
+		}
+
+		public void ExposeArtifacts(FileSet files, ArtifactType type)
+		{
+			// do nothing
+		}
+
+		public void DeleteArtifacts()
+		{
+			// do nothing
+		}
 	}
 }

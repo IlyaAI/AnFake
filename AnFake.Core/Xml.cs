@@ -133,20 +133,19 @@ namespace AnFake.Core
 				if (file == null)
 					throw new ArgumentException("XDoc.Save(file): file must not be null");
 
+				file.EnsurePath();
+
 				_doc.Save(file.Path.Full);
 			}
 
 			/// <summary>
-			///		Saves XML document to specified stream.
+			///		Returns XML document as string.
 			/// </summary>
-			/// <param name="stream">stream to save document to (not null)</param>
-			public void SaveTo(Stream stream)
+			/// <returns>xml string</returns>
+			public override string ToString()
 			{
-				if (stream == null)
-					throw new ArgumentException("XDoc.Save(stream): stream must not be null");
-
-				_doc.Save(stream);
-			}			
+				return _doc.ToString();
+			}
 		}
 
 		/// <summary>
@@ -389,26 +388,7 @@ namespace AnFake.Core
 			{
 				return LoadXDoc(reader, file);
 			}
-		}
-
-		/// <summary>
-		///		Loads XML document from given stream.
-		/// </summary>
-		/// <remarks>
-		///		Returned document might be saved to the file or other stream with <c>XDoc.SaveTo</c> method.
-		/// </remarks>
-		/// <param name="stream">stream to load xml from (not null)</param>
-		/// <returns>XML document</returns>
-		public static XDoc AsXmlDoc(this Stream stream)
-		{
-			if (stream == null)
-				throw new ArgumentException("Xml.AsXmlDoc(stream): stream must not be null");
-
-			using (var reader = XmlReader.Create(stream))
-			{
-				return LoadXDoc(reader);
-			}
-		}
+		}		
 
 		/// <summary>
 		///		Loads XML document from given string.

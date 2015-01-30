@@ -128,8 +128,8 @@ namespace AnFake.Core
 					if (trxPath != null)
 					{
 						var currentTests = postProcessor
-							.PostProcess(trxPath)
-							.Trace(assembly.Name, trxPath.Full);
+							.PostProcess(assembly.Name, trxPath.AsFile())
+							.Trace();
 
 						tests.AddRange(currentTests);
 						processed = true;

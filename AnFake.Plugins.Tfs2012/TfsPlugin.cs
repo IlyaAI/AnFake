@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
+using System.Text;
 using AnFake.Api;
 using AnFake.Core;
 using AnFake.Core.Exceptions;
@@ -25,7 +25,7 @@ namespace AnFake.Plugins.Tfs2012
 		private const string OverviewKey = "AnFakeOverview";
 		private const string OverviewHeader = "Overview";
 		private const int OverviewPriority = 150;
-		private const string LocalTemp = ".tmp";
+		//private const string LocalTemp = ".tmp";
 		
 		private readonly Queue<TraceMessage> _messages = new Queue<TraceMessage>();
 		private long _lastFlushed;
@@ -35,8 +35,6 @@ namespace AnFake.Plugins.Tfs2012
 		private readonly IBuildDetail _build;
 		private readonly IBuildInformation _tracker;
 		
-		private FileSystemPath _logsDropPath;
-		private bool _hasDropErrors;
 		private bool _hasBuildErrorsOrWarns;
 		private bool _isInfoCacheUpToDate;
 
@@ -312,55 +310,98 @@ namespace AnFake.Plugins.Tfs2012
 			get { return _build == null; }
 		}
 
-		public bool HasDropLocation
+		public bool CanExposeArtifacts
 		{
 			get
 			{
-				if (_build == null)
-					return BuildServer.Local.HasDropLocation;
-
-				return !String.IsNullOrEmpty(_build.DropLocation);
+				return
+					_build != null
+						? !String.IsNullOrEmpty(_build.DropLocation)
+						: BuildServer.Local.CanExposeArtifacts;
 			}
 		}
 
-		public FileSystemPath DropLocation
+		public Uri ExposeArtifact(FileItem file, ArtifactType type)
 		{
-			get
-			{
-				if (_build == null)
-					return BuildServer.Local.DropLocation;
+			if (_build == null)
+				return BuildServer.Local.ExposeArtifact(file, type);
 
-				if (String.IsNullOrEmpty(_build.DropLocation))
-					throw new InvalidConfigurationException("Drop location is not specified.");
+			EnsureCanExpose();
 
-				return _build.DropLocation.AsPath();
-			}
+			Trace.InfoFormat("TfsPlugin: Exposing file '{0}'...", file);
+			
+			var dstPath = _build.DropLocation.AsPath()/type.ToString()/file.Name;
+			Files.Copy(file, dstPath);
+			
+			return new Uri(dstPath.Full);
 		}
 
-		public bool HasLogsLocation
+		public Uri ExposeArtifact(FolderItem folder, ArtifactType type)
 		{
-			get
-			{
-				if (_build == null)
-					return BuildServer.Local.HasLogsLocation;
+			if (_build == null)
+				return BuildServer.Local.ExposeArtifact(folder, type);
 
-				return _logsDropPath != null;
-			}
+			EnsureCanExpose();
+
+			Trace.InfoFormat("TfsPlugin: Exposing folder '{0}'...", folder);
+
+			var dstPath = _build.DropLocation.AsPath()/type.ToString()/folder.Name;
+			Files.Copy(folder.Path % "**/*", dstPath);
+
+			return new Uri(dstPath.Full);
 		}
 
-		public FileSystemPath LogsLocation
+		public Uri ExposeArtifact(string name, string content, Encoding encoding, ArtifactType type)
 		{
-			get
+			if (_build == null)
+				return BuildServer.Local.ExposeArtifact(name, content, encoding, type);
+
+			EnsureCanExpose();
+
+			Trace.InfoFormat("TfsPlugin: Exposing text content '{0}'...", name);
+
+			var dstFile = (_build.DropLocation.AsPath()/type.ToString()/name).AsFile();
+			Text.WriteTo(dstFile, content, encoding);
+
+			return new Uri(dstFile.Path.Full);
+		}
+
+		public void ExposeArtifacts(FileSet files, ArtifactType type)
+		{
+			if (_build == null)
 			{
-				if (_build == null)
-					return BuildServer.Local.DropLocation;
-
-				if (_logsDropPath == null)
-					throw new InvalidConfigurationException("Drop location is not specified.");
-
-				return _logsDropPath;
+				BuildServer.Local.ExposeArtifacts(files, type);
+				return;
 			}
-		}		
+
+			EnsureCanExpose();
+
+			Trace.Info("TfsPlugin: Exposing multiple files...");
+
+			var dstPath = _build.DropLocation.AsPath()/type.ToString();
+			Files.Copy(files, dstPath);
+		}
+
+		public void DeleteArtifacts()
+		{
+			if (_build == null)
+			{
+				BuildServer.Local.DeleteArtifacts();
+				return;
+			}
+
+			if (!CanExposeArtifacts)
+				return;
+			
+			Trace.Info("TfsPlugin: Deleting artifacts...");
+			Folders.Clean(_build.DropLocation.AsPath());			
+		}
+
+		private void EnsureCanExpose()
+		{
+			if (!CanExposeArtifacts)
+				throw new InvalidConfigurationException("Unable to expose artifact: drop location isn't specified.");
+		}
 
 		//
 		// TFS is too "smart" and treats files as changed even its content fully identical to server's item,
@@ -464,34 +505,36 @@ namespace AnFake.Plugins.Tfs2012
 
 		private TfsBuildSummarySection GetOverviewSection()
 		{
-			return new TfsBuildSummarySection(_build, OverviewKey, OverviewHeader, OverviewPriority, _logsDropPath);
+			return new TfsBuildSummarySection(_build, OverviewKey, OverviewHeader, OverviewPriority);
 		}
 
 		private TfsBuildSummarySection GetSummarySection()
 		{
-			return new TfsBuildSummarySection(_build, SummaryKey, SummaryHeader, SummaryPriority, _logsDropPath);
+			return new TfsBuildSummarySection(_build, SummaryKey, SummaryHeader, SummaryPriority);
 		}
 
 		private void OnBuildStarted(object sender, MyBuild.RunDetails details)
 		{
 			Trace.Info(">>> TfsPlugin.OnBuildStarted");
 
-			Folders.Create(LocalTemp);
+			var rdpFile = Environment.MachineName.MakeUnique(".rdp").AsFile();
+			Text.WriteTo(rdpFile, String.Format("full address:s:{0}", Environment.MachineName));
 
-			var rdpPath = LocalTemp.AsPath() / Environment.MachineName + ".rdp";
-			Text.WriteTo(rdpPath.AsFile(), String.Format("full address:s:{0}", Environment.MachineName));
+			var rdpUri = CanExposeArtifacts
+				? ExposeArtifact(rdpFile, ArtifactType.Other)
+				: rdpFile.Path.ToUnc().ToUri();
 
 			FlushMessages();
 
 			var overview = GetOverviewSection();
 
-			overview.Append("Build Agent: ").AppendLink(Environment.MachineName, rdpPath.ToUnc()).Push();
-			overview.Append("Build Folder: ").AppendLink(MyBuild.Current.Path.Full, MyBuild.Current.Path.ToUnc()).Push();
+			overview.Append("Build Agent: ").AppendLink(Environment.MachineName, rdpUri).Push();
+			overview.Append("Build Folder: ").AppendLink(MyBuild.Current.Path.Full, MyBuild.Current.Path.ToUnc().ToUri()).Push();
 			
 			overview.Append("Drop Folder: ");
 			if (!String.IsNullOrEmpty(_build.DropLocation))
 			{
-				overview.AppendLink(_build.DropLocation);
+				overview.AppendLink(new Uri(_build.DropLocation));
 			}
 			else
 			{
@@ -499,21 +542,7 @@ namespace AnFake.Plugins.Tfs2012
 			}
 			overview
 				.Push()
-				.Save();
-
-			if (!String.IsNullOrEmpty(_build.DropLocation))
-			{
-				_logsDropPath = _build.DropLocation.AsPath() / "logs";
-				if (!SafeOp.Try(Folders.Clean, _logsDropPath))
-				{
-					_logsDropPath = null;
-
-					GetSummarySection()
-						.Append("(!) Drop location is inaccessible, logs will be unavailable.")
-						.Push()
-						.Save();
-				}
-			}			
+				.Save();						
 			
 			Trace.Info("<<< TfsPlugin.OnBuildStarted");
 		}
@@ -523,17 +552,23 @@ namespace AnFake.Plugins.Tfs2012
 			if (String.IsNullOrEmpty(test.Output))
 				return;
 
+			if (!CanExposeArtifacts)
+				return;
+
 			try
 			{
-				var outPath = LocalTemp.AsPath() / String.Format("{0}.{1}", test.Suite, test.Name).MakeUnique(".txt");
-				Text.WriteTo(outPath.AsFile(), test.Output);
+				var uri = ExposeArtifact(
+					String.Format("{0}.{1}", test.Suite, test.Name).MakeUnique(".txt"),
+					test.Output,
+					Encoding.UTF8,
+					ArtifactType.TestResults);
 
-				test.Links.Add(new Hyperlink(outPath.Full, "Output"));
+				test.Links.Add(new Hyperlink(uri, "Output"));
 			}
 			catch (Exception e)
 			{
 				Log.WarnFormat("TfsPlugin.OnTestFailed: {0}", AnFakeException.ToString(e));
-			}					
+			}
 		}
 
 		private void OnTargetFinished(object sender, Target.RunDetails details)
@@ -574,9 +609,7 @@ namespace AnFake.Plugins.Tfs2012
 					topTarget.State.ToHumanReadable().ToUpperInvariant())
 				.Push();
 			summary.Append(" ").Push()
-				.Save();
-
-			_hasDropErrors |= summary.HasDropErrors;
+				.Save();			
 			
 			Trace.Info("<<< TfsPlugin.OnTargetFinished");
 		}		
@@ -587,23 +620,13 @@ namespace AnFake.Plugins.Tfs2012
 
 			var summary = GetSummarySection();
 			
-			if (_logsDropPath != null)
+			if (!String.IsNullOrEmpty(_build.DropLocation))
 			{
 				// Visual Studio expects predefined name 'build.log' so we need to copy with new name.
-				var buildLog = _logsDropPath / "build.log";
-				if (SafeOp.Try(Files.Copy, MyBuild.Current.LogFile.Path, buildLog, false))
-				{
-					summary.AppendLink("build.log", buildLog).Push();
-				}
-				else
-				{
-					_hasDropErrors = true;
-				}
-
-				if (_hasDropErrors)
-				{
-					summary.Append("(!) There are troubles accessing drop location, some logs are unavailable.").Push();
-				}
+				var buildLog = _build.DropLocation.AsPath() / ArtifactType.Logs.ToString() / "build.log";
+				Files.Copy(MyBuild.Current.LogFile.Path, buildLog, true);
+				
+				summary.AppendLink("build.log", buildLog.ToUri()).Push();				
 			}
 			else
 			{
@@ -624,15 +647,12 @@ namespace AnFake.Plugins.Tfs2012
 			_build.FinalizeStatus(details.Status.AsTfsBuildStatus());
 		}
 
-		private string FormatMessage(TraceMessage message)
+		private static string FormatMessage(TraceMessage message)
 		{
-			var formatted = new TfsMessageBuilder(_logsDropPath)
+			return new TfsMessageBuilder()
 				.Append(message.ToString("mfd"))
-				.AppendLinks(message.Links, "\n");
-
-			_hasDropErrors |= formatted.HasDropErrors;
-
-			return formatted.ToString();
+				.AppendLinks(message.Links, "\n")
+				.ToString();
 		}		
 	}
 }

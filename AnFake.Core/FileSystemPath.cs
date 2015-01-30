@@ -95,7 +95,7 @@ namespace AnFake.Core
 		{
 			get
 			{
-				return _value.Length > 0 && _value[0] == Path.DirectorySeparatorChar && _value[1] == Path.DirectorySeparatorChar;
+				return _value.Length > 1 && _value[0] == Path.DirectorySeparatorChar && _value[1] == Path.DirectorySeparatorChar;
 			}
 		}
 
@@ -317,6 +317,21 @@ namespace AnFake.Core
 				.Append(full.Substring(2));
 
 			return new FileSystemPath(unc.ToString(), true);
+		}
+
+		/// <summary>
+		///		Converts UNC path to URI.
+		/// </summary>
+		/// <remarks>
+		///		Method throws an exception if this path is not UNC path.
+		/// </remarks>
+		/// <returns>file:// URI</returns>
+		public Uri ToUri()
+		{
+			if (!IsUnc)
+				throw new InvalidConfigurationException(String.Format("Only UNC path can be converted to URI: '{0}'", _value));
+
+			return new Uri(_value);
 		}
 
 		/// <summary>

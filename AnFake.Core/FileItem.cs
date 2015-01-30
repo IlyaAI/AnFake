@@ -88,6 +88,18 @@ namespace AnFake.Core
 			}			
 		}
 
+		public void EnsurePath()
+		{
+			if (!_path.HasParent)
+				return;
+
+			var folder = _path.Parent.Full;
+			if (Directory.Exists(folder))
+				return;
+			
+			Directory.CreateDirectory(folder);			
+		}
+
 		public override string ToString()
 		{
 			return _path.ToString();

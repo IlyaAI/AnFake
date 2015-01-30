@@ -16,7 +16,7 @@ namespace AnFake.Plugins.HtmlSummary
 		private const string IndexHtml = "Index.html";
 		
 		private BuildSummary _summary;
-		private FileSystemPath _tempSummaryFilePath;
+		private FileSystemPath _tempPath;
 		
 		public HtmlSummaryPlugin()
 		{
@@ -28,13 +28,13 @@ namespace AnFake.Plugins.HtmlSummary
 		
 		private void OnTargetFinished(object sender, Target.RunDetails details)
 		{
-			Summarize((Target)sender, details.ExecutedTargets);
-			Save();
+			Summarize((Target)sender, details.ExecutedTargets);			
 		}
 
 		private void OnBuildStarted(object sender, MyBuild.RunDetails details)
 		{
-			_tempSummaryFilePath = "[Temp]".AsPath()/SummaryJs.MakeUnique();			
+			_tempPath = "[Temp]".AsPath()/PluginName.MakeUnique();
+			Folders.Clean(_tempPath);
 
 			_summary = new BuildSummary
 			{
@@ -57,9 +57,10 @@ namespace AnFake.Plugins.HtmlSummary
 		{
 			_summary.FinishTime = details.FinishTime;
 			_summary.Status = details.Status;
+			
+			Expose();
 
-			Save();
-			Drop();			
+			Folders.Delete(_tempPath);
 		}
 
 		private void Summarize(Target top, IEnumerable<Target> executedTargets)
@@ -72,40 +73,34 @@ namespace AnFake.Plugins.HtmlSummary
 			}
 
 			_summary.Targets.Add(targetSummary);
-		}
+		}		
 
-		private void Save()
-		{
-			using (var stream = new FileStream(_tempSummaryFilePath.Full, FileMode.Create, FileAccess.Write))
-			{
-				var decl = Encoding.UTF8.GetBytes("var gSummary = ");
-				stream.Write(decl, 0, decl.Length);
-
-				new DataContractJsonSerializer(typeof (BuildSummary))
-					.WriteObject(stream, _summary);
-			}
-		}
-
-		private void Drop()
+		private void Expose()
 		{
 			Log.Text("-------- HTML Summary Plugin --------");
 			Log.Text("Generating report...");
 
-			var logsPath = Plugin.Get<IBuildServer>().LogsLocation/PluginName;
+			using (var stream = new FileStream((_tempPath / SummaryJs).Full, FileMode.Create, FileAccess.Write))
+			{
+				var decl = Encoding.UTF8.GetBytes("var gSummary = ");
+				stream.Write(decl, 0, decl.Length);
+
+				new DataContractJsonSerializer(typeof(BuildSummary))
+					.WriteObject(stream, _summary);
+			}
 
 			Zip.Unpack(
 				"[AnFakePlugins]".AsPath() / PluginName + ".zip", 
-				logsPath,
+				_tempPath,
 				p => p.OverwriteMode = Zip.OverwriteMode.Overwrite);
 
-			Files.Move(
-				_tempSummaryFilePath,
-				logsPath / SummaryJs, 
-				true);
+			var logUri = BuildServer.ExposeArtifact(_tempPath.AsFolder(), ArtifactType.Logs);
+
+			// TODO: append IndexHtml
 
 			Log.Text("");
 			Log.Text("Surprise! HtmlSummary plugin has generated a nice build report for you. Look here...");
-			Log.TextFormat("[HTML Summary|{0}]", (logsPath/IndexHtml).Full);
+			Log.TextFormat("[HTML Summary|{0}]", logUri);
 		}
 
 		private static TargetSummary SummaryOf(Target target)

@@ -153,16 +153,10 @@ namespace AnFake.Core
 		/// </remarks>
 		public void Save()
 		{
-			if (_storePath.HasParent)
-			{
-				var cfgDir = _storePath.Parent.Full;
-				if (!Directory.Exists(cfgDir))
-				{
-					Directory.CreateDirectory(cfgDir);
-				}
-			}					
+			var cfgFile = _storePath.AsFile();
+			cfgFile.EnsurePath();
 
-			using (var stream = new FileStream(_storePath.Full, FileMode.Create, FileAccess.Write))
+			using (var stream = new FileStream(cfgFile.Path.Full, FileMode.Create, FileAccess.Write))
 			{
 				new DataContractJsonSerializer(
 					typeof (Dictionary<string, string>),

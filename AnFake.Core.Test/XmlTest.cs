@@ -1,6 +1,4 @@
-﻿using System.IO;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AnFake.Core.Test
@@ -114,7 +112,7 @@ namespace AnFake.Core.Test
 			xdoc.SelectFirst("/root/element").SetAttr("attr", "new-value");
 
 			// assert
-			Assert.IsTrue(AsString(xdoc).Contains("attr=\"new-value\""));
+			Assert.IsTrue(xdoc.ToString().Contains("attr=\"new-value\""));
 		}
 
 		[TestMethod]
@@ -127,22 +125,12 @@ namespace AnFake.Core.Test
 			xdoc.SelectFirst("/root/element").SetAttr("attr", "value");
 
 			// assert
-			Assert.IsTrue(AsString(xdoc).Contains("attr=\"value\""));
+			Assert.IsTrue(xdoc.ToString().Contains("attr=\"value\""));
 		}
 
 		private static Xml.XDoc AsXmlDoc(string xml)
 		{
-			return (new MemoryStream(Encoding.UTF8.GetBytes(xml), false)).AsXmlDoc();
-		}
-
-		private static string AsString(Xml.XDoc xdoc)
-		{
-			using (var stream = new MemoryStream())
-			{
-				xdoc.SaveTo(stream);
-
-				return Encoding.UTF8.GetString(stream.ToArray());
-			}			
-		}
+			return xml.AsXmlDoc();
+		}		
 	}
 }

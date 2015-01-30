@@ -1,18 +1,16 @@
-﻿using System.Collections.Generic;
-using System.IO;
-
-namespace AnFake.Core.Integration.Tests
+﻿namespace AnFake.Core.Integration.Tests
 {
 	/// <summary>
-	///		Represents extension point for test-run trace parsers.
+	///     Represents extension point for test-run trace parsers.
 	/// </summary>
 	public interface ITestPostProcessor
 	{
 		/// <summary>
-		///		Processes given stream and returns <c>TestResult</c>-s.
+		///     Processes given stream and returns <c>TestResult</c>-s.
 		/// </summary>
-		/// <param name="stream">stream to be processed</param>
+		/// <param name="setName">test-set name</param>
+		/// <param name="traceFile">trace file to be processed</param>
 		/// <returns>set of test results</returns>
-		IEnumerable<TestResult> PostProcess(Stream stream);
+		TestSet PostProcess(string setName, FileItem traceFile);
 	}
 }

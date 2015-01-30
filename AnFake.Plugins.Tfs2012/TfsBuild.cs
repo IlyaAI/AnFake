@@ -163,6 +163,14 @@ namespace AnFake.Plugins.Tfs2012
 			}
 
 			/// <summary>
+			///		Returns subfolder inside drop location for specified artifact type. Throws if drop location not specified.
+			/// </summary>
+			public FileSystemPath GetDropLocationOf(ArtifactType type)
+			{
+				return DropLocation/type.ToString();
+			}
+
+			/// <summary>
 			///		Gets custom info filed value. Throws if no such field.
 			/// </summary>
 			/// <param name="name">field name (not null or empty)</param>
@@ -270,7 +278,7 @@ namespace AnFake.Plugins.Tfs2012
 		/// <seealso cref="TfsBuildSummarySection"/>
 		public static TfsBuildSummarySection GetSummarySection(string key, string header, int priority)
 		{
-			return new TfsBuildSummarySection(Impl.Build, key, header, priority, Impl.HasLogsLocation ? Impl.LogsLocation : null);
+			return new TfsBuildSummarySection(Impl.Build, key, header, priority);
 		}
 
 		/// <summary>

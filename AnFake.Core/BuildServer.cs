@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using AnFake.Core.Integration;
 
 namespace AnFake.Core
@@ -35,27 +36,107 @@ namespace AnFake.Core
 		{
 			get { return Instance.Value.IsLocal; }
 		}
-		
+
 		/// <summary>
-		///		Drop folder location.
+		///		Can this build expose artifacts?
 		/// </summary>
-		/// <remarks>
-		///		Drop folder is used for "publishing" build's final artifacts. Default for local builds is ".out".
-		/// </remarks>
-		public static FileSystemPath DropLocation
+		public static bool CanExposeArtifacts
 		{
-			get { return Instance.Value.DropLocation; }
+			get { return Instance.Value.CanExposeArtifacts; }
 		}
 
 		/// <summary>
-		///		Build and test logs location.
+		///		Exposes given file as build artifact of specified type and returns URI to access this artifact.
+		///		Throws an exception if build server unable to expose artifact.
 		/// </summary>
 		/// <remarks>
-		///		Logs folder is used for "publishing" build and test logs. Default for local builds is ".out/logs".
-		/// </remarks>
-		public static FileSystemPath LogsLocation
+		///		<para>
+		///			Method throws if build server unable to expose artifact in any reason including: 
+		///			public location isn't configured; artifact with the same name already exists; 
+		///			any i/o error occured.
+		///		</para>
+		/// </remarks>		
+		/// <param name="file">file to be exposed</param>
+		/// <param name="type"><see cref="ArtifactType"/>(default Other)</param>
+		/// <returns>URI of exposed artifact (not null)</returns>
+		/// <example>
+		/// The Team Foundation Server has an option 'Drop Folder' in build definition. This is UNC path to folder which is visible outside of build sandbox.
+		/// Assume your build definition has a name 'MyBuild' and drop folder is '\\build-server\builds'.
+		/// <code>
+		/// let myExe = ".out/MyProduct.exe".AsFile()
+		/// let uri = BuildServer.ExposeArtifact(myExe, ArtifactType.Deliverables) // file://build-server/builds/MyBuild/MyBuild_20150101.1/Deliverables/MyProduct.exe
+		/// </code>
+		/// </example>
+		public static Uri ExposeArtifact(FileItem file, ArtifactType type = ArtifactType.Other)
 		{
-			get { return Instance.Value.LogsLocation; }
+			if (file == null)
+				throw new ArgumentException("BuildServer.ExposeArtifact(file[, type]): file must not be null");
+
+			return Instance.Value.ExposeArtifact(file, type);
+		}
+
+		/// <summary>
+		///		Exposes given folder (with all content) as build artifact of specified type and returns URI to access this artifact.
+		///		Throws an exception if build server unable to expose artifact.
+		/// </summary>
+		/// <param name="folder">folder to be exposed</param>
+		/// <param name="type"><see cref="ArtifactType"/>(default Other)</param>
+		/// <returns>URI of exposed artifact (not null)</returns>
+		/// <seealso cref="ExposeArtifact(AnFake.Core.FileItem,AnFake.Core.ArtifactType)"/>
+		public static Uri ExposeArtifact(FolderItem folder, ArtifactType type = ArtifactType.Other)
+		{
+			if (folder == null)
+				throw new ArgumentException("BuildServer.ExposeArtifact(folder[, type]): folder must not be null");
+
+			return Instance.Value.ExposeArtifact(folder, type);
+		}
+
+		/// <summary>
+		///		Exposes given text content as build artifact of specified type with givent name and returns URI to access this artifact.
+		///		Throws an exception if build server unable to expose artifact.
+		/// </summary>
+		/// <param name="name">artifact name</param>
+		/// <param name="content">text content to be exposed</param>
+		/// <param name="encoding">content encoding</param>
+		/// <param name="type"><see cref="ArtifactType"/>(default Other)</param>
+		/// <returns>URI of exposed artifact (not null)</returns>
+		/// <seealso cref="ExposeArtifact(AnFake.Core.FileItem,AnFake.Core.ArtifactType)"/>
+		public static Uri ExposeArtifact(string name, string content, Encoding encoding, ArtifactType type = ArtifactType.Other)
+		{
+			if (String.IsNullOrEmpty(name))
+				throw new ArgumentException("BuildServer.ExposeArtifact(name, content, encoding[, type]): name must not be null or empty");
+
+			if (content == null)
+				throw new ArgumentException("BuildServer.ExposeArtifact(name, content, encoding[, type]): content must not be null");
+
+			if (encoding == null)
+				throw new ArgumentException("BuildServer.ExposeArtifact(name, content, encoding[, type]): encoding must not be null");
+
+			return Instance.Value.ExposeArtifact(name, content, encoding, type);
+		}
+
+		/// <summary>
+		///		Exposes files as build artifact of specified type.
+		///		Throws an exception if build server unable to expose artifact.
+		/// </summary>
+		/// <param name="files">files to be exposed</param>
+		/// <param name="type"><see cref="ArtifactType"/>(default Deliverables)</param>
+		/// <returns>URI of exposed artifact (not null)</returns>
+		/// <seealso cref="ExposeArtifact(AnFake.Core.FileItem,AnFake.Core.ArtifactType)"/>
+		public static void ExposeArtifacts(FileSet files, ArtifactType type = ArtifactType.Deliverables)
+		{
+			if (files == null)
+				throw new ArgumentException("BuildServer.ExposeArtifact(files[, type]): files must not be null");
+
+			Instance.Value.ExposeArtifacts(files, type);
+		}
+
+		/// <summary>
+		///		Deletes all exposed artifacts. Does nothing if build server isn't cunfigured for exposing.
+		/// </summary>
+		public static void DeleteArtifacts()
+		{
+			Instance.Value.DeleteArtifacts();
 		}
 	}
 }

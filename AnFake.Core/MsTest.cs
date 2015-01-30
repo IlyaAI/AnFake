@@ -105,8 +105,8 @@ namespace AnFake.Core
 				if (postProcessor != null && File.Exists(resultPath.Full))
 				{
 					var currentTests = postProcessor
-						.PostProcess(resultPath)
-						.Trace(assembly.Name, resultPath.Full);
+						.PostProcess(assembly.Name, resultPath.AsFile())
+						.Trace();
 
 					tests.AddRange(currentTests);
 				}

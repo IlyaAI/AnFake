@@ -405,6 +405,8 @@ namespace AnFake.Core
 				if (encoding == null)
 					throw new ArgumentException("TextDoc.SaveTo(file, encoding): encoding must not be null");
 
+				file.EnsurePath();
+
 				using (var writer = new StreamWriter(file.Path.Full, false, encoding))
 				{
 					writer.Write(GetText());
@@ -613,6 +615,8 @@ namespace AnFake.Core
 				throw new ArgumentException("Text.WriteTo(file, text[, encoding]): text must not be null");
 			if (encoding == null)
 				throw new ArgumentException("Text.WriteTo(file, text, encoding): encoding must not be null");
+
+			file.EnsurePath();
 
 			using (var writer = new StreamWriter(file.Path.Full, false, encoding))
 			{

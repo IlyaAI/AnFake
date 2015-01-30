@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -13,13 +11,22 @@ namespace AnFake.Core.Integration.Tests
 	{
 		/// <summary>
 		///		See <see cref="ITestPostProcessor.PostProcess"/>.
-		/// </summary>
-		/// <param name="stream"></param>
+		/// </summary>		
 		/// <returns></returns>
-		public IEnumerable<TestResult> PostProcess(Stream stream)
+		public TestSet PostProcess(string setName, FileItem traceFile)
 		{
-			var xdoc = stream.AsXmlDoc();
+			var xdoc = traceFile.AsXmlDoc();
 			xdoc.Ns("t", "http://microsoft.com/schemas/VisualStudio/TeamTest/2010");
+
+			var attachmentsFolder = (FolderItem)null;
+			
+			var deploymentRoot = xdoc.ValueOf("/t:TestRun/t:TestSettings/t:Deployment/@runDeploymentRoot", null);
+			if (deploymentRoot != null)
+			{
+				attachmentsFolder = (traceFile.Folder/deploymentRoot).AsFolder();
+			}
+			
+			var testSet = new TestSet(setName, traceFile, attachmentsFolder);
 
 			var defs = xdoc.Select("/t:TestRun/t:TestDefinitions/t:UnitTest")
 				.Select(x => new
@@ -30,8 +37,7 @@ namespace AnFake.Core.Integration.Tests
 							.Select(y => y.Attr("TestCategory"))),
 					Suite = x.ValueOf("t:TestMethod/@className")
 				}).ToDictionary(x => x.Id);
-
-			var tests = new List<TestResult>();
+			
 			var results = xdoc.Select("/t:TestRun/t:Results/t:UnitTestResult");
 
 			foreach (var result in results)
@@ -61,11 +67,11 @@ namespace AnFake.Core.Integration.Tests
 					test.Suite = def.Suite.Split(',').First();
 					test.Category = def.Category;
 				}
-				
-				tests.Add(test);				
+
+				testSet.Tests.Add(test);				
 			}
 
-			return tests;
+			return testSet;
 		}
 
 		private static void ExtractErrorMessage(Xml.XNode result, TestResult test)

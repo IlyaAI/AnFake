@@ -58,6 +58,7 @@
   </Choose>
   <ItemGroup>
     <Compile Include="FolderSetTest.cs" />
+    <Compile Include="MyBuildTest.cs" />
     <Compile Include="ZipTest.cs" />
     <Compile Include="SnapshotTest.cs" />
     <Compile Include="AssemblyInfoTest.cs" />

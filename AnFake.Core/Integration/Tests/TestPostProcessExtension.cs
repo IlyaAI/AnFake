@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text;
 using AnFake.Api;
 
@@ -12,30 +11,24 @@ namespace AnFake.Core.Integration.Tests
 	public static class TestPostProcessExtension
 	{
 		/// <summary>
-		///		Processes test-run trace from specified file.
-		/// </summary>
-		/// <param name="postProcessor">ITestPostProcessor implementation</param>
-		/// <param name="resultPath">path to test-run trace file</param>
-		/// <returns>set of test results</returns>
-		/// <seealso cref="ITestPostProcessor.PostProcess"/>
-		public static IEnumerable<TestResult> PostProcess(this ITestPostProcessor postProcessor, FileSystemPath resultPath)
-		{
-			using (var stream = new FileStream(resultPath.Full, FileMode.Open, FileAccess.Read))
-			{
-				return postProcessor.PostProcess(stream);
-			}
-		}
-
-		/// <summary>
 		///		Generates and writes appropriate <c>TraceMessage</c> for each given <c>TestResult</c>.
 		/// </summary>
-		/// <param name="tests">set of tests to be traced</param>
-		/// <param name="containerName">test container name (usually assembly name)</param>
-		/// <param name="trxHref">path to test-run trace file if applicable (optional)</param>
+		/// <param name="testSet">set of tests to be traced</param>		
 		/// <returns>the same sequence which was passed as 'tests' argument</returns>
-		public static IEnumerable<TestResult> Trace(this IEnumerable<TestResult> tests, string containerName, string trxHref)
+		public static IEnumerable<TestResult> Trace(this TestSet testSet)
 		{
 			const int ident = 2;
+
+			var trxUri = (Uri) null;
+			if (BuildServer.CanExposeArtifacts)
+			{
+				trxUri = BuildServer.ExposeArtifact(testSet.TraceFile, ArtifactType.TestResults);
+				
+				if (testSet.AttachmentsFolder != null && testSet.AttachmentsFolder.Exists())
+				{
+					BuildServer.ExposeArtifact(testSet.AttachmentsFolder, ArtifactType.TestResults);
+				}
+			}						
 
 			var msg = (TraceMessage) null;
 			var total = 0;
@@ -43,7 +36,7 @@ namespace AnFake.Core.Integration.Tests
 			var skipped = 0;
 			var failed = 0;
 
-			foreach (var test in tests)
+			foreach (var test in testSet.Tests)
 			{
 				TestResultAware.Notify(test);
 
@@ -79,9 +72,9 @@ namespace AnFake.Core.Integration.Tests
 						};
 						msg.Links.AddRange(test.Links);
 
-						if (trxHref != null)
+						if (trxUri != null)
 						{
-							msg.Links.Add(new Hyperlink(trxHref, "Trace"));
+							msg.Links.Add(new Hyperlink(trxUri, "Trace"));
 						}
 						
 						Api.Trace.Message(msg);
@@ -95,7 +88,7 @@ namespace AnFake.Core.Integration.Tests
 			}
 
 			var summary = new StringBuilder(128)
-				.AppendFormat("{0}: {1} total / {2} passed", containerName, total, passed);
+				.AppendFormat("{0}: {1} total / {2} passed", testSet.Name, total, passed);
 
 			if (skipped > 0)
 			{
@@ -108,9 +101,9 @@ namespace AnFake.Core.Integration.Tests
 			}
 
 			msg = new TraceMessage(TraceMessageLevel.Summary, summary.ToString());
-			if (trxHref != null)
+			if (trxUri != null)
 			{
-				msg.Links.Add(new Hyperlink(trxHref, "Trace"));
+				msg.Links.Add(new Hyperlink(trxUri, "Trace"));
 			}
 
 			Api.Trace.Message(msg);

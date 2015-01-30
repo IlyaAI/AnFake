@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using AnFake.Api;
 using AnFake.Core.Integration.Tests;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -33,15 +32,20 @@ namespace AnFake.Core.Test
 			var pp = new MsTrxPostProcessor();
 
 			// act
-			var tests = pp.PostProcess("Data/mstest-01.trx".AsPath()).ToList();
+			var testSet = pp.PostProcess("Test", "Data/mstest-01.trx".AsFile());
 
 			// assert
+			Assert.AreEqual("Test", testSet.Name);
+			Assert.AreEqual("Data\\mstest-01.trx", testSet.TraceFile.Path.Spec);
+			Assert.AreEqual("Data\\Ivanov_I_IVANOV-I 2014-10-15 17_33_14", testSet.AttachmentsFolder.Path.Spec);
+
+			var tests = testSet.Tests;
 			Assert.AreEqual(2, tests.Count);
 			Assert.AreEqual(TestStatus.Failed, tests[0].Status);
 			Assert.AreEqual("AllInOne.TestDataTestSuite", tests[0].Suite);
 			Assert.AreEqual("TestDataNegativeTest", tests[0].Name);
 			Assert.IsFalse(String.IsNullOrWhiteSpace(tests[0].ErrorMessage));
 			Assert.IsFalse(String.IsNullOrWhiteSpace(tests[0].ErrorStackTrace));
-		}
+		}		
 	}
 }

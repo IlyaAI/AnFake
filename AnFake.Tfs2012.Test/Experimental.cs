@@ -7,8 +7,7 @@ using Microsoft.TeamFoundation.Client;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AnFake.Tfs2012.Test
-{
-	[Ignore]
+{	
 	[TestClass]
 	public class Experimental : TfsTestSuite
 	{
@@ -18,6 +17,7 @@ namespace AnFake.Tfs2012.Test
 			base.Initialize();
 		}
 
+		[Ignore]
 		[TestMethod]
 		public void CreateBuild()
 		{
@@ -26,6 +26,7 @@ namespace AnFake.Tfs2012.Test
 			Trace.WriteLine("Build: " + buildUri);
 		}
 
+		[Ignore]
 		[TestMethod]
 		public void ExploreBuildDetailInformation()
 		{
@@ -34,7 +35,7 @@ namespace AnFake.Tfs2012.Test
 
 			//IBuildDefinition buildDefinition = buildService.GetBuildDefinition(TeamProject, "BuildDefinitionName");
 			var buildDetail = buildService.QueryBuildsByUri(
-				new[] { new Uri("vstfs:///Build/Build/33788") }, 
+				new[] { new Uri("vstfs:///Build/Build/34861") }, 
 				new[] { "*" }, 
 				QueryOptions.All).Single();		
 
@@ -42,6 +43,7 @@ namespace AnFake.Tfs2012.Test
 			var node = Find(buildDetail.Information.Nodes[0], "Any CPU|Debug|AllInOne");
 		}
 
+		[Ignore]
 		[TestMethod]
 		public void Test2()
 		{
@@ -100,6 +102,7 @@ namespace AnFake.Tfs2012.Test
 			//detail.Save();
 		}
 
+		[Ignore]
 		[TestMethod]
 		public void Test3()
 		{

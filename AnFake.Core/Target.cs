@@ -442,7 +442,10 @@ namespace AnFake.Core
 			if (_state == TargetState.PreQueued)
 				throw new InvalidConfigurationException(String.Format("Target '{0}' has cycle dependency.", _name));
 
-			if (_state == TargetState.Queued)
+			if (_state == TargetState.Queued ||
+				_state == TargetState.Succeeded || 
+				_state == TargetState.PartiallySucceeded ||
+				_state == TargetState.Failed)
 				return;
 
 			_state = TargetState.PreQueued;

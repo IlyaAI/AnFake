@@ -1,4 +1,7 @@
-﻿namespace AnFake.Core.Integration
+﻿using System;
+using System.Text;
+
+namespace AnFake.Core.Integration
 {
 	/// <summary>
 	///		Represents extension point for build server integration.
@@ -11,23 +14,61 @@
 		bool IsLocal { get; }
 
 		/// <summary>
-		///		Whether this build has drop location?
+		///		Can this build expose artifacts?
 		/// </summary>
-		bool HasDropLocation { get; }
+		bool CanExposeArtifacts { get; }
 
 		/// <summary>
-		///		Drop folder location. Throws if not specified.
+		///		Exposes given file as build artifact of specified type and returns URI to access this artifact.
+		///		Throws an exception if build server unable to expose artifact.
 		/// </summary>
-		FileSystemPath DropLocation { get; }
+		/// <remarks>
+		///		<para>
+		///			Method throws if build server unable to expose artifact in any reason including: 
+		///			public location isn't configured; artifact with the same name already exists; 
+		///			any i/o error occured.
+		///		</para>
+		/// </remarks>
+		/// <param name="file">file to be exposed</param>
+		/// <param name="type"><see cref="ArtifactType"/></param>
+		/// <returns>URI of exposed artifact (not null)</returns>
+		Uri ExposeArtifact(FileItem file, ArtifactType type);
 
 		/// <summary>
-		///		Whether this build has logs folder?
+		///		Exposes given folder (with all content) as build artifact of specified type and returns URI to access this artifact.
+		///		Throws an exception if build server unable to expose artifact.
 		/// </summary>
-		bool HasLogsLocation { get; }
+		/// <param name="folder">folder to be exposed</param>
+		/// <param name="type"><see cref="ArtifactType"/></param>
+		/// <returns>URI of exposed artifact (not null)</returns>
+		/// <seealso cref="ExposeArtifact(AnFake.Core.FileItem,AnFake.Core.ArtifactType)"/>
+		Uri ExposeArtifact(FolderItem folder, ArtifactType type);
 
 		/// <summary>
-		///		Logs folder location. Throws if not specified.
+		///		Exposes given text content as build artifact of specified type with givent name and returns URI to access this artifact.
+		///		Throws an exception if build server unable to expose artifact.
 		/// </summary>
-		FileSystemPath LogsLocation { get; }
-	}
+		/// <param name="name">artifact name</param>
+		/// <param name="content">text content to be exposed</param>
+		/// <param name="encoding">content encoding</param>
+		/// <param name="type"><see cref="ArtifactType"/></param>
+		/// <returns>URI of exposed artifact (not null)</returns>
+		/// <seealso cref="ExposeArtifact(AnFake.Core.FileItem,AnFake.Core.ArtifactType)"/>
+		Uri ExposeArtifact(string name, string content, Encoding encoding, ArtifactType type);
+
+		/// <summary>
+		///		Exposes files as build artifact of specified type.
+		///		Throws an exception if build server unable to expose artifact.
+		/// </summary>
+		/// <param name="files">files to be exposed</param>
+		/// <param name="type"><see cref="ArtifactType"/></param>
+		/// <returns>URI of exposed artifact (not null)</returns>
+		/// <seealso cref="ExposeArtifact(AnFake.Core.FileItem,AnFake.Core.ArtifactType)"/>
+		void ExposeArtifacts(FileSet files, ArtifactType type);
+
+		/// <summary>
+		///		Deletes all exposed artifacts. Does nothing if build server isn't cunfigured for exposing.
+		/// </summary>
+		void DeleteArtifacts();
+	}	
 }
