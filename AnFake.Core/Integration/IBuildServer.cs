@@ -64,11 +64,6 @@ namespace AnFake.Core.Integration
 		/// <param name="type"><see cref="ArtifactType"/></param>
 		/// <returns>URI of exposed artifact (not null)</returns>
 		/// <seealso cref="ExposeArtifact(AnFake.Core.FileItem,AnFake.Core.ArtifactType)"/>
-		void ExposeArtifacts(FileSet files, ArtifactType type);
-
-		/// <summary>
-		///		Deletes all exposed artifacts. Does nothing if build server isn't cunfigured for exposing.
-		/// </summary>
-		void DeleteArtifacts();
+		void ExposeArtifacts(FileSet files, ArtifactType type);		
 	}	
 }

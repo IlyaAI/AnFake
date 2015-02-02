@@ -33,11 +33,6 @@ namespace AnFake.Core.Integration
 		public void ExposeArtifacts(FileSet files, ArtifactType type)
 		{
 			// do nothing
-		}
-
-		public void DeleteArtifacts()
-		{
-			// do nothing
-		}
+		}		
 	}
 }

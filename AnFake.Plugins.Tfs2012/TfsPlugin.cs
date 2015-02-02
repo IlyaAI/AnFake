@@ -346,7 +346,7 @@ namespace AnFake.Plugins.Tfs2012
 			Trace.InfoFormat("TfsPlugin: Exposing folder '{0}'...", folder);
 
 			var dstPath = _build.DropLocation.AsPath()/type.ToString()/folder.Name;
-			Files.Copy(folder.Path % "**/*", dstPath);
+			Robocopy.Copy(folder.Path, dstPath, p => p.Recursion = Robocopy.RecursionMode.All);			
 
 			return new Uri(dstPath.Full);
 		}
@@ -380,22 +380,7 @@ namespace AnFake.Plugins.Tfs2012
 
 			var dstPath = _build.DropLocation.AsPath()/type.ToString();
 			Files.Copy(files, dstPath);
-		}
-
-		public void DeleteArtifacts()
-		{
-			if (_build == null)
-			{
-				BuildServer.Local.DeleteArtifacts();
-				return;
-			}
-
-			if (!CanExposeArtifacts)
-				return;
-			
-			Trace.Info("TfsPlugin: Deleting artifacts...");
-			Folders.Clean(_build.DropLocation.AsPath());			
-		}
+		}		
 
 		private void EnsureCanExpose()
 		{
@@ -466,6 +451,8 @@ namespace AnFake.Plugins.Tfs2012
 
 		private void FlushMessages()
 		{
+			Log.DebugFormat("TfsPlugin: flushing {0} queued message(s)...", _messages.Count);
+
 			if (_tracker == null)
 			{
 				_messages.Clear();
@@ -517,7 +504,7 @@ namespace AnFake.Plugins.Tfs2012
 		{
 			Trace.Info(">>> TfsPlugin.OnBuildStarted");
 
-			var rdpFile = Environment.MachineName.MakeUnique(".rdp").AsFile();
+			var rdpFile = String.Format("{0}.rdp", Environment.MachineName).AsFile();
 			Text.WriteTo(rdpFile, String.Format("full address:s:{0}", Environment.MachineName));
 
 			var rdpUri = CanExposeArtifacts
@@ -557,9 +544,17 @@ namespace AnFake.Plugins.Tfs2012
 
 			try
 			{
+				var output = new StringBuilder(test.Output.Length + 256);
+				output
+					.Append('=', 48).AppendLine()
+					.Append("TEST OUTPUT").AppendLine()
+					.Append("    ").Append(test.Suite).Append('.').Append(test.Name).AppendLine()
+					.Append('=', 48).AppendLine()
+					.AppendLine();
+
 				var uri = ExposeArtifact(
-					String.Format("{0}.{1}", test.Suite, test.Name).MakeUnique(".txt"),
-					test.Output,
+					"Output".MakeUnique(".txt"),
+					output.ToString(),
 					Encoding.UTF8,
 					ArtifactType.TestResults);
 

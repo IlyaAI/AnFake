@@ -129,14 +129,6 @@ namespace AnFake.Core
 				throw new ArgumentException("BuildServer.ExposeArtifact(files[, type]): files must not be null");
 
 			Instance.Value.ExposeArtifacts(files, type);
-		}
-
-		/// <summary>
-		///		Deletes all exposed artifacts. Does nothing if build server isn't cunfigured for exposing.
-		/// </summary>
-		public static void DeleteArtifacts()
-		{
-			Instance.Value.DeleteArtifacts();
-		}
+		}		
 	}
 }
