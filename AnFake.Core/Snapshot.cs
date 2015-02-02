@@ -33,14 +33,14 @@ namespace AnFake.Core
 
 		private readonly IList<SavedFile> _originalFiles = new List<SavedFile>();
 		private readonly string _snapshotBasePath;
+		private bool _initialized;
 
 		/// <summary>
 		///		Constructs new shanshot instance.
 		/// </summary>
 		public Snapshot()
 		{
-			_snapshotBasePath = Path.Combine(Path.GetTempPath(), "AnFake".MakeUnique());
-			Directory.CreateDirectory(_snapshotBasePath);
+			_snapshotBasePath = Path.Combine(Path.GetTempPath(), "AnFakeSnapshot".MakeUnique());
 		}
 
 		/// <summary>
@@ -66,6 +66,12 @@ namespace AnFake.Core
 		{
 			if (file == null)
 				throw new ArgumentException("Snapshot.Save(file): file must not be null");
+
+			if (_initialized)
+			{
+				Directory.CreateDirectory(_snapshotBasePath);
+				_initialized = true;
+			}
 
 			var fullPath = file.Path.Full;
 			var snapshotPath = Path.Combine(_snapshotBasePath, String.Format("{0:X8}", _originalFiles.Count));

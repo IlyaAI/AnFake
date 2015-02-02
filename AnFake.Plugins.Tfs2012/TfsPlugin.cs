@@ -376,7 +376,7 @@ namespace AnFake.Plugins.Tfs2012
 
 			EnsureCanExpose();
 
-			Trace.InfoFormat("TfsPlugin: Exposing files {{{0}}}...", files);
+			Trace.InfoFormat("TfsPlugin: Exposing files {{{0}}}...", files.ToFormattedString());
 
 			var dstPath = _build.DropLocation.AsPath()/type.ToString();
 			Files.Copy(files, dstPath);

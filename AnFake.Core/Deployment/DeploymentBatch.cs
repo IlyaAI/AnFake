@@ -1,0 +1,45 @@
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace AnFake.Core.Deployment
+{
+	public sealed class DeploymentBatch
+	{
+		private readonly List<DeploymentStep> _deploymentSteps = new List<DeploymentStep>();
+		private readonly string _description;
+
+		public DeploymentBatch(string description)
+		{
+			_description = description;
+		}
+
+		public string Description
+		{
+			get { return _description; }
+		}
+
+		public void UpdateFile(FileItem file, string destination)
+		{
+			_deploymentSteps.Add(
+				new UpdateFilesStep(new [] {file}, destination));
+		}
+
+		public void UpdateFiles(IEnumerable<FileItem> files, string destination)
+		{
+			_deploymentSteps.Add(
+				new UpdateFilesStep(files.ToArray(), destination));
+		}
+
+		public void DeleteFile(string destination)
+		{
+			_deploymentSteps.Add(
+				new DeleteFileStep(destination));
+		}
+
+		internal IEnumerable<DeploymentStep> GetDeploymentSteps()
+		{
+			return _deploymentSteps;
+		}
+	}
+}

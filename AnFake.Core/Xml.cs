@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Xml;
 using System.Xml.XPath;
 using AnFake.Core.Exceptions;
@@ -35,6 +36,42 @@ namespace AnFake.Core
 			public XNode Root
 			{
 				get { return new XNode(_doc.Root, _ns); }
+			}
+
+			public Encoding DeclaredEncoding
+			{
+				get
+				{
+					var enc = _doc.Declaration.Encoding;
+					
+					if ("utf-8".Equals(enc, StringComparison.OrdinalIgnoreCase))
+						return Encoding.UTF8;
+
+					if ("utf-16".Equals(enc, StringComparison.OrdinalIgnoreCase))
+						return Encoding.Unicode;
+
+					throw new InvalidConfigurationException(String.Format("Unsupported XML encoding: '{0}'.", enc));
+				}
+
+				set
+				{
+					if (value == null)
+						throw new ArgumentException("XDoc.DeclaredEncoding: value must not be null");
+
+					if (value.EncodingName == Encoding.UTF8.EncodingName)
+					{
+						_doc.Declaration.Encoding = "utf-8";
+						return;
+					}
+
+					if (value.EncodingName == Encoding.Unicode.EncodingName)
+					{
+						_doc.Declaration.Encoding = "utf-16";
+						return;
+					}
+
+					throw new InvalidConfigurationException(String.Format("Unsupported XML encoding: '{0}'.", value.EncodingName));
+				}
 			}
 
 			/// <summary>
@@ -139,12 +176,39 @@ namespace AnFake.Core
 			}
 
 			/// <summary>
-			///		Returns XML document as string.
+			///		Returns XML document as string without declaration.
 			/// </summary>
+			/// <remarks>
+			///		IMPORTANT! This method returns xml string WITHOUT '&lt;?xml version encoding?&gt;' declaration. 
+			///		If you are going to save returned string to the file use <c>ToStringWithDeclaration</c> instead.
+			/// </remarks>
 			/// <returns>xml string</returns>
 			public override string ToString()
 			{
 				return _doc.ToString();
+			}
+
+			/// <summary>
+			///		Returns XML document as string with declaration.
+			/// </summary>
+			/// <remarks>
+			///		IMPORTANT! This method returns xml string with '&lt;?xml version encoding?&gt;' declaration. Encoding is defined by <c>DeclaredEncoding</c> property.
+			/// </remarks>
+			/// <returns>xml string</returns>
+			/// <example>
+			/// <code>
+			/// let xml = "&lt;root/&gt;".AsXmlDoc()
+			/// xml.DeclaredEncoding = Encoding.Unicode			
+			/// let s = xml.ToStringWithDeclaration()	// &lt;?xml version="1.0" encoding="utf-16"?&gt;
+			/// </code>
+			/// </example>
+			public string ToStringWithDeclaration()
+			{
+				return 
+					new StringBuilder()
+						.AppendLine(_doc.Declaration.ToString())
+						.Append(_doc)
+						.ToString();
 			}
 		}
 
@@ -354,6 +418,15 @@ namespace AnFake.Core
 				_element.Add(xelem);
 
 				return new XNode(xelem, _ns);
+			}
+
+			/// <summary>
+			///		Returns string presentation of Xml element.
+			/// </summary>
+			/// <returns>xml string</returns>
+			public override string ToString()
+			{
+				return _element.ToString();
 			}
 
 			private System.Xml.Linq.XName ToXName(string name)

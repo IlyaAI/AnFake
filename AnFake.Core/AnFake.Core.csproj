@@ -52,8 +52,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ArgsExtension.cs" />
+    <Compile Include="Deployment\DeleteFileStep.cs" />
+    <Compile Include="Deployment\DeploymentBatch.cs" />
+    <Compile Include="Deployment\Deployer.cs" />
+    <Compile Include="Deployment\DeploymentStep.cs" />
+    <Compile Include="Deployment\UpdateFilesStep.cs" />
     <Compile Include="Exceptions\StackTraceMode.cs" />
     <Compile Include="ArtifactType.cs" />
+    <Compile Include="FormatExtension.cs" />
     <Compile Include="Integration\IBuildServer.cs" />
     <Compile Include="BuildServer.cs" />
     <Compile Include="Integration\Tests\IMsTrxPostProcessor.cs" />
@@ -121,9 +127,6 @@
     <Compile Include="TargetExtension.cs" />
     <Compile Include="Text.cs" />
     <Compile Include="UserInterop.cs" />
-    <Compile Include="Utils\CycleDependencyException.cs" />
-    <Compile Include="Utils\DependencyResolver.cs" />
-    <Compile Include="Utils\EnumerableAdapter.cs" />
     <Compile Include="Integration\IChangeset.cs" />
     <Compile Include="Integration\IVersionControl.cs" />
     <Compile Include="VersionControl.cs" />

@@ -45,6 +45,10 @@ namespace AnFake.Api
 
 		public event EventHandler<TraceMessage> MessageReceived;
 
-		public event EventHandler Idle;
+		public event EventHandler Idle
+		{
+			add { }
+			remove { }
+		}
 	}
 }

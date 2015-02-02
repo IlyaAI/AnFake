@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AnFake.Core.Test
@@ -90,7 +91,7 @@ namespace AnFake.Core.Test
 		public void XNode_should_return_namespaced_attribute_value()
 		{
 			// arrange
-			var xdoc = AsXmlDoc("<root><element xmlns:t=\"urn:test:namespace\" t:attr=\"value\"/></root>");
+			var xdoc = "<root><element xmlns:t=\"urn:test:namespace\" t:attr=\"value\"/></root>".AsXmlDoc();
 
 			// act
 			var value = xdoc
@@ -106,7 +107,7 @@ namespace AnFake.Core.Test
 		public void XNode_should_replace_attribute_value()
 		{
 			// arrange
-			var xdoc = AsXmlDoc("<root><element attr=\"value\"/></root>");
+			var xdoc = "<root><element attr=\"value\"/></root>".AsXmlDoc();
 
 			// act
 			xdoc.SelectFirst("/root/element").SetAttr("attr", "new-value");
@@ -119,7 +120,7 @@ namespace AnFake.Core.Test
 		public void XNode_should_create_attribute_if_none()
 		{
 			// arrange
-			var xdoc = AsXmlDoc("<root><element/></root>");
+			var xdoc = "<root><element/></root>".AsXmlDoc();
 
 			// act
 			xdoc.SelectFirst("/root/element").SetAttr("attr", "value");
@@ -128,9 +129,45 @@ namespace AnFake.Core.Test
 			Assert.IsTrue(xdoc.ToString().Contains("attr=\"value\""));
 		}
 
-		private static Xml.XDoc AsXmlDoc(string xml)
+		[TestMethod]
+		public void XDocToString_should_return_xml_string_without_decl()
 		{
-			return xml.AsXmlDoc();
-		}		
+			// arrange
+			var xdoc = "<?xml version=\"1.0\" encoding=\"utf-8\"?><root/>".AsXmlDoc();
+
+			// act
+			var value = xdoc.ToString();
+
+			// assert
+			Assert.IsFalse(value.Contains("encoding=\"utf-8\""), "Xml declaration isn't expected");
+		}
+
+		[TestMethod]
+		public void XDocToStringWithDeclaration_should_return_utf16_xml_string()
+		{
+			// arrange
+			var xdoc = "<?xml version=\"1.0\" encoding=\"utf-8\"?><root/>".AsXmlDoc();
+
+			// act
+			xdoc.DeclaredEncoding = Encoding.Unicode;
+			var value = xdoc.ToStringWithDeclaration();
+
+			// assert
+			Assert.IsTrue(value.Contains("encoding=\"utf-16\""), "UTF-16 encoding expected");
+		}
+
+		[TestMethod]
+		public void XDocToStringWithDeclaration_should_return_utf8_xml_string()
+		{
+			// arrange
+			var xdoc = "<?xml version=\"1.0\" encoding=\"utf-16\"?><root/>".AsXmlDoc();
+
+			// act
+			xdoc.DeclaredEncoding = Encoding.UTF8;
+			var value = xdoc.ToStringWithDeclaration();
+
+			// assert
+			Assert.IsTrue(value.Contains("encoding=\"utf-8\""), "UTF-8 encoding expected");
+		}				
 	}
 }

@@ -15,7 +15,7 @@ namespace AnFake.Core
 			if (targetPath == null)
 				throw new ArgumentException("Files.Copy(files, targetPath[, overwrite]): targetPath must not be null");
 
-			Trace.InfoFormat("Copying files {{{0}}} to '{1}'...", files, targetPath);
+			Trace.InfoFormat("Copying files {{{0}}} to '{1}'...", files.ToFormattedString(), targetPath);
 
 			var filePathes = files
 				.Select(x => new Tuple<FileSystemPath, FileSystemPath>(x.Path, targetPath / x.RelPath))
@@ -74,7 +74,7 @@ namespace AnFake.Core
 			if (targetPath == null)
 				throw new ArgumentException("Files.Move(files, targetPath[, overwrite]): targetPath must not be null");
 
-			Trace.InfoFormat("Moving files {{{0}}} to '{1}'...", files, targetPath);
+			Trace.InfoFormat("Moving files {{{0}}} to '{1}'...", files.ToFormattedString(), targetPath);
 
 			var filePathes = files
 				.Select(x => new Tuple<FileSystemPath, FileSystemPath>(x.Path, targetPath / x.RelPath))
@@ -131,7 +131,7 @@ namespace AnFake.Core
 			if (files == null)
 				throw new ArgumentException("Files.Delete(files): files must not be null");
 
-			Trace.InfoFormat("Deleting files {{{0}}}...", files);
+			Trace.InfoFormat("Deleting files {{{0}}}...", files.ToFormattedString());
 
 			var filePathes = files
 				.Select(x => x.Path)

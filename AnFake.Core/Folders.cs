@@ -36,7 +36,7 @@ namespace AnFake.Core
 			if (folders == null)
 				throw new ArgumentException("Folders.Delete(folders): folders must not be null");
 
-			Trace.InfoFormat("Deleting folders {{{0}}}...", folders);
+			Trace.InfoFormat("Deleting folders {{{0}}}...", folders.ToFormattedString());
 
 			var folderPathes = folders
 				.Select(x => x.Path)
@@ -78,7 +78,7 @@ namespace AnFake.Core
 			if (folders == null)
 				throw new ArgumentException("Folders.Clean(folders): folders must not be null");
 
-			Trace.InfoFormat("Cleaning folders {{{0}}}...", folders);
+			Trace.InfoFormat("Cleaning folders {{{0}}}...", folders.ToFormattedString());
 
 			var folderPathes = folders.ToArray();
 

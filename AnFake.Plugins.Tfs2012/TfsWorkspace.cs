@@ -375,7 +375,7 @@ namespace AnFake.Plugins.Tfs2012
 
 			var ws = Impl.GetWorkspace(filePathes[0]);
 			
-			Trace.InfoFormat("TfsWorkspace.PendAdd: {{{0}}}", files);
+			Trace.InfoFormat("TfsWorkspace.PendAdd: {{{0}}}", files.ToFormattedString());
 
 			foreach (var path in filePathes)
 			{
@@ -397,7 +397,7 @@ namespace AnFake.Plugins.Tfs2012
 
 			var ws = Impl.GetWorkspace(filesArray[0].Path);
 			
-			Trace.InfoFormat("TfsWorkspace.Undo: {{{0}}}", files);
+			Trace.InfoFormat("TfsWorkspace.Undo: {{{0}}}", files.ToFormattedString());
 
 			foreach (var file in filesArray)
 			{
