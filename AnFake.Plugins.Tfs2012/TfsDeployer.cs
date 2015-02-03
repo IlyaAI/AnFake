@@ -23,26 +23,34 @@ namespace AnFake.Plugins.Tfs2012
 				Workspace = workspace;
 			}
 
-			public override void DoStep(UpdateFilesStep updateFiles)
+			public override void DoStep(UpdateFilesStep step)
 			{
-				var dstPath = DeploymentFolder/updateFiles.Destination;
-				Files.Copy(updateFiles.Files, dstPath, true);
+				var dstPath = DeploymentFolder/step.Destination;
+				Files.Copy(step.Files, dstPath, true);
 				
-				foreach (var file in updateFiles.Files)
+				foreach (var file in step.Files)
 				{
 					Workspace.PendAdd((dstPath / file.RelPath).Full);
 				}
 			}
 
-			public override void DoStep(DeleteFileStep deleteFile)
+			public override void DoStep(UpdateFileInplaceStep step)
 			{
-				Workspace.PendDelete((DeploymentFolder / deleteFile.Destination).Full);
+				var file = (DeploymentFolder/step.Destination).AsFile();
+				step.Updater.Invoke(file);
+			}
+
+			public override void DoStep(DeleteFileStep step)
+			{
+				Workspace.PendDelete((DeploymentFolder / step.Destination).Full);
 			}
 		}
 
 		public sealed class Params
 		{
 			public Uri TfsUri;
+			public FolderItem LocalFolder;
+			public bool DoNotCheckIn;
 
 			internal Params()
 			{
@@ -60,8 +68,8 @@ namespace AnFake.Plugins.Tfs2012
 		{
 			Defaults = new Params();
 		}
-
-		public static void Deploy(DeploymentBatch batch, ServerPath serverPath, Action<Params> setParams)
+		
+		public static void Deploy(DeploymentBatch batch, ServerPath serverPath, Action<Params> setParams)		
 		{
 			var parameters = Defaults.Clone();
 			setParams(parameters);
@@ -69,39 +77,69 @@ namespace AnFake.Plugins.Tfs2012
 			if (parameters.TfsUri == null)
 				throw new ArgumentException("TfsDeployer.Params.TfsUri must not be null");
 
+			var localFolder = (FolderItem) null;			
+			if (parameters.LocalFolder == null)
+			{
+				localFolder = "[Temp]/AnFake.Deployment".MakeUnique().AsFolder();
+				Folders.Create(localFolder);
+			}
+			else
+			{
+				localFolder = parameters.LocalFolder;
+				Folders.Clean(localFolder);
+			}
+
+			var workspaceName = localFolder.Name;
+
 			Trace.InfoFormat("TfsDeployer.Deploy: '{0}' to '{1}'...", batch.Description, serverPath);
-
-			var timestamp = String.Format("{0:yyyyMMdd.HHmmss.ff}", DateTime.Now);
-			var deploymentFolder = ("[Temp]/AnFakeDeployment." + timestamp).AsPath();
-			Folders.Create(deploymentFolder);
-
-			var workspace = (Workspace) null;
+			
+			var workspace = (Workspace)null;
+			var checkinReady = false;
 			try
 			{
 				var teamProjectCollection = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(parameters.TfsUri);
 				var vcs = teamProjectCollection.GetService<VersionControlServer>();
 
-				var wsName = String.Format("Deployment-{0}", timestamp);
-				Trace.InfoFormat("Creating temporary workspace '{0}'...", wsName);
+				try
+				{
+					workspace = vcs.GetWorkspace(workspaceName, User.Current);
+					workspace.Update(
+						workspaceName,						
+						workspace.Comment,
+						new[] {new WorkingFolder(serverPath.Full, localFolder.Path.Full)});
+				}
+				catch (WorkspaceNotFoundException)
+				{
+				}
 
-				workspace = vcs.CreateWorkspace(
-					wsName,
-					User.Current,
-					batch.Description,
-					new[] { new WorkingFolder(serverPath.Full, deploymentFolder.Full) });
+				if (workspace == null)
+				{
+					Trace.InfoFormat("Creating workspace '{0}'...", workspaceName);
+
+					workspace = vcs.CreateWorkspace(
+						workspaceName,
+						User.Current,
+						batch.Description,
+						new[] {new WorkingFolder(serverPath.Full, localFolder.Path.Full)});
+
+					Trace.Info("Workspace successfuly created.");
+				}				
 
 				Trace.Info("Downloading files...");
 
 				var status = workspace.Get();
 				if (status.GetFailures().Length > 0)
-					throw new InvalidConfigurationException("");
+					throw new InvalidConfigurationException(
+						String.Format("Workspace GET operation failed. {0}", status.GetFailures()[0].GetFormattedMessage()));
+
+				Trace.InfoFormat("{0} file(s) downloaded.", status.NumFiles);
 
 				Trace.Info("Deploying batch...");
 
-				new TfsDeployerImpl(deploymentFolder, workspace).Deploy(batch);
+				new TfsDeployerImpl(localFolder, workspace).Deploy(batch);
 
 				var pendingSets = workspace.QueryPendingSets(
-					new[] { deploymentFolder.Full },
+					new[] { localFolder.Path.Full },
 					RecursionType.Full,
 					workspace.Name,
 					workspace.OwnerName,
@@ -111,26 +149,42 @@ namespace AnFake.Plugins.Tfs2012
 					.SelectMany(x => x.PendingChanges)
 					.ToArray();
 
-				Trace.Info("Pending changes ready to check-in:");
+				Trace.Info("The following changes has been pended:");
 				foreach (var change in changes)
 				{
-					Trace.InfoFormat("  [{0,-6}] {1}", change.ChangeTypeName, change.FileName);
+					Trace.InfoFormat("    [{0,-6}] {1}", change.ChangeTypeName, change.FileName);
 				}
 
-				Trace.Info("Checking in...");
-				workspace.CheckIn(changes, batch.Description);
+				checkinReady = true;
+
+				if (parameters.DoNotCheckIn)
+				{
+					Trace.SummaryFormat("PRE-DEPLOY: check-in pending changes in '{0}' workspace.", workspaceName);
+				}
+				else
+				{
+					Trace.Info("Checking in...");
+					workspace.CheckIn(changes, batch.Description);
+					
+					Trace.SummaryFormat("DEPLOY: '{0}' successfuly deployed.", batch.Description);
+				}				
 			}
 			finally
 			{
-				Trace.Info("Cleaning up...");
-
-				SafeOp.Try(Folders.Delete, deploymentFolder);
-
-				if (workspace != null)
+				if (parameters.LocalFolder == null && (!parameters.DoNotCheckIn || !checkinReady))
 				{
-					SafeOp.Try(() => workspace.Delete());
-				}
-			}						
+					Trace.Info("Cleaning up...");
+
+					SafeOp.Try(Folders.Delete, localFolder);
+
+					if (workspace != null)
+					{
+						SafeOp.Try(() => workspace.Delete());
+					}
+				}				
+
+				Trace.Info("Deploy finished.");
+			}
 		}
 	}
 }

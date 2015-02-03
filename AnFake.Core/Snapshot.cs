@@ -40,7 +40,7 @@ namespace AnFake.Core
 		/// </summary>
 		public Snapshot()
 		{
-			_snapshotBasePath = Path.Combine(Path.GetTempPath(), "AnFakeSnapshot".MakeUnique());
+			_snapshotBasePath = Path.Combine(Path.GetTempPath(), "AnFake.Snapshot".MakeUnique());
 		}
 
 		/// <summary>
@@ -67,7 +67,7 @@ namespace AnFake.Core
 			if (file == null)
 				throw new ArgumentException("Snapshot.Save(file): file must not be null");
 
-			if (_initialized)
+			if (!_initialized)
 			{
 				Directory.CreateDirectory(_snapshotBasePath);
 				_initialized = true;

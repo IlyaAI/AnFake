@@ -277,6 +277,7 @@ namespace AnFake.Core
 
 		/// <summary>
 		///		Converts this path to relative against given base.
+		///		Throws an exception if this path isn't a sub-path of base one.
 		/// </summary>
 		/// <param name="basePath"></param>
 		/// <returns>relative path</returns>
@@ -288,9 +289,10 @@ namespace AnFake.Core
 			var myFull = Path.GetFullPath(Full);
 			var baseFull = Path.GetFullPath(basePath.Full);
 
-			return myFull.StartsWith(baseFull, StringComparison.OrdinalIgnoreCase)
-				? new FileSystemPath(myFull.Substring(baseFull.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar), true)
-				: this;
+			if (myFull.StartsWith(baseFull, StringComparison.OrdinalIgnoreCase))
+				return new FileSystemPath(myFull.Substring(baseFull.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar), true);
+
+			throw new InvalidConfigurationException(String.Format("Unable to evaluate relative path.\n  SourcePath: '{0}'\n  BasePath: '{1}'", myFull, baseFull));
 		}
 
 		/// <summary>

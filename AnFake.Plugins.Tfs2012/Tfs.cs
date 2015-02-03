@@ -68,6 +68,14 @@ namespace AnFake.Plugins.Tfs2012
 		}
 
 		/// <summary>
+		///     Current team project name.
+		/// </summary>		
+		public static string TeamProject
+		{
+			get { return Impl.TeamProject; }
+		}
+
+		/// <summary>
 		///     The current changeset number for build path.
 		/// </summary>
 		/// <returns></returns>

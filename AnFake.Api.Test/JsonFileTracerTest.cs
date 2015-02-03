@@ -94,6 +94,27 @@ namespace AnFake.Api.Test
 
 		[TestCategory("Functional")]
 		[TestMethod]
+		public void JsonFileTracer_should_support_unicode_messages()
+		{
+			// arrange
+			var tracer = new JsonFileTracer("unicode.jsx", false);
+			tracer.Write(new TraceMessage(TraceMessageLevel.Error, "ОШИБКА"));
+			
+			// act
+			var reader = new JsonTraceReader();
+			using (var log = new FileStream("unicode.jsx", FileMode.Open, FileAccess.Read))
+			{
+				reader.ReadFrom(log, 0);
+			}
+			var msg = reader.Next();
+
+			// assert
+			Assert.IsNotNull(msg);
+			Assert.AreEqual("ОШИБКА", msg.Message);			
+		}
+
+		[TestCategory("Functional")]
+		[TestMethod]
 		public void JsonFileTracer_should_work_in_concurrent_env()
 		{
 			// arrange

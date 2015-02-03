@@ -299,9 +299,9 @@ namespace AnFake.Plugins.Tfs2012
 		/// <returns>set of build</returns>
 		public static IEnumerable<BuildDetail> QueryAll(string definitionName, int limit)
 		{
-			var buildSvc = Current.Impl.BuildServer;
+			var buildSvc = Impl.TeamProjectCollection.GetService<IBuildServer>();
 
-			var definition = buildSvc.GetBuildDefinition(Current.TeamProject, definitionName);
+			var definition = buildSvc.GetBuildDefinition(Impl.TeamProject, definitionName);
 			var spec = buildSvc.CreateBuildDetailSpec(definition);
 			spec.MaxBuildsPerDefinition = limit;
 			spec.QueryOrder = BuildQueryOrder.FinishTimeDescending;
@@ -332,9 +332,9 @@ namespace AnFake.Plugins.Tfs2012
 		/// <returns>set of builds</returns>
 		public static IEnumerable<BuildDetail> QueryByQuality(string definitionName, string quality, int limit)
 		{
-			var buildSvc = Current.Impl.BuildServer;
+			var buildSvc = Impl.TeamProjectCollection.GetService<IBuildServer>();
 
-			var definition = buildSvc.GetBuildDefinition(Current.TeamProject, definitionName);
+			var definition = buildSvc.GetBuildDefinition(Impl.TeamProject, definitionName);
 			var spec = buildSvc.CreateBuildDetailSpec(definition);
 			spec.MaxBuildsPerDefinition = limit;
 			spec.QueryOrder = BuildQueryOrder.FinishTimeDescending;

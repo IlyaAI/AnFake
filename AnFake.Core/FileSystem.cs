@@ -55,7 +55,7 @@ namespace AnFake.Core
 			if (path == null)
 				throw new ArgumentException("FileSystem.AsFile(path): path must not be null");
 
-			return new FileItem(path, FileSystemPath.Base);
+			return new FileItem(path, path.IsRooted ? path.Parent : FileSystemPath.Base);
 		}
 
 		public static FileItem AsFile(this string path)

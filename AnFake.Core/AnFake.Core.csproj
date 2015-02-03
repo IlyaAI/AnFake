@@ -56,6 +56,7 @@
     <Compile Include="Deployment\DeploymentBatch.cs" />
     <Compile Include="Deployment\Deployer.cs" />
     <Compile Include="Deployment\DeploymentStep.cs" />
+    <Compile Include="Deployment\UpdateFileInplaceStep.cs" />
     <Compile Include="Deployment\UpdateFilesStep.cs" />
     <Compile Include="Exceptions\StackTraceMode.cs" />
     <Compile Include="ArtifactType.cs" />

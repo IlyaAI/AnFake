@@ -2,11 +2,15 @@
 {
 	public class Deployer
 	{
-		public virtual void DoStep(UpdateFilesStep updateFiles)
+		public virtual void DoStep(UpdateFilesStep step)
 		{
 		}
 
-		public virtual void DoStep(DeleteFileStep deleteFile)
+		public virtual void DoStep(UpdateFileInplaceStep step)
+		{
+		}
+
+		public virtual void DoStep(DeleteFileStep step)
 		{
 		}
 

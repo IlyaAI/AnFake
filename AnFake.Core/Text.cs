@@ -113,7 +113,7 @@ namespace AnFake.Core
 				}
 
 				_line.Value = replacer.ToString();
-			}
+			}			
 
 			/// <summary>
 			///     Removes current line.
@@ -651,6 +651,72 @@ namespace AnFake.Core
 			}
 
 			return sb.ToString();
+		}
+
+		/// <summary>
+		///		Replaces matched substrings with new one evaluated by given function in given string.
+		/// </summary>
+		/// <param name="text">original text to replace in</param>
+		/// <param name="pattern">Regex pattern (not null)</param>
+		/// <param name="newValue">function which evaluates new value (not null)</param>
+		/// <param name="ignoreCase">true to match ignoring case</param>
+		/// <returns>new string with replaced occurrences</returns>
+		public static string Replace(this string text, string pattern, Func<int, string, string> newValue, bool ignoreCase = false)
+		{
+			if (text == null)
+				throw new ArgumentException("Text.Replace(text, pattern, newValue[, ignoreCase]): text must not be null");
+			if (pattern == null)
+				throw new ArgumentException("Text.Replace(text, pattern, newValue[, ignoreCase]): pattern must not be null");
+			if (newValue == null)
+				throw new ArgumentException("Text.Replace(text, pattern, newValue[, ignoreCase]): newValue must not be null");
+
+			var rx = Rx(pattern, ignoreCase);
+			var replacer = new TextReplacer(text, newValue);
+			foreach (Match match in rx.Matches(text))
+			{
+				replacer.Replace(match.Groups);
+			}
+
+			return replacer.ToString();
+		}
+
+		public static string Parse1Group(this string text, string pattern, bool ignoreCase = false)
+		{
+			if (text == null)
+				throw new ArgumentException("Text.Parse1Group(text, pattern[, ignoreCase]): text must not be null");
+			if (pattern == null)
+				throw new ArgumentException("Text.Parse1Group(text, pattern[, ignoreCase]): pattern must not be null");
+			
+			var match = GetMatch(Rx(pattern, ignoreCase).Matches(text), 2);
+
+			return match.Groups[1].Value;
+		}
+
+		public static Tuple<string, string> Parse2Groups(this string text, string pattern, bool ignoreCase = false)
+		{
+			if (text == null)
+				throw new ArgumentException("Text.Parse2Group(text, pattern[, ignoreCase]): text must not be null");
+			if (pattern == null)
+				throw new ArgumentException("Text.Parse2Group(text, pattern[, ignoreCase]): pattern must not be null");
+
+			var match = GetMatch(Rx(pattern, ignoreCase).Matches(text), 2);
+
+			return new Tuple<string, string>(match.Groups[1].Value, match.Groups[2].Value);
+		}
+
+		private static Match GetMatch(MatchCollection matches, int requiredGroups)
+		{
+			if (matches.Count == 0)
+				throw new InvalidConfigurationException("String doesn't match specified pattern.");
+
+			if (matches.Count > 1)
+				throw new InvalidConfigurationException("String matches specified pattern more than once. ParseXGroup methods expect one and only one match.");
+
+			var match = matches[0];
+			if (match.Groups.Count < requiredGroups)
+				throw new InvalidConfigurationException("Matched pattern doesn't have requested number of groups.");
+
+			return match;
 		}
 
 		private static Regex Rx(string pattern, bool ignoreCase)

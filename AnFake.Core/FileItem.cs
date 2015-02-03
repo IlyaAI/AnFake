@@ -34,11 +34,7 @@ namespace AnFake.Core
 
 		public FileSystemPath RelPath
 		{
-			get
-			{
-				// TODO: what if basePath is null?
-				return _path.ToRelative(_basePath);
-			}
+			get { return _path.ToRelative(_basePath); }
 		}
 
 		public string Name

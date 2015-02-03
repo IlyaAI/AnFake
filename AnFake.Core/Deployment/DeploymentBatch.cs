@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -23,6 +24,12 @@ namespace AnFake.Core.Deployment
 		{
 			_deploymentSteps.Add(
 				new UpdateFilesStep(new [] {file}, destination));
+		}
+
+		public void UpdateFileInplace(string destination, Action<FileItem> updater)
+		{
+			_deploymentSteps.Add(
+				new UpdateFileInplaceStep(destination, updater));
 		}
 
 		public void UpdateFiles(IEnumerable<FileItem> files, string destination)
