@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace AnFake.Core.Deployment
 {
@@ -18,12 +17,6 @@ namespace AnFake.Core.Deployment
 		public string Description
 		{
 			get { return _description; }
-		}
-
-		public void UpdateFile(FileItem file, string destination)
-		{
-			_deploymentSteps.Add(
-				new UpdateFilesStep(new [] {file}, destination));
 		}
 
 		public void UpdateFileInplace(string destination, Action<FileItem> updater)

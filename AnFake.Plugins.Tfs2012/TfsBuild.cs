@@ -256,6 +256,24 @@ namespace AnFake.Plugins.Tfs2012
 			get { return Impl.HasBuild; }
 		}
 
+		private static BuildDetail _pipeIn;
+
+		/// <summary>
+		///		Is this build part of pipeline?
+		/// </summary>
+		public static bool IsPipelined
+		{
+			get { return MyBuild.HasProp("Tfs.PipeIn"); }
+		}
+
+		/// <summary>
+		///		Input build from previous pipeline step.
+		/// </summary>
+		public static BuildDetail PipeIn
+		{
+			get { return _pipeIn ?? (_pipeIn = new BuildDetail(Impl.GetBuildByUri(new Uri(MyBuild.GetProp("Tfs.PipeIn"))))); }
+		}
+
 		/// <summary>
 		///		Returns instance of <c>TfsBuildSummarySection</c> which represents section in summary view displayd by Visual Studio after build completion.
 		/// </summary>

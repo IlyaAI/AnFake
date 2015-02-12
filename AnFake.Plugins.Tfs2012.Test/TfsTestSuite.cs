@@ -56,7 +56,7 @@ namespace AnFake.Plugins.Tfs2012.Test
 				return;
 
 			build.KeepForever = false;
-			build.FinalizeStatus(BuildStatus.Failed);			
+			build.FinalizeStatus(BuildStatus.Failed);
 			build.Delete(DeleteOptions.All & ~DeleteOptions.DropLocation);			
 		}
 	}

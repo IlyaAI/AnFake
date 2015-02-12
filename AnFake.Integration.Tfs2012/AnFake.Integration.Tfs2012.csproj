@@ -48,13 +48,19 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ExpandWorkspace.cs" />
+    <Compile Include="RunPipeline.cs" />
     <Compile Include="InvokeAnFake.cs" />
+    <Compile Include="Pipeline\TfsPipeline.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ServerPathUtils.cs" />
     <Compile Include="UseWorkspaceFrom.cs" />
     <Compile Include="VcsMappings.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\AnFake.Api.Pipeline\AnFake.Api.Pipeline.csproj">
+      <Project>{43f036f4-04f0-49bd-a391-e2f693e9be81}</Project>
+      <Name>AnFake.Api.Pipeline</Name>
+    </ProjectReference>
     <ProjectReference Include="..\AnFake.Api\AnFake.Api.csproj">
       <Project>{e08fa8a9-33d4-4f27-b29e-c9388a291c45}</Project>
       <Name>AnFake.Api</Name>

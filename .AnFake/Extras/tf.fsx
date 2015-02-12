@@ -158,13 +158,14 @@ Tfs.PlugInDeferred()
 
     TfsWorkspace.Create(processTmplPath, localPath, workspaceName)
     
-    Files.Copy(~~"[AnFakePlugins]" % "AnFakeTemplate.*.xaml", localPath, true)
-    Files.Copy(~~"[AnFake]" % "AnFake.Api.*.dll", activitiesLocalPath, true)
+    Files.Copy(~~"[AnFakePlugins]" % "*.xaml", localPath, true)
+    Files.Copy(~~"[AnFake]" % "AnFake.Api.*.dll" + "Antlr4.Runtime.dll", activitiesLocalPath, true)
     Files.Copy(~~"[AnFakePlugins]" % "AnFake.Integration.Tfs2012.*.dll", activitiesLocalPath, true)    
 
-    TfsWorkspace.PendAdd(localPath % "AnFakeTemplate.*.xaml")
+    TfsWorkspace.PendAdd(localPath % "*.xaml")
     TfsWorkspace.PendAdd(
         activitiesLocalPath % "AnFake.Api.*.dll"
+        + "Antlr4.Runtime.dll"
         + "AnFake.Integration.Tfs2012.*.dll"
     )
 

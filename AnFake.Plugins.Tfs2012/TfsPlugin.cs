@@ -24,8 +24,7 @@ namespace AnFake.Plugins.Tfs2012
 		private const int SummaryPriority = 199;
 		private const string OverviewKey = "AnFakeOverview";
 		private const string OverviewHeader = "Overview";
-		private const int OverviewPriority = 150;
-		//private const string LocalTemp = ".tmp";
+		private const int OverviewPriority = 150;		
 		
 		private readonly Queue<TraceMessage> _messages = new Queue<TraceMessage>();
 		private long _lastFlushed;
@@ -58,16 +57,8 @@ namespace AnFake.Plugins.Tfs2012
 
 			if (!String.IsNullOrEmpty(buildUri))
 			{
-				var buildServer = (Microsoft.TeamFoundation.Build.Client.IBuildServer)_teamProjectCollection.GetService(typeof(Microsoft.TeamFoundation.Build.Client.IBuildServer));
-
-				_build = buildServer.QueryBuildsByUri(
-					new[] { new Uri(buildUri) },
-					new[] { "ActivityTracking", CustomInformationNode },
-					QueryOptions.Definitions).Single();
-
-				if (_build == null)
-					throw new InvalidConfigurationException(String.Format("TFS plugin unable to find build '{0}'", buildUri));
-
+				_build = GetBuildByUri(new Uri(buildUri));
+				
 				if (String.IsNullOrEmpty(_build.DropLocation))
 				{
 					var dropLocationRoot = !String.IsNullOrEmpty(_build.DropLocationRoot)
@@ -256,6 +247,21 @@ namespace AnFake.Plugins.Tfs2012
 			return changeset != null
 				? changeset.ChangesetId
 				: 0;
+		}
+
+		public IBuildDetail GetBuildByUri(Uri uri)
+		{
+			var buildSvc = _teamProjectCollection.GetService<Microsoft.TeamFoundation.Build.Client.IBuildServer>();
+
+			var build = buildSvc.QueryBuildsByUri(
+				new[] { uri },
+				new[] { "ActivityTracking", CustomInformationNode },
+				QueryOptions.Definitions).Single();
+
+			if (build == null)
+				throw new InvalidConfigurationException(String.Format("TFS plugin unable to find build '{0}'", uri));
+
+			return build;
 		}
 
 		public static string GetBuildCustomField(IBuildDetail build, string name, string defValue)

@@ -9,16 +9,36 @@ using AnFake.Core.Exceptions;
 
 namespace AnFake.Core
 {
+	/// <summary>
+	///		Represents basic tools related to file system. The most methods declared as extension methods.
+	/// </summary>
 	public static class FileSystem
 	{
 		private static readonly string DirectorySeparatorString = Path.DirectorySeparatorChar.ToString(CultureInfo.InvariantCulture);
 
+		/// <summary>
+		///		Generic parameters of file system operations.
+		/// </summary>
 		public sealed class Params
 		{
+			/// <summary>
+			///		Max number of retries of delete operation.
+			/// </summary>			
 			public int MaxRetries;
+			
+			/// <summary>
+			///		Delay between retries of delete operation.
+			/// </summary>
 			public TimeSpan RetryInterval;
+
+			/// <summary>
+			///		Set of file attributes to be removed before delete operation.
+			/// </summary>
 			public FileAttributes JunkFileAttributes;
 
+			/// <summary>
+			///		Constructs default parameters.
+			/// </summary>
 			public Params()
 			{
 				MaxRetries = 4;
@@ -32,8 +52,19 @@ namespace AnFake.Core
 			Defaults = new Params();
 		}		
 
+		/// <summary>
+		///		Default parameters.
+		/// </summary>
 		public static Params Defaults { get; private set; }
 
+		/// <summary>
+		///		Converts string to FileSystemPath.
+		/// </summary>
+		/// <remarks>
+		///		Relative path is evaluated against build script location.
+		/// </remarks>
+		/// <param name="path">path as plain string (not null)</param>
+		/// <returns>FileSystemPath instance</returns>
 		public static FileSystemPath AsPath(this string path)
 		{
 			if (path == null)
@@ -42,6 +73,13 @@ namespace AnFake.Core
 			return new FileSystemPath(path, false);
 		}		
 
+		/// <summary>
+		///		Converts splitted path in form of string array to FileSystemPath.
+		/// </summary>
+		/// <param name="pathSteps">array of path steps (not null)</param>
+		/// <param name="start">index of first step</param>
+		/// <param name="count">number of steps</param>
+		/// <returns>FileSystemPath instance</returns>
 		public static FileSystemPath AsPath(this string[] pathSteps, int start, int count)
 		{
 			if (pathSteps == null)
@@ -50,6 +88,11 @@ namespace AnFake.Core
 			return new FileSystemPath(String.Join(DirectorySeparatorString, pathSteps, start, count), true);
 		}
 
+		/// <summary>
+		///		Converts file path to FileItem.
+		/// </summary>
+		/// <param name="path">file path (not null)</param>
+		/// <returns>FileItem instance</returns>
 		public static FileItem AsFile(this FileSystemPath path)
 		{
 			if (path == null)
@@ -58,11 +101,92 @@ namespace AnFake.Core
 			return new FileItem(path, path.IsRooted ? path.Parent : FileSystemPath.Base);
 		}
 
+		/// <summary>
+		///		Converts file path to FileItem.
+		/// </summary>
+		/// <param name="path">file path (not null)</param>
+		/// <returns>FileItem instance</returns>
 		public static FileItem AsFile(this string path)
 		{
+			if (path == null)
+				throw new ArgumentException("FileSystem.AsFile(path): path must not be null");
+
 			return AsFile(path.AsPath());
 		}
 
+		///  <summary>
+		/// 		Converts file path to FileItem with specified base path.
+		///  </summary>
+		///  <param name="path">file path (not null)</param>
+		/// <param name="basePath">base path (not null)</param>
+		/// <returns>FileItem instance</returns>
+		/// <seealso cref="FileItem.RelPath"/>
+		public static FileItem AsFileFrom(this FileSystemPath path, FileSystemPath basePath)
+		{
+			if (path == null)
+				throw new ArgumentException("FileSystem.AsFileFrom(path, basePath): path must not be null");
+			if (basePath == null)
+				throw new ArgumentException("FileSystem.AsFileFrom(path, basePath): basePath must not be null");
+
+			return new FileItem(path, basePath);
+		}
+
+		///  <summary>
+		/// 		Converts file path to FileItem with specified base path.
+		///  </summary>
+		///  <param name="path">file path (not null)</param>
+		/// <param name="basePath">base path (not null)</param>
+		/// <returns>FileItem instance</returns>
+		/// <seealso cref="FileItem.RelPath"/>
+		public static FileItem AsFileFrom(this FileSystemPath path, string basePath)
+		{
+			if (path == null)
+				throw new ArgumentException("FileSystem.AsFileFrom(path, basePath): path must not be null");
+			if (basePath == null)
+				throw new ArgumentException("FileSystem.AsFileFrom(path, basePath): basePath must not be null");
+
+			return new FileItem(path, basePath.AsPath());
+		}
+
+		///  <summary>
+		/// 		Converts file path to FileItem with specified base path.
+		///  </summary>
+		///  <param name="path">file path (not null)</param>
+		/// <param name="basePath">base path (not null)</param>
+		/// <returns>FileItem instance</returns>
+		/// <seealso cref="FileItem.RelPath"/>
+		public static FileItem AsFileFrom(this string path, FileSystemPath basePath)
+		{
+			if (path == null)
+				throw new ArgumentException("FileSystem.AsFileFrom(path, basePath): path must not be null");
+			if (basePath == null)
+				throw new ArgumentException("FileSystem.AsFileFrom(path, basePath): basePath must not be null");
+
+			return new FileItem(path.AsPath(), basePath);
+		}
+
+		///  <summary>
+		/// 		Converts file path to FileItem with specified base path.
+		///  </summary>
+		///  <param name="path">file path (not null)</param>
+		/// <param name="basePath">base path (not null)</param>
+		/// <returns>FileItem instance</returns>
+		/// <seealso cref="FileItem.RelPath"/>
+		public static FileItem AsFileFrom(this string path, string basePath)
+		{
+			if (path == null)
+				throw new ArgumentException("FileSystem.AsFileFrom(path, basePath): path must not be null");
+			if (basePath == null)
+				throw new ArgumentException("FileSystem.AsFileFrom(path, basePath): basePath must not be null");
+
+			return new FileItem(path.AsPath(), basePath.AsPath());
+		}
+
+		///  <summary>
+		/// 		Converts wildcarded path to FileSet.
+		///  </summary>		
+		/// <param name="wildcardedPath">wildcarded path (not null)</param>
+		/// <returns>FileSet instance</returns>		
 		public static FileSet AsFileSet(this FileSystemPath wildcardedPath)
 		{
 			if (wildcardedPath == null)
@@ -71,6 +195,11 @@ namespace AnFake.Core
 			return new FileSet().Include(wildcardedPath);
 		}
 
+		///  <summary>
+		/// 		Converts array of wildcarded pathes to FileSet.
+		///  </summary>		
+		/// <param name="wildcardedPathes">array of wildcarded pathes (not null)</param>
+		/// <returns>FileSet instance</returns>
 		public static FileSet AsFileSet(this FileSystemPath[] wildcardedPathes)
 		{
 			if (wildcardedPathes == null)
@@ -85,11 +214,24 @@ namespace AnFake.Core
 			return fs;
 		}
 
+		///  <summary>
+		/// 		Converts wildcarded path to FileSet.
+		///  </summary>		
+		/// <param name="wildcardedPath">wildcarded path (not null)</param>
+		/// <returns>FileSet instance</returns>
 		public static FileSet AsFileSet(this string wildcardedPath)
 		{
+			if (wildcardedPath == null)
+				throw new ArgumentException("FileSystem.AsFileSet(wildcardedPath): wildcardedPath must not be null");
+
 			return AsFileSet(wildcardedPath.AsPath());
 		}
 
+		///  <summary>
+		/// 		Converts array of wildcarded pathes to FileSet.
+		///  </summary>		
+		/// <param name="wildcardedPathes">array of wildcarded pathes (not null)</param>
+		/// <returns>FileSet instance</returns>
 		public static FileSet AsFileSet(this string[] wildcardedPathes)
 		{
 			if (wildcardedPathes == null)
@@ -104,6 +246,13 @@ namespace AnFake.Core
 			return fs;
 		}
 
+		///  <summary>
+		/// 		Converts wildcarded path to FileSet with specified base path.
+		///  </summary>		
+		/// <param name="wildcardedPath">wildcarded path (not null)</param>
+		/// <param name="basePath">base path (not null)</param>
+		/// <returns>FileSet instance</returns>
+		/// <seealso cref="FileItem.RelPath"/>
 		public static FileSet AsFileSetFrom(this FileSystemPath wildcardedPath, FileSystemPath basePath)
 		{
 			if (wildcardedPath == null)
@@ -115,21 +264,62 @@ namespace AnFake.Core
 				.Include(wildcardedPath);
 		}
 
+		///  <summary>
+		/// 		Converts wildcarded path to FileSet with specified base path.
+		///  </summary>		
+		/// <param name="wildcardedPath">wildcarded path (not null)</param>
+		/// <param name="basePath">base path (not null)</param>
+		/// <returns>FileSet instance</returns>
+		/// <seealso cref="FileItem.RelPath"/>
 		public static FileSet AsFileSetFrom(this FileSystemPath wildcardedPath, string basePath)
 		{
+			if (wildcardedPath == null)
+				throw new ArgumentException("FileSystem.AsFileSetFrom(wildcardedPath, basePath): wildcardedPath must not be null");
+			if (basePath == null)
+				throw new ArgumentException("FileSystem.AsFileSetFrom(wildcardedPath, basePath): basePath must not be null");
+
 			return AsFileSetFrom(wildcardedPath, basePath.AsPath());
 		}
 
+		///  <summary>
+		/// 		Converts wildcarded path to FileSet with specified base path.
+		///  </summary>		
+		/// <param name="wildcardedPath">wildcarded path (not null)</param>
+		/// <param name="basePath">base path (not null)</param>
+		/// <returns>FileSet instance</returns>
+		/// <seealso cref="FileItem.RelPath"/>
 		public static FileSet AsFileSetFrom(this string wildcardedPath, FileSystemPath basePath)
 		{
+			if (wildcardedPath == null)
+				throw new ArgumentException("FileSystem.AsFileSetFrom(wildcardedPath, basePath): wildcardedPath must not be null");
+			if (basePath == null)
+				throw new ArgumentException("FileSystem.AsFileSetFrom(wildcardedPath, basePath): basePath must not be null");
+
 			return AsFileSetFrom(wildcardedPath.AsPath(), basePath);
 		}
 
+		///  <summary>
+		/// 		Converts wildcarded path to FileSet with specified base path.
+		///  </summary>		
+		/// <param name="wildcardedPath">wildcarded path (not null)</param>
+		/// <param name="basePath">base path (not null)</param>
+		/// <returns>FileSet instance</returns>
+		/// <seealso cref="FileItem.RelPath"/>
 		public static FileSet AsFileSetFrom(this string wildcardedPath, string basePath)
 		{
+			if (wildcardedPath == null)
+				throw new ArgumentException("FileSystem.AsFileSetFrom(wildcardedPath, basePath): wildcardedPath must not be null");
+			if (basePath == null)
+				throw new ArgumentException("FileSystem.AsFileSetFrom(wildcardedPath, basePath): basePath must not be null");
+
 			return AsFileSetFrom(wildcardedPath.AsPath(), basePath.AsPath());
 		}
 
+		///  <summary>
+		/// 		Converts folder path to FolderItem.
+		///  </summary>
+		/// <param name="path">folder path (not null)</param>
+		/// <returns>FolderItem instance</returns>
 		public static FolderItem AsFolder(this FileSystemPath path)
 		{
 			if (path == null)
@@ -138,11 +328,24 @@ namespace AnFake.Core
 			return new FolderItem(path);
 		}
 
+		///  <summary>
+		/// 		Converts folder path to FolderItem.
+		///  </summary>
+		/// <param name="path">folder path (not null)</param>
+		/// <returns>FolderItem instance</returns>
 		public static FolderItem AsFolder(this string path)
 		{
+			if (path == null)
+				throw new ArgumentException("FileSystem.AsFolder(path): path must not be null");
+
 			return AsFolder(path.AsPath());
 		}
 
+		///  <summary>
+		/// 		Converts wildcarded path to FolderSet.
+		///  </summary>		
+		/// <param name="wildcardedPath">wildcarded path (not null)</param>
+		/// <returns>FolderSet instance</returns>
 		public static FolderSet AsFolderSet(this FileSystemPath wildcardedPath)
 		{
 			if (wildcardedPath == null)
@@ -151,18 +354,45 @@ namespace AnFake.Core
 			return new FolderSet().Include(wildcardedPath);
 		}
 
+		///  <summary>
+		/// 		Converts wildcarded path to FolderSet.
+		///  </summary>		
+		/// <param name="wildcardedPath">wildcarded path (not null)</param>
+		/// <returns>FolderSet instance</returns>
 		public static FolderSet AsFolderSet(this string wildcardedPath)
 		{
+			if (wildcardedPath == null)
+				throw new ArgumentException("FileSystem.AsFolderSet(wildcardedPath): wildcardedPath must not be null");
+
 			return AsFolderSet(wildcardedPath.AsPath());
 		}
 		
+		/// <summary>
+		///		Generates unique name by adding formatted timestamp to given base name.
+		/// </summary>
+		/// <param name="name">base name (not null)</param>
+		/// <param name="ext">extension, including dot (not null)</param>
+		/// <returns>unique name with extension</returns>
 		public static string MakeUnique(this string name, string ext)
 		{
+			if (name == null)
+				throw new ArgumentException("FileSystem.MakeUnique(name, ext): name must not be null");
+			if (ext == null)
+				throw new ArgumentException("FileSystem.MakeUnique(name, ext): ext must not be null");
+
 			return String.Format("{0}.{1:yyyyMMdd.HHmmss.ff}{2}", name, DateTime.Now, ext);
 		}
 
+		/// <summary>
+		///		Generates unique name. Equals to <see cref="MakeUnique(string,string)">MakeUnique(name, "")</see>.
+		/// </summary>
+		/// <param name="name">base name (not null)</param>
+		/// <returns>unique name</returns>
 		public static string MakeUnique(this string name)
 		{
+			if (name == null)
+				throw new ArgumentException("FileSystem.MakeUnique(name): name must not be null");
+
 			return MakeUnique(name, "");
 		}
 

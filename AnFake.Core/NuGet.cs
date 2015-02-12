@@ -48,6 +48,16 @@ namespace AnFake.Core
 			public bool NoDefaultExcludes;
 
 			/// <summary>
+			///		If set, the destination directory will contain only the package name, not the version number.
+			/// </summary>
+			public bool ExcludeVersion;
+
+			/// <summary>
+			///		Disable looking up packages from local machine cache.
+			/// </summary>
+			public bool NoCache;
+
+			/// <summary>
 			///		Access key for package push.
 			/// </summary>
 			public string AccessKey;
@@ -56,6 +66,11 @@ namespace AnFake.Core
 			///		Package source URL.
 			/// </summary>
 			public string SourceUrl;
+
+			/// <summary>
+			///		(v2.5) The NuGet configuation file. If not specified, file %AppData%\NuGet\NuGet.config is used as configuration file.
+			/// </summary>
+			public FileSystemPath ConfigFile;
 
 			/// <summary>
 			///		Timeout for NuGet operation. Default: TimeSpan.MaxValue
@@ -124,21 +139,45 @@ namespace AnFake.Core
 			if (setParams == null)
 				throw new ArgumentException("NuGet.Install(packageId, setParams): setParams must not be null");
 			
+			DoInstall(packageId, setParams);
+		}
+
+		/// <summary>
+		///		Equals to 'nuget.exe install'.
+		/// </summary>		
+		/// <param name="packagesConfig">packages.config file</param>
+		/// <param name="setParams">action which overrides default parameters</param>
+		/// <seealso cref="http://docs.nuget.org/docs/reference/command-line-reference"/>		
+		public static void Install(FileItem packagesConfig, Action<Params> setParams)
+		{
+			if (packagesConfig == null)
+				throw new ArgumentException("NuGet.Install(packagesConfig[, setParams]): packagesConfig must not be null or empty");
+			if (setParams == null)
+				throw new ArgumentException("NuGet.Install(packagesConfig, setParams): setParams must not be null");
+
+			DoInstall(packagesConfig.Path.Full, setParams);
+		}
+
+		private static void DoInstall(string packageIdOrConfigPath, Action<Params> setParams)
+		{
 			var parameters = Defaults.Clone();
 			setParams(parameters);
 
 			EnsureToolPath(parameters);
-			// TODO: check other parameters
 
-			Trace.InfoFormat("NuGet.Install => {0}", packageId);
+			Trace.InfoFormat("NuGet.Install => {0}", packageIdOrConfigPath);
 
 			var args = new Args("-", " ")
 				.Command("install")
-				.Param(packageId)
+				.Param(packageIdOrConfigPath)
 				.Option("Version", parameters.Version)
+				.Option("Source", parameters.SourceUrl)
 				.Option("OutputDirectory", parameters.OutputDirectory)
+				.Option("ConfigFile", parameters.ConfigFile)
+				.Option("ExcludeVersion", parameters.ExcludeVersion)
+				.Option("NoCache", parameters.NoCache)
 				.Option("NonInteractive", true)
-				.Other(parameters.ToolArguments);			
+				.Other(parameters.ToolArguments);
 
 			var result = Process.Run(p =>
 			{
@@ -149,8 +188,68 @@ namespace AnFake.Core
 
 			result
 				.FailIfAnyError("Target terminated due to NuGet errors.")
-				.FailIfExitCodeNonZero(String.Format("NuGet.Install failed with exit code {0}. Package: {1}", result.ExitCode, packageId));
+				.FailIfExitCodeNonZero(String.Format("NuGet.Install failed with exit code {0}. Package: {1}", result.ExitCode, packageIdOrConfigPath));
 		}
+
+		///  <summary>
+		/// 		Equals to <see cref="Restore(AnFake.Core.FileItem,System.Action{AnFake.Core.NuGet.Params})">Restore(slnOrConfigFile, p => {})</see>.
+		///  </summary>				
+		///  <param name="slnOrConfigFile">sln or packages.config file</param>		
+		///  <seealso cref="http://docs.nuget.org/docs/reference/command-line-reference"/>
+		///  <example>
+		///  <code>
+		/// 		NuGet.Restore("MySolution.sln".AsFile())
+		///  </code>
+		///  </example>
+		public static void Restore(FileItem slnOrConfigFile)
+		{
+			Restore(slnOrConfigFile, p => { });
+		}
+
+		///  <summary>
+		/// 		Equals to 'nuget.exe restore'.
+		///  </summary>				
+		///  <remarks>
+		///		Requires NuGet 2.7 or above.
+		///	 </remarks>
+		///  <param name="slnOrConfigFile">sln or packages.config file</param>
+		///  <param name="setParams">action which overrides default parameters</param>
+		///  <seealso cref="http://docs.nuget.org/docs/reference/command-line-reference"/>		
+		public static void Restore(FileItem slnOrConfigFile, Action<Params> setParams)
+		{
+			if (slnOrConfigFile == null)
+				throw new ArgumentException("NuGet.Restore(slnOrConfigFile[, setParams]): slnOrConfigFile must not be null");
+			if (setParams == null)
+				throw new ArgumentException("NuGet.Restore(slnOrConfigFile, setParams): setParams must not be null");
+
+			var parameters = Defaults.Clone();
+			setParams(parameters);
+
+			EnsureToolPath(parameters);
+
+			Trace.InfoFormat("NuGet.Restore => {0}", slnOrConfigFile);
+
+			var args = new Args("-", " ")
+				.Command("restore")
+				.Param(slnOrConfigFile.Path.Full)
+				.Option("Source", parameters.SourceUrl)
+				.Option("OutputDirectory", parameters.OutputDirectory)
+				.Option("ConfigFile", parameters.ConfigFile)
+				.Option("NoCache", parameters.NoCache)
+				.Option("NonInteractive", true)
+				.Other(parameters.ToolArguments);
+
+			var result = Process.Run(p =>
+			{
+				p.FileName = parameters.ToolPath;
+				p.Timeout = parameters.Timeout;
+				p.Arguments = args.ToString();
+			});
+
+			result
+				.FailIfAnyError("Target terminated due to NuGet errors.")
+				.FailIfExitCodeNonZero(String.Format("NuGet.Restore failed with exit code {0}. Solution: {1}", result.ExitCode, slnOrConfigFile));
+		}		
 
 		/// <summary>
 		///		Creates package spec of version 2.0

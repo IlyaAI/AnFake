@@ -12,6 +12,8 @@ open AnFake.Plugins.Tfs2012
 
 Tfs.PlugIn()
 
+let productVersion = "1.0.0".AsVersion()
+
 let out = ~~".out"
 let productOut = out / "product"
 let testsOut = out / "tests"
@@ -33,12 +35,21 @@ let product =
 )
 
 "Compile" => (fun _ ->
+    // Embeds product version into AssemblyInfo files.
+    // 'Temporary' means that after build all changes will be reverted to prevent committing of version number to VCS.
+    AssemblyInfo.EmbedTemporary(
+        !!"*/Properties/AssemblyInfo.cs",
+        fun p ->             
+            p.Version <- VersionControl.GetFullVersion(productVersion)
+        )
+    
     MsBuild.BuildRelease(product, productOut)
 
     MsBuild.BuildRelease(tests, testsOut)
 )
 
 "Test.Unit" => (fun _ -> 
+    // Run tests using VSTest.Console.exe runner
     VsTest.Run(
         testsOut % "*.Test.dll")
 )
@@ -49,6 +60,6 @@ let product =
 //
 "Drop" => (fun _ -> ())
 
-"Test" <== ["Test.Unit"]
+"Test" <== ["Test.Unit"]            // 'Test' consists of 'Test.Unit'
 
-"Build" <== ["Compile"; "Test"]
+"Build" <== ["Compile"; "Test"]     // 'Build' consists of 'Compile' and 'Test'

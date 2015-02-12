@@ -13,13 +13,15 @@ let productOut = out / "product"
 let pluginsOut = productOut / "Plugins"
 let extrasOut = productOut / "Extras"
 let testsOut = out / "tests"
-let product = !!"AnFake/*.csproj"
+let product = 
+    !!"AnFake/*.csproj"
+    + "AnFake.Api.Pipeline/*.csproj"
 let plugins = 
     !!"AnFake.Plugins.*/*.csproj" 
     - "AnFake.Plugins.*.Test/*.csproj"
 let extras = ~~".AnFake/Extras" % "*"
 let cmds = ~~".AnFake" % "*.cmd"
-let xaml = ~~"AnFake.Integration.Tfs2012.Template/AnFakeTemplate.xaml"
+let xaml = ~~"AnFake.Integration.Tfs2012.Template" % "*.xaml"
 let buildTmpls = ~~".AnFake" % "*.tmpl.fsx" + "*.tmpl.csx"
 let fsharp = 
     ~~"[ProgramFilesX86]/Reference Assemblies/Microsoft/FSharp/.NETFramework/v4.0/4.3.1.0" % "FSharp.Core.dll"
@@ -38,7 +40,7 @@ let nugetFiles =
     + "FSharp.Core.sigdata"
     + "Extras/*"
     + "Plugins/AnFake.Integration.Tfs2012.*.dll"
-    + "Plugins/AnFakeTemplate.*.xaml"
+    + "Plugins/*.xaml"
     + "Plugins/AnFake.Plugins.Tfs2012.dll"
     + "Plugins/AnFake.Plugins.StringTemplate.dll"
     + "Plugins/Antlr4.StringTemplate.dll"
@@ -89,7 +91,8 @@ let xamlVersion = "1"
     MsBuild.BuildRelease(plugins, pluginsOut)
 
     Files.Copy(extras, extrasOut, true)
-    Files.Copy(xaml, pluginsOut / String.Format("AnFakeTemplate.v{0}.xaml", xamlVersion), true)
+    for fx in xaml do
+        Files.Copy(fx, pluginsOut / String.Format("{0}.v{1}.xaml", fx.NameWithoutExt, xamlVersion), true)
 
     MsBuild.BuildRelease(tests, testsOut)
 )
@@ -157,6 +160,10 @@ let xamlVersion = "1"
             "AnFake.Integration.Tfs2012.Template/AnFake.Integration.Tfs2012.Template.csproj",
                 [                    
                     @"<HintPath>\.\.\\\.AnFake\\AnFake.Api\.v(\d+)\.dll</HintPath>"
+                ]
+            "AnFake.Api.Pipeline/AnFake.Api.Pipeline.csproj", 
+                [
+                    @"<AssemblyName>AnFake\.Api\.Pipeline\.v(\d+)</AssemblyName>"
                 ]            
         ]
 
@@ -181,6 +188,10 @@ let xamlVersion = "1"
                     @"<HintPath>\.\.\\\.AnFake\\Plugins\\AnFake.Integration\.Tfs2012\.v(\d+)\.dll</HintPath>"
                 ]
             "AnFake.Integration.Tfs2012.Template/AnFakeTemplate.xaml",
+                [
+                    @"clr-namespace:AnFake\.Integration\.Tfs2012;assembly=AnFake\.Integration\.Tfs2012\.v(\d+)"
+                ]
+            "AnFake.Integration.Tfs2012.Template/AnFakePipelineTemplate.xaml",
                 [
                     @"clr-namespace:AnFake\.Integration\.Tfs2012;assembly=AnFake\.Integration\.Tfs2012\.v(\d+)"
                 ]
