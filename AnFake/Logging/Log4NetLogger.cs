@@ -9,13 +9,17 @@ namespace AnFake.Logging
 {
 	internal class Log4NetLogger : Api.ILogger
 	{
+		private const string LoggerName = "AnFake";
+
 		private readonly log4net.Core.ILogger _logger;
 
-		public Log4NetLogger(string logPath, int consoleWidth)
+		public Log4NetLogger(string logPath, Verbosity verbosity, int consoleWidth)
 		{
-			_logger = LogManager.GetLogger("AnFake").Logger;
+			SetUp(logPath, verbosity, consoleWidth);
 
-			SetUp(logPath, consoleWidth);
+			_logger = LogManager.GetLogger(LoggerName).Logger;
+
+			Threshold = verbosity.AsLogLevelThreshold();
 		}
 
 		public LogMessageLevel Threshold { get; set; }
@@ -28,7 +32,7 @@ namespace AnFake.Logging
 			_logger.Log(typeof(Log4NetLogger), GetLevel(level), message, null);
 		}
 
-		private void SetUp(string logPath, int consoleWidth)
+		private void SetUp(string logPath, Verbosity verbosity, int consoleWidth)
 		{
 			var consoleAppender = new ColoredConsoleAppender
 			{
@@ -65,6 +69,7 @@ namespace AnFake.Logging
 					ForeColor = ColoredConsoleAppender.Colors.Red | ColoredConsoleAppender.Colors.HighIntensity,
 					Level = Level.Error
 				});
+			consoleAppender.ActivateOptions();
 
 			var fileAppender = new FileAppender
 			{
@@ -72,18 +77,20 @@ namespace AnFake.Logging
 				AppendToFile = false,
 				Encoding = Encoding.UTF8,
 				File = logPath,
-				Layout = new FilePattern()
+				Layout = new FilePattern(LoggerName)
 			};
+			fileAppender.ActivateOptions();
 
 			var hierarchy = (Hierarchy)LogManager.GetRepository();
 
-			consoleAppender.ActivateOptions();
-			hierarchy.Root.AddAppender(consoleAppender);
+			var root = hierarchy.Root;
+			root.AddAppender(fileAppender);
+			root.Level = GetLevelThreshold(verbosity);
 
-			fileAppender.ActivateOptions();
-			hierarchy.Root.AddAppender(fileAppender);
+			var anfake = hierarchy.GetLogger(LoggerName, hierarchy.LoggerFactory);
+			anfake.AddAppender(consoleAppender);
+			anfake.Level = Level.All;
 
-			hierarchy.Root.Level = Level.All;
 			hierarchy.Configured = true;
 		}
 
@@ -106,6 +113,25 @@ namespace AnFake.Logging
 					return Level.Error;
 				default:
 					return Level.Off;
+			}
+		}
+
+		private static Level GetLevelThreshold(Verbosity verbosity)
+		{
+			switch (verbosity)
+			{
+				case Verbosity.Quiet:
+				case Verbosity.Minimal:
+					return Level.Warn;
+					
+				case Verbosity.Detailed:
+					return Level.Debug;
+
+				case Verbosity.Diagnostic:
+					return Level.All;
+					
+				default:
+					return Level.Info;
 			}
 		}
 	}

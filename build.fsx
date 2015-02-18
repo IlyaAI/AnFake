@@ -44,6 +44,9 @@ let nugetFiles =
     + "Plugins/AnFake.Plugins.Tfs2012.dll"
     + "Plugins/AnFake.Plugins.StringTemplate.dll"
     + "Plugins/Antlr4.StringTemplate.dll"
+    + "Plugins/AnFake.Plugins.NHibernate.dll"
+    + "Plugins/NHibernate.dll"
+    + "Plugins/Iesi.Collections.dll"
     //+ "Plugins/AnFake.Plugins.HtmlSummary.dll" // not ready yet
     //+ "Plugins/AnFake.Plugins.HtmlSummary.zip"
 

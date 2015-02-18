@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{E08FA8A9-33D4-4F27-B29E-C9388A291C45}</ProjectGuid>
+    <ProjectGuid>{0EB04FA6-2392-4945-AEA1-35A803806E24}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AnFake.Api</RootNamespace>
-    <AssemblyName>AnFake.Api.v1</AssemblyName>
+    <RootNamespace>AnFake.Plugins.NHibernate</RootNamespace>
+    <AssemblyName>AnFake.Plugins.NHibernate</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
@@ -18,7 +18,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\.AnFake\Plugins\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -26,12 +26,18 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>..\.AnFake\Plugins\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Iesi.Collections">
+      <HintPath>..\packages\Iesi.Collections.4.0.0.4000\lib\net40\Iesi.Collections.dll</HintPath>
+    </Reference>
+    <Reference Include="NHibernate">
+      <HintPath>..\packages\NHibernate.4.0.3.4000\lib\net40\NHibernate.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Serialization" />
@@ -42,26 +48,23 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Args.cs" />
-    <Compile Include="ArgsExtension.cs" />
-    <Compile Include="Hyperlink.cs" />
-    <Compile Include="ILogger.cs" />
-    <Compile Include="ITracer.cs" />
-    <Compile Include="BypassTracer.cs" />
-    <Compile Include="Log.cs" />
-    <Compile Include="NoopLogger.cs" />
-    <Compile Include="NoopTracer.cs" />
-    <Compile Include="JsonFileTracer.cs" />
-    <Compile Include="JsonTraceReader.cs" />
+    <Compile Include="Nh.cs" />
+    <Compile Include="NhMapper.cs" />
+    <Compile Include="NhPlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TraceMessageCollector.cs" />
-    <Compile Include="LogMessageLevel.cs" />
-    <Compile Include="TraceMessageCounter.cs" />
-    <Compile Include="TraceMessageLevel.cs" />
-    <Compile Include="TraceMessage.cs" />
-    <Compile Include="Trace.cs" />
-    <Compile Include="Verbosity.cs" />
-    <Compile Include="VerbosityExtension.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AnFake.Api\AnFake.Api.csproj">
+      <Project>{e08fa8a9-33d4-4f27-b29e-c9388a291c45}</Project>
+      <Name>AnFake.Api</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\AnFake.Core\AnFake.Core.csproj">
+      <Project>{86c27076-a445-433b-bb89-e265ef9a74d8}</Project>
+      <Name>AnFake.Core</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />

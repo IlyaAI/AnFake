@@ -20,9 +20,8 @@ namespace AnFake.Core.Test
 
 		[TestCleanup]
 		public void Cleanup()
-		{
-			MyBuild.Reset();
-			Target.Reset();
+		{		
+			MyBuild.Finalise();			
 		}
 
 		[TestCategory("Functional")]

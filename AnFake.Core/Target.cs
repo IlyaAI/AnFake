@@ -670,7 +670,7 @@ namespace AnFake.Core
 				: new Target(name);
 		}
 
-		internal static void Reset()
+		internal static void Finalise()
 		{
 			Targets.Clear();
 		}

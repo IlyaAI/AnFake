@@ -63,6 +63,7 @@
     <Compile Include="FormatExtension.cs" />
     <Compile Include="Integration\IBuildServer.cs" />
     <Compile Include="BuildServer.cs" />
+    <Compile Include="Integration\PluginBase.cs" />
     <Compile Include="Integration\Tests\IMsTrxPostProcessor.cs" />
     <Compile Include="Integration\LocalBuildServer.cs" />
     <Compile Include="Integration\Tests\ITestPostProcessor.cs" />
@@ -72,6 +73,7 @@
     <Compile Include="Integration\Tests\TestResultAware.cs" />
     <Compile Include="Integration\Tests\TestStatus.cs" />
     <Compile Include="Integration\User.cs" />
+    <Compile Include="Json.cs" />
     <Compile Include="NuSpec\IPackage.cs" />
     <Compile Include="NuSpec\v20\File.cs" />
     <Compile Include="NuSpec\v20\Framework.cs" />

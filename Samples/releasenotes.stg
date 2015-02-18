@@ -1,19 +1,29 @@
-﻿delimiters "$", "$"
+﻿group ReleaseNotes;
 
-itemTypes ::= [
-    "Bug":      "BUGFIXES",
-    "Task":     "FEATURES",
-    default:    "OTHER"
+delimiters "$", "$"
+
+itemTypeNames ::= [
+    "Bug":			"Bugfixes",	
+    "Task":		    "Features",
+    default:		"Other"
 ]
 
-main(itemGroups) ::= <<
-    $itemGroups:{items|
-        <div>
-            <p><strong>$itemTypes.(items.Key)$</strong></p>
+itemTypeColors ::= [
+    "Bug":			"#008080",	
+    "Task":		    "#000080",
+    default:		"#404040"
+]
 
-            <ul>
-                $items:{item|<li><a href="$item.Uri$">$item.Id$</a> $item.Title$ $item.State$</li>}$
-            </ul>
-        </div>
-    }$
+main(releaseNotes) ::= <<
+	$releaseNotes.CategorizedNotes:{notes|$renderCategory(notes)$}$
+>>
+
+renderCategory(notes) ::= <<
+<div>
+    <p style="color: $itemTypeColors.(notes.Key)$;"><strong>$itemTypeNames.(notes.Key)$</strong></p>
+
+    <ul>
+        $notes:{note|<li><a href="$note.Uri$">$note.Id$</a> $note.Summary$ <span style="Color: Gray">$note.State$</span></li>}$
+    </ul>
+</div>
 >>

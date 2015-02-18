@@ -164,7 +164,7 @@ namespace AnFake.Core
 		/// <summary>
 		///     Resets all registrations. Normally used for test purpose only.
 		/// </summary>
-		internal static void Reset()
+		internal static void Finalise()
 		{
 			if (_container != null)
 			{

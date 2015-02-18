@@ -70,13 +70,19 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnFake.Plugins.StringTempla
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{DDA9C5B6-89AF-48E7-986E-1B2D69FD1DA5}"
 	ProjectSection(SolutionItems) = preProject
+		Samples\nhibernate.fsx = Samples\nhibernate.fsx
 		Samples\releasenotes.stg = Samples\releasenotes.stg
+		Samples\report.json = Samples\report.json
 		Samples\tfs-releasenotes.fsx = Samples\tfs-releasenotes.fsx
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnFake.Api.Pipeline", "AnFake.Api.Pipeline\AnFake.Api.Pipeline.csproj", "{43F036F4-04F0-49BD-A391-E2F693E9BE81}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnFake.Api.Pipeline.Test", "AnFake.Api.Pipeline.Test\AnFake.Api.Pipeline.Test.csproj", "{A3B46B42-5D1F-4FCE-9AAE-C62BED52544A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnFake.Plugins.NHibernate", "AnFake.Plugins.NHibernate\AnFake.Plugins.NHibernate.csproj", "{0EB04FA6-2392-4945-AEA1-35A803806E24}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnFake.Plugins.NHibernate.Test", "AnFake.Plugins.NHibernate.Test\AnFake.Plugins.NHibernate.Test.csproj", "{965CFD7F-F118-4486-A62A-D1DC7C1FE912}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -156,6 +162,14 @@ Global
 		{A3B46B42-5D1F-4FCE-9AAE-C62BED52544A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A3B46B42-5D1F-4FCE-9AAE-C62BED52544A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A3B46B42-5D1F-4FCE-9AAE-C62BED52544A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0EB04FA6-2392-4945-AEA1-35A803806E24}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0EB04FA6-2392-4945-AEA1-35A803806E24}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0EB04FA6-2392-4945-AEA1-35A803806E24}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0EB04FA6-2392-4945-AEA1-35A803806E24}.Release|Any CPU.Build.0 = Release|Any CPU
+		{965CFD7F-F118-4486-A62A-D1DC7C1FE912}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{965CFD7F-F118-4486-A62A-D1DC7C1FE912}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{965CFD7F-F118-4486-A62A-D1DC7C1FE912}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{965CFD7F-F118-4486-A62A-D1DC7C1FE912}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -180,5 +194,7 @@ Global
 		{AE3C99AE-AF7D-40B2-A356-C73E0C68311B} = {29EE3C45-D196-4946-A87E-D9525E8B7E60}
 		{43F036F4-04F0-49BD-A391-E2F693E9BE81} = {CFD32F43-BF31-42F9-9BDF-7B3E781F0E2A}
 		{A3B46B42-5D1F-4FCE-9AAE-C62BED52544A} = {CFD32F43-BF31-42F9-9BDF-7B3E781F0E2A}
+		{0EB04FA6-2392-4945-AEA1-35A803806E24} = {29EE3C45-D196-4946-A87E-D9525E8B7E60}
+		{965CFD7F-F118-4486-A62A-D1DC7C1FE912} = {29EE3C45-D196-4946-A87E-D9525E8B7E60}
 	EndGlobalSection
 EndGlobal

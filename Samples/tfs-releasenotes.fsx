@@ -15,7 +15,7 @@ open AnFake.Plugins.StringTemplate
 Tfs.PlugIn()
 ST.PlugIn()
 
-"Generate.ReleaseNotes" => (fun _ ->
+"Generate" => (fun _ ->
     let wiql = 
         "select [System.Id], [System.State], [System.Title]" + 
         " from WorkItems" +
@@ -25,9 +25,20 @@ ST.PlugIn()
         "  and [System.State] = 'Closed'" +
         "  and [System.ChangedDate] > @from"
 
-    let itemGroups = 
-        TfsWorkItem.ExecQuery(wiql, "from", (DateTime.Now - TimeSpan.FromDays(30.0)).Date)
-            .GroupBy(fun x -> x.Type)
+    let items = 
+        TfsWorkItem.ExecQuery(wiql, "from", (DateTime.Now - TimeSpan.FromDays(30.0)).Date);
 
-    ST.Render("releasenotes.stg".AsFile(), "releasenotes.html".AsFile(), itemGroups)
+    let releaseNotes = 
+        ReleaseNotes.Create(
+            "My Product", 
+            "1.0".AsVersion(), 
+            items,
+            fun ticket note ->                
+                note.Category <- ticket.Type
+                note.Ordinal <- ticket.NativeId
+        )
+
+    let tmplFile = "releasenotes.stg".AsFile()
+    let notesFile = "releasenotes.html".AsFile()
+    ST.Render(tmplFile, notesFile, releaseNotes)
 )

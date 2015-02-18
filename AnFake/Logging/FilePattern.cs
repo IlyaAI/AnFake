@@ -7,6 +7,13 @@ namespace AnFake.Logging
 {
 	internal sealed class FilePattern : LayoutSkeleton
 	{
+		private readonly string _defaultLoggerName;
+
+		public FilePattern(string defaultLoggerName)
+		{
+			_defaultLoggerName = defaultLoggerName;
+		}
+
 		public override void ActivateOptions()
 		{
 		}
@@ -18,12 +25,24 @@ namespace AnFake.Logging
 				return;
 
 			var level = FormatLevel(loggingEvent.Level);
-			foreach (var line in msg.GetLines())
+
+			if (loggingEvent.LoggerName == _defaultLoggerName)
+			{				
+				foreach (var line in msg.GetLines())
+				{
+					writer.Write(level);
+					writer.Write(' ');
+					writer.WriteLine(line);
+				}
+			}
+			else
 			{
 				writer.Write(level);
-				writer.Write(' ');
-				writer.WriteLine(line);
-			}			
+				writer.Write(" [");
+				writer.Write(loggingEvent.LoggerName);
+				writer.Write("] ");
+				writer.WriteLine(msg);
+			}
 		}
 
 		private static string FormatLevel(Level level)

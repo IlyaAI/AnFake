@@ -2,7 +2,7 @@
 {
 	public interface ILogger
 	{
-		LogMessageLevel Threshold { get; set; }		
+		LogMessageLevel Threshold { get; set; }
 
 		void Write(LogMessageLevel level, string message);		
 	}

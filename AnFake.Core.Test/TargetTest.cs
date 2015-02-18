@@ -24,7 +24,7 @@ namespace AnFake.Core.Test
 		public void Cleanup()
 		{
 			Trace.Set(PrevTracer);
-			Target.Reset();
+			Target.Finalise();
 		}
 
 		[TestCategory("Functional")]

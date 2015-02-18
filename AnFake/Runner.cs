@@ -219,49 +219,17 @@ namespace AnFake
 
 			var maxWidth = 180;
 			SafeOp.Try(() => maxWidth = Math.Min(Console.WindowWidth, maxWidth));
-
-			var logger = new Log4NetLogger(options.LogPath, maxWidth);
-			switch (options.Verbosity)
-			{
-				case Verbosity.Quiet:
-					logger.Threshold = LogMessageLevel.Warning;
-					break;
-				case Verbosity.Minimal:
-					logger.Threshold = LogMessageLevel.Summary;
-					break;
-				case Verbosity.Detailed:
-				case Verbosity.Diagnostic:
-					logger.Threshold = LogMessageLevel.Debug;
-					break;
-				default:
-					logger.Threshold = LogMessageLevel.Info;
-					break;
-			}			
-
-			Log.Set(logger);
+			
+			Log.Set(new Log4NetLogger(options.LogPath, options.Verbosity, maxWidth));
 		}
 
 		private static void ConfigureTracer(RunOptions options)
 		{
-			var tracer = new JsonFileTracer(Path.Combine(options.BuildPath, "AnFake.trace.jsx"), false);
-			switch (options.Verbosity)
-			{
-				case Verbosity.Quiet:
-					tracer.Threshold = TraceMessageLevel.Warning;
-					break;
-				case Verbosity.Minimal:
-					tracer.Threshold = TraceMessageLevel.Summary;
-					break;
-				case Verbosity.Detailed:
-				case Verbosity.Diagnostic:
-					tracer.Threshold = TraceMessageLevel.Debug;
-					break;
-				default:
-					tracer.Threshold = TraceMessageLevel.Info;
-					break;
-			}
-
-			Api.Trace.Set(tracer);
+			Api.Trace.Set(
+				new JsonFileTracer(Path.Combine(options.BuildPath, "AnFake.trace.jsx"), false)
+				{
+					Threshold = options.Verbosity.AsTraceLevelThreshold()
+				});
 		}
 
 		private static int Run(RunOptions options)
@@ -315,9 +283,10 @@ namespace AnFake
 				Plugin.Configure();
 				
 				var status = MyBuild.Run();
-				var exitCode = status - MyBuild.Status.Succeeded;
+				
+				MyBuild.Finalise();
 
-				return exitCode;
+				return (status - MyBuild.Status.Succeeded);
 			}
 			catch (Exception e)
 			{				

@@ -46,7 +46,7 @@ namespace AnFake.Plugins.Tfs2012.Test
 		[TestCleanup]
 		public void Cleanup()
 		{
-			MyBuildTesting.Reset();
+			MyBuildTesting.Finalise();
 
 			Trace.Set(PrevTracer);
 

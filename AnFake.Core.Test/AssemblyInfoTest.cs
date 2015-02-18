@@ -12,7 +12,7 @@ namespace AnFake.Core.Test
 		[TestCleanup]
 		public void Cleanup()
 		{
-			Target.Reset();
+			Target.Finalise();
 		}
 
 		[TestCategory("Functional")]

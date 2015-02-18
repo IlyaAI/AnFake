@@ -89,7 +89,7 @@ namespace AnFake.Core
 		public static Params Current { get; private set; }
 
 		private static bool _isInitialized;
-		private static EventHandler<Params> _initialized;
+		private static EventHandler<Params> _initialized;		
 
 		internal static void Initialize(
 			FileSystemPath path, 
@@ -115,12 +115,18 @@ namespace AnFake.Core
 			}
 		}
 
-		internal static void Reset()
+		internal static void Finalise()
 		{
+			if (!_isInitialized)
+				return;
+
+			Target.Finalise();
+			Plugin.Finalise();
+
 			Current = null;
 			Started = null;
-			Finished = null;			
-
+			Finished = null;
+			
 			_initialized = null;
 			_isInitialized = false;
 		}
@@ -142,7 +148,7 @@ namespace AnFake.Core
 				}
 			}
 			remove { throw new NotSupportedException("It is impossible to unsubscribe from Initialized event."); }
-		}
+		}		
 
 		/// <summary>
 		///     Fired when build started (just after evaluating configuration script).

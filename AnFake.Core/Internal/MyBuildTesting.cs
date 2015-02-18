@@ -16,20 +16,23 @@ namespace AnFake.Core.Internal
 				new FileItem(buildPath/"build.log", buildPath),
 				new FileItem(buildPath/"build.fsx", buildPath),
 				Verbosity.Normal,
-				new[] {"Build"},
+				new[] {"Test"},
 				properties);
-		}		
+		}
 
-		public static void Reset()
+		public static void Initialize()
 		{
-			Target.Reset();
-			Plugin.Reset();
-			MyBuild.Reset();
+			Initialize(new Dictionary<string, string>());
+		}
+
+		public static void Finalise()
+		{			
+			MyBuild.Finalise();
 		}
 
 		public static void ConfigurePlugins(Action registrator)
 		{
-			Plugin.Reset();
+			Plugin.Finalise();
 
 			registrator();
 
