@@ -21,7 +21,18 @@ namespace AnFake.Api
 			Href = href;
 			Label = label;
 		}
-		
+
+		public Hyperlink(string href, string label)
+		{
+			if (String.IsNullOrEmpty(href))
+				throw new ArgumentException("Hyperlink(href, label): href must not be null or empty");
+			if (String.IsNullOrEmpty(label))
+				throw new ArgumentException("Hyperlink(href, label): label must not be null or empty");
+
+			Href = new Uri(href);
+			Label = label;
+		}
+
 		public Uri Href { get; private set; }
 
 		[DataMember(Name = "Href")]

@@ -215,13 +215,13 @@ namespace AnFake.Core
 		private static void EnsureBuilder()
 		{
 			if (_builder == null)
-				throw new InvalidOperationException("Plugin: Internal IoC container already configured. Hint: did you forget to call Plugin.Reset?");
+				throw new InvalidOperationException("Plugin: Internal IoC container already configured. Hint: probably, you are trying to activate plugin inside of some target.");
 		}
 
 		private static void EnsureContainer()
 		{
 			if (_container == null)
-				throw new InvalidOperationException("Plugin: Internal IoC container isn't configured. Hint: did you forget to call Plugin.Configure?");
+				throw new InvalidOperationException("Plugin: Internal IoC container isn't configured. Hint: probably, you are trying to use plugin outside of any target.");
 		}
 
 		private static AnFakeException FindAnFakeException(Exception exception)

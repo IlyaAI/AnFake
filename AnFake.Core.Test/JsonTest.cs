@@ -46,7 +46,7 @@ namespace AnFake.Core.Test
 				"}";
 
 			// act
-			var obj = Json.Read<MyObject>(json);
+			var obj = Json.ReadAs<MyObject>(json);
 
 			// assert
 			Assert.IsNotNull(obj);

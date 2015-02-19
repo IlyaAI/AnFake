@@ -110,18 +110,7 @@ namespace AnFake.Plugins.NHibernate
 
 				_hsx.Delete(entity);
 			}
-
-			/// <summary>
-			///		Flushes all pending operations.
-			/// </summary>
-			/// <remarks>
-			///		Normally you should not call <c>Flush</c> explicitly.
-			/// </remarks>
-			public void Flush()
-			{
-				_hsx.Flush();
-			}
-
+			
 			/// <summary>
 			///		Commits all changes to persistent store.
 			/// </summary>
@@ -179,21 +168,7 @@ namespace AnFake.Plugins.NHibernate
 
 				return cfg;
 			}
-		}
-
-		/// <summary>
-		///		Convention mapper.
-		/// </summary>
-		public static ConventionModelMapper ConventionMapper
-		{
-			get
-			{
-				var mapper = Impl.Mapper;
-				Impl.ReconfigureNeeded();
-
-				return mapper;
-			}
-		}
+		}		
 
 		/// <summary>
 		///		Activates NHibernate plugin.
@@ -211,42 +186,13 @@ namespace AnFake.Plugins.NHibernate
 		/// </remarks>		
 		/// <typeparam name="T">class to be mapped</typeparam>
 		public static void MapClass<T>()
-			where T : class
+			where T : class, new()
 		{
 			EnsureNonSystem<T>();
 
-			Impl.RequestedEntityTypes.Add(typeof (T));
+			Impl.AutoMapper.Push<T>();
 			Impl.ReconfigureNeeded();
 		}
-
-		/// <summary>
-		///		Applies convention based mapping to specified class with customizations.
-		/// </summary>
-		/// <remarks>
-		///		IMPORTANT! Only simple properties, one-to-many and many-to-one relations are supported.
-		/// </remarks>		
-		/// <param name="customize">action which provides customization</param>
-		/// <typeparam name="T">class to be mapped</typeparam>
-		/// <example>
-		/// <code>
-		/// Nh.MapClass&lt;PerformanceReport>(
-        ///     fun map ->
-        ///         map.Property(
-        ///            "Name",                
-        ///            fun p -> p.Index("IDX_Name")
-        ///     )
-		/// )
-		/// </code>
-		/// </example>
-		public static void MapClass<T>(Action<IClassMapper<T>> customize)
-			where T : class
-		{
-			EnsureNonSystem<T>();
-
-			Impl.RequestedEntityTypes.Add(typeof (T));
-			Impl.Mapper.Class(customize);
-			Impl.ReconfigureNeeded();
-		}		
 
 		/// <summary>
 		///		Runs given action in transaction scope.

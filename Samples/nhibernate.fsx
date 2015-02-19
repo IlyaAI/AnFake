@@ -18,22 +18,16 @@ Nh.PlugIn()
 
 [<DataContract>]
 type PerformanceReport () =
-    [<DataMember>] member val Name: string = null with get, set
+    [<DataMember>][<Indexed("IDX_Name")>] member val Name: string = null with get, set
     [<DataMember>] member val ElapsedTime: double = 0.0 with get, set
     [<DataMember>] member val BytesProcessed: int64 = 0L with get, set
 
 "Report" => (fun _ ->
-    let report = Json.Read<PerformanceReport>("report.json".AsFile())
+    let report = Json.ReadAs<PerformanceReport>("report.json".AsFile())
 
     Trace.InfoFormat("{0} processing speed {1:F2}MB/s", report.Name, (double)report.BytesProcessed / report.ElapsedTime / 1024.0)
 
-    Nh.MapClass<PerformanceReport>(
-        fun map ->
-            map.Property(
-                "Name",                
-                fun p -> p.Index("IDX_Name")
-            )            
-    )
+    Nh.MapClass<PerformanceReport>()
 
     Nh.DoWork(fun uow ->
         let prevReports = 

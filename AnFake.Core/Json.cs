@@ -16,7 +16,7 @@ namespace AnFake.Core
 		/// <typeparam name="T">type of object to be read</typeparam>
 		/// <param name="file">json-file (not null)</param>
 		/// <returns>deserialized object</returns>
-		public static T Read<T>(FileItem file)
+		public static T ReadAs<T>(FileItem file)
 			where T : class, new()
 		{
 			if (file == null)
@@ -34,7 +34,7 @@ namespace AnFake.Core
 		/// <typeparam name="T">type of object to be read</typeparam>
 		/// <param name="value">json-string (not null or empty)</param>
 		/// <returns>deserialized object</returns>
-		public static T Read<T>(string value)
+		public static T ReadAs<T>(string value)
 			where T : class, new()
 		{
 			if (String.IsNullOrEmpty(value))

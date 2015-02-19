@@ -48,8 +48,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="NhAutoMapper.cs" />
+    <Compile Include="OrderedAttribute.cs" />
+    <Compile Include="LengthAttribute.cs" />
+    <Compile Include="IndexedAttribute.cs" />
+    <Compile Include="IdAttribute.cs" />
     <Compile Include="Nh.cs" />
-    <Compile Include="NhMapper.cs" />
     <Compile Include="NhPlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

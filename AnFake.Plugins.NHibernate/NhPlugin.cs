@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using AnFake.Api;
 using AnFake.Core;
@@ -12,20 +11,14 @@ using NHibernate.Connection;
 using NHibernate.Context;
 using NHibernate.Dialect;
 using NHibernate.Driver;
-using NHibernate.Mapping;
-using NHibernate.Mapping.ByCode;
 using NHibernate.Tool.hbm2ddl;
-using NHibernate.Type;
-using NHibernate.Util;
 
 namespace AnFake.Plugins.NHibernate
 {
 	internal sealed class NhPlugin : PluginBase
 	{
-		private readonly ISet<Type> _requestedEntityTypes = new HashSet<Type>();
-		private readonly ISet<Type> _mappedEntityTypes = new HashSet<Type>();
 		private readonly Configuration _configuration;
-		private readonly ConventionModelMapper _mapper;
+		private readonly NhAutoMapper _autoMapper;
 
 		private ISessionFactory _sessionFactory;
 
@@ -41,79 +34,14 @@ namespace AnFake.Plugins.NHibernate
 				{
 					dbi.ConnectionProvider<DriverConnectionProvider>();
 					dbi.Dialect<MsSql2005Dialect>();
-					dbi.Driver<SqlClientDriver>();					
+					dbi.Driver<SqlClientDriver>();
 					dbi.LogSqlInConsole = false;
 					dbi.SchemaAction = SchemaAutoAction.Update;
 					dbi.ConnectionString = connectionString;
 				})
-				.CurrentSessionContext<ThreadStaticSessionContext>();			
+				.CurrentSessionContext<ThreadStaticSessionContext>();
 
-			_mapper = new ConventionModelMapper();
-
-			_mapper.IsEntity(
-				(type, declared) =>
-				{
-					if (declared || _requestedEntityTypes.Contains(type) || _mappedEntityTypes.Contains(type))
-						return true;
-
-					if (!type.IsClass || type.BaseType != typeof (Object) || type.FullName.StartsWith("System."))
-						return false;
-
-					_requestedEntityTypes.Add(type);
-					return true;
-				});
-
-			_mapper.IsPersistentId((member, declared) => member.Name.Equals("Id"));
-
-			_mapper.BeforeMapClass +=
-				(inspector, type, customizer) =>
-				{
-					customizer.Lazy(false);
-					customizer.Table(type.Name);					
-					customizer.EntityName(type.Name);
-				};
-
-			_mapper.AfterMapClass +=
-				(inspector, type, customizer) =>
-				{
-					if (type.GetMember("Id").Length == 0)
-					{
-						customizer.Id(
-							mapper =>
-							{
-								mapper.Type(new Int64Type());
-								mapper.Generator(new NativeGeneratorDef());
-							});
-					}
-				};
-
-			_mapper.BeforeMapProperty +=
-				(inspector, member, customizer) =>
-				{
-					var type = member.LocalMember.GetPropertyOrFieldType();
-					if (type.IsValueType && !type.IsNullable())
-					{
-						customizer.NotNullable(true);
-					}
-				};
-
-			_mapper.BeforeMapOneToMany +=
-				(inspector, member, customizer) =>
-				{
-					var elementType = member.LocalMember.DetermineRequiredCollectionElementType();
-					customizer.EntityName(elementType.Name);
-				};
-
-			_mapper.BeforeMapManyToOne +=
-				(inspector, member, customizer) =>
-				{
-					var type = member.LocalMember.GetPropertyOrFieldType();
-					customizer.Class(type);
-				};
-
-			_mapper.BeforeMapSet += (inspector, member, customizer) => customizer.Cascade(Cascade.All);
-			_mapper.BeforeMapList += (inspector, member, customizer) => customizer.Cascade(Cascade.All);
-			_mapper.BeforeMapBag += (inspector, member, customizer) => customizer.Cascade(Cascade.All);
+			_autoMapper = new NhAutoMapper();
 		}
 
 		public override void Dispose()
@@ -127,24 +55,14 @@ namespace AnFake.Plugins.NHibernate
 			base.Dispose();
 		}
 
-		public ISet<Type> RequestedEntityTypes
-		{
-			get { return _requestedEntityTypes; }
-		}
-
-		public ISet<Type> MappedEntityTypes
-		{
-			get { return _mappedEntityTypes; }
-		}
-
 		public Configuration Configuration
 		{
 			get { return _configuration; }
 		}
 
-		public ConventionModelMapper Mapper
+		public NhAutoMapper AutoMapper
 		{
-			get { return _mapper; }
+			get { return _autoMapper; }
 		}
 
 		public ISessionFactory SessionFactory
@@ -153,6 +71,8 @@ namespace AnFake.Plugins.NHibernate
 			{
 				if (_sessionFactory != null)
 					return _sessionFactory;
+
+				Trace.Info("NHibernate: Initiating...");
 
 				var connectionString = _configuration.GetProperty("connection.connection_string");
 				if (String.IsNullOrEmpty(connectionString))
@@ -165,25 +85,14 @@ namespace AnFake.Plugins.NHibernate
 						" * using 'Nh.LocalConnectionString' user config  parameter.");
 
 				Trace.InfoFormat("NHibernate: Using connection string '{0}'", connectionString);
-				
-				Trace.Info("NHibernate: Mapped classes:");
-				while (_requestedEntityTypes.Count > 0)
+
+				var mapping = (HbmMapping) null;
+				while ((mapping = _autoMapper.Pull()) != null)
 				{
-					var type = _requestedEntityTypes.First();
-					_requestedEntityTypes.Remove(type);
-
-					if (!_mappedEntityTypes.Add(type))
-						continue;
-
-					Trace.InfoFormat("  {0}", type.FullName);
-
-					var mapping = _mapper.CompileMappingFor(new[] {type});
-					FixManyToOneRelations(mapping.RootClasses[0]);
-
-					_configuration.AddDeserializedMapping(mapping, type.FullName);
+					_configuration.AddDeserializedMapping(mapping, mapping.assembly);
 				}
 
-				Trace.Info("NHibernate: Updating schema...");
+				Trace.InfoFormat("NHibernate: Updating schema...\n  {0}", String.Join("\n  ", _autoMapper.MappedTypes.Select(x => x.Name)));
 
 				var showSql = "true".Equals(_configuration.GetProperty("show_sql"), StringComparison.OrdinalIgnoreCase);
 				new SchemaUpdate(_configuration).Execute(showSql, true);
@@ -203,18 +112,6 @@ namespace AnFake.Plugins.NHibernate
 
 			_sessionFactory.Dispose();
 			_sessionFactory = null;
-		}
-
-		private static void FixManyToOneRelations(HbmClass mapping)
-		{
-			foreach (var relation in mapping.Items.OfType<HbmManyToOne>())
-			{
-				var index = relation.@class.LastIndexOfAny(new []{'.', '+'});
-				if (index >= 0)
-				{
-					relation.entityname = relation.@class.Substring(index + 1);
-				}
-			}
 		}
 	}
 }
