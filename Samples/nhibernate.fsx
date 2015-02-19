@@ -35,23 +35,26 @@ type PerformanceReport () =
             )            
     )
 
-    let uow = Nh.BeginWork()
+    Nh.DoWork(fun uow ->
+        let prevReports = 
+            uow.Query("from PerformanceReport order by id desc")
+                .SetMaxResults(5)
+                .List<PerformanceReport>()
 
-    let prevReports = 
-        uow.Query("from PerformanceReport order by id desc")
-            .SetMaxResults(5)
-            .List<PerformanceReport>()
+        uow.Save(report)
+        uow.Commit()
 
-    uow.Save(report)
-    uow.Commit()
+        if prevReports.Count = 5 then        
+            let prevSpeeds = prevReports.Select(fun rep -> (double)rep.BytesProcessed / rep.ElapsedTime)
+            let avg = prevSpeeds.Average()
+            let sig2 = prevSpeeds.Average(fun x -> (x - avg)*(x - avg))
 
-    if prevReports.Count = 5 then        
-        let prevSpeeds = prevReports.Select(fun rep -> (double)rep.BytesProcessed / rep.ElapsedTime)
-        let avg = prevSpeeds.Average()
-        let sig2 = prevSpeeds.Average(fun x -> (x - avg)*(x - avg))
-
-        let speed = (double)report.BytesProcessed / report.ElapsedTime
-        if (speed - avg)*(speed - avg) > sig2 then
-            MyBuild.Failed("Reported speed {0:F2}MB/s is out of tolerance interval [{1:F2}, {2:F2}] ", 
-                speed / 1024.0, (avg - Math.Sqrt(sig2)) / 1024.0, (avg + Math.Sqrt(sig2)) / 1024.0)
+            let speed = (double)report.BytesProcessed / report.ElapsedTime
+            let threshold = avg - Math.Sqrt(sig2);
+            if speed < threshold then
+                MyBuild.Failed(
+                    "The last reported speed {0:F2} KB/s is under threshold {1:F2} KB/s.", 
+                    speed / 1024.0, threshold / 1024.0
+                )
+    )
 )

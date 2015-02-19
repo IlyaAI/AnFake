@@ -86,21 +86,23 @@ namespace AnFake.Plugins.NHibernate.Test
 			{
 				Nh.MapClass<MyEntity>();
 
-				var uow = Nh.BeginWork();
-				uow.Save(
-					new MyEntity
-					{
-						IntVal = Int32.MaxValue,
-						LongVal = Int64.MaxValue,
-						DoubleVal = Double.MaxValue,
-						StringVal = "string",
-						DateVal = new DateTime(2015, 2, 1, 12, 15, 30)
-					});
-				uow.Flush();
+				Nh.DoWork(uow =>
+				{
+					uow.Save(
+						new MyEntity
+						{
+							IntVal = Int32.MaxValue,
+							LongVal = Int64.MaxValue,
+							DoubleVal = Double.MaxValue,
+							StringVal = "string",
+							DateVal = new DateTime(2015, 2, 1, 12, 15, 30)
+						});
+					uow.Flush();
 
-				entity = uow.Query("from MyEntity where IntVal = :intVal")
-					.SetParameter("intVal", Int32.MaxValue)
-					.UniqueResult<MyEntity>();
+					entity = uow.Query("from MyEntity where IntVal = :intVal")
+						.SetParameter("intVal", Int32.MaxValue)
+						.UniqueResult<MyEntity>();
+				});
 			});
 
 			// act
@@ -127,23 +129,25 @@ namespace AnFake.Plugins.NHibernate.Test
 			{
 				Nh.MapClass<MyEntity>();
 
-				var uow = Nh.BeginWork();
-				uow.Save(
-					new MyEntity
-					{
-						IntVal = pseudoId,
-						DateVal = DateTime.UtcNow,
-						Children = new List<MySubEntity>
+				Nh.DoWork(uow =>
+				{
+					uow.Save(
+						new MyEntity
 						{
-							new MySubEntity {Value = "sub-entity-1"},
-							new MySubEntity {Value = "sub-entity-2"}
-						}
-					});
-				uow.Flush();
+							IntVal = pseudoId,
+							DateVal = DateTime.UtcNow,
+							Children = new List<MySubEntity>
+							{
+								new MySubEntity {Value = "sub-entity-1"},
+								new MySubEntity {Value = "sub-entity-2"}
+							}
+						});
+					uow.Flush();
 
-				entity = uow.Query("from MyEntity as e left join fetch e.Children where e.IntVal = :intVal")
-					.SetParameter("intVal", pseudoId)
-					.UniqueResult<MyEntity>();
+					entity = uow.Query("from MyEntity as e left join fetch e.Children where e.IntVal = :intVal")
+						.SetParameter("intVal", pseudoId)
+						.UniqueResult<MyEntity>();
+				});				
 			});
 
 			// act
@@ -169,27 +173,27 @@ namespace AnFake.Plugins.NHibernate.Test
 			{
 				Nh.MapClass<MyIdEntity>();
 
-				var uow = Nh.BeginWork();
-				uow.Save(
-					new MyIdEntity
-					{
-						Id = id,
-						Value = "value"
-					});
-				uow.Commit();				
-			});
+				Nh.DoWork(uow =>
+				{
+					uow.Save(
+						new MyIdEntity
+						{
+							Id = id,
+							Value = "value"
+						});
+					uow.Commit();
+				});
 
-			"Nh4".AsTarget().Do(() =>
-			{
-				var uow = Nh.BeginWork();
-				entity = uow.Query("from MyIdEntity where Id = :id")
-					.SetParameter("id", id)
-					.UniqueResult<MyIdEntity>();
-			});
+				Nh.DoWork(uow =>
+				{
+					entity = uow.Query("from MyIdEntity where Id = :id")
+						.SetParameter("id", id)
+						.UniqueResult<MyIdEntity>();
+				});
+			});		
 
 			// act
-			MyBuildTesting.RunTarget("Nh3");
-			MyBuildTesting.RunTarget("Nh4");
+			MyBuildTesting.RunTarget("Nh3");			
 
 			// assert
 			Assert.IsNotNull(entity);
@@ -208,34 +212,35 @@ namespace AnFake.Plugins.NHibernate.Test
 			{
 				Nh.MapClass<MyEntity>();
 
-				var uow = Nh.BeginWork();
-				
-				uow.Save(new MySuperEntity { Value = "super" });
-				uow.Flush();
+				Nh.DoWork(uow =>
+				{
+					uow.Save(new MySuperEntity { Value = "super" });
+					uow.Flush();
 
-				var super = uow.Query("from MySuperEntity where Value = :value")
-					.SetParameter("value", "super")
-					.UniqueResult<MySuperEntity>();
+					var super = uow.Query("from MySuperEntity where Value = :value")
+						.SetParameter("value", "super")
+						.UniqueResult<MySuperEntity>();
 
-				uow.Save(
-					new MyEntity
-					{
-						StringVal = "entity-1",
-						DateVal = DateTime.UtcNow,
-						Parent = super
-					});
-				uow.Save(
-					new MyEntity
-					{
-						StringVal = "entity-2",
-						DateVal = DateTime.UtcNow,
-						Parent = super
-					});
-				uow.Flush();
+					uow.Save(
+						new MyEntity
+						{
+							StringVal = "entity-1",
+							DateVal = DateTime.UtcNow,
+							Parent = super
+						});
+					uow.Save(
+						new MyEntity
+						{
+							StringVal = "entity-2",
+							DateVal = DateTime.UtcNow,
+							Parent = super
+						});
+					uow.Flush();
 
-				entity = uow.Query("from MyEntity as e join fetch e.Parent where e.StringVal = :val")
-					.SetParameter("val", "entity-1")
-					.UniqueResult<MyEntity>();
+					entity = uow.Query("from MyEntity as e join fetch e.Parent where e.StringVal = :val")
+						.SetParameter("val", "entity-1")
+						.UniqueResult<MyEntity>();
+				});				
 			});
 
 			// act
@@ -260,18 +265,19 @@ namespace AnFake.Plugins.NHibernate.Test
 			{
 				Nh.MapClass<MyBiEntity>();
 
-				var uow = Nh.BeginWork();
+				Nh.DoWork(uow =>
+				{
+					var parent = new MyBiEntity { Id = rnd.Next(), Children = new List<MyBiEntity>() };
+					parent.Children.Add(new MyBiEntity { Id = rnd.Next(), Parent = parent });
+					parent.Children.Add(new MyBiEntity { Id = rnd.Next(), Parent = parent });
 
-				var parent = new MyBiEntity { Id = rnd.Next(), Children = new List<MyBiEntity>() };
-				parent.Children.Add(new MyBiEntity { Id = rnd.Next(), Parent = parent });
-				parent.Children.Add(new MyBiEntity { Id = rnd.Next(), Parent = parent });
+					uow.Save(parent);
+					uow.Flush();
 
-				uow.Save(parent);
-				uow.Flush();
-
-				entity = uow.Query("from MyBiEntity as e left join fetch e.Children where e.Id = :id")
-					.SetParameter("id", parent.Id)
-					.UniqueResult<MyBiEntity>();				
+					entity = uow.Query("from MyBiEntity as e left join fetch e.Children where e.Id = :id")
+						.SetParameter("id", parent.Id)
+						.UniqueResult<MyBiEntity>();
+				});
 			});
 
 			// act

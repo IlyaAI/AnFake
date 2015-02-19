@@ -16,6 +16,7 @@ using NHibernate.Mapping;
 using NHibernate.Mapping.ByCode;
 using NHibernate.Tool.hbm2ddl;
 using NHibernate.Type;
+using NHibernate.Util;
 
 namespace AnFake.Plugins.NHibernate
 {
@@ -83,6 +84,16 @@ namespace AnFake.Plugins.NHibernate
 								mapper.Type(new Int64Type());
 								mapper.Generator(new NativeGeneratorDef());
 							});
+					}
+				};
+
+			_mapper.BeforeMapProperty +=
+				(inspector, member, customizer) =>
+				{
+					var type = member.LocalMember.GetPropertyOrFieldType();
+					if (type.IsValueType && !type.IsNullable())
+					{
+						customizer.NotNullable(true);
 					}
 				};
 

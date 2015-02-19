@@ -28,9 +28,10 @@ namespace AnFake.Plugins.NHibernate
 	/// 
 	/// let report = Json.Read&lt;PerformanceReport>("report.json".AsFile())
 	///
-    /// let uow = Nh.BeginWork()
-    /// uow.Save(report)
-    /// uow.Commit()
+    /// Nh.DoWork(fun uow ->
+    ///     uow.Save(report)
+    ///     uow.Commit()
+    /// )
 	/// </code>
 	/// </example>
 	public static class Nh
@@ -65,12 +66,14 @@ namespace AnFake.Plugins.NHibernate
 			/// <returns><c>IQuery</c> object</returns>
 			/// <example>
 			/// <code>
-			/// let uow = Nh.BeginWork()
-			///
-			/// let prevReports = 
-			///     uow.Query("from PerformanceReport order by id desc")
-            ///         .SetMaxResults(5)
-            ///         .List&lt;PerformanceReport>()
+			/// Nh.DoWork(fun uow ->
+			///     let prevReports = 
+			///         uow.Query("from PerformanceReport order by id desc")
+            ///             .SetMaxResults(5)
+            ///             .List&lt;PerformanceReport>()
+            ///     
+            ///     // do something with prevReports
+            /// )
 			/// </code>
 			/// </example>
 			public IQuery Query(string hql)
@@ -243,19 +246,21 @@ namespace AnFake.Plugins.NHibernate
 			Impl.RequestedEntityTypes.Add(typeof (T));
 			Impl.Mapper.Class(customize);
 			Impl.ReconfigureNeeded();
-		}
+		}		
 
 		/// <summary>
-		///		Initiates database transaction.
+		///		Runs given action in transaction scope.
 		/// </summary>
-		/// <returns><c>UnitOfWork</c></returns>
-		public static UnitOfWork BeginWork()
+		/// <param name="body">action body (not null)</param>		
+		public static void DoWork(Action<UnitOfWork> body)
 		{
-			var uow = new UnitOfWork();
+			if (body == null)
+				throw new ArgumentException("Nh.DoWork(body): body must not be null");
 
-			Target.CurrentFinalized += (s, r) => uow.Dispose();
-
-			return uow;
+			using (var uow = new UnitOfWork())
+			{
+				body.Invoke(uow);
+			}
 		}
 
 		private static void EnsureNonSystem<T>()
