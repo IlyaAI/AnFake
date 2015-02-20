@@ -1,4 +1,4 @@
-﻿<Activity mc:Ignorable="sads sap sap2010" x:Class="TfsBuild.Process" this:Process.BuildNumberFormat="[&quot;$(BuildDefinitionName)_$(Date:yyyyMMdd)$(Rev:.r)&quot;]" this:Process.CleanWorkspace="[Microsoft.TeamFoundation.Build.Workflow.Activities.CleanWorkspaceOption.All]" this:Process.AgentSettings="[New Microsoft.TeamFoundation.Build.Workflow.Activities.AgentSettings() With {.MaxWaitTime = New System.TimeSpan(4, 0, 0), .MaxExecutionTime = New System.TimeSpan(0, 0, 0), .TagComparison = Microsoft.TeamFoundation.Build.Workflow.Activities.TagComparison.MatchExactly }]" this:Process.Verbosity="[Microsoft.TeamFoundation.Build.Workflow.BuildVerbosity.Normal]" this:Process.SupportedReasons="All" this:Process.BuildProcessVersion="11.0" this:Process.AnFakeTargets="Build" this:Process.AnFakeProperties="[String.Empty]" this:Process.AnFakeScript="build.fsx" this:Process.AnFakePath=".AnFake\AnFake.exe"
+﻿<Activity mc:Ignorable="sads sap sap2010" x:Class="TfsBuild.Process" this:Process.BuildNumberFormat="[&quot;$(BuildDefinitionName)_$(Date:yyyyMMdd)$(Rev:.r)&quot;]" this:Process.CleanWorkspace="[Microsoft.TeamFoundation.Build.Workflow.Activities.CleanWorkspaceOption.All]" this:Process.AgentSettings="[New Microsoft.TeamFoundation.Build.Workflow.Activities.AgentSettings() With {.MaxWaitTime = New System.TimeSpan(4, 0, 0), .MaxExecutionTime = New System.TimeSpan(0, 0, 0), .TagComparison = Microsoft.TeamFoundation.Build.Workflow.Activities.TagComparison.MatchExactly }]" this:Process.Verbosity="[Microsoft.TeamFoundation.Build.Workflow.BuildVerbosity.Normal]" this:Process.SupportedReasons="Manual, IndividualCI, BatchedCI, Schedule, ScheduleForced, UserCreated" this:Process.BuildProcessVersion="1.0" this:Process.AnFakeTargets="Build" this:Process.AnFakeProperties="[String.Empty]" this:Process.AnFakeScript="build.fsx" this:Process.AnFakePath=".AnFake\AnFake.exe"
  xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities"
  xmlns:ait="clr-namespace:AnFake.Integration.Tfs2012;assembly=AnFake.Integration.Tfs2012.v1"
  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -134,7 +134,7 @@
           </If.Then>
         </If>
         <mtbwa:CreateWorkspace BuildDirectory="[BuildDirectory]" Comment="[&quot;Workspace Created by Team Build&quot;]" DisplayName="Create Workspace" sap2010:WorkflowViewState.IdRef="CreateWorkspace_1" Name="[WorkspaceName]" Result="[Workspace]" SourcesDirectory="[BuildDirectory]" />
-        <ait:ExpandWorkspace BuildDetail="[BuildDetail]" sap2010:WorkflowViewState.IdRef="ExpandWorkspace_1" Workspace="[Workspace]" WorkspaceFile=".workspace" WorkspaceSource="File" />
+        <ait:ExpandWorkspace BuildDetail="[BuildDetail]" sap2010:WorkflowViewState.IdRef="ExpandWorkspace_1" Version="[GetVersion]" Workspace="[Workspace]" WorkspaceFile=".workspace" WorkspaceSource="File" />
         <mtbwa:SyncWorkspace DisplayName="Get Workspace" sap2010:WorkflowViewState.IdRef="SyncWorkspace_1" mva:VisualBasic.Settings="Assembly references and imported namespaces serialized as XML namespaces" VersionOverride="[GetVersion]" Workspace="[Workspace]">
           <mtbwa:SyncWorkspace.RequestsFailed>
             <ActivityAction x:TypeArguments="scg:ICollection(mtbc:IQueuedBuild)">
@@ -148,13 +148,13 @@
       </Sequence>
       <ait:InvokeAnFake BuildDetail="[BuildDetail]" BuildDirectory="[BuildDirectory]" CleanWorkspace="[CleanWorkspace]" sap2010:WorkflowViewState.IdRef="InvokeAnFake_1" PrivateDropLocation="[PrivateDropLocation]" Properties="[AnFakeProperties]" Script="[AnFakeScript]" Targets="[AnFakeTargets]" ToolPath="[AnFakePath]" Verbosity="[Verbosity]" />
     </mtbwa:AgentScope>
-    <sads:DebugSymbol.Symbol>d0pDOlxQcm9qZWN0c1xBbkZha2VcQW5GYWtlLkludGVncmF0aW9uLlRmczIwMTIuVGVtcGxhdGVcQW5GYWtlVGVtcGxhdGUueGFtbEQB/gUBhAYBCQHVBAGVBQEIAa0CAbwEAQcB8wYBhgcBBgGkBgGzBgEFAcIBAZACAQQBzwYB2QYBAwFlAaQBAQJkA5gBDgIBAWkFabMBAgFZagVsHQIBVW0FlgEYAgECaaEBabABAgFaawdrogECAVZtsQFtzgECAQdtggFtpAECAQZt3wFtigICAQRyNnJRAgEDdQeBARICAUCCAQeUARICARuVAQeVAdoCAgEIazJrRwIBV3YJdrQBAgFSdwl3ygECAU94CXiWAwIBS3kJgAEOAgFBgwEJhwEOAgE6iAEJiAGfAgIBMIkBCYkBugECASmKAQmTAR8CARyVAeEBlQH1AQIBGZUB/QGVAY0CAgEXlQGxApUBvwICARWVAcoClQHXAgIBE5UBJZUBNAIBEZUBlgKVAacCAgEPlQFElQFWAgENlQG+AZUB1QECAQuVAWaVAXgCAQl2owF2sQECAVN3tQF3xwECAVB4zAF4kwMCAU54tAF4xQECAUx5F3mMAQIBQnsNfhgCAUODAReDAUQCATuFAQ2FAdoBAgE8iAEviAFBAgE4iAFKiAF5AgE3iAHrAYgB+AECATWIAYoCiAGcAgIBM4gB0gGIAeMBAgExiQGxAYkBtwECAS+JASqJATkCAS2JAZQBiQGgAQIBLIkBeIkBhQECASqKAeABigHuAQIBJIoB+QGKAYYCAgEikAEPkAGjAgIBHXwPfPgDAgFIfQ993gICAUSFATWFAT0CAT+FAcYBhQHXAQIBPZABLZABfAIBIJABjgKQAaACAgEffJEBfJEDAgFKfdoBfdsCAgFHfcIBfdMBAgFF</sads:DebugSymbol.Symbol>
+    <sads:DebugSymbol.Symbol>d0pDOlxQcm9qZWN0c1xBbkZha2VcQW5GYWtlLkludGVncmF0aW9uLlRmczIwMTIuVGVtcGxhdGVcQW5GYWtlVGVtcGxhdGUueGFtbEUBwAYBxgYBCQHVBAGVBQEIAa0CAbwEAQcBtQcByAcBBgHmBgH1BgEFAcIBAZACAQQBkQcBmwcBAwFlAaQBAQJkA5gBDgIBAWkFabMBAgFbagVsHQIBV20FlgEYAgECaaEBabABAgFcawdrogECAVhtsQFtzgECAQdtggFtpAECAQZt3wFtigICAQRyNnJRAgEDdQeBARICAUKCAQeUARICARuVAQeVAdoCAgEIazJrRwIBWXYJdrQBAgFUdwl3ygECAVF4CXiWAwIBTXkJgAEOAgFDgwEJhwEOAgE8iAEJiAGfAgIBMokBCYkB0QECASmKAQmTAR8CARyVAeEBlQH1AQIBGZUB/QGVAY0CAgEXlQGxApUBvwICARWVAcoClQHXAgIBE5UBJZUBNAIBEZUBlgKVAacCAgEPlQFElQFWAgENlQG+AZUB1QECAQuVAWaVAXgCAQl2owF2sQECAVV3tQF3xwECAVJ4zAF4kwMCAVB4tAF4xQECAU55F3mMAQIBRHsNfhgCAUWDAReDAUQCAT2FAQ2FAdoBAgE+iAEviAFBAgE6iAFKiAF5AgE5iAHrAYgB+AECATeIAYoCiAGcAgIBNYgB0gGIAeMBAgEziQHIAYkBzgECATGJASqJATkCAS+JAasBiQG3AQIBLokBdokBhAECASyJAY8BiQGcAQIBKooB4AGKAe4BAgEkigH5AYoBhgICASKQAQ+QAaMCAgEdfA98+AMCAUp9D33eAgIBRoUBNYUBPQIBQYUBxgGFAdcBAgE/kAEtkAF8AgEgkAGOApABoAICAR98kQF8kQMCAUx92gF92wICAUl9wgF90wECAUc=</sads:DebugSymbol.Symbol>
   </Sequence>
   <sap2010:WorkflowViewState.ViewStateManager>
     <sap2010:ViewStateManager>
-      <sap2010:ViewStateData Id="GetBuildDetail_1" sap:VirtualizedContainerService.HintSize="244,22" />
+      <sap2010:ViewStateData Id="GetBuildDetail_1" sap:VirtualizedContainerService.HintSize="278,22" />
       <sap2010:ViewStateData Id="UpdateBuildNumber_1" sap:VirtualizedContainerService.HintSize="200,22" />
-      <sap2010:ViewStateData Id="InvokeForReason_1" sap:VirtualizedContainerService.HintSize="244,146">
+      <sap2010:ViewStateData Id="InvokeForReason_1" sap:VirtualizedContainerService.HintSize="278,146">
         <sap:WorkflowViewStateService.ViewState>
           <scg:Dictionary x:TypeArguments="x:String, x:Object">
             <x:Boolean x:Key="IsExpanded">True</x:Boolean>
@@ -182,7 +182,7 @@
           </scg:Dictionary>
         </sap:WorkflowViewStateService.ViewState>
       </sap2010:ViewStateData>
-      <sap2010:ViewStateData Id="Sequence_5" sap:VirtualizedContainerService.HintSize="222,361">
+      <sap2010:ViewStateData Id="Sequence_5" sap:VirtualizedContainerService.HintSize="256,361">
         <sap:WorkflowViewStateService.ViewState>
           <scg:Dictionary x:TypeArguments="x:String, x:Object">
             <x:Boolean x:Key="IsExpanded">True</x:Boolean>
@@ -191,7 +191,7 @@
         </sap:WorkflowViewStateService.ViewState>
       </sap2010:ViewStateData>
       <sap2010:ViewStateData Id="DeleteWorkspace_2" sap:VirtualizedContainerService.HintSize="200,22" />
-      <sap2010:ViewStateData Id="If_6" sap:VirtualizedContainerService.HintSize="200,51">
+      <sap2010:ViewStateData Id="If_6" sap:VirtualizedContainerService.HintSize="234,51">
         <sap:WorkflowViewStateService.ViewState>
           <scg:Dictionary x:TypeArguments="x:String, x:Object">
             <x:Boolean x:Key="IsExpanded">False</x:Boolean>
@@ -199,18 +199,10 @@
           </scg:Dictionary>
         </sap:WorkflowViewStateService.ViewState>
       </sap2010:ViewStateData>
-      <sap2010:ViewStateData Id="CreateWorkspace_1" sap:VirtualizedContainerService.HintSize="200,22" />
-      <sap2010:ViewStateData Id="ExpandWorkspace_1" sap:VirtualizedContainerService.HintSize="200,22" />
+      <sap2010:ViewStateData Id="CreateWorkspace_1" sap:VirtualizedContainerService.HintSize="234,22" />
+      <sap2010:ViewStateData Id="ExpandWorkspace_1" sap:VirtualizedContainerService.HintSize="234,22" />
       <sap2010:ViewStateData Id="RetryRequests_1" sap:VirtualizedContainerService.HintSize="200,22" />
-      <sap2010:ViewStateData Id="SyncWorkspace_1" sap:VirtualizedContainerService.HintSize="200,51">
-        <sap:WorkflowViewStateService.ViewState>
-          <scg:Dictionary x:TypeArguments="x:String, x:Object">
-            <x:Boolean x:Key="IsExpanded">False</x:Boolean>
-            <x:Boolean x:Key="IsPinned">False</x:Boolean>
-          </scg:Dictionary>
-        </sap:WorkflowViewStateService.ViewState>
-      </sap2010:ViewStateData>
-      <sap2010:ViewStateData Id="Sequence_9" sap:VirtualizedContainerService.HintSize="222,390">
+      <sap2010:ViewStateData Id="SyncWorkspace_1" sap:VirtualizedContainerService.HintSize="234,157">
         <sap:WorkflowViewStateService.ViewState>
           <scg:Dictionary x:TypeArguments="x:String, x:Object">
             <x:Boolean x:Key="IsExpanded">True</x:Boolean>
@@ -218,16 +210,24 @@
           </scg:Dictionary>
         </sap:WorkflowViewStateService.ViewState>
       </sap2010:ViewStateData>
-      <sap2010:ViewStateData Id="InvokeAnFake_1" sap:VirtualizedContainerService.HintSize="222,22" />
-      <sap2010:ViewStateData Id="AgentScope_1" sap:VirtualizedContainerService.HintSize="244,977" />
-      <sap2010:ViewStateData Id="Sequence_16" sap:VirtualizedContainerService.HintSize="266,1349">
+      <sap2010:ViewStateData Id="Sequence_9" sap:VirtualizedContainerService.HintSize="256,496">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            <x:Boolean x:Key="IsPinned">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="InvokeAnFake_1" sap:VirtualizedContainerService.HintSize="256,22" />
+      <sap2010:ViewStateData Id="AgentScope_1" sap:VirtualizedContainerService.HintSize="278,1083" />
+      <sap2010:ViewStateData Id="Sequence_16" sap:VirtualizedContainerService.HintSize="300,1455">
         <sap:WorkflowViewStateService.ViewState>
           <scg:Dictionary x:TypeArguments="x:String, x:Object">
             <x:Boolean x:Key="IsExpanded">True</x:Boolean>
           </scg:Dictionary>
         </sap:WorkflowViewStateService.ViewState>
       </sap2010:ViewStateData>
-      <sap2010:ViewStateData Id="TfsBuild.Process_1" sap:VirtualizedContainerService.HintSize="306,1429" />
+      <sap2010:ViewStateData Id="TfsBuild.Process_1" sap:VirtualizedContainerService.HintSize="340,1535" />
     </sap2010:ViewStateManager>
   </sap2010:WorkflowViewState.ViewStateManager>
 </Activity>
