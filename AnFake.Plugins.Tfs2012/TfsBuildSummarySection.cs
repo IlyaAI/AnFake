@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using AnFake.Api;
+using AnFake.Integration.Tfs2012;
 using Microsoft.TeamFoundation.Build.Client;
 
 namespace AnFake.Plugins.Tfs2012

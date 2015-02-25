@@ -1,6 +1,6 @@
 ﻿namespace AnFake.Api.Pipeline
 {
-	public sealed class ParallelPipelineStep : PipelineStep
+	internal sealed class ParallelPipelineStep : PipelineStep
 	{
 		public readonly PipelineStep First;
 		public readonly PipelineStep Second;
@@ -11,14 +11,20 @@
 			Second = second;
 		}
 
-		public override PipelineStepStatus Step(IPipeline pipeline)
+		public override void Prepare(Pipeline pipeline)
 		{
-			var first = First.Step(pipeline);
-			var second = Second.Step(pipeline);
+			First.Prepare(pipeline);
+			Second.Prepare(pipeline);
+		}
 
-			return first < second
-				? first
-				: second;
+		public override PipelineStepStatus Step(Pipeline pipeline)
+		{
+			var statusFirst = First.Step(pipeline);
+			var statusSecond = Second.Step(pipeline);
+
+			return statusFirst < statusSecond
+				? statusFirst
+				: statusSecond;
 		}
 	}
 }

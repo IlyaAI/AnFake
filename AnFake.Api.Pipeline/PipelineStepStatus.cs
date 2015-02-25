@@ -2,7 +2,11 @@
 {
 	public enum PipelineStepStatus
 	{
-		InProgress,
+		// ORDER IS IMPORTANT!
+		// DO NOT CHANGE
+		None,
+		Queued,
+		InProgress,		
 		Failed,		
 		PartiallySucceeded,
 		Succeeded

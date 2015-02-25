@@ -1,6 +1,6 @@
 ﻿namespace AnFake.Api.Pipeline
 {
-	public sealed class OptionalPipelineStep : PipelineStep
+	internal sealed class OptionalPipelineStep : PipelineStep
 	{
 		public readonly PipelineStep InnerStep;
 
@@ -9,7 +9,12 @@
 			InnerStep = innerStep;
 		}
 
-		public override PipelineStepStatus Step(IPipeline pipeline)
+		public override void Prepare(Pipeline pipeline)
+		{
+			InnerStep.Prepare(pipeline);
+		}
+
+		public override PipelineStepStatus Step(Pipeline pipeline)
 		{
 			var status = InnerStep.Step(pipeline);
 

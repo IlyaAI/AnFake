@@ -1,7 +1,9 @@
 ﻿namespace AnFake.Api.Pipeline
 {
-	public abstract class PipelineStep
+	internal abstract class PipelineStep
 	{
-		public abstract PipelineStepStatus Step(IPipeline pipeline);
+		public abstract void Prepare(Pipeline pipeline);
+
+		public abstract PipelineStepStatus Step(Pipeline pipeline);
 	}
 }

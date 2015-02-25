@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using AnFake.Api;
 
-namespace AnFake.Plugins.Tfs2012
+namespace AnFake.Integration.Tfs2012
 {
 	internal sealed class TfsMessageBuilder
 	{

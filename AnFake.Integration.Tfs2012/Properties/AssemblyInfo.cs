@@ -36,3 +36,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyFileVersion("1.0.3")]
 
 [assembly: InternalsVisibleTo("AnFake.Plugins.Tfs2012")]
+[assembly: InternalsVisibleTo("AnFake.Plugins.Tfs2012.Test")]

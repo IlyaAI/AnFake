@@ -5,7 +5,7 @@ using Antlr4.Runtime.Tree;
 
 namespace AnFake.Api.Pipeline
 {
-	public static class PipelineCompiler
+	internal static class PipelineCompiler
 	{
 		private sealed class CompilationListener : PipelineBaseListener
 		{
@@ -42,7 +42,7 @@ namespace AnFake.Api.Pipeline
 			public override void EnterInternalBuildRunVoid(PipelineParser.InternalBuildRunVoidContext ctx)
 			{
 				_steps.Push(
-					new BuildRun(
+					new QueueBuildStep(
 						Unquote(ctx.buildRunName()), 
 						null, 
 						null));
@@ -51,7 +51,7 @@ namespace AnFake.Api.Pipeline
 			public override void EnterInternalBuildRunIn(PipelineParser.InternalBuildRunInContext ctx)
 			{
 				_steps.Push(
-					new BuildRun(
+					new QueueBuildStep(
 						Unquote(ctx.buildRunName()),
 						ctx.Identifier().GetText(),
 						null));
@@ -60,7 +60,7 @@ namespace AnFake.Api.Pipeline
 			public override void EnterInternalBuildRunOut(PipelineParser.InternalBuildRunOutContext ctx)
 			{
 				_steps.Push(
-					new BuildRun(
+					new QueueBuildStep(
 						Unquote(ctx.buildRunName()),
 						null,
 						ctx.Identifier().GetText()));
@@ -69,7 +69,7 @@ namespace AnFake.Api.Pipeline
 			public override void EnterInternalBuildRunInOut(PipelineParser.InternalBuildRunInOutContext ctx)
 			{
 				_steps.Push(
-					new BuildRun(
+					new QueueBuildStep(
 						Unquote(ctx.buildRunName()),
 						ctx.Identifier(0).GetText(),
 						ctx.Identifier(1).GetText()));
@@ -85,9 +85,9 @@ namespace AnFake.Api.Pipeline
 			}
 		}
 
-		public static PipelineStep Compile(string pipelineSrc)
+		public static PipelineStep Compile(string pipelineDef)
 		{
-			var lexer = new PipelineLexer(new AntlrInputStream(pipelineSrc));
+			var lexer = new PipelineLexer(new AntlrInputStream(pipelineDef));
 			var tokens = new CommonTokenStream(lexer);
 			var parser = new PipelineParser(tokens);
 			var tree = parser.pipeline();

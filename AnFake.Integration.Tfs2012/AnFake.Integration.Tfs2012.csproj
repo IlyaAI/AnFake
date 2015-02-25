@@ -47,12 +47,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BuildInformationExtension.cs" />
     <Compile Include="ExpandWorkspace.cs" />
+    <Compile Include="Pipeline\TfsPipelineBuild.cs" />
+    <Compile Include="Pipeline\TfsPipelineRunner.cs" />
     <Compile Include="RunPipeline.cs" />
     <Compile Include="InvokeAnFake.cs" />
-    <Compile Include="Pipeline\TfsPipeline.cs" />
+    <Compile Include="Pipeline\TfsPipelineImplementor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ServerPathUtils.cs" />
+    <Compile Include="TfsMessageBuilder.cs" />
     <Compile Include="UseWorkspaceFrom.cs" />
     <Compile Include="VcsMappings.cs" />
   </ItemGroup>

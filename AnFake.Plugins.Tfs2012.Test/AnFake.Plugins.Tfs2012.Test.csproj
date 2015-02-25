@@ -54,7 +54,7 @@
   </Choose>
   <ItemGroup>
     <Compile Include="TfsBuildTest.cs" />
-    <Compile Include="TfsPipelineTest.cs" />
+    <Compile Include="TfsPipelineRunnerTest.cs" />
     <Compile Include="TfsWorkItemTest.cs" />
     <Compile Include="TfsPluginTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

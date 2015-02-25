@@ -49,7 +49,6 @@
   <ItemGroup>
     <Compile Include="BuildStatusConverter.cs" />
     <Compile Include="TfsDeployer.cs" />
-    <Compile Include="TfsMessageBuilder.cs" />
     <Compile Include="TfsBuildSummarySection.cs" />
     <Compile Include="ServerPath.cs" />
     <Compile Include="TfsWorkItem.cs" />

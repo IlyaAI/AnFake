@@ -46,8 +46,10 @@
     <Compile Include="Antlr\PipelineLexer.cs" />
     <Compile Include="Antlr\PipelineListener.cs" />
     <Compile Include="Antlr\PipelineParser.cs" />
-    <Compile Include="BuildRun.cs" />
-    <Compile Include="IPipeline.cs" />
+    <Compile Include="Pipeline.cs" />
+    <Compile Include="IPipelineBuild.cs" />
+    <Compile Include="IPipelineImplementor.cs" />
+    <Compile Include="QueueBuildStep.cs" />
     <Compile Include="OptionalPipelineStep.cs" />
     <Compile Include="ParallelPipelineStep.cs" />
     <Compile Include="PipelineCompiler.cs" />
@@ -62,6 +64,12 @@
       <Generator>MSBuild:Compile</Generator>
       <CustomToolNamespace>AnFake.Tfs2012.Test</CustomToolNamespace>
     </Antlr4>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AnFake.Api\AnFake.Api.csproj">
+      <Project>{e08fa8a9-33d4-4f27-b29e-c9388a291c45}</Project>
+      <Name>AnFake.Api</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -7,6 +7,7 @@ using AnFake.Core;
 using AnFake.Core.Exceptions;
 using AnFake.Core.Integration;
 using AnFake.Core.Integration.Tests;
+using AnFake.Integration.Tfs2012;
 using Microsoft.TeamFoundation;
 using Microsoft.TeamFoundation.Build.Client;
 using Microsoft.TeamFoundation.Client;
@@ -469,31 +470,11 @@ namespace AnFake.Plugins.Tfs2012
 			{
 				var message = _messages.Dequeue();
 
-				switch (message.Level)
-				{
-					case TraceMessageLevel.Debug:
-						_tracker.AddBuildMessage(message.ToString("mfd"), BuildMessageImportance.Low, DateTime.Now);
-						break;
-
-					case TraceMessageLevel.Info:
-						_tracker.AddBuildMessage(message.ToString("mfd"), BuildMessageImportance.Normal, DateTime.Now);
-						break;
-
-					case TraceMessageLevel.Summary:
-						_tracker.AddBuildMessage(message.ToString("mfd"), BuildMessageImportance.High, DateTime.Now);
-						break;
-
-					case TraceMessageLevel.Warning:
-						_tracker.AddBuildWarning(FormatMessage(message), DateTime.Now);
-						break;
-
-					case TraceMessageLevel.Error:
-						_tracker.AddBuildError(FormatMessage(message), DateTime.Now);
-						break;
-				}
+				_tracker.TraceMessage(message);
 			}
 
-			_tracker.Save();			
+			//_tracker.Save();
+			_build.Information.Save();
 		}
 
 		private TfsBuildSummarySection GetOverviewSection()
@@ -520,7 +501,7 @@ namespace AnFake.Plugins.Tfs2012
 			FlushMessages();
 
 			var overview = GetOverviewSection();
-
+			overview.Append("Sources Version: ").Append(_build.SourceGetVersion).Push();
 			overview.Append("Build Agent: ").AppendLink(Environment.MachineName, rdpUri).Push();
 			overview.Append("Build Folder: ").AppendLink(MyBuild.Current.Path.Full, MyBuild.Current.Path.ToUnc().ToUri()).Push();
 			
@@ -550,13 +531,14 @@ namespace AnFake.Plugins.Tfs2012
 
 			try
 			{
-				var output = new StringBuilder(test.Output.Length + 256);
+				var output = new StringBuilder(test.Output.Length + 512);
 				output
-					.Append('=', 48).AppendLine()
+					.Append('*', 64).AppendLine()
 					.Append("TEST OUTPUT").AppendLine()
 					.Append("    ").Append(test.Suite).Append('.').Append(test.Name).AppendLine()
-					.Append('=', 48).AppendLine()
-					.AppendLine();
+					.Append('*', 64).AppendLine()
+					.AppendLine()
+					.Append(test.Output);
 
 				var uri = ExposeArtifact(
 					"Output".MakeUnique(".txt"),
@@ -646,14 +628,6 @@ namespace AnFake.Plugins.Tfs2012
 			FlushMessages();
 
 			_build.FinalizeStatus(details.Status.AsTfsBuildStatus());
-		}
-
-		private static string FormatMessage(TraceMessage message)
-		{
-			return new TfsMessageBuilder()
-				.Append(message.ToString("mfd"))
-				.AppendLinks(message.Links, "\n")
-				.ToString();
-		}		
+		}				
 	}
 }
