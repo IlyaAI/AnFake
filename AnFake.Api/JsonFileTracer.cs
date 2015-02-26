@@ -94,15 +94,17 @@ namespace AnFake.Api
 					MessageReceived.Invoke(this, message);
 				}
 			}
-		}		
+		}
 
-		public bool TrackExternal(Func<TimeSpan, bool> externalWait, TimeSpan timeout)
+		public bool TrackExternal(Action externalStart, Func<TimeSpan, bool> externalWait, TimeSpan timeout)
 		{
 			var processedLength = 0L;
 			using (var log = OpenLog(FileMode.Append, FileAccess.Write, MaxRetries))
 			{
 				processedLength = log.Length;
 			}
+
+			externalStart();
 
 			var totalTime = TimeSpan.Zero;
 			var waitTime = _trackingInterval;

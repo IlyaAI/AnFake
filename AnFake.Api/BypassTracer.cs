@@ -36,7 +36,7 @@ namespace AnFake.Api
 			}
 		}
 
-		public bool TrackExternal(Func<TimeSpan, bool> externalWait, TimeSpan timeout)
+		public bool TrackExternal(Action externalStart, Func<TimeSpan, bool> externalWait, TimeSpan timeout)
 		{
 			throw new NotSupportedException("BypassTracer.TrackExternal() not supported.");
 		}		

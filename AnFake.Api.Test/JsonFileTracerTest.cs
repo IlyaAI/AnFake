@@ -193,7 +193,9 @@ namespace AnFake.Api.Test
 			
 			// act
 			tracer.TrackExternal(
-				t => {
+				() => { },
+				t => 
+				{
 					external.Write(new TraceMessage(TraceMessageLevel.Warning, "Warning"));
 					external.Write(new TraceMessage(TraceMessageLevel.Error, "Error"));
 					external.Write(new TraceMessage(TraceMessageLevel.Info, "Info"));
@@ -220,6 +222,7 @@ namespace AnFake.Api.Test
 			
 			// act
 			var ret = tracer.TrackExternal(
+				() => { },
 				t =>
 				{
 					Thread.Sleep(t);

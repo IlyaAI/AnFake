@@ -17,7 +17,7 @@ namespace AnFake.Plugins.Tfs2012
 {
 	internal sealed class TfsPlugin : Core.Integration.IVersionControl, Core.Integration.IBuildServer, IDisposable
 	{
-		private const long FlushIntervalMs = 2000;
+		private readonly static TimeSpan FlushInterval = TimeSpan.FromSeconds(2);
 
 		private const string CustomInformationNode = "AnFake";
 		private const string SummaryKey = "AnFakeSummary";
@@ -28,7 +28,7 @@ namespace AnFake.Plugins.Tfs2012
 		private const int OverviewPriority = 150;		
 		
 		private readonly Queue<TraceMessage> _messages = new Queue<TraceMessage>();
-		private long _lastFlushed;
+		private DateTime _lastFlushed;
 		
 		private readonly TfsTeamProjectCollection _teamProjectCollection;
 		
@@ -447,8 +447,8 @@ namespace AnFake.Plugins.Tfs2012
 
 		private void OnTraceIdle(object sender, EventArgs dummy)
 		{
-			var now = Environment.TickCount;
-			if (_lastFlushed + FlushIntervalMs > now) 
+			var now = DateTime.UtcNow;
+			if (now - _lastFlushed < FlushInterval)
 				return;
 
 			FlushMessages();
@@ -473,8 +473,7 @@ namespace AnFake.Plugins.Tfs2012
 				_tracker.TraceMessage(message);
 			}
 
-			//_tracker.Save();
-			_build.Information.Save();
+			_tracker.Save();			
 		}
 
 		private TfsBuildSummarySection GetOverviewSection()

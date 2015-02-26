@@ -10,7 +10,7 @@ namespace AnFake.Api
 
 		void Write(TraceMessage message);
 
-		bool TrackExternal(Func<TimeSpan, bool> externalWait, TimeSpan timeout);
+		bool TrackExternal(Action externalStart, Func<TimeSpan, bool> externalWait, TimeSpan timeout);
 
 		event EventHandler<TraceMessage> MessageReceiving;
 

@@ -106,12 +106,12 @@ namespace AnFake.Api
 			Message(new TraceMessage(TraceMessageLevel.Error, String.Format(format, args)) {Details = e.StackTrace});
 		}
 
-		public static bool TrackExternal(Func<TimeSpan, bool> externalWait, TimeSpan timeout)
+		public static bool TrackExternal(Action externalStart, Func<TimeSpan, bool> externalWait, TimeSpan timeout)
 		{
 			Tracer.MessageReceived += OnMessageReceived;
 			try
 			{
-				return Tracer.TrackExternal(externalWait, timeout);
+				return Tracer.TrackExternal(externalStart, externalWait, timeout);
 			}
 			finally 
 			{

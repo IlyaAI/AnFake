@@ -145,15 +145,25 @@ namespace AnFake.Core
 
 			try
 			{
-				process.Start();
+				var processStart = new Action(() =>
+				{
+					process.Start();
 
-				process.BeginOutputReadLine();
-				process.BeginErrorReadLine();
+					process.BeginOutputReadLine();
+					process.BeginErrorReadLine();
+				});
+
+				bool completed;
+				if (parameters.TrackExternalMessages)
+				{
+					completed = Api.Trace.TrackExternal(processStart, process.Wait, parameters.Timeout);
+				}
+				else
+				{
+					processStart();
+					completed = process.Wait(parameters.Timeout);
+				}
 				
-				var completed = parameters.TrackExternalMessages 
-					? Api.Trace.TrackExternal(process.Wait, parameters.Timeout) 
-					: process.Wait(parameters.Timeout);
-
 				if (!completed)
 				{
 					process.Kill();
