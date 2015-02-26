@@ -422,6 +422,7 @@ namespace AnFake.Core
 				.Take(lastExecutedTarget + 1)
 				.Where(x => x.HasBody)
 				.ToArray();
+
 			FinalizeState(executedTargets);
 
 			LogSummary(executedTargets);
@@ -544,9 +545,17 @@ namespace AnFake.Core
 
 		private void FinalizeState(IEnumerable<Target> executedTargets)
 		{
-			if (_state == TargetState.Queued || _state == TargetState.Failed)
+			if (_state == TargetState.Queued)
 			{
 				_state = TargetState.Failed;
+				return;
+			}
+
+			if (_state == TargetState.Failed)
+			{
+				_state = _skipErrors
+					? TargetState.PartiallySucceeded
+					: TargetState.Failed;
 				return;
 			}
 

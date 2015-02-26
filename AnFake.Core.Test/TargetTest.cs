@@ -3,7 +3,6 @@ using System.Text;
 using AnFake.Api;
 using AnFake.Core.Exceptions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Rhino.Mocks;
 
 namespace AnFake.Core.Test
 {
@@ -16,7 +15,7 @@ namespace AnFake.Core.Test
 		[TestInitialize]
 		public void Initialize()
 		{
-			Tracer = MockRepository.GenerateMock<ITracer>();
+			Tracer = new BypassTracer();
 			PrevTracer = Trace.Set(Tracer);
 		}
 
@@ -59,26 +58,20 @@ namespace AnFake.Core.Test
 			"a".AsTarget().Do(() => sb.Append("a"));
 			"b".AsTarget().Do(() => sb.Append("b"));
 			"c".AsTarget().Do(() => sb.Append("c"));
-			"d".AsTarget().Do(() => { throw new Exception("ERROR"); });
+			"d".AsTarget().Do(() =>
+			{
+				sb.Append("d");
+				throw new Exception("ERROR");
+			});
 
 			"b".AsTarget().DependsOn("a", "c", "d");
 			"c".AsTarget().DependsOn("d");
 
 			// act
-			try
-			{
-				"b".AsTarget().Run();
-			}
-			catch (TerminateTargetException)
-			{
-				// it's ok
-			}			
+			SafeOp.Try("b".AsTarget().Run);		
 
 			// assert
-			Assert.AreEqual("a", sb.ToString());
-			Tracer.AssertWasCalled(
-				x => x.Write(
-					Arg<TraceMessage>.Matches(y => y.Level == TraceMessageLevel.Error && y.Message == "ERROR")));
+			Assert.AreEqual("ad", sb.ToString());			
 		}
 
 		[TestCategory("Functional")]
@@ -130,24 +123,18 @@ namespace AnFake.Core.Test
 			var sb = new StringBuilder();
 
 			"a".AsTarget()
-				.Do(() => { throw new Exception("ERROR"); })
+				.Do(() =>
+				{
+					sb.Append("a");
+					throw new Exception("ERROR");
+				})
 				.Finally(() => sb.Append("c"));
 
 			// act
-			try
-			{
-				"a".AsTarget().Run();
-			}
-			catch (TerminateTargetException)
-			{
-				// it's ok
-			}			
+			SafeOp.Try("a".AsTarget().Run);			
 			
 			// assert
-			Assert.AreEqual("c", sb.ToString());
-			Tracer.AssertWasCalled(
-				x => x.Write(
-					Arg<TraceMessage>.Matches(y => y.Level == TraceMessageLevel.Error && y.Message == "ERROR")));
+			Assert.AreEqual("ac", sb.ToString());			
 		}
 
 		[TestCategory("Functional")]
@@ -158,24 +145,18 @@ namespace AnFake.Core.Test
 			var sb = new StringBuilder();
 
 			"a".AsTarget()
-				.Do(() => { throw new Exception("ERROR"); })
+				.Do(() =>
+				{
+					sb.Append("a");
+					throw new Exception("ERROR"); 
+				})
 				.OnFailure(() => sb.Append("c"));
 
 			// act
-			try
-			{
-				"a".AsTarget().Run();
-			}
-			catch (TerminateTargetException)
-			{
-				// it's ok
-			}			
+			SafeOp.Try("a".AsTarget().Run);
 			
 			// assert
-			Assert.AreEqual("c", sb.ToString());
-			Tracer.AssertWasCalled(
-				x => x.Write(
-					Arg<TraceMessage>.Matches(y => y.Level == TraceMessageLevel.Error && y.Message == "ERROR")));
+			Assert.AreEqual("ac", sb.ToString());			
 		}
 
 		[TestCategory("Functional")]
@@ -234,6 +215,108 @@ namespace AnFake.Core.Test
 
 			// assert
 			Assert.AreEqual("a", sb.ToString());
+		}
+
+		[TestCategory("Functional")]
+		[TestMethod]
+		public void TargetRun_should_eval_state_as_succeeded_if_all_dependents_succeeded()
+		{
+			// arrange			
+			"a".AsTarget().Do(() => { });
+			var b = "b".AsTarget()
+				.Do(() => { })
+				.DependsOn("a");
+
+			// act
+			b.Run();
+
+			// assert
+			Assert.AreEqual(TargetState.Succeeded, b.State);
+		}
+
+		[TestCategory("Functional")]
+		[TestMethod]
+		public void TargetRun_should_eval_state_as_failed_if_any_dependent_failed()
+		{
+			// arrange			
+			"a".AsTarget().Do(() => { throw new TerminateTargetException(); });
+			var b = "b".AsTarget()
+				.Do(() => { })
+				.DependsOn("a");
+
+			// act
+			SafeOp.Try(b.Run);		
+
+			// assert
+			Assert.AreEqual(TargetState.Failed, b.State);
+		}
+
+		[TestCategory("Functional")]
+		[TestMethod]
+		public void TargetRun_should_eval_state_as_partially_succeeded_if_at_least_one_dependent_partially_succeeded()
+		{
+			// arrange			
+			"a".AsTarget()
+				.Do(() => { throw new TerminateTargetException(); })
+				.SkipErrors();
+			var b = "b".AsTarget()
+				.Do(() => { })
+				.DependsOn("a");
+
+			// act
+			b.Run();
+
+			// assert
+			Assert.AreEqual(TargetState.PartiallySucceeded, b.State);
+		}
+
+		[TestCategory("Functional")]
+		[TestMethod]
+		public void TargetRun_should_eval_state_as_partially_succeeded_if_self_failed_and_skip_errors_enabled()
+		{
+			// arrange						
+			var a = "a".AsTarget()
+				.Do(() => { throw new TerminateTargetException(); })
+				.SkipErrors();
+
+			// act
+			a.Run();
+
+			// assert
+			Assert.AreEqual(TargetState.PartiallySucceeded, a.State);
+		}
+
+		[TestCategory("Functional")]
+		[TestMethod]
+		public void TargetRun_should_eval_state_as_failed_if_any_warning_and_fail_by_warnings_enabled()
+		{
+			// arrange			
+			var a = "a".AsTarget()
+				.Do(() => Trace.Warn("Fatal Warning"))
+				.FailIfAnyWarning();
+
+			// act
+			SafeOp.Try(a.Run);
+			
+			// assert
+			Assert.AreEqual(TargetState.Failed, a.State);
+		}
+
+		[TestCategory("Functional")]
+		[TestMethod]
+		public void TargetRun_should_eval_state_as_partially_succeeded_if_any_warning_and_fail_by_warnings_and_skip_errors_enabled()
+		{
+			// arrange			
+			var a = "a".AsTarget()
+				.Do(() => Trace.Warn("Fatal Warning"))
+				.FailIfAnyWarning()
+				.SkipErrors();
+
+			// act
+			a.Run();
+			
+			// assert
+			Assert.AreEqual(TargetState.PartiallySucceeded, a.State);
 		}
 	}
 }

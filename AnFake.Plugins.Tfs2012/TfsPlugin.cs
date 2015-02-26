@@ -533,10 +533,9 @@ namespace AnFake.Plugins.Tfs2012
 			{
 				var output = new StringBuilder(test.Output.Length + 512);
 				output
-					.Append('*', 64).AppendLine()
-					.Append("TEST OUTPUT").AppendLine()
-					.Append("    ").Append(test.Suite).Append('.').Append(test.Name).AppendLine()
-					.Append('*', 64).AppendLine()
+					.Append('*', 48).Append(" TEST OUTPUT ").Append('*', 48).AppendLine()					
+					.Append(test.Suite).Append('.').Append(test.Name).AppendLine()
+					.Append('*', 109).AppendLine()
 					.AppendLine()
 					.Append(test.Output);
 
