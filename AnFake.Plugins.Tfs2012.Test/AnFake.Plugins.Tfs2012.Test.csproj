@@ -59,6 +59,7 @@
     <Compile Include="TfsPluginTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TfsTestSuite.cs" />
+    <Compile Include="TfsMessageBuilderTest.cs" />
     <Compile Include="VcsMappingsTest.cs" />
   </ItemGroup>
   <ItemGroup>

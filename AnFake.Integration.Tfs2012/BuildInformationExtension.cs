@@ -6,38 +6,48 @@ namespace AnFake.Integration.Tfs2012
 {
 	public static class BuildInformationExtension
 	{
-		public static void TraceMessage(this IBuildInformation info, TraceMessage message)
+		public static void TraceMessage(this IBuildInformation info, TraceMessage message, bool embedLinks = false)
 		{
 			switch (message.Level)
 			{
 				case TraceMessageLevel.Debug:
-					info.AddBuildMessage(message.ToString("mfd"), BuildMessageImportance.Low, DateTime.Now);
+					info.AddBuildMessage(FormatMessage(message, embedLinks), BuildMessageImportance.Low, DateTime.Now);
 					break;
 
 				case TraceMessageLevel.Info:
-					info.AddBuildMessage(message.ToString("mfd"), BuildMessageImportance.Normal, DateTime.Now);
+					info.AddBuildMessage(FormatMessage(message, embedLinks), BuildMessageImportance.Normal, DateTime.Now);
 					break;
 
 				case TraceMessageLevel.Summary:
-					info.AddBuildMessage(message.ToString("mfd"), BuildMessageImportance.High, DateTime.Now);
+					info.AddBuildMessage(FormatMessage(message, embedLinks), BuildMessageImportance.High, DateTime.Now);
 					break;
 
 				case TraceMessageLevel.Warning:
-					info.AddBuildWarning(FormatMessage(message), DateTime.Now);
+					info.AddBuildWarning(FormatMessage(message, embedLinks), DateTime.Now);
 					break;
 
 				case TraceMessageLevel.Error:
-					info.AddBuildError(FormatMessage(message), DateTime.Now);
+					info.AddBuildError(FormatMessage(message, embedLinks), DateTime.Now);
 					break;
 			}
 		}
 
-		private static string FormatMessage(TraceMessage message)
+		private static string FormatMessage(TraceMessage message, bool embedLinks)
 		{
-			return new TfsMessageBuilder()
-				.Append(message.ToString("mfd"))
-				.AppendLinks(message.Links, "\n")
-				.ToString();
+			var builder = new TfsMessageBuilder();
+
+			builder.Append(message.ToString("mfd"));
+
+			if (embedLinks)
+			{
+				builder.EmbedLinks(message.Links);
+			}
+			else
+			{
+				builder.AppendLinks(message.Links, "\n");
+			}
+				
+			return builder.ToString();
 		}
 	}
 }

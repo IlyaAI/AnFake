@@ -31,7 +31,7 @@ using ParserRuleContext = Antlr4.Runtime.ParserRuleContext;
 /// of the available methods.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("ANTLR", "4.5")]
-[System.CLSCompliant(false)]
+//[System.CLSCompliant(false)]
 public partial class PipelineBaseListener : IPipelineListener {
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="PipelineParser.pipeline"/>.

@@ -27,7 +27,7 @@ using IToken = Antlr4.Runtime.IToken;
 /// <see cref="PipelineParser"/>.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("ANTLR", "4.5")]
-[System.CLSCompliant(false)]
+//[System.CLSCompliant(false)]
 public interface IPipelineListener : IParseTreeListener {
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="PipelineParser.pipeline"/>.

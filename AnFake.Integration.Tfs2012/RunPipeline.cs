@@ -4,6 +4,7 @@ using AnFake.Integration.Tfs2012.Pipeline;
 using Microsoft.TeamFoundation.Build.Client;
 using Microsoft.TeamFoundation.Build.Workflow.Services;
 using Microsoft.TeamFoundation.Build.Workflow.Tracking;
+using Microsoft.TeamFoundation.VersionControl.Client;
 
 namespace AnFake.Integration.Tfs2012
 {
@@ -21,11 +22,14 @@ namespace AnFake.Integration.Tfs2012
 
 		public InArgument<TimeSpan> Timeout { get; set; }
 
+		public InArgument<string> SourcesVersion { get; set; }
+
 		public RunPipeline()
 		{
 			DisplayName = "Run Pipeline";
 			SpinTime = new InArgument<TimeSpan>(TimeSpan.FromSeconds(15));
 			Timeout = new InArgument<TimeSpan>(TimeSpan.MaxValue);
+			SourcesVersion = new InArgument<string>();
 		}
 
 		protected override void CacheMetadata(CodeActivityMetadata metadata)
@@ -41,6 +45,16 @@ namespace AnFake.Integration.Tfs2012
 			var pipelineDef = Pipeline.Get(context);
 			var spinTime = SpinTime.Get(context);
 			var timeout = Timeout.Get(context);
+			var version = SourcesVersion.Get(context);
+
+			if (!String.IsNullOrEmpty(version))
+			{
+				// Validate specified version
+				VersionSpec.ParseSingleSpec(version, ".");
+
+				buildDetail.SourceGetVersion = version;
+				buildDetail.Save();
+			}
 
 			var tracker = context
 				.GetExtension<IBuildLoggingExtension>()

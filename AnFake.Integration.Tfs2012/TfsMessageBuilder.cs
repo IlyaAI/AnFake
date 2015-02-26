@@ -75,6 +75,55 @@ namespace AnFake.Integration.Tfs2012
 			return this;
 		}
 
+		public TfsMessageBuilder EmbedLinks(IList<Hyperlink> links)
+		{
+			if (links.Count == 0)
+				return this;
+
+			var msg = _message.ToString();
+			_message.Clear();
+
+			var tailLinks = new List<Hyperlink>();
+
+			var start = 0;
+			foreach (var link in links)
+			{
+				var labelLen = link.Label.Length;
+				var index = msg.IndexOf(link.Label, start, StringComparison.InvariantCulture);
+
+				if (index > 0 && msg[index - 1] == '[' &&
+					index + labelLen + 1 < msg.Length && msg[index + labelLen] == ']' && msg[index + labelLen + 1] == '(')
+					continue;
+
+				if (index < 0 ||
+					index > 0 && Char.IsLetterOrDigit(msg[index - 1]) ||
+					index + labelLen < msg.Length && Char.IsLetterOrDigit(msg[index + labelLen]))
+				{
+					tailLinks.Add(link);
+					continue;					
+				}				
+
+				_message
+					.Append(msg.Substring(start, index - start));
+				AppendLink(link);
+
+				start = index + link.Label.Length;
+			}
+
+			if (start < msg.Length)
+			{
+				_message.Append(msg.Substring(start));
+			}
+
+			foreach (var link in tailLinks)
+			{
+				_message.Append(' ');					
+				AppendLink(link);
+			}
+
+			return this;
+		}
+
 		public TfsMessageBuilder NewLine()
 		{
 			_message.AppendLine();
