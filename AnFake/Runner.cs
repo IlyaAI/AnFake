@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Threading;
 using AnFake.Api;
 using AnFake.Core;
 using AnFake.Core.Exceptions;
@@ -18,16 +20,12 @@ namespace AnFake
 			{
 				{".fsx", new FSharpEvaluator()},
 				{".csx", new CSharpEvaluator()}
-			};
-
-		private class AbortException : Exception
-		{
-		}
+			};		
 
 		[STAThread]
 		public static int Main(string[] args)
 		{
-			// Console might be unavailable if executing on server, 
+			// Console window might be unavailable if executing on server, 
 			// so we use SafeOp.Try to skip exception if any.
 			SafeOp.Try(ConfigureConsole);
 			
@@ -77,25 +75,36 @@ namespace AnFake
 
 				ConfigureLogger(options);
 				ConfigureTracer(options);
-			}
-			catch (AbortException)
-			{
-				// just skip
-			}
+			}			
 			catch (Exception e)
 			{
-				Console.ForegroundColor = ConsoleColor.Red;
-				Console.WriteLine("AnFake failed in initiation phase. See details below.");
-				Console.WriteLine(e);
-
+				ConsoleLogError("AnFake failed in initiation phase. See details below.", e);
 				return (int) MyBuild.Status.Unknown;
 			}
 
 			return Run(options);
 		}
 
+		private delegate bool ConsoleCtrlHandler(int ctrlEvent);
+
+		[DllImport("Kernel32")]
+		private static extern bool SetConsoleCtrlHandler(ConsoleCtrlHandler handler, bool add);
+
 		private static void ConfigureConsole()
 		{
+			SetConsoleCtrlHandler(
+				@event =>
+				{
+					Interruption.Requested();
+
+					// Take some time for main thread to reach interruption check-point and perform all neccessary cleanups.
+					// This sleep doesn't prevent application from exit if main thread finished first. Treat the value as 'interruption timeout'.
+					Thread.Sleep(TimeSpan.FromSeconds(15));
+					
+					return true;
+				},
+				true);
+
 			Console.Title = "AnFake: Another F# Make";
 
 			var consoleWidth = (int)(Console.LargestWindowWidth * 0.75);
@@ -121,8 +130,8 @@ namespace AnFake
 			}
 			catch (Exception e)
 			{
-				ConsoleLog(String.Format("Failed to parse local settings '{0}'", Settings.LocalPath.AsPath().Full), e);
-				throw new AbortException();
+				throw new Exception(
+					String.Format("Failed to parse local settings '{0}'", Settings.LocalPath.AsPath().Full), e);				
 			}
 
 			try
@@ -134,8 +143,8 @@ namespace AnFake
 			}
 			catch (Exception e)
 			{
-				ConsoleLog(String.Format("Failed to parse user settings '{0}'", Settings.UserPath.AsPath().Full), e);
-				throw new AbortException();
+				throw new Exception(
+					String.Format("Failed to parse user settings '{0}'", Settings.UserPath.AsPath().Full), e);
 			}
 		}
 
@@ -295,7 +304,7 @@ namespace AnFake
 			}
 		}
 
-		private static void ConsoleLog(string message, Exception exception)
+		private static void ConsoleLogError(string message, Exception exception)
 		{
 			var prevColor = Console.ForegroundColor;
 

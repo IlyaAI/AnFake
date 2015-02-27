@@ -11,7 +11,7 @@ namespace AnFake.Api
 		private readonly string _logFile;
 		private readonly XmlObjectSerializer _serializer;
 		private TraceMessageLevel _threshold = TraceMessageLevel.Info;
-		private TimeSpan _trackingInterval = TimeSpan.FromSeconds(5);
+		private TimeSpan _trackingInterval = TimeSpan.FromSeconds(2);
 		private TimeSpan _retryInterval = TimeSpan.FromMilliseconds(50);
 		private int _maxRetries = 20;		
 		
@@ -151,6 +151,8 @@ namespace AnFake.Api
 				}
 
 				waitTime = _trackingInterval;
+
+				Interruption.CheckPoint();
 			}
 
 			return completed;

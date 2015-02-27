@@ -47,6 +47,7 @@
     <Compile Include="Hyperlink.cs" />
     <Compile Include="HyperlinkExtension.cs" />
     <Compile Include="ILogger.cs" />
+    <Compile Include="Interruption.cs" />
     <Compile Include="ITracer.cs" />
     <Compile Include="BypassTracer.cs" />
     <Compile Include="Log.cs" />

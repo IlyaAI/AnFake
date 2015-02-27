@@ -161,18 +161,38 @@ namespace AnFake.Core
 				else
 				{
 					processStart();
-					completed = process.Wait(parameters.Timeout);
+
+					completed = false;
+					var totalTime = TimeSpan.Zero;
+					var spinTime = TimeSpan.FromSeconds(1);
+
+					while (!completed && totalTime < parameters.Timeout)
+					{
+						completed = process.Wait(spinTime);
+						totalTime += spinTime;
+
+						Interruption.CheckPoint();
+					}					
 				}
-				
+
 				if (!completed)
 				{
 					process.Kill();
 					throw new TimeoutException(
 						String.Format(
-							"Process isn't completed in specified time.\n  Executable: {0}\n  Timeout: {1}", 
+							"Process isn't completed in specified time.\n  Executable: {0}\n  Timeout: {1}",
 							process.StartInfo.FileName,
 							parameters.Timeout));
 				}
+			}
+			catch (Interruption.BuildInterruptedException)
+			{
+				if (!process.HasExited)
+				{
+					process.Kill();
+				}
+
+				throw;
 			}
 			catch (Win32Exception e)
 			{
