@@ -179,6 +179,7 @@ namespace AnFake.Plugins.Tfs2012
 
 					if (workspace != null)
 					{
+						Trace.InfoFormat("Deleting workspace '{0}'...", workspace.Name);
 						SafeOp.Try(() => workspace.Delete());
 					}
 				}				

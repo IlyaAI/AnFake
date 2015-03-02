@@ -442,17 +442,24 @@ namespace AnFake.Plugins.Tfs2012
 		//
 		private void OnTraceMessage(object sender, TraceMessage message)
 		{
-			_messages.Enqueue(message);			
+			_messages.Enqueue(message);
+
+			FlushMessagesIfNeccessary();
 		}
 
 		private void OnTraceIdle(object sender, EventArgs dummy)
+		{
+			FlushMessagesIfNeccessary();
+		}
+
+		private void FlushMessagesIfNeccessary()
 		{
 			var now = DateTime.UtcNow;
 			if (now - _lastFlushed < FlushInterval)
 				return;
 
 			FlushMessages();
-			
+
 			_lastFlushed = now;
 		}
 
