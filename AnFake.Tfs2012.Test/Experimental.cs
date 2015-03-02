@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using AnFake.Plugins.Tfs2012.Test;
 using Microsoft.TeamFoundation.Build.Client;
 using Microsoft.TeamFoundation.Client;
+using Microsoft.TeamFoundation.VersionControl.Client;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AnFake.Tfs2012.Test
@@ -104,21 +106,39 @@ namespace AnFake.Tfs2012.Test
 
 		[Ignore]
 		[TestMethod]
-		public void Test3()
+		public void FindAndDeleteBuild()
 		{
 			var teamProjectCollection = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(new Uri(TfsUri));
 			var buildService = (IBuildServer)teamProjectCollection.GetService(typeof(IBuildServer));
 
 			var buildDefinition = buildService.GetBuildDefinition(TeamProject, BuildDefinition);
-			var buildDetails = buildDefinition.QueryBuilds();
+			var buildDetail = buildDefinition
+				.QueryBuilds()
+				.First(x => (x.Status & BuildStatus.InProgress) != 0);
 
-			/*var buildDetail = buildService.QueryBuildsByUri(
-				new[] { new Uri("vstfs:///Build/Build/32764") },
-				new[] { "*" },
-				QueryOptions.All).Single();
+			buildDetail.Stop();
 
-			buildDetail.FinalizeStatus(BuildStatus.Failed);
-			buildDetail.Delete(DeleteOptions.All & ~DeleteOptions.DropLocation);*/
+			buildDetail.KeepForever = false;
+			buildDetail.Save();
+			
+			buildDetail.Delete();
+		}
+
+		[Ignore]
+		[TestMethod]
+		public void GetSpecificVersion()
+		{
+			var teamProjectCollection = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(new Uri(TfsUri));
+			var vcs = teamProjectCollection.GetService<VersionControlServer>();
+
+			var content = "";
+			var item = vcs.GetItem(".workspace", VersionSpec.ParseSingleSpec("C", ""));
+			using (var downstream = item.DownloadFile())
+			{
+				content = new StreamReader(downstream).ReadToEnd();
+			}			
+
+			Assert.IsTrue(content.Contains("AnFake/1.0.2"));
 		}
 
 		private static IBuildInformationNode Find(IBuildInformationNode node, string fieldName, string fieldValue)
