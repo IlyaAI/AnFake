@@ -7,6 +7,9 @@ using AnFake.Core.Exceptions;
 
 namespace AnFake.Core
 {
+	/// <summary>
+	///		Represents external process.
+	/// </summary>
 	public static class Process
 	{
 		private sealed class OutputBuffer
@@ -42,13 +45,47 @@ namespace AnFake.Core
 		/// </summary>
 		public sealed class Params
 		{
+			/// <summary>
+			///		Path to executable.
+			/// </summary>
 			public FileSystemPath FileName;
+
+			/// <summary>
+			///		Command line arguments.
+			/// </summary>
 			public string Arguments;
+
+			/// <summary>
+			///		Working directory.
+			/// </summary>
 			public FileSystemPath WorkingDirectory;
+
+			/// <summary>
+			///		Timeout.
+			/// </summary>
 			public TimeSpan Timeout;
+
+			/// <summary>
+			///		Whether track external messages via ITracer (true) or via std output (false).
+			/// </summary>
 			public bool TrackExternalMessages;
+
+			/// <summary>
+			///		Custom action called when line written in std output.
+			/// </summary>
 			public Action<string> OnStdOut;
+
+			/// <summary>
+			///		Custom action called when line written in std error.
+			/// </summary>
 			public Action<string> OnStdErr;
+
+			/// <summary>
+			///		Output buffer capacity.
+			/// </summary>
+			/// <remarks>
+			///		Output buffer contains last n lines from stndard error/output.
+			/// </remarks>
 			public int OutputBufferCapacity;
 
 			internal Params()
@@ -58,6 +95,10 @@ namespace AnFake.Core
 				OutputBufferCapacity = 24; // lines
 			}
 
+			/// <summary>
+			///		Clones Params structure.
+			/// </summary>
+			/// <returns></returns>
 			public Params Clone()
 			{
 				return (Params) MemberwiseClone();

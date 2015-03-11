@@ -6,8 +6,17 @@ using AnFake.Api;
 
 namespace AnFake.Core
 {
+	/// <summary>
+	///		Files related tools.
+	/// </summary>
 	public static class Files
-	{		
+	{
+		/// <summary>
+		///		Copies given files to specified target folder.
+		/// </summary>
+		/// <param name="files">files to be copied (not null)</param>
+		/// <param name="targetPath">path to target folder (not null)</param>
+		/// <param name="overwrite">overwrite existing files?</param>
 		public static void Copy(IEnumerable<FileItem> files, FileSystemPath targetPath, bool overwrite = false)
 		{
 			if (files == null)

@@ -6,6 +6,11 @@ namespace AnFake.Core
 {
 	public static class NuGetExtension
 	{
+		/// <summary>
+		///		Adds references to NuSpec.
+		/// </summary>
+		/// <param name="meta"></param>
+		/// <param name="assemblies"></param>
 		public static void AddRefs(this NuSpec.v20.Metadata meta, IEnumerable<string> assemblies)
 		{
 			var refs = assemblies
@@ -15,6 +20,12 @@ namespace AnFake.Core
 			meta.References = Merge(meta.References, refs);
 		}
 
+		/// <summary>
+		///		Adds files to package.
+		/// </summary>
+		/// <param name="package"></param>
+		/// <param name="files"></param>
+		/// <param name="target"></param>
 		public static void AddFiles(this NuSpec.v20.Package package, IEnumerable<FileItem> files, string target)
 		{
 			var nuFiles = files
@@ -24,11 +35,23 @@ namespace AnFake.Core
 			package.Files = Merge(package.Files, nuFiles);
 		}
 
+		/// <summary>
+		///		Adds files to package.
+		/// </summary>
+		/// <param name="package"></param>
+		/// <param name="files"></param>
+		/// <param name="targetFramework"></param>
 		public static void AddFiles(this NuSpec.v20.Package package, IEnumerable<FileItem> files, NuSpec.v20.Framework targetFramework)
 		{
 			AddFiles(package, files, "lib/" + targetFramework.ToString().ToLowerInvariant());
 		}
 
+		/// <summary>
+		///		Adds references to NuSpec.
+		/// </summary>
+		/// <param name="meta"></param>
+		/// <param name="targetFramework"></param>
+		/// <param name="assemblies"></param>
 		public static void AddRefs(this NuSpec.v25.Metadata meta, NuSpec.v25.Framework targetFramework, IEnumerable<string> assemblies)
 		{
 			var group = new NuSpec.v25.ReferenceGroup
@@ -42,6 +65,12 @@ namespace AnFake.Core
 			meta.ReferenceGroups = Merge(meta.ReferenceGroups, group);
 		}
 
+		/// <summary>
+		///		Adds files to package.
+		/// </summary>
+		/// <param name="package"></param>
+		/// <param name="files"></param>
+		/// <param name="target"></param>
 		public static void AddFiles(this NuSpec.v25.Package package, IEnumerable<FileItem> files, string target)
 		{
 			var nuFiles = files
@@ -51,6 +80,12 @@ namespace AnFake.Core
 			package.Files = Merge(package.Files, nuFiles);
 		}
 
+		/// <summary>
+		///		Adds files to package.
+		/// </summary>
+		/// <param name="package"></param>
+		/// <param name="files"></param>
+		/// <param name="targetFramework"></param>
 		public static void AddFiles(this NuSpec.v25.Package package, IEnumerable<FileItem> files, NuSpec.v25.Framework targetFramework)
 		{
 			AddFiles(package, files, "lib/" + targetFramework.ToString().ToLowerInvariant());

@@ -20,6 +20,9 @@ namespace AnFake.Core
 			"[ProgramFilesX86]/Microsoft Visual Studio 11.0/Common7/IDE/CommonExtensions/Microsoft/TestWindow/vstest.console.exe"
 		};
 
+		/// <summary>
+		///		VSTest.Console parameters.
+		/// </summary>
 		public sealed class Params
 		{
 			public string TestCaseFilter;
@@ -53,11 +56,20 @@ namespace AnFake.Core
 			Defaults = new Params();
 		}
 
+		/// <summary>
+		///		Runs tests from specified assemblies with default parameters.
+		/// </summary>
+		/// <param name="assemblies">set of assemblies with tests (not null)</param>
 		public static void Run(IEnumerable<FileItem> assemblies)
 		{
 			Run(assemblies, p => { });
 		}
 
+		/// <summary>
+		///		Runs tests from specified assemblies with overrided parameters.
+		/// </summary>
+		/// <param name="assemblies">set of assemblies with tests (not null)</param>
+		/// <param name="setParams">action which overrides default parameters (not null)</param>
 		public static void Run(IEnumerable<FileItem> assemblies, Action<Params> setParams)
 		{
 			var assembliesToRun = assemblies.ToArray();

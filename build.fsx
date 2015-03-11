@@ -41,6 +41,7 @@ let nugetFiles =
     + "Extras/*"
     + "Plugins/AnFake.Integration.Tfs2012.*.dll"
     + "Plugins/*.xaml"
+    + "Plugins/AnFake.Plugins.*.xml"
     + "Plugins/AnFake.Plugins.Tfs2012.dll"
     + "Plugins/AnFake.Plugins.StringTemplate.dll"
     + "Plugins/Antlr4.StringTemplate.dll"

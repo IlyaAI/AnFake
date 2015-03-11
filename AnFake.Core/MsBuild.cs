@@ -5,6 +5,9 @@ using AnFake.Api;
 
 namespace AnFake.Core
 {
+	/// <summary>
+	///		Represents MSBuild tool.
+	/// </summary>
 	public static class MsBuild
 	{
 		private static readonly string[] Locations =
@@ -15,15 +18,55 @@ namespace AnFake.Core
             "[Windows]/Microsoft.NET/Framework/v4.0.30128/MsBuild.exe"
 		};
 
+		/// <summary>
+		///		MSBuild parameters.
+		/// </summary>
 		public sealed class Params
 		{
+			/// <summary>
+			///		Requested targtes. Default 'Build'.
+			/// </summary>
 			public string[] Targets;
+
+			/// <summary>
+			///		Build properties. E.g. 'Configuration', 'Platform', etc.
+			/// </summary>
 			public readonly IDictionary<string, string> Properties = new Dictionary<string, string>();
+
+			/// <summary>
+			///		Max CPU count participated in build. Default null - sequencial build.
+			/// </summary>
 			public int? MaxCpuCount;
+
+			/// <summary>
+			///		Node reuse flag.
+			/// </summary>
 			public bool NodeReuse;
+
+			/// <summary>
+			///		Output verbosity.
+			/// </summary>
 			public Verbosity Verbosity;
+
+			/// <summary>
+			///		Timeout.
+			/// </summary>
 			public TimeSpan Timeout;
+
+			/// <summary>
+			///		Path to MSBuild.exe.
+			/// </summary>
+			/// <remarks>
+			///		Normally, ToolPath is evaluated automatically but you could provide specific one.
+			/// </remarks>
 			public FileSystemPath ToolPath;
+
+			/// <summary>
+			///		Additional command line arguments for MSBuild.exe
+			/// </summary>
+			/// <remarks>
+			///		Additional arguments appended to command line as is be carefull with quotes and spaces.
+			/// </remarks>
 			public string ToolArguments;
 
 			internal Params()
@@ -34,12 +77,19 @@ namespace AnFake.Core
 				ToolPath = Locations.AsFileSet().Select(x => x.Path).FirstOrDefault();
 			}
 
+			/// <summary>
+			///		Clones Params structure.
+			/// </summary>
+			/// <returns></returns>
 			public Params Clone()
 			{
 				return (Params) MemberwiseClone();
 			}
 		}
 
+		/// <summary>
+		///		Default parameters.
+		/// </summary>
 		public static Params Defaults { get; private set; }
 
 		static MsBuild()
@@ -60,6 +110,10 @@ namespace AnFake.Core
 			};
 		}
 
+		/// <summary>
+		///		Builds solution with 'Configuration=Debug'.
+		/// </summary>
+		/// <param name="solution">solution to be built (not null)</param>
 		public static void BuildDebug(FileItem solution)
 		{
 			if (solution == null)
@@ -68,6 +122,10 @@ namespace AnFake.Core
 			BuildDebug(new[] {solution});
 		}
 
+		/// <summary>
+		///		Builds set of projects with 'Configuration=Debug'.
+		/// </summary>
+		/// <param name="projects">projects to be built (not null)</param>
 		public static void BuildDebug(IEnumerable<FileItem> projects)
 		{
 			if (projects == null)
@@ -76,6 +134,11 @@ namespace AnFake.Core
 			Build(projects, p => { p.Properties["Configuration"] = "Debug"; });
 		}
 
+		/// <summary>
+		///		Builds set of projects with 'Configuration=Debug' and 'OutDir=&lt;output&gt;'.
+		/// </summary>
+		/// <param name="projects">projects to be built (not null)</param>
+		/// <param name="output">output path (not null)</param>
 		public static void BuildDebug(IEnumerable<FileItem> projects, FileSystemPath output)
 		{
 			if (projects == null)
@@ -90,6 +153,10 @@ namespace AnFake.Core
 			});
 		}
 
+		/// <summary>
+		///		Builds solution with 'Configuration=Release'.
+		/// </summary>
+		/// <param name="solution">solution to be built (not null)</param>
 		public static void BuildRelease(FileItem solution)
 		{
 			if (solution == null)
@@ -98,6 +165,10 @@ namespace AnFake.Core
 			BuildRelease(new[] {solution});
 		}
 
+		/// <summary>
+		///		Builds set of projects with 'Configuration=Release'.
+		/// </summary>
+		/// <param name="projects">projects to be built (not null)</param>
 		public static void BuildRelease(IEnumerable<FileItem> projects)
 		{
 			if (projects == null)
@@ -106,6 +177,11 @@ namespace AnFake.Core
 			Build(projects, p => { p.Properties["Configuration"] = "Release"; });
 		}
 
+		/// <summary>
+		///		Builds set of projects with 'Configuration=Release' and 'OutDir=&lt;output&gt;'.
+		/// </summary>
+		/// <param name="projects">projects to be built (not null)</param>
+		/// <param name="output">output path (not null)</param>
 		public static void BuildRelease(IEnumerable<FileItem> projects, FileSystemPath output)
 		{
 			if (projects == null)
@@ -120,6 +196,10 @@ namespace AnFake.Core
 			});
 		}
 
+		/// <summary>
+		///		Builds solution with default parameters.
+		/// </summary>
+		/// <param name="solution">solution to be built (not null)</param>
 		public static void Build(FileItem solution)
 		{
 			if (solution == null)
@@ -128,6 +208,10 @@ namespace AnFake.Core
 			Build(new[] {solution}, p => { });
 		}
 
+		/// <summary>
+		///		Builds set of projects with default parameters.
+		/// </summary>
+		/// <param name="projects">projects to be built (not null)</param>
 		public static void Build(IEnumerable<FileItem> projects)
 		{
 			if (projects == null)
@@ -136,6 +220,11 @@ namespace AnFake.Core
 			Build(projects, p => { });
 		}
 
+		/// <summary>
+		///		Builds solution with overrided parameters.
+		/// </summary>
+		/// <param name="solution">solution to be built (not null)</param>
+		/// <param name="setParams">action which override default parameters (not null)</param>
 		public static void Build(FileItem solution, Action<Params> setParams)
 		{
 			if (solution == null)
@@ -146,6 +235,11 @@ namespace AnFake.Core
 			Build(new[] {solution}, setParams);
 		}
 
+		/// <summary>
+		///		Builds set of projects with overrided parameters.
+		/// </summary>
+		/// <param name="projects">projects to be built (not null)</param>
+		/// <param name="setParams">action which overrides default parameters (not null)</param>
 		public static void Build(IEnumerable<FileItem> projects, Action<Params> setParams)
 		{
 			if (projects == null)
