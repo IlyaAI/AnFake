@@ -74,23 +74,58 @@ namespace AnFake.Integration.MsBuild
 					break;
 			}
 
-			TraceMessage(level, null, null, 0, 0, e.Code, e.Message);
+			TraceMessage(
+				level, 
+				e.ProjectFile,
+				e.File,
+				e.ColumnNumber, 
+				e.LineNumber, 
+				e.Code, 
+				e.Message,
+				e.BuildEventContext != null 
+					? (int?)e.BuildEventContext.NodeId
+					: null);
 		}
 
 		private void OnWarning(object sender, BuildWarningEventArgs e)
 		{
-			TraceMessage(TraceMessageLevel.Warning, e.ProjectFile, e.File, e.LineNumber, e.ColumnNumber, e.Code, e.Message);
+			TraceMessage(
+				TraceMessageLevel.Warning, 
+				e.ProjectFile, 
+				e.File, 
+				e.LineNumber, 
+				e.ColumnNumber, 
+				e.Code, 
+				e.Message,
+				e.BuildEventContext != null
+					? (int?)e.BuildEventContext.NodeId
+					: null);
 		}
 
 		private void OnError(object sender, BuildErrorEventArgs e)
 		{
-			TraceMessage(TraceMessageLevel.Error, e.ProjectFile, e.File, e.LineNumber, e.ColumnNumber, e.Code, e.Message);
+			TraceMessage(
+				TraceMessageLevel.Error, 
+				e.ProjectFile, 
+				e.File, 
+				e.LineNumber, 
+				e.ColumnNumber, 
+				e.Code, 
+				e.Message,
+				e.BuildEventContext != null
+					? (int?)e.BuildEventContext.NodeId
+					: null);
 		}
 
-		private void TraceMessage(TraceMessageLevel level, string project, string file, int line, int col, string code, string message)
+		private void TraceMessage(TraceMessageLevel level, string project, string file, int line, int col, string code, string message, int? nodeId)
 		{
 			try
 			{
+				if (nodeId != null)
+				{
+					message = String.Format("{0}> {1}", nodeId, message);
+				}
+
 				Trace.Message(new TraceMessage(level, message)
 				{
 					Code = code,

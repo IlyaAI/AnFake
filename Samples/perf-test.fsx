@@ -2,6 +2,7 @@
 #r "../.AnFake/AnFake.Api.v1.dll"
 #r "../.AnFake/AnFake.Core.dll"
 #r "../.AnFake/AnFake.Fsx.dll"
+#r "../.AnFake/Plugins/AnFake.Plugins.Tfs2012.dll"
 #r "../.AnFake/Plugins/AnFake.Plugins.NHibernate.dll"
 #r "../.AnFake/Plugins/NHibernate.dll"
 
@@ -11,20 +12,43 @@ open System.Runtime.Serialization
 open AnFake.Api
 open AnFake.Core
 open AnFake.Fsx.Dsl
+open AnFake.Plugins.Tfs2012
 open AnFake.Plugins.NHibernate
 
+Tfs.PlugIn()
 Nh.PlugIn()
+
+let out = ~~".out"
+let binOut = out / "bin"
 
 [<DataContract>]
 type PerformanceReport () =
-    [<DataMember>][<Indexed("IDX_Name")>] member val Name: string = null with get, set
+    [<DataMember>] member val ChangesetId: int = 0 with get, set
     [<DataMember>] member val ElapsedTime: double = 0.0 with get, set
     [<DataMember>] member val BytesProcessed: int64 = 0L with get, set
 
-"Report" => (fun _ ->
-    let report = Json.ReadAs<PerformanceReport>("report.json".AsFile())
+"Test.Performance" => (fun _ ->
+    let buildDefName = MyBuild.GetProp("productBuild")
+    let goodBuild = TfsBuild.QueryByQuality(buildDefName, "Unit-Tests Passed", 1).First()
+    
+    Folders.Clean(binOut)
+    Files.Copy(goodBuild.GetDropLocationOf(ArtifactType.Deliverables) % "*", binOut)
+    
+    let reportPath = out / "PerfMeter.report"
+    let args = 
+        (new Args("--", " "))            
+            .Option("threads", 4)
+            .Option("report", reportPath)
+            .ToString()
 
-    Trace.InfoFormat("{0} processing speed {1:F2}MB/s", report.Name, (double)report.BytesProcessed / report.ElapsedTime / 1024.0)
+    Process.Run(fun p -> 
+        p.FileName <- binOut / "PerfMeter.exe"
+        p.Arguments <- args        
+    ).FailIfExitCodeNonZero("PerfMeter.exe FAILED.") 
+    |> ignore
+
+    let report = Json.ReadAs<PerformanceReport>(reportPath.AsFile())
+    report.ChangesetId <- VersionControl.CurrentChangesetId
 
     Nh.MapClass<PerformanceReport>()
 

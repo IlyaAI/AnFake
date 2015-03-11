@@ -70,7 +70,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnFake.Plugins.StringTempla
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{DDA9C5B6-89AF-48E7-986E-1B2D69FD1DA5}"
 	ProjectSection(SolutionItems) = preProject
+		Samples\basic.fsx = Samples\basic.fsx
 		Samples\nhibernate.fsx = Samples\nhibernate.fsx
+		Samples\perf-test.fsx = Samples\perf-test.fsx
 		Samples\releasenotes.stg = Samples\releasenotes.stg
 		Samples\report.json = Samples\report.json
 		Samples\tfs-releasenotes.fsx = Samples\tfs-releasenotes.fsx
