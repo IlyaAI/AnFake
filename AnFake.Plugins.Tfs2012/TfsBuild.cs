@@ -138,6 +138,18 @@ namespace AnFake.Plugins.Tfs2012
 			}
 
 			/// <summary>
+			///		Does keep build results forever? Forever means build will not be a subject of retention policy.
+			/// </summary>
+			/// <remarks>
+			///		Don't forget to call <c>Save()</c> after changing.
+			/// </remarks>
+			public bool IsKeepForever
+			{
+				get { return _impl.KeepForever; }
+				set { _impl.KeepForever = value; }
+			}
+
+			/// <summary>
 			///		Build status (read-only).
 			/// </summary>
 			/// <seealso cref="MyBuild.Status"/>

@@ -34,7 +34,7 @@ namespace AnFake.Core
 			public readonly IDictionary<string, string> Properties = new Dictionary<string, string>();
 
 			/// <summary>
-			///		Max CPU count participated in build. Default null - sequencial build.
+			///		Max CPU count participated in build. Default equals to <c>Environment.ProcessorCount</c>.
 			/// </summary>
 			public int? MaxCpuCount;
 
@@ -44,7 +44,7 @@ namespace AnFake.Core
 			public bool NodeReuse;
 
 			/// <summary>
-			///		Output verbosity.
+			///		Output verbosity. Default Normal.
 			/// </summary>
 			public Verbosity Verbosity;
 
@@ -73,6 +73,7 @@ namespace AnFake.Core
 			{
 				Targets = new[] {"Build"};
 				Verbosity = Verbosity.Normal;
+				MaxCpuCount = Environment.ProcessorCount;
 				Timeout = TimeSpan.MaxValue;
 				ToolPath = Locations.AsFileSet().Select(x => x.Path).FirstOrDefault();
 			}

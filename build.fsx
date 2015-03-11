@@ -65,8 +65,6 @@ let apiVersion = "1"
 let xamlVersion = "1" 
 /////////////////////////////////////////////////////////////////
 
-MsBuild.Defaults.MaxCpuCount <- (4).AsNullable()
-
 "Clean" => (fun _ ->    
     let obj = !!!"*/obj"
     let bin = !!!"*/bin"
