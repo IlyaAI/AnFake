@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.30723.0
+VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnFake", "AnFake\AnFake.csproj", "{3246D767-56B5-4C58-BDEE-C32A60C5EEB9}"
 EndProject
@@ -59,6 +59,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".AnFake", ".AnFake", "{9039
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Extras", "Extras", "{CBAFFC16-B785-46E1-8C90-1CAD1115D3D3}"
 	ProjectSection(SolutionItems) = preProject
+		.AnFake\Extras\nuget.fsx = .AnFake\Extras\nuget.fsx
 		.AnFake\Extras\tf.fsx = .AnFake\Extras\tf.fsx
 	EndProjectSection
 EndProject
@@ -85,6 +86,11 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnFake.Plugins.NHibernate", "AnFake.Plugins.NHibernate\AnFake.Plugins.NHibernate.csproj", "{0EB04FA6-2392-4945-AEA1-35A803806E24}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnFake.Plugins.NHibernate.Test", "AnFake.Plugins.NHibernate.Test\AnFake.Plugins.NHibernate.Test.csproj", "{965CFD7F-F118-4486-A62A-D1DC7C1FE912}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{83D7878C-0DC2-4C6C-9375-BDCB08D50EEB}"
+	ProjectSection(SolutionItems) = preProject
+		tools\Init.ps1 = tools\Init.ps1
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

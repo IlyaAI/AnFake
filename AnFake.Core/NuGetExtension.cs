@@ -26,7 +26,7 @@ namespace AnFake.Core
 		/// <param name="package"></param>
 		/// <param name="files"></param>
 		/// <param name="target"></param>
-		public static void AddFiles(this NuSpec.v20.Package package, IEnumerable<FileItem> files, string target)
+		public static void AddFiles(this NuSpec.v20.Package package, IEnumerable<FileItem> files, string target = "")
 		{
 			var nuFiles = files
 				.Select(x => new NuSpec.v20.File(x.Path.Full, (target.AsPath() / x.RelPath).Spec))
@@ -71,7 +71,7 @@ namespace AnFake.Core
 		/// <param name="package"></param>
 		/// <param name="files"></param>
 		/// <param name="target"></param>
-		public static void AddFiles(this NuSpec.v25.Package package, IEnumerable<FileItem> files, string target)
+		public static void AddFiles(this NuSpec.v25.Package package, IEnumerable<FileItem> files, string target = "")
 		{
 			var nuFiles = files
 				.Select(x => new NuSpec.v25.File(x.Path.Full, (target.AsPath() / x.RelPath).Spec))

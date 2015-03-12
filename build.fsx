@@ -55,7 +55,7 @@ let productName = "AnFake"
 let productTitle = "AnFake /Another F# Make/ runtime component"
 let productDescription = "AnFake: Another F# Make"
 let productAuthor = "Ilya A. Ivanov"
-let productVersion = "1.0.3".AsVersion()
+let productVersion = "1.0.4".AsVersion()
 
 //
 // IMPORTANT! 
@@ -139,7 +139,8 @@ let xamlVersion = "1"
         meta.Description <- productDescription
     )
 
-    nuspec.AddFiles(nugetFiles, "")
+    nuspec.AddFiles(nugetFiles)
+    nuspec.AddFiles(!!"tools/*")
 
     NuGet.Pack(nuspec, out, fun p -> 
         p.NoPackageAnalysis <- true

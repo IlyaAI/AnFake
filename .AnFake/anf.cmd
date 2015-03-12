@@ -1,12 +1,7 @@
 @echo off
 
-if exist "%~dp0\AnFake.exe" (
-	"%~dp0\AnFake.exe" %1 %2 %3 %4 %5 %6 %7 %8 %9	
-	goto eof
-)
-
-if exist "%~dp0\.AnFake\AnFake.exe" (
-	"%~dp0\.AnFake\AnFake.exe" %1 %2 %3 %4 %5 %6 %7 %8 %9
+if exist "$REL_PATH\AnFake.exe" (
+	"$REL_PATH\AnFake.exe" %*
 	goto eof
 )
 
