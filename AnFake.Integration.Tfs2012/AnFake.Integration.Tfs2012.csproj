@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>AnFake.Integration.Tfs2012</RootNamespace>
-    <AssemblyName>AnFake.Integration.Tfs2012.v1</AssemblyName>
+    <AssemblyName>AnFake.Integration.Tfs2012.v2</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -40,6 +40,7 @@
     <Reference Include="System.Activities" />
     <Reference Include="System.Activities.Presentation" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -47,8 +48,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AnFakeBuildProcessException.cs" />
     <Compile Include="BuildInformationExtension.cs" />
     <Compile Include="ExpandWorkspace.cs" />
+    <Compile Include="ProcessOutputBuffer.cs" />
+    <Compile Include="RestorePackages.cs" />
     <Compile Include="Pipeline\TfsPipelineBuild.cs" />
     <Compile Include="Pipeline\TfsPipelineRunner.cs" />
     <Compile Include="RunPipeline.cs" />

@@ -62,7 +62,7 @@ let productVersion = "1.0.4".AsVersion()
 // If apiVersion changed then xamlVersion MUST BE incremented too
 //
 let apiVersion = "1"
-let xamlVersion = "1" 
+let xamlVersion = "2" 
 /////////////////////////////////////////////////////////////////
 
 "Clean" => (fun _ ->    
@@ -139,7 +139,7 @@ let xamlVersion = "1"
         meta.Description <- productDescription
     )
 
-    nuspec.AddFiles(nugetFiles)
+    nuspec.AddFiles(nugetFiles, "bin")
     nuspec.AddFiles(!!"tools/*")
 
     NuGet.Pack(nuspec, out, fun p -> 

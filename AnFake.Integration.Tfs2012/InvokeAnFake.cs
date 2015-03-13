@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Activities;
 using System.Activities.Statements;
-using System.Collections.Generic;
 using System.IO;
 using AnFake.Api;
 using Microsoft.TeamFoundation.Build.Client;
@@ -16,36 +15,6 @@ namespace AnFake.Integration.Tfs2012
 	[BuildActivity(HostEnvironmentOption.All)]
 	public sealed class InvokeAnFake : Activity
 	{
-		private sealed class OutputBuffer
-		{
-			private readonly int _capacity;
-			private readonly Queue<string> _buffer;
-
-			public OutputBuffer(int capacity)
-			{
-				_capacity = capacity;
-				_buffer = new Queue<string>(capacity);
-			}
-
-			// Used via Reflection
-			// ReSharper disable once UnusedMember.Local
-			public void Append(string data)
-			{
-				if (String.IsNullOrWhiteSpace(data))
-					return;
-
-				while (_buffer.Count >= _capacity)
-					_buffer.Dequeue();
-
-				_buffer.Enqueue(data);
-			}
-
-			public override string ToString()
-			{
-				return String.Join("\n", _buffer);
-			}
-		}
-
 		[RequiredArgument]
 		public InArgument<IBuildDetail> BuildDetail { get; set; }
 
@@ -63,9 +32,7 @@ namespace AnFake.Integration.Tfs2012
 
 		public InArgument<string> Properties { get; set; }
 
-		public InArgument<string> Script { get; set; }
-
-		public InArgument<string> ToolPath { get; set; }
+		public InArgument<string> Script { get; set; }		
 
 		public InvokeAnFake()
 		{
@@ -73,8 +40,7 @@ namespace AnFake.Integration.Tfs2012
 			CleanWorkspace = new InArgument<CleanWorkspaceOption>(CleanWorkspaceOption.Outputs);
 			PrivateDropLocation = new InArgument<string>();
 			Properties = new InArgument<string>("");
-			Script = new InArgument<string>("build.fsx");
-			ToolPath = new InArgument<string>(@".AnFake\AnFake.exe");
+			Script = new InArgument<string>("build.fsx");			
 
 			Implementation = CreateBody;
 		}
@@ -88,38 +54,13 @@ namespace AnFake.Integration.Tfs2012
 
 		private Activity CreateBody()
 		{
-			const int outputBufferCapacity = 48; // lines
-			
 			var retCode = new Variable<int>();
-			var outBuffer = new Variable<OutputBuffer>(ctx => new OutputBuffer(outputBufferCapacity));
-
-			var onOutData = new ActivityAction<string>
-			{
-				Argument = new DelegateInArgument<string>()
-			};
-			onOutData.Handler = new InvokeMethod
-			{
-				DisplayName = "OutputBuffer.Append",
-				MethodName = "Append",
-				Parameters = {new InArgument<string>(onOutData.Argument)},
-				TargetObject = new InArgument<OutputBuffer>(outBuffer)
-			};
-			var onErrData = new ActivityAction<string>
-			{
-				Argument = new DelegateInArgument<string>()
-			};
-			onErrData.Handler = new InvokeMethod
-			{				
-				DisplayName = "OutputBuffer.Append",
-				MethodName = "Append",
-				Parameters = {new InArgument<string>(onErrData.Argument)},
-				TargetObject = new InArgument<OutputBuffer>(outBuffer)
-			};
+			var dummy = new Variable<int>();
+			var outBuffer = new Variable<ProcessOutputBuffer>(ctx => new ProcessOutputBuffer());
 
 			var invokeProcess = new InvokeProcess
-			{
-				DisplayName = "Invoke AnFake.exe",
-				FileName = new InArgument<string>(ctx => Path.Combine(BuildDirectory.Get(ctx), ToolPath.Get(ctx))),
+			{				
+				FileName = new InArgument<string>(ctx => Path.Combine(BuildDirectory.Get(ctx), @".AnFake\AnFake.exe")),
 				Arguments = new InArgument<string>(
 					ctx => new Args("", "=")
 						.Param(Script.Get(ctx))
@@ -135,41 +76,71 @@ namespace AnFake.Integration.Tfs2012
 						.ToString()),
 				WorkingDirectory = new InArgument<string>(ctx => BuildDirectory.Get(ctx)),
 				Result = new OutArgument<int>(retCode),
-				OutputDataReceived = onOutData,
-				ErrorDataReceived = onErrData
+				OutputDataReceived = AppendBuffer(outBuffer, dummy),
+				ErrorDataReceived = AppendBuffer(outBuffer, dummy)
 			};
 
-			var checkExitCode = new If(ctx => retCode.Get(ctx) < 0 || retCode.Get(ctx) > 2)
+			return new Sequence
 			{
-				DisplayName = "Check Exit Code",
+				Variables = {retCode, dummy, outBuffer},
+				Activities =
+				{
+					invokeProcess, 
+					CheckExitCode(retCode, outBuffer)
+				}
+			};
+		}
+
+		/*private static string LocateAnFake(string buildDirectory)
+		{
+			var searchPath = Path.Combine(buildDirectory, "packages");
+			var newestPackage = Directory.GetDirectories(
+				searchPath,
+				"AnFake.*", 
+				SearchOption.TopDirectoryOnly)
+					.OrderByDescending(x => new Version(x.Substring(7)))
+					.FirstOrDefault();
+
+			if (newestPackage == null)
+				throw new AnFakeBuildProcessException("Unable to locate AnFake package in '{0}'.", searchPath);
+
+			return Path.Combine(newestPackage, "AnFake.exe");
+		}*/
+
+		private static ActivityAction<string> AppendBuffer(Variable<ProcessOutputBuffer> outBuffer, Variable<int> dummy)
+		{
+			var arg = new DelegateInArgument<string>();
+			return new ActivityAction<string>
+			{
+				Argument = arg,
+				Handler = new Assign
+				{
+					To = new OutArgument<int>(dummy),
+					Value = new InArgument<int>(ctx => outBuffer.Get(ctx).Append(arg.Get(ctx)))
+				}
+			};
+		}
+
+		private static If CheckExitCode(Variable<int> retCode, Variable<ProcessOutputBuffer> outBuffer)
+		{
+			return new If(ctx => retCode.Get(ctx) < 0 || retCode.Get(ctx) > 2)
+			{
 				Then = new Sequence
 				{
 					Activities =
 					{
-						new WriteBuildError
+						new Throw
 						{
-							Message = new InArgument<string>(
-								ctx => String.Format(
+							Exception = new InArgument<Exception>(
+								ctx => new AnFakeBuildProcessException(
 									"AnFake.exe has failed with exit code: {0}.\n" +
 									"============= Process Output =============\n" +
 									"{1}",
 									retCode.Get(ctx),
 									outBuffer.Get(ctx)))
-						},
-						new SetBuildProperties
-						{
-							DisplayName = "Set 'Build Failed'",
-							PropertiesToSet = BuildUpdate.Status,
-							Status = new InArgument<BuildStatus>(ctx => BuildStatus.Failed)
-						}
+						}						
 					}
 				}
-			};
-
-			return new Sequence
-			{
-				Variables = { retCode, outBuffer },
-				Activities = { invokeProcess, checkExitCode }
 			};
 		}
 	}
