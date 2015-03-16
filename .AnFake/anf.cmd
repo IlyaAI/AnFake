@@ -1,16 +1,10 @@
 @echo off
 
-if exist "%~dp0\AnFake.exe" (
-	"%~dp0\AnFake.exe" %*
-	goto eof
+if not exist "%~dp0\.AnFake" (
+	"%~dp0\$REL_PATH\AnFake.exe" [AnFakeExtras]/nuget.fsx ValidateSolution
+	if %ERRORLEVEL% neq 0 (
+		exit %ERRORLEVEL%
+	)
 )
 
-if exist "%~dp0\.AnFake\AnFake.exe" (
-	"%~dp0\.AnFake\AnFake.exe" %*
-	goto eof
-)
-
-echo "AnFake.exe not found."
-exit -1
-
-:eof
+"%~dp0\.AnFake\AnFake.exe" %*

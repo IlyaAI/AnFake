@@ -43,7 +43,7 @@ namespace AnFake.Integration.Tfs2012
 				FileName = new InArgument<string>(ctx => EmbeddedNuGetPath),
 				Arguments = new InArgument<string>(
 					ctx => new Args("-", " ")
-						.Command("restore")
+						.Command("install")
 						.Param(PackagesConfigPath.Get(ctx))
 						.Option("Source", GetSourceUrl(BuildDirectory.Get(ctx)))
 						.Option("NonInteractive", true)

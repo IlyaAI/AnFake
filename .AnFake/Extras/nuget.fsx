@@ -14,12 +14,14 @@ let curDir = Folders.Current.Path;
 
 Tfs.PlugInDeferred()
 
+let getSolutionRoot() =
+    (~~"[AnFake]")  // <sln-root>/packages/AnFake.x.y.z/bin
+        .Parent     // <sln-root>/packages/bin
+        .Parent     // <sln-root>/packages
+        .Parent     // <sln-root>
+
 "InitiateSolution" => (fun _ ->
-    let slnRoot = 
-        (~~"[AnFake]")  // <sln-root>/packages/AnFake.x.y.z/bin
-            .Parent     // <sln-root>/packages/bin
-            .Parent     // <sln-root>/packages
-            .Parent     // <sln-root>
+    let slnRoot = getSolutionRoot()
 
     let sln = (slnRoot % "*.sln").FirstOrDefault()
     if sln = null then
@@ -27,27 +29,19 @@ Tfs.PlugInDeferred()
 
     Log.InfoFormat("Initiating solution '{0}'...", sln.NameWithoutExt)
 
-    let anfCmd = (slnRoot / "anf.cmd").AsFile()
-    if not <| anfCmd.Exists() then
-        Files.Copy(~~"[AnFake]/anf.cmd", anfCmd.Path)
-        Log.Info("  'anf.cmd' generated.")
-    else
-        Log.Info("  'anf.cmd' Ok.")
+    let anfCmd = (slnRoot / "anf.cmd").AsFile()    
+    let anfCmdBody = "[AnFake]/anf.cmd".AsFile().AsTextDoc()
+    anfCmdBody.Replace(@"\$REL_PATH", (~~"[AnFake]").ToRelative(slnRoot).Spec)
+    anfCmdBody.SaveTo(anfCmd, Text.Encoding.ASCII)
+    Log.Info("  anf.cmd generated.")    
 
     let buildFsx = (slnRoot / "build.fsx").AsFile()
     if not <| buildFsx.Exists() then            
         Files.Copy(~~"[AnFake]/build.tmpl.fsx", buildFsx.Path)
-        Log.Info("  'build.fsx' generated.")
+        Log.Info("  build.fsx generated.")
     else
-        Log.Info("  'build.fsx' Ok.")
+        Log.Info("  build.fsx Ok.")
 
-    let symlink = slnRoot / ".AnFake"
-    if not <| symlink.AsFolder().Exists() then
-        SymLink.Create(symlink, "[AnFake]".AsFolder())
-        Log.Info("  '.AnFake' symlink created.")
-    else
-        Log.Info("  '.AnFake' Ok.")
-    
     let wsFile = (slnRoot / TfsWorkspace.Defaults.WorkspaceFile).AsFile()
     if not <| wsFile.Exists() then
         let tfsUriRx = @"SccTeamFoundationServer[\s\t]*=[\s\t]*(.*)" // SccTeamFoundationServer = https://server.com/path
@@ -56,17 +50,32 @@ Tfs.PlugInDeferred()
             let tfsUri = Text.Parse1Group(tfsUriLine.Text, tfsUriRx)
             MyBuild.SetProp("Tfs.Uri", tfsUri)
 
-            Log.InfoFormat("  TFS detected: '{0}'.", tfsUri)
+            Log.InfoFormat("  TFS detected: {0}.", tfsUri)
             
             Tfs.PlugIn()
 
             TfsWorkspace.SaveLocal(slnRoot)
-            Log.InfoFormat("  '{0}' generated.", wsFile.Name)
+            Log.InfoFormat("  {0} generated.", wsFile.Name)
 
-            TfsWorkspace.PendAdd([wsFile])
-            TfsWorkspace.PendAdd([buildFsx])
+            TfsWorkspace.PendAdd([wsFile; buildFsx; anfCmd])            
     else
-        Log.InfoFormat("  '{0}' Ok.", wsFile.Name)
+        Log.InfoFormat("  {0} Ok.", wsFile.Name)
         
     Log.InfoFormat("Solution '{0}' is ready to use AnFake.", sln.NameWithoutExt)
+)
+
+"ValidateSolution" => (fun _ ->
+    let slnRoot = getSolutionRoot()
+
+    Log.Info("Validating solution...")
+    
+    let anfakeLink = (slnRoot / ".AnFake").AsFolder()
+    let anfakeTarget = "[AnFake]".AsFolder();
+    if not <| JunctionPoint.Exists(anfakeLink) || JunctionPoint.GetTarget(anfakeLink) <> anfakeTarget then
+        JunctionPoint.Create(anfakeLink, anfakeTarget, true)
+        Log.Info("  /.AnFake junction point created.")
+    else
+        Log.Info("  /.AnFake Ok.")
+        
+    Log.Info("Solution is ready to use AnFake.")
 )

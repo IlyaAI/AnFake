@@ -14,7 +14,9 @@ namespace AnFake.Core
 	{
 		private static readonly string[] Locations =
 		{
-			".nuget/NuGet.exe"
+			".nuget/NuGet.exe",
+			"tools/NuGet/NuGet.exe",
+			"[AnFake]/NuGet.exe"
 		};
 
 		/// <summary>

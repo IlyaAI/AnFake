@@ -47,9 +47,10 @@ let nugetFiles =
     + "Plugins/Antlr4.StringTemplate.dll"
     + "Plugins/AnFake.Plugins.NHibernate.dll"
     + "Plugins/NHibernate.dll"
-    + "Plugins/Iesi.Collections.dll"
+    + "Plugins/Iesi.Collections.dll"    
     //+ "Plugins/AnFake.Plugins.HtmlSummary.dll" // not ready yet
     //+ "Plugins/AnFake.Plugins.HtmlSummary.zip"
+    + ~~"packages/NuGet.CommandLine.2.8.3/tools" % "NuGet.exe"
 
 let productName = "AnFake"
 let productTitle = "AnFake /Another F# Make/ runtime component"
@@ -72,6 +73,10 @@ let xamlVersion = "2"
     Folders.Clean obj
     Folders.Clean bin
     Folders.Clean out
+)
+
+"NuGetRestore" => (fun _ ->
+    NuGet.Restore("AnFake.sln".AsFile())
 )
 
 "EmbedAssemblyInfo" => (fun _ ->
