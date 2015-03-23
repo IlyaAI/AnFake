@@ -22,7 +22,7 @@ namespace AnFake.Integration.Tfs2012
 		public InArgument<string> BuildDirectory { get; set; }
 
 		[RequiredArgument]
-		public InArgument<string> PackagesConfigPath { get; set; }
+		public InArgument<string> PackagesConfig { get; set; }
 
 		public InArgument<string> Options { get; set; }
 
@@ -37,33 +37,36 @@ namespace AnFake.Integration.Tfs2012
 		private Activity CreateBody()
 		{			
 			var retCode = new Variable<int>();
+			var dummy = new Variable<int>();
+			var outBuffer = new Variable<ProcessOutputBuffer>(ctx => new ProcessOutputBuffer());
 			
 			var invokeProcess = new InvokeProcess
 			{				
 				FileName = new InArgument<string>(ctx => EmbeddedNuGetPath),
 				Arguments = new InArgument<string>(
 					ctx => new Args("-", " ")
-						.Command("install")
-						.Param(PackagesConfigPath.Get(ctx))
+						.Command("restore")
+						.Param(PackagesConfig.Get(ctx))
+						.Option("SolutionDirectory", BuildDirectory.Get(ctx))
 						.Option("Source", GetSourceUrl(BuildDirectory.Get(ctx)))
 						.Option("NonInteractive", true)
 						.Other(Options.Get(ctx))
 						.ToString()),
 				WorkingDirectory = new InArgument<string>(ctx => BuildDirectory.Get(ctx)),
 				Result = new OutArgument<int>(retCode),
-				OutputDataReceived = RedirectToLog(),
-				ErrorDataReceived = RedirectToLog()
+				OutputDataReceived = RedirectToLogAndBuffer(outBuffer, dummy),
+				ErrorDataReceived = RedirectToLogAndBuffer(outBuffer, dummy)
 			};
 
 			return new Sequence
 			{
-				Variables = { retCode },
+				Variables = { retCode, dummy, outBuffer },
 				Activities =
 				{
 					LogInfo("Restoring NuGet packages..."),
 					LogDebug("Using embedded NuGet: '{0}'.", EmbeddedNuGetPath),
 					invokeProcess,
-					CheckExitCode(retCode)
+					CheckExitCode(retCode, outBuffer)
 				}
 			};
 		}
@@ -96,21 +99,32 @@ namespace AnFake.Integration.Tfs2012
 			}
 		}
 
-		private static ActivityAction<string> RedirectToLog()
+		private static ActivityAction<string> RedirectToLogAndBuffer(Variable<ProcessOutputBuffer> outBuffer, Variable<int> dummy)
 		{
 			var arg = new DelegateInArgument<string>();
 			return new ActivityAction<string>
 			{
 				Argument = arg,
-				Handler = new WriteBuildMessage
+				Handler = new Sequence
 				{
-					Message = new InArgument<string>(arg),
-					Importance = new InArgument<BuildMessageImportance>(BuildMessageImportance.Normal)
-				}
+					Activities =
+					{
+						new WriteBuildMessage
+						{
+							Message = new InArgument<string>(arg),
+							Importance = new InArgument<BuildMessageImportance>(BuildMessageImportance.High)
+						},
+						new Assign
+						{
+							To = new OutArgument<int>(dummy),
+							Value = new InArgument<int>(ctx => outBuffer.Get(ctx).Append(arg.Get(ctx)))
+						}
+					}
+				}				
 			};
 		}
 
-		private static If CheckExitCode(Variable<int> retCode)
+		private static If CheckExitCode(Variable<int> retCode, Variable<ProcessOutputBuffer> outBuffer)
 		{
 			return new If(ctx => retCode.Get(ctx) != 0)
 			{				
@@ -121,7 +135,12 @@ namespace AnFake.Integration.Tfs2012
 						new Throw
 						{
 							Exception = new InArgument<Exception>(
-								ctx => new AnFakeBuildProcessException("NuGet.exe has failed with exit code: {0}.", retCode.Get(ctx)))
+								ctx => new AnFakeBuildProcessException(
+									"NuGet.exe has failed with exit code: {0}.\n" +
+									"============= Process Output =============\n" +
+									"{1}",
+									retCode.Get(ctx),
+									outBuffer.Get(ctx)))
 						}
 					}
 				}

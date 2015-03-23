@@ -29,15 +29,37 @@ let getSolutionRoot() =
 
     Log.InfoFormat("Initiating solution '{0}'...", sln.NameWithoutExt)
 
+    let anfakePath = (~~"[AnFake]").ToRelative(slnRoot).Spec
+
+    let mutable undoNeeded = false
+    let nugetConfig = (slnRoot / ".nuget/NuGet.config").AsFile()
+    if not <| nugetConfig.Exists() then
+        undoNeeded <- true
+
+        let nugetConfigBody = "<configuration/>".AsXmlDoc()
+        let node = 
+            nugetConfigBody.Root
+                .Append("solution")
+                .Append("add")
+        node.SetAttr("key", "disableSourceControlIntegration")
+        node.SetAttr("value", "true")
+
+        nugetConfigBody.SaveTo(nugetConfig)
+        Log.Info("  NuGet.config generated.")
+    else
+        Log.Info("  NuGet.config Ok.")
+
     let anfCmd = (slnRoot / "anf.cmd").AsFile()    
     let anfCmdBody = "[AnFake]/anf.cmd".AsFile().AsTextDoc()
-    anfCmdBody.Replace(@"\$REL_PATH", (~~"[AnFake]").ToRelative(slnRoot).Spec)
+    anfCmdBody.Replace(@"\[\.AnFake\]", anfakePath)
     anfCmdBody.SaveTo(anfCmd, Text.Encoding.ASCII)
     Log.Info("  anf.cmd generated.")    
 
     let buildFsx = (slnRoot / "build.fsx").AsFile()
-    if not <| buildFsx.Exists() then            
-        Files.Copy(~~"[AnFake]/build.tmpl.fsx", buildFsx.Path)
+    if not <| buildFsx.Exists() then
+        let buildFsxBody = "[AnFake]/build.tmpl.fsx".AsFile().AsTextDoc()
+        buildFsxBody.Replace(@"\[\.AnFake\]", anfakePath)
+        buildFsxBody.SaveTo(buildFsx)
         Log.Info("  build.fsx generated.")
     else
         Log.Info("  build.fsx Ok.")
@@ -57,25 +79,12 @@ let getSolutionRoot() =
             TfsWorkspace.SaveLocal(slnRoot)
             Log.InfoFormat("  {0} generated.", wsFile.Name)
 
-            TfsWorkspace.PendAdd([wsFile; buildFsx; anfCmd])            
+            TfsWorkspace.PendAdd([wsFile; buildFsx; anfCmd; nugetConfig])
+
+            if undoNeeded then
+                TfsWorkspace.Undo(!!!MyBuild.GetProp("__1"))
     else
         Log.InfoFormat("  {0} Ok.", wsFile.Name)
         
     Log.InfoFormat("Solution '{0}' is ready to use AnFake.", sln.NameWithoutExt)
-)
-
-"ValidateSolution" => (fun _ ->
-    let slnRoot = getSolutionRoot()
-
-    Log.Info("Validating solution...")
-    
-    let anfakeLink = (slnRoot / ".AnFake").AsFolder()
-    let anfakeTarget = "[AnFake]".AsFolder();
-    if not <| JunctionPoint.Exists(anfakeLink) || JunctionPoint.GetTarget(anfakeLink) <> anfakeTarget then
-        JunctionPoint.Create(anfakeLink, anfakeTarget, true)
-        Log.Info("  /.AnFake junction point created.")
-    else
-        Log.Info("  /.AnFake Ok.")
-        
-    Log.Info("Solution is ready to use AnFake.")
 )

@@ -60,7 +60,7 @@ namespace AnFake.Integration.Tfs2012
 
 			var invokeProcess = new InvokeProcess
 			{				
-				FileName = new InArgument<string>(ctx => Path.Combine(BuildDirectory.Get(ctx), @".AnFake\AnFake.exe")),
+				FileName = new InArgument<string>(ctx => Path.Combine(BuildDirectory.Get(ctx), @"anf.cmd")),
 				Arguments = new InArgument<string>(
 					ctx => new Args("", "=")
 						.Param(Script.Get(ctx))
@@ -91,21 +91,21 @@ namespace AnFake.Integration.Tfs2012
 			};
 		}
 
-		/*private static string LocateAnFake(string buildDirectory)
-		{
-			var searchPath = Path.Combine(buildDirectory, "packages");
-			var newestPackage = Directory.GetDirectories(
-				searchPath,
-				"AnFake.*", 
-				SearchOption.TopDirectoryOnly)
-					.OrderByDescending(x => new Version(x.Substring(7)))
-					.FirstOrDefault();
-
-			if (newestPackage == null)
-				throw new AnFakeBuildProcessException("Unable to locate AnFake package in '{0}'.", searchPath);
-
-			return Path.Combine(newestPackage, "AnFake.exe");
-		}*/
+//		private static string LocateAnFake(string buildDirectory)
+//		{
+//			var searchPath = Path.Combine(buildDirectory, "packages");
+//			var newestPackage = Directory.GetDirectories(
+//				searchPath,
+//				"AnFake.*", 
+//				SearchOption.TopDirectoryOnly)
+//					.OrderByDescending(x => new Version(x.Substring(7)))
+//					.FirstOrDefault();
+//
+//			if (newestPackage == null)
+//				throw new AnFakeBuildProcessException("Unable to locate AnFake package in '{0}'.", searchPath);
+//
+//			return Path.Combine(newestPackage, "AnFake.exe");
+//		}
 
 		private static ActivityAction<string> AppendBuffer(Variable<ProcessOutputBuffer> outBuffer, Variable<int> dummy)
 		{

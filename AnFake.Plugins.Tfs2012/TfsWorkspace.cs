@@ -404,12 +404,36 @@ namespace AnFake.Plugins.Tfs2012
 				Trace.DebugFormat("  {0}", file);
 			}
 
-			ws.Undo(
+			var reverted = ws.Undo(
 				filesArray
 					.Select(x => new ItemSpec(x.Path.Full, RecursionType.None))
 					.ToArray());
 
-			Trace.InfoFormat("{0} file(s) reverted.", filesArray.Length);
+			Trace.InfoFormat("{0} file(s) reverted.", reverted);
+		}
+
+		public static void Undo(IEnumerable<FolderItem> folders)
+		{
+			if (folders == null)
+				throw new ArgumentException("TfsWorkspace.Undo(folders): folders must not be null");
+
+			var foldersArray = folders.ToArray();
+
+			var ws = Impl.GetWorkspace(foldersArray[0].Path);
+
+			Trace.InfoFormat("TfsWorkspace.Undo: {{{0}}}", folders.ToFormattedString());
+
+			foreach (var folder in foldersArray)
+			{
+				Trace.DebugFormat("  {0}", folder);
+			}
+
+			var reverted = ws.Undo(
+				foldersArray
+					.Select(x => new ItemSpec(x.Path.Full, RecursionType.Full))
+					.ToArray());
+
+			Trace.InfoFormat("{0} item(s) reverted.", reverted);
 		}
 
 		private static void EnsureWorkspaceFile(Params parameters)
