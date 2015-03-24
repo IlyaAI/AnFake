@@ -4,31 +4,49 @@ namespace AnFake.Core
 {
 	public static class UserInterop
 	{
-		public static string Prompt(string name, string hint = null)
+		public static string Prompt(string name, string hint = null, Action<string> validate = null)
 		{
 			if (String.IsNullOrEmpty(name))
 				throw new ArgumentException("UserInterop.Prompt(name[, hint]): name must not be null or empty");
 
-			var prevColor = Console.ForegroundColor;
+			while (true)
+			{			
+				var prevColor = Console.ForegroundColor;
 
-			Console.WriteLine();
+				Console.WriteLine();
 
-			if (!String.IsNullOrWhiteSpace(hint))
-			{
-				Console.ForegroundColor = ConsoleColor.DarkYellow;				
-				Console.WriteLine(hint);
-			}
+				if (!String.IsNullOrWhiteSpace(hint))
+				{
+					Console.ForegroundColor = ConsoleColor.DarkYellow;
+					Console.WriteLine(hint);
+				}
 
-			Console.ForegroundColor = ConsoleColor.Cyan;
-			Console.Write(name);
-			Console.Write("> ");
+				Console.ForegroundColor = ConsoleColor.Cyan;
+				Console.Write(name);
+				Console.Write("> ");
 
-			Console.ForegroundColor = ConsoleColor.White;
-			var value = Console.ReadLine();
-			Console.WriteLine();
+				Console.ForegroundColor = ConsoleColor.White;
+				var value = Console.ReadLine();
+				Console.WriteLine();
 
-			Console.ForegroundColor = prevColor;
-			return value;
+				if (validate != null)
+				{
+					try
+					{
+						validate(value);
+					}
+					catch (Exception e)
+					{
+						Console.ForegroundColor = ConsoleColor.Red;
+						Console.WriteLine(e.Message);
+						continue;
+					}
+				}
+
+				Console.ForegroundColor = prevColor;
+
+				return value;
+			}					
 		}
 
 		public static bool Confirm(string operation, string hint = null)

@@ -118,7 +118,7 @@ Tfs.PlugInDeferred()
 )
 
 "SetUpTeamProjects" => (fun _ ->
-    if not <| MyBuild.HasProp("Tfs.Uri") then        
+    if not <| MyBuild.HasProp("Tfs.Uri") then
         MyBuild.SetProp(
             "Tfs.Uri",
             UserInterop.Prompt(

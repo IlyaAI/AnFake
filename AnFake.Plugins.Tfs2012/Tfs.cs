@@ -51,6 +51,11 @@ namespace AnFake.Plugins.Tfs2012
 			_registered = true;
 		}
 
+		public static void CheckConnection(string tfsUri)
+		{
+			
+		}
+
 		private static TfsPlugin _impl;
 
 		private static TfsPlugin Impl
