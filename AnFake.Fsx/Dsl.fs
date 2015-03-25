@@ -31,11 +31,13 @@ let skipErrors (target: Target) = target.SkipErrors()
 
 let failIfAnyWarning (target: Target) = target.FailIfAnyWarning()
 
-let noInt () = new Nullable<Int32>()
+let nullInt () = new Nullable<Int32>()
 
-let noLong () = new Nullable<Int64>()
+let nullLong () = new Nullable<Int64>()
 
-let noBool () = new Nullable<bool>()
+let nullBool () = new Nullable<bool>()
+
+let doNothing = fun () -> ()
 
 [<Extension>]
 type FsxHelper () =

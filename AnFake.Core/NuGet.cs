@@ -16,6 +16,7 @@ namespace AnFake.Core
 		{
 			".nuget/NuGet.exe",
 			"tools/NuGet/NuGet.exe",
+			"packages/NuGet.CommandLine.*/tools/NuGet.exe",
 			"[AnFake]/NuGet.exe"
 		};
 

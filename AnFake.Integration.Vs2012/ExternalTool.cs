@@ -6,6 +6,12 @@ namespace AnFake.Integration.Vs2012
 {
 	public sealed class ExternalTool
 	{
+		public const int OptionNone					= 0x00;
+		public const int OptionCloseOnExit			= 0x02;
+		public const int OptionPromptArgs			= 0x04;
+		public const int OptionUseOutWindow			= 0x08;
+		public const int OptionTreatOutAsUnicode	= 0x40;
+
 		private const string ToolTitle = "ToolTitle{0}";
 		private const string ToolCmd = "ToolCmd{0}";
 		private const string ToolDir = "ToolDir{0}";
@@ -14,6 +20,11 @@ namespace AnFake.Integration.Vs2012
 		private const string ToolSourceKey = "ToolSourceKey{0}";
 		private const string ToolTitlePkg = "ToolTitlePkg{0}";
 		private const string ToolTitleResId = "ToolTitleResID{0}";
+
+		public ExternalTool()
+		{
+			Options = 0x10; // Unidentified default value
+		}
 
 		public string Title { get; set; }
 
@@ -65,39 +76,79 @@ namespace AnFake.Integration.Vs2012
 		{
 			return new ExternalTool
 			{
-				Title = key.GetValue(String.Format(ToolTitle, index), "").ToString(),
-				Command = key.GetValue(String.Format(ToolCmd, index), "").ToString(),
-				InitialDirectory = key.GetValue(String.Format(ToolDir, index), "").ToString(),
-				Arguments = key.GetValue(String.Format(ToolArg, index), "").ToString(),
-				Options = (int) key.GetValue(String.Format(ToolOpt, index), 0),
-				SourceKey = key.GetValue(String.Format(ToolSourceKey, index), "").ToString(),
-				TitlePackage = key.GetValue(String.Format(ToolTitlePkg, index), "").ToString(),
-				TitleResourceId = key.GetValue(String.Format(ToolTitleResId, index), "").ToString(),
+				Title = GetStringValue(key, ToolTitle, index),
+				Command = GetStringValue(key, ToolCmd, index),
+				InitialDirectory = GetStringValue(key, ToolDir, index),
+				Arguments = GetStringValue(key, ToolArg, index),
+				Options = GetIntValue(key, ToolOpt, index),
+				SourceKey = GetStringValue(key, ToolSourceKey, index),
+				TitlePackage = GetStringValue(key, ToolTitlePkg, index),
+				TitleResourceId = GetStringValue(key, ToolTitleResId, index)
 			};
 		}		
 
 		private static void Write(ExternalTool tool, RegistryKey key, int index)
 		{
-			key.SetValue(String.Format(ToolTitle, index), tool.Title, RegistryValueKind.String);
-			key.SetValue(String.Format(ToolCmd, index), tool.Command, RegistryValueKind.String);
-			key.SetValue(String.Format(ToolDir, index), tool.InitialDirectory, RegistryValueKind.String);
-			key.SetValue(String.Format(ToolArg, index), tool.Arguments, RegistryValueKind.String);
-			key.SetValue(String.Format(ToolOpt, index), tool.Options, RegistryValueKind.DWord);
-			key.SetValue(String.Format(ToolSourceKey, index), tool.SourceKey, RegistryValueKind.String);
-			key.SetValue(String.Format(ToolTitlePkg, index), tool.TitlePackage, RegistryValueKind.String);
-			key.SetValue(String.Format(ToolTitleResId, index), tool.TitleResourceId, RegistryValueKind.String);
+			SetStringValue(key, ToolTitle, index, tool.Title);
+			SetStringValue(key, ToolCmd, index, tool.Command);
+			SetStringValue(key, ToolDir, index, tool.InitialDirectory);
+			SetStringValue(key, ToolArg, index, tool.Arguments);
+			SetIntValue(key, ToolOpt, index, tool.Options);
+			SetStringValue(key, ToolSourceKey, index, tool.SourceKey);
+			SetStringValue(key, ToolTitlePkg, index, tool.TitlePackage);
+			SetStringValue(key, ToolTitleResId, index, tool.TitleResourceId);
 		}
 
 		private static void Remove(RegistryKey key, int index)
 		{
-			key.DeleteValue(String.Format(ToolTitle, index));
-			key.DeleteValue(String.Format(ToolCmd, index));
-			key.DeleteValue(String.Format(ToolDir, index));
-			key.DeleteValue(String.Format(ToolArg, index));
-			key.DeleteValue(String.Format(ToolOpt, index));
-			key.DeleteValue(String.Format(ToolSourceKey, index));
-			key.DeleteValue(String.Format(ToolTitlePkg, index));
-			key.DeleteValue(String.Format(ToolTitleResId, index));
+			DeleteValue(key, ToolTitle, index);
+			DeleteValue(key, ToolCmd, index);
+			DeleteValue(key, ToolDir, index);
+			DeleteValue(key, ToolArg, index);
+			DeleteValue(key, ToolOpt, index);
+			DeleteValue(key, ToolSourceKey, index);
+			DeleteValue(key, ToolTitlePkg, index);
+			DeleteValue(key, ToolTitleResId, index);
+		}
+
+		private static string GetStringValue(RegistryKey key, string name, int index)
+		{
+			var val = key.GetValue(String.Format(name, index), null);
+			
+			return val != null 
+				? val.ToString() 
+				: null;
+		}
+
+		private static int GetIntValue(RegistryKey key, string name, int index)
+		{
+			var val = key.GetValue(String.Format(name, index), null);
+
+			return val != null
+				? (int)val
+				: 0;
+		}
+
+		private static void SetStringValue(RegistryKey key, string name, int index, string value)
+		{
+			if (value == null)
+			{
+				key.DeleteValue(String.Format(name, index), false);
+			}
+			else
+			{
+				key.SetValue(String.Format(name, index), value, RegistryValueKind.String);
+			}
+		}
+
+		private static void SetIntValue(RegistryKey key, string name, int index, int value)
+		{
+			key.SetValue(String.Format(name, index), value, RegistryValueKind.DWord);
+		}
+
+		private static void DeleteValue(RegistryKey key, string name, int index)
+		{			
+			key.DeleteValue(String.Format(name, index), false);
 		}
 	}
 }

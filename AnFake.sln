@@ -48,6 +48,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".AnFake", ".AnFake", "{9039
 		.AnFake\anf.cmd = .AnFake\anf.cmd
 		.AnFake\Antlr4.Runtime.dll = .AnFake\Antlr4.Runtime.dll
 		.AnFake\build.tmpl.fsx = .AnFake\build.tmpl.fsx
+		.AnFake\vs-setup.cmd = .AnFake\vs-setup.cmd
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Extras", "Extras", "{CBAFFC16-B785-46E1-8C90-1CAD1115D3D3}"

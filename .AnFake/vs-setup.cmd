@@ -1,0 +1,1 @@
+@"%~dp0\AnFake.exe" [AnFakeExtras]\vs-setup.fsx %*

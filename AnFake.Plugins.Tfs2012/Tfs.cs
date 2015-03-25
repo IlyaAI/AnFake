@@ -1,6 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using AnFake.Core;
 using Microsoft.TeamFoundation.Client;
+using Microsoft.TeamFoundation.Framework.Common;
+using Microsoft.TeamFoundation.Server;
 
 namespace AnFake.Plugins.Tfs2012
 {
@@ -51,9 +55,16 @@ namespace AnFake.Plugins.Tfs2012
 			_registered = true;
 		}
 
+		/// <summary>
+		///		Checks TFS connection. Throws if something wrong.
+		/// </summary>
+		/// <param name="tfsUri">TFS connection URI</param>
 		public static void CheckConnection(string tfsUri)
 		{
-			
+			using (var teamProjectCollection = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(new Uri(tfsUri)))
+			{
+				teamProjectCollection.Connect(ConnectOptions.None);
+			}			
 		}
 
 		private static TfsPlugin _impl;
@@ -110,6 +121,28 @@ namespace AnFake.Plugins.Tfs2012
 				throw new ArgumentException("Tfs.AsServerPath(path): path must not be null");
 
 			return new ServerPath(path, false);
+		}
+
+		/// <summary>
+		///		Gets list of available projects.
+		/// </summary>
+		/// <returns></returns>
+		public static IEnumerable<string> GetTeamProjects()
+		{
+			return Impl.TeamProjectCollection
+				.GetService<ICommonStructureService>()
+				.ListProjects()
+				.Select(x => x.Name);
+		}
+
+		/// <summary>
+		///		Returns true if project with specified name exists in collection and false other wise.
+		/// </summary>
+		/// <param name="name">team project name</param>
+		/// <returns>true if exists</returns>
+		public static bool HasTeamProject(string name)
+		{
+			return GetTeamProjects().Any(x => x == name);
 		}
 
 		/// <summary>

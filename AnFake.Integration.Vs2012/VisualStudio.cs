@@ -37,16 +37,16 @@ namespace AnFake.Integration.Vs2012
 
 		public static void SetExternalTools(Version version, List<ExternalTool> tools)
 		{
-			using (var key = OpenSubKey(Registry.CurrentUser, version, KeyExternalTools))
+			using (var key = OpenSubKey(Registry.CurrentUser, version, KeyExternalTools, true))
 			{
 				ExternalTool.Write(key, tools);
 			}
 		}
 
-		private static RegistryKey OpenSubKey(RegistryKey parent, Version version, string subKey)
+		private static RegistryKey OpenSubKey(RegistryKey parent, Version version, string subKey, bool writeable = false)
 		{
 			var keyPath = String.Format(@"{0}\{1}\{2}", KeyBase, version, subKey);
-			var key = parent.OpenSubKey(keyPath);
+			var key = parent.OpenSubKey(keyPath, writeable);
 			if (key == null)
 				throw new InvalidOperationException(String.Format(@"Unable to open registry key '{0}\{1}'.", parent.Name, keyPath));
 

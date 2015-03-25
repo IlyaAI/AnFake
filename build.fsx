@@ -18,6 +18,7 @@ let product =
     + "AnFake.Api.Pipeline/*.csproj"
 let plugins = 
     !!"AnFake.Plugins.*/*.csproj" 
+    + "AnFake.Integration.Vs2012/*.csproj" 
     - "AnFake.Plugins.*.Test/*.csproj"
 let extras = ~~".AnFake/Extras" % "*"
 let cmds = ~~".AnFake" % "*.cmd"
@@ -40,6 +41,7 @@ let nugetFiles =
     + "FSharp.Core.sigdata"
     + "Extras/*"
     + "Plugins/AnFake.Integration.Tfs2012.*.dll"
+    + "Plugins/AnFake.Integration.Vs2012.dll"
     + "Plugins/*.xaml"
     + "Plugins/AnFake.Plugins.*.xml"
     + "Plugins/AnFake.Plugins.Tfs2012.dll"
@@ -57,6 +59,7 @@ let productTitle = "AnFake /Another F# Make/ runtime component"
 let productDescription = "AnFake: Another F# Make"
 let productAuthor = "Ilya A. Ivanov"
 let productVersion = "1.0.4".AsVersion()
+let productHome = "https://github.com/IlyaAI/AnFake/wiki"
 
 //
 // IMPORTANT! 
@@ -142,6 +145,7 @@ let xamlVersion = "2"
         meta.Version <- productVersion
         meta.Authors <- productAuthor
         meta.Description <- productDescription
+        meta.ProjectUrl <- productHome
     )
 
     nuspec.AddFiles(nugetFiles, "bin")
