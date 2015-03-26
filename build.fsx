@@ -55,11 +55,16 @@ let nugetFiles =
     + ~~"packages/NuGet.CommandLine.2.8.3/tools" % "NuGet.exe"
 
 let productName = "AnFake"
-let productTitle = "AnFake /Another F# Make/ runtime component"
-let productDescription = "AnFake: Another F# Make"
+let productTitle = "AnFake: Another F# Make. Use eighther F# or C# script for your build definitions in Ms Team Build."
+let productDescription = 
+    "AnFake: Another F# Make. " + 
+    "Use eighther F# or C# script for your build definitions in Ms Team Build, " + 
+    "forget about build process templates! " +
+    "Integration with TFS 2012/2013 provided out-of-box."
 let productAuthor = "Ilya A. Ivanov"
 let productVersion = "1.0.4".AsVersion()
 let productHome = "https://github.com/IlyaAI/AnFake/wiki"
+let productTags = "build f# c# tfs"
 
 //
 // IMPORTANT! 
@@ -146,6 +151,8 @@ let xamlVersion = "2"
         meta.Authors <- productAuthor
         meta.Description <- productDescription
         meta.ProjectUrl <- productHome
+        meta.Summary <- productTitle
+        meta.Tags <- productTags
     )
 
     nuspec.AddFiles(nugetFiles, "bin")
@@ -225,4 +232,4 @@ let xamlVersion = "2"
 
 "Build" <== ["Compile"; "Custom.ZipHtmlSummary"; "Test.Unit"]
 
-"Package" <== ["Package.Pack"; "Package.Push"]
+"Package" <== ["Package.Zip"; "Package.Pack"; "Package.Push"]

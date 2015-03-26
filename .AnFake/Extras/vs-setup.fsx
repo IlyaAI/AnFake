@@ -56,10 +56,21 @@ let vsSupportedVersions =
 
 let vsExternalTools = 
     [
-        "AnFake Checkout",   "[AnFake]/anf-tf.cmd", "Checkout",  null,             ExternalTool.OptionNone
-        "AnFake Get Latest", "[AnFake]/anf-tf.cmd", "GetLatest", "$(SolutionDir)", ExternalTool.OptionNone
-        "AnFake Build",      "anf.cmd",             "Build",     "$(SolutionDir)", ExternalTool.OptionPromptArgs        
+        "AnFake Checkout",     "[AnFake]/anf-tf.cmd", "Checkout",          null,             ExternalTool.OptionNone
+        "AnFake Get Specific", "[AnFake]/anf-tf.cmd", "GetSpecific Cnnnn", "$(SolutionDir)", ExternalTool.OptionPromptArgs
+        "AnFake Get Latest",   "[AnFake]/anf-tf.cmd", "GetLatest",         "$(SolutionDir)", ExternalTool.OptionNone
+        "AnFake Build",        "anf.cmd",             "Build",             "$(SolutionDir)", ExternalTool.OptionPromptArgs
     ]
+
+"Build" => (fun _ ->
+    Log.Info("")
+    Log.Info("Usage: vs-setup[.cmd] <command> [<param>] ...")
+    Log.Info("COMMANDS:")
+    Log.Info("  Tools         - setup external tools in VisualStudio.")
+    Log.Info("  BuildTemplate - setup build process template in Team Build.")
+    
+    MyBuild.Failed "Command is missed."
+)
 
 "Tools" => (fun _ ->
     plugInTfs()
@@ -79,7 +90,7 @@ let vsExternalTools =
             if not <| tools.Any(fun x -> x.Title = title) then
                 let tool = new ExternalTool()
                 tool.Title <- title            
-                tool.Command <- (~~cmd).Full
+                tool.Command <- (~~cmd).Spec
                 tool.Arguments <- args
                 tool.InitialDirectory <- if dir <> null then dir else projHome
                 tool.Options <- tool.Options ||| opt
