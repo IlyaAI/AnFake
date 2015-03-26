@@ -52,15 +52,16 @@ let getSolutionRoot() =
     anfCmdBody.Replace(@"\[\.AnFake\]", anfakePath)
     anfCmdBody.SaveTo(anfCmd, Text.Encoding.ASCII)
     Log.Info("  anf.cmd generated.")    
-
-    let buildFsx = (slnRoot / "build.fsx").AsFile()
-    if not <| buildFsx.Exists() then
-        let buildFsxBody = "[AnFake]/build.tmpl.fsx".AsFile().AsTextDoc()
-        buildFsxBody.Replace(@"\[\.AnFake\]", anfakePath)
-        buildFsxBody.SaveTo(buildFsx)
-        Log.Info("  build.fsx generated.")
-    else
-        Log.Info("  build.fsx Ok.")
+    
+    for sx in ["fsx"; "csx"] do
+        let buildSx = (slnRoot / "build." + sx).AsFile()
+        if not <| buildSx.Exists() then
+            let buildSxBody = ("[AnFake]/build.tmpl." + sx).AsFile().AsTextDoc()
+            buildSxBody.Replace(@"\[\.AnFake\]", anfakePath)
+            buildSxBody.SaveTo(buildSx)
+            Log.InfoFormat("  build.{0} generated.", sx)
+        else
+            Log.InfoFormat("  build.{0} Ok.", sx)
 
     let wsFile = (slnRoot / TfsWorkspace.Defaults.WorkspaceFile).AsFile()
     if not <| wsFile.Exists() then
@@ -69,6 +70,7 @@ let getSolutionRoot() =
         if tfsUriLine <> null then
             let tfsUri = Text.Parse1Group(tfsUriLine.Text, tfsUriRx)
             MyBuild.SetProp("Tfs.Uri", tfsUri)
+            MyBuild.SaveProp("Tfs.Uri")
 
             Log.InfoFormat("  TFS detected: {0}.", tfsUri)
             
@@ -77,8 +79,13 @@ let getSolutionRoot() =
             TfsWorkspace.SaveLocal(slnRoot)
             Log.InfoFormat("  {0} generated.", wsFile.Name)
 
-            TfsWorkspace.PendAdd([wsFile; buildFsx; anfCmd; nugetConfig])
-
+            TfsWorkspace.PendAdd([wsFile; anfCmd; nugetConfig])
+            TfsWorkspace.PendAdd(
+                ["fsx"; "csx"].Select(
+                    fun sx -> (slnRoot / "build." + sx).AsFile()
+                )
+            )
+            
             if undoNeeded then
                 TfsWorkspace.Undo(!!!MyBuild.GetProp("__1"))
     else

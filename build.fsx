@@ -93,7 +93,7 @@ let xamlVersion = "2"
         fun p -> 
             p.Title <- productTitle
             p.Product <- productName
-            p.Description <- productDescription
+            p.Description <- ""
             p.Copyright <- String.Format("{0} {1}", productAuthor, DateTime.Now.Year)
             p.Version <- productVersion
         ) |> ignore    

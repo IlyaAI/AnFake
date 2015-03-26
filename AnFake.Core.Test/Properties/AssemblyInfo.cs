@@ -5,8 +5,8 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("AnFake /Another F# Make/ runtime component")]
-[assembly: AssemblyDescription("AnFake: Another F# Make")]
+[assembly: AssemblyTitle("AnFake: Another F# Make. Use eighther F# or C# script for your build definitions in Ms Team Build.")]
+[assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("AnFake")]

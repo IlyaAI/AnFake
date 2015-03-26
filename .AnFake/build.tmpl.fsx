@@ -29,9 +29,13 @@ let product =
     let obj = !!!"*/obj"
     let bin = !!!"*/bin"
 
-    Folders.Clean obj
-    Folders.Clean bin
-    Folders.Clean out
+    Folders.Clean(obj)
+    Folders.Clean(bin)
+    Folders.Clean(out)
+)
+
+"NuGetRestore" => (fun _ ->
+    NuGet.Restore()
 )
 
 "Compile" => (fun _ ->
@@ -60,6 +64,6 @@ let product =
 //
 "Drop" => (fun _ -> ())
 
-"Test" <== ["Test.Unit"]            // 'Test' consists of 'Test.Unit'
+"Test" <== ["Test.Unit"]                            // 'Test' consists of 'Test.Unit'
 
-"Build" <== ["Compile"; "Test"]     // 'Build' consists of 'Compile' and 'Test'
+"Build" <== ["NuGetRestore"; "Compile"; "Test"]     // 'Build' consists of 'NuGetRestore', 'Compile' and 'Test'

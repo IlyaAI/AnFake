@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
 using AnFake.Api;
+using AnFake.Core.Exceptions;
 
 namespace AnFake.Core
 {
@@ -192,6 +193,27 @@ namespace AnFake.Core
 			result
 				.FailIfAnyError("Target terminated due to NuGet errors.")
 				.FailIfExitCodeNonZero(String.Format("NuGet.Install failed with exit code {0}. Package: {1}", result.ExitCode, packageIdOrConfigPath));
+		}
+
+		///  <summary>
+		/// 		Equals to <see cref="Restore(AnFake.Core.FileItem,System.Action{AnFake.Core.NuGet.Params})">Restore("*.sln".AsFileSet().Single(), p => {})</see>.
+		///  </summary>		
+		///  <seealso cref="http://docs.nuget.org/docs/reference/command-line-reference"/>		
+		public static void Restore()
+		{
+			var slns = "*.sln".AsFileSet().ToArray();
+			
+			if (slns.Length == 0)
+				throw new InvalidConfigurationException(String.Format("There is no one solution found in '{0}'.", FileSystemPath.Base));
+
+			if (slns.Length > 1)
+				throw new InvalidConfigurationException(
+					String.Format(
+						"There are multiple solutions found in '{0}'.\n" +
+						"Hint: use NuGet.Restore(\"<my-solution>.sln\".AsFile()) instead.", 
+						FileSystemPath.Base));
+
+			Restore(slns[0], p => { });
 		}
 
 		///  <summary>
