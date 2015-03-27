@@ -46,6 +46,9 @@ namespace AnFake.Api
 		[DataMember(EmitDefaultValue = false)]
 		public string Target { get; set; }
 
+		[DataMember(EmitDefaultValue = false)]
+		public int NodeId { get; set; }
+
 		[DataMember]
 		public List<Hyperlink> Links
 		{
@@ -60,13 +63,16 @@ namespace AnFake.Api
 		///         Message text is a default string representation. Additionally the following information might be included:
 		///     </para>
 		///		<para>
-		///			m - message itself prefixed with code (if any)
+		///			m - message itself prefixed with node id and/or code (if any)
 		///		</para>
 		///     <para>
 		///         l - link if specified;
 		///     </para>
 		///     <para>
-		///         f - file/project reference if specified;
+		///         f - file/project reference if specified (for warning or error only);
+		///     </para>
+		///		<para>
+		///         F - file/project reference if specified (for all levels);
 		///     </para>
 		///     <para>
 		///         d - details if specified;
@@ -83,13 +89,16 @@ namespace AnFake.Api
 			foreach (var field in format)
 			{
 				switch (field)
-				{
+				{					
 					case 'm':
 						if (sb.Length > 0) 
 							sb.AppendLine();
 
+						if (NodeId != 0)
+							sb.Append(NodeId).Append("> ");
+
 						if (!String.IsNullOrEmpty(Code))			
-							sb.Append(Code).Append(": ");						
+							sb.Append(Code).Append(": ");
 
 						sb.Append(Message);
 						break;
@@ -107,26 +116,30 @@ namespace AnFake.Api
 						}
 						break;
 
+					case 'F':
 					case 'f':
-						if (!String.IsNullOrEmpty(File))
+						if (field == 'F' || Level >= TraceMessageLevel.Warning)
 						{
-							if (sb.Length > 0)
-								sb.AppendLine();
+							if (!String.IsNullOrEmpty(File))
+							{
+								if (sb.Length > 0)
+									sb.AppendLine();
 
-							sb.Append(' ', ident).Append(File);
-							if (Line > 0)							
-								sb.AppendFormat(" Ln: {0}", Line);
-							
-							if (Column > 0)
-								sb.AppendFormat(" Col: {0}", Column);							
-						}
+								sb.Append(' ', ident).Append(File);
+								if (Line > 0)
+									sb.AppendFormat(" Ln: {0}", Line);
 
-						if (!String.IsNullOrEmpty(Project))
-						{
-							if (sb.Length > 0)
-								sb.AppendLine();
+								if (Column > 0)
+									sb.AppendFormat(" Col: {0}", Column);
+							}
 
-							sb.Append(' ', ident).Append(Project);
+							if (!String.IsNullOrEmpty(Project))
+							{
+								if (sb.Length > 0)
+									sb.AppendLine();
+
+								sb.Append(' ', ident).Append(Project);
+							}
 						}
 						break;
 

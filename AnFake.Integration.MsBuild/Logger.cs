@@ -82,9 +82,7 @@ namespace AnFake.Integration.MsBuild
 				e.LineNumber, 
 				e.Code, 
 				e.Message,
-				e.BuildEventContext != null 
-					? (int?)e.BuildEventContext.NodeId
-					: null);
+				e.BuildEventContext != null ? e.BuildEventContext.NodeId : 0);
 		}
 
 		private void OnWarning(object sender, BuildWarningEventArgs e)
@@ -97,9 +95,7 @@ namespace AnFake.Integration.MsBuild
 				e.ColumnNumber, 
 				e.Code, 
 				e.Message,
-				e.BuildEventContext != null
-					? (int?)e.BuildEventContext.NodeId
-					: null);
+				e.BuildEventContext != null ? e.BuildEventContext.NodeId : 0);
 		}
 
 		private void OnError(object sender, BuildErrorEventArgs e)
@@ -112,20 +108,13 @@ namespace AnFake.Integration.MsBuild
 				e.ColumnNumber, 
 				e.Code, 
 				e.Message,
-				e.BuildEventContext != null
-					? (int?)e.BuildEventContext.NodeId
-					: null);
+				e.BuildEventContext != null ? e.BuildEventContext.NodeId : 0);
 		}
 
-		private void TraceMessage(TraceMessageLevel level, string project, string file, int line, int col, string code, string message, int? nodeId)
+		private void TraceMessage(TraceMessageLevel level, string project, string file, int line, int col, string code, string message, int nodeId)
 		{
 			try
 			{
-				if (nodeId != null)
-				{
-					message = String.Format("{0}> {1}", nodeId, message);
-				}
-
 				Trace.Message(new TraceMessage(level, message)
 				{
 					Code = code,
@@ -133,7 +122,8 @@ namespace AnFake.Integration.MsBuild
 					Project = project,
 					Line = line,
 					Column = col,
-					Target = AnFakeTarget
+					Target = AnFakeTarget,
+					NodeId = nodeId
 				});
 			}
 				// ReSharper disable once EmptyGeneralCatchClause
