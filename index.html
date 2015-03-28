@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="AnFake = Another F# Make : Provides alternative to TFS build process templates. Using AnFake you can define your build with F#/C# script instead of XAML. Supports TFS 2012 and 2013.">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>AnFake = Another F# Make</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/IlyaAI/AnFake">View on GitHub</a>
+
+          <h1 id="project_title">AnFake = Another F# Make</h1>
+          <h2 id="project_tagline">Provides alternative to TFS build process templates. Using AnFake you can define your build with F#/C# script instead of XAML. Supports TFS 2012 and 2013.</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/IlyaAI/AnFake/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/IlyaAI/AnFake/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h2>
+<a id="how-is-this-look-like" class="anchor" href="#how-is-this-look-like" aria-hidden="true"><span class="octicon octicon-link"></span></a>How Is This Look Like?</h2>
+
+<p>Lets look at a Demo solution:</p>
+
+<pre><code>\Demo
+  \Demo.App
+  \Demo.Lib
+  \Demo.Lib.Test
+  - Demo.sln
+  - build.fsx      
+</code></pre>
+
+<p>The build.fsx defines build steps:</p>
+
+<div class="highlight highlight-fsharp"><pre><span class="pl-c1">Tfs</span>.PlugIn<span class="pl-c1">()</span>
+
+<span class="pl-k">let</span> out <span class="pl-k">=</span> ~~<span class="pl-s"><span class="pl-pds">"</span>.out<span class="pl-pds">"</span></span>
+<span class="pl-k">let</span> productOut <span class="pl-k">=</span> out <span class="pl-k">/</span> <span class="pl-s"><span class="pl-pds">"</span>product<span class="pl-pds">"</span></span>
+<span class="pl-k">let</span> testsOut <span class="pl-k">=</span> out <span class="pl-k">/</span> <span class="pl-s"><span class="pl-pds">"</span>tests<span class="pl-pds">"</span></span>
+
+<span class="pl-k">let</span> tests <span class="pl-k">=</span> !!<span class="pl-s"><span class="pl-pds">"</span>*/*.Test.csproj<span class="pl-pds">"</span></span>
+<span class="pl-k">let</span> product <span class="pl-k">=</span> 
+    !!<span class="pl-s"><span class="pl-pds">"</span>*/*.csproj<span class="pl-pds">"</span></span>
+    <span class="pl-k">-</span> tests
+
+<span class="pl-s"><span class="pl-pds">"</span>Clean<span class="pl-pds">"</span></span> <span class="pl-k">=&gt;</span> (<span class="pl-k">fun</span> _ <span class="pl-k">-&gt;</span>    
+    <span class="pl-k">let</span> obj <span class="pl-k">=</span> !!!<span class="pl-s"><span class="pl-pds">"</span>*/obj<span class="pl-pds">"</span></span>
+    <span class="pl-k">let</span> bin <span class="pl-k">=</span> !!!<span class="pl-s"><span class="pl-pds">"</span>*/bin<span class="pl-pds">"</span></span>
+
+    <span class="pl-c1">Folders</span>.Clean obj
+    <span class="pl-c1">Folders</span>.Clean bin
+    <span class="pl-c1">Folders</span>.Clean out
+)
+
+<span class="pl-s"><span class="pl-pds">"</span>Compile<span class="pl-pds">"</span></span> <span class="pl-k">=&gt;</span> (<span class="pl-k">fun</span> _ <span class="pl-k">-&gt;</span>
+    <span class="pl-c1">MsBuild</span>.BuildRelease(product, productOut)
+
+    <span class="pl-c1">MsBuild</span>.BuildRelease(tests, testsOut)
+)
+
+<span class="pl-s"><span class="pl-pds">"</span>Test.Unit<span class="pl-pds">"</span></span> <span class="pl-k">=&gt;</span> (<span class="pl-k">fun</span> _ <span class="pl-k">-&gt;</span> 
+    <span class="pl-c1">VsTest</span>.Run(
+        testsOut <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>*.Test.dll<span class="pl-pds">"</span></span>)
+)
+
+<span class="pl-s"><span class="pl-pds">"</span>Test<span class="pl-pds">"</span></span> <span class="pl-k">&lt;==</span> <span class="pl-k">[</span><span class="pl-s"><span class="pl-pds">"</span>Test.Unit<span class="pl-pds">"</span></span><span class="pl-k">]</span>
+
+<span class="pl-s"><span class="pl-pds">"</span>Build<span class="pl-pds">"</span></span> <span class="pl-k">&lt;==</span> <span class="pl-k">[</span><span class="pl-s"><span class="pl-pds">"</span>Compile<span class="pl-pds">"</span></span><span class="pl-k">;</span> <span class="pl-s"><span class="pl-pds">"</span>Test<span class="pl-pds">"</span></span><span class="pl-k">]</span></pre></div>
+
+<p>You can run build either locally...</p>
+
+<pre><code>\Projects\Demo\dev&gt; anf Clean Compile
+</code></pre>
+
+<p><img src="https://github.com/IlyaAI/AnFake/blob/assets/Images/ConsoleSample.png" alt="AnFake Local Run"></p>
+
+<p>...or on Team Build server</p>
+
+<p><img src="https://github.com/IlyaAI/AnFake/blob/assets/Images/TeamBuildSample.png" alt="AnFake Team Build Run"></p>
+
+<h3>
+<a id="benefits" class="anchor" href="#benefits" aria-hidden="true"><span class="octicon octicon-link"></span></a>Benefits</h3>
+
+<ul>
+<li>build.fsx is under version control and will be branched with a solution (this is especially important when build steps change from branch to branch);</li>
+<li>it's possible to test build locally before commit;</li>
+<li>for most developers it is easier to edit script (in usual editor with IntelliSense working!) instead of build process template;</li>
+<li>it's significantly easy to debug local script than build workflow on remote machine.</li>
+</ul>
+
+<p>[[Getting Started]]</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">AnFake = Another F# Make maintained by <a href="https://github.com/IlyaAI">IlyaAI</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-61278595-1");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+
+  </body>
+</html>
