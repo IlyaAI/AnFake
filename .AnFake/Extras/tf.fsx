@@ -1,7 +1,7 @@
 ﻿#r "../AnFake.Api.v1.dll"
 #r "../AnFake.Core.dll"
 #r "../AnFake.Fsx.dll"
-#r "../Plugins/AnFake.Plugins.Tfs2012.dll"
+#r "../AnFake.Plugins.Tfs2012.dll"
 
 open System
 open System.Linq
@@ -34,14 +34,6 @@ let serviceNames =
         "feature"
         "features"
     ]
-
-let anfakeFiles =
-    ~~"[AnFake]" % "**/*" 
-    - "anf.cmd" 
-    - "*.fsx" 
-    - "*.csx"
-    - "*.nupkg"
-    - "Plugins/*.xaml"
 
 let getProductName (serverPath: ServerPath) =
     serverPath

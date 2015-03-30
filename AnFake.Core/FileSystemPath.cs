@@ -470,12 +470,7 @@ namespace AnFake.Core
 			if (macro == "AnFake")
 				return Path.Combine(
 					Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
-					subPath);
-
-			if (macro == "AnFakePlugins")
-				return Path.Combine(
-					Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
-					Path.Combine("Plugins", subPath));
+					subPath);			
 
 			if (macro == "AnFakeExtras")
 				return Path.Combine(

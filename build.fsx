@@ -10,16 +10,13 @@ open AnFake.Fsx.Dsl
 
 let out = ~~".out"
 let productOut = out / "product"
-let pluginsOut = productOut / "Plugins"
 let extrasOut = productOut / "Extras"
 let testsOut = out / "tests"
 let product = 
     !!"AnFake/*.csproj"
     + "AnFake.Api.Pipeline/*.csproj"
-let plugins = 
-    !!"AnFake.Plugins.*/*.csproj" 
-    + "AnFake.Integration.Vs2012/*.csproj" 
-    - "AnFake.Plugins.*.Test/*.csproj"
+    + "AnFake.Plugins.*/*.csproj" - "AnFake.Plugins.*.Test/*.csproj"
+    + "AnFake.Integration.Vs2012/*.csproj"
 let extras = ~~".AnFake/Extras" % "*"
 let cmds = ~~".AnFake" % "*.cmd"
 let xaml = ~~"AnFake.Integration.Tfs2012.Template" % "*.xaml"
@@ -34,24 +31,15 @@ let nugetFiles =
     + "AnFake.exe.config"
     + "*.cmd"
     + "*.dll"
+    + "*.xaml"
     + "*.tmpl.fsx"
     + "*.tmpl.csx"
     + "AnFake.*.xml"
+    + "AnFake.Plugins.*.xml"
     + "FSharp.Core.optdata"
     + "FSharp.Core.sigdata"
     + "Extras/*"
-    + "Plugins/AnFake.Integration.Tfs2012.*.dll"
-    + "Plugins/AnFake.Integration.Vs2012.dll"
-    + "Plugins/*.xaml"
-    + "Plugins/AnFake.Plugins.*.xml"
-    + "Plugins/AnFake.Plugins.Tfs2012.dll"
-    + "Plugins/AnFake.Plugins.StringTemplate.dll"
-    + "Plugins/Antlr4.StringTemplate.dll"
-    + "Plugins/AnFake.Plugins.NHibernate.dll"
-    + "Plugins/NHibernate.dll"
-    + "Plugins/Iesi.Collections.dll"    
-    //+ "Plugins/AnFake.Plugins.HtmlSummary.dll" // not ready yet
-    //+ "Plugins/AnFake.Plugins.HtmlSummary.zip"
+    - "Microsoft.*"
     + ~~"packages/NuGet.CommandLine.2.8.3/tools" % "NuGet.exe"
 
 let productName = "AnFake"
@@ -63,7 +51,7 @@ let productDescription =
     "Integration with TFS 2012/2013 provided out-of-box."
 let productAuthor = "Ilya A. Ivanov"
 let productVersion = "1.0.4".AsVersion()
-let productHome = "https://github.com/IlyaAI/AnFake/wiki"
+let productHome = "http://ilyaai.github.io/AnFake"
 let productTags = "build f# c# tfs"
 
 //
@@ -106,11 +94,9 @@ let xamlVersion = "2"
     Files.Copy(fsharp, productOut, true)
     Files.Copy(buildTmpls, productOut, true)
 
-    MsBuild.BuildRelease(plugins, pluginsOut)
-
     Files.Copy(extras, extrasOut, true)
     for fx in xaml do
-        Files.Copy(fx, pluginsOut / String.Format("{0}.v{1}.xaml", fx.NameWithoutExt, xamlVersion), true)
+        Files.Copy(fx, productOut / String.Format("{0}.v{1}.xaml", fx.NameWithoutExt, xamlVersion), true)
 
     MsBuild.BuildRelease(tests, testsOut)
 )
@@ -120,10 +106,9 @@ let xamlVersion = "2"
         ~~"AnFake.Plugins.HtmlSummary/Html" % "**/*"
         - "build.summary.js"
 
-    let zip = pluginsOut / "AnFake.Plugins.HtmlSummary.zip"
+    let zip = productOut / "AnFake.Plugins.HtmlSummary.zip"
 
-    Zip.Pack(htmlSummary, zip)
-    Files.Copy(zip, ~~".AnFake/Plugins" / zip.LastName, true)
+    Zip.Pack(htmlSummary, zip)    
 )
 
 "Test.Unit" => (fun _ -> 

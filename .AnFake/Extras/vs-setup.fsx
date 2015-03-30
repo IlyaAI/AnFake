@@ -1,8 +1,8 @@
 ﻿#r "../AnFake.Api.v1.dll"
 #r "../AnFake.Core.dll"
 #r "../AnFake.Fsx.dll"
-#r "../Plugins/AnFake.Plugins.Tfs2012.dll"
-#r "../Plugins/AnFake.Integration.Vs2012.dll"
+#r "../AnFake.Plugins.Tfs2012.dll"
+#r "../AnFake.Integration.Vs2012.dll"
 
 open System
 open System.Linq
@@ -56,10 +56,10 @@ let vsSupportedVersions =
 
 let vsExternalTools = 
     [
-        "AnFake Checkout",     "[AnFake]/anf-tf.cmd", "Checkout",          null,             ExternalTool.OptionNone
-        "AnFake Get Specific", "[AnFake]/anf-tf.cmd", "GetSpecific Cnnnn", "$(SolutionDir)", ExternalTool.OptionPromptArgs
-        "AnFake Get Latest",   "[AnFake]/anf-tf.cmd", "GetLatest",         "$(SolutionDir)", ExternalTool.OptionNone
-        "AnFake Build",        "anf.cmd",             "Build",             "$(SolutionDir)", ExternalTool.OptionPromptArgs
+        "AnFake Checkout",     "anf-tf.cmd", "Checkout",          null,             ExternalTool.OptionNone
+        "AnFake Get Specific", "anf-tf.cmd", "GetSpecific Cnnnn", "$(SolutionDir)", ExternalTool.OptionPromptArgs
+        "AnFake Get Latest",   "anf-tf.cmd", "GetLatest",         "$(SolutionDir)", ExternalTool.OptionNone
+        "AnFake Build",        "anf.cmd",    "Build",             "$(SolutionDir)", ExternalTool.OptionPromptArgs
     ]
 
 "Build" => (fun _ ->
@@ -73,13 +73,17 @@ let vsExternalTools =
 )
 
 "Tools" => (fun _ ->
-    plugInTfs()
+    plugInTfs()    
 
     let projHome = getProjectsHome()
     let versions = 
         VisualStudio
             .GetInstalledVersions()
             .Intersect(vsSupportedVersions)
+
+    let dstPath = ~~"[LocalApplicationData]/AnFake";
+    Trace.InfoFormat("Copying AnFake to '{0}'...", dstPath)    
+    Files.Copy(~~"[AnFake]" % "**/*", dstPath, true);
 
     for version in versions do
         Trace.InfoFormat("Setting up external tools in VisualStudio {0}...", version)
@@ -90,7 +94,7 @@ let vsExternalTools =
             if not <| tools.Any(fun x -> x.Title = title) then
                 let tool = new ExternalTool()
                 tool.Title <- title            
-                tool.Command <- (~~cmd).Spec
+                tool.Command <- if cmd = "anf-tf.cmd" then (dstPath / cmd).Full else cmd
                 tool.Arguments <- args
                 tool.InitialDirectory <- if dir <> null then dir else projHome
                 tool.Options <- tool.Options ||| opt
@@ -124,14 +128,14 @@ let vsExternalTools =
 
     TfsWorkspace.Create(processTmplPath, localPath, workspaceName)
     
-    Files.Copy(~~"[AnFakePlugins]" % "*.xaml", localPath, true)
+    Files.Copy(~~"[AnFake]" % "*.xaml", localPath, true)
     Files.Copy(
         ~~"[AnFake]" % "AnFake.Api.*.dll" 
+        + "AnFake.Integration.Tfs2012.*.dll"
         + "Antlr4.Runtime.dll"
         + "NuGet.exe",
         activitiesLocalPath, 
-        true)
-    Files.Copy(~~"[AnFakePlugins]" % "AnFake.Integration.Tfs2012.*.dll", activitiesLocalPath, true)    
+        true)    
 
     TfsWorkspace.PendAdd(localPath % "*.xaml")
     TfsWorkspace.PendAdd(

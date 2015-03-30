@@ -1,7 +1,7 @@
 ﻿#r "../.AnFake/AnFake.Api.v1.dll"
 #r "../.AnFake/AnFake.Core.dll"
 #r "../.AnFake/AnFake.Fsx.dll"
-#r "../.AnFake/Plugins/AnFake.Plugins.Tfs2012.dll"
+#r "../.AnFake/AnFake.Plugins.Tfs2012.dll"
 
 open System
 open System.Linq
