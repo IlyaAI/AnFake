@@ -17,10 +17,15 @@ namespace AnFake.Integration.Tfs2012.Pipeline
 		private readonly IBuildInformation _tracker;
 		private readonly ITracer _prevTracer;
 
-		public TfsPipelineRunner(IBuildDetail currentBuild, IActivityTracking tracking)
+		public TfsPipelineRunner(IBuildDetail currentBuild, string activityInstanceId)
 		{
 			_currentBuild = currentBuild;
-			_tracker = tracking.Node.Children;
+
+			var activity = InformationNodeConverters.GetActivityTracking(_currentBuild, activityInstanceId);
+			if (activity == null)
+				throw new AnFakeBuildProcessException("TfsPipelineRunner unable to find activity with InstanceId='{0}'", activityInstanceId);
+
+			_tracker = activity.Node.Children;			
 
 			_prevTracer = Trace.Set(new BypassTracer());
 			Trace.MessageReceived += OnMessageReceived;
@@ -105,10 +110,7 @@ namespace AnFake.Integration.Tfs2012.Pipeline
 		private void OnMessageReceived(object sender, TraceMessage message)
 		{
 			_tracker.TraceMessage(message, true);
-
-			_currentBuild
-				.Information
-				.Save();
+			_tracker.Save();
 		}
 
 		private void WriteSummary(string message)

@@ -36,7 +36,12 @@ namespace AnFake.Integration.Tfs2012
 		{
 			var builder = new TfsMessageBuilder();
 
-			builder.Append(message.ToString("mfd"));
+			var fmt = 
+				message.Level < TraceMessageLevel.Warning
+					? "nmfd"
+					: "mfd";
+
+			builder.Append(message.ToString(fmt));
 
 			if (embedLinks)
 			{

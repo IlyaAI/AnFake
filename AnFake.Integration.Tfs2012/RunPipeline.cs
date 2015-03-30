@@ -56,11 +56,12 @@ namespace AnFake.Integration.Tfs2012
 				buildDetail.Save();
 			}
 
-			var tracker = context
+			var activityInstanceId = context
 				.GetExtension<IBuildLoggingExtension>()
-				.GetActivityTracking(context);
+				.GetActivityTracking(context)
+				.ActivityInstanceId;
 
-			using (var runner = new TfsPipelineRunner(buildDetail, tracker))
+			using (var runner = new TfsPipelineRunner(buildDetail, activityInstanceId))
 			{
 				runner.Run(pipelineDef, spinTime, timeout);
 			}

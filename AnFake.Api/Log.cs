@@ -125,6 +125,11 @@ namespace AnFake.Api
 			Message((LogMessageLevel)message.Level, message.ToString());
 		}
 
+		public static void TraceMessage(TraceMessage message, string format)
+		{
+			Message((LogMessageLevel)message.Level, message.ToString(format));
+		}
+
 		public static void TraceMessageFormat(TraceMessageLevel level, string format, params object[] args)
 		{
 			Message((LogMessageLevel)level, String.Format(format, args));

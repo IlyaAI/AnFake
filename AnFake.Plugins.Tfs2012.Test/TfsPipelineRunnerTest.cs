@@ -27,7 +27,7 @@ namespace AnFake.Plugins.Tfs2012.Test
 				.Information
 				.Save();
 
-			PipelineRunner = new TfsPipelineRunner(Build, tracking);
+			PipelineRunner = new TfsPipelineRunner(Build, "0001");
 		}
 
 		[TestCleanup]

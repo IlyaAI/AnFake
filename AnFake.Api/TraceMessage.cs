@@ -63,7 +63,10 @@ namespace AnFake.Api
 		///         Message text is a default string representation. Additionally the following information might be included:
 		///     </para>
 		///		<para>
-		///			m - message itself prefixed with node id and/or code (if any)
+		///			m - message itself prefixed with code (if any)
+		///		</para>
+		///		<para>
+		///			nm - message itself prefixed with node id and/or code (if any)
 		///		</para>
 		///     <para>
 		///         l - link if specified;
@@ -84,17 +87,19 @@ namespace AnFake.Api
 		public string ToString(string format, IFormatProvider formatProvider)
 		{
 			const int ident = 2;
+			
 			var sb = new StringBuilder(512);
 
+			var prevField = '\0';
 			foreach (var field in format)
 			{
 				switch (field)
-				{					
+				{
 					case 'm':
 						if (sb.Length > 0) 
 							sb.AppendLine();
 
-						if (NodeId != 0)
+						if (NodeId != 0 && prevField == 'n')
 							sb.Append(NodeId).Append("> ");
 
 						if (!String.IsNullOrEmpty(Code))			
@@ -153,6 +158,8 @@ namespace AnFake.Api
 						}
 						break;
 				}
+
+				prevField = field;
 			}
 
 			return sb.ToString();
@@ -169,12 +176,12 @@ namespace AnFake.Api
 		}
 
 		/// <summary>
-		///     Formats message with default presentation 'mlfd'. <see cref="ToString(string,System.IFormatProvider)" />
+		///     Formats message with default presentation 'nmlfd'. <see cref="ToString(string,System.IFormatProvider)" />
 		/// </summary>
 		/// <returns></returns>
 		public override string ToString()
 		{
-			return ToString("mlfd", null);
+			return ToString("nmlfd", null);
 		}
 	}
 }
