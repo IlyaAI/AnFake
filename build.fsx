@@ -154,7 +154,7 @@ let xamlVersion = "2"
 
     NuGet.Push(nupkg, fun p -> 
         p.AccessKey <- MyBuild.GetProp("NuGet.AccessKey")
-        p.SourceUrl <- MyBuild.GetProp("NuGet.SourceUrl"))
+        p.SourceUrl <- MyBuild.GetProp("NuGet.SourcePushUrl"))
 )
 
 "SetApiVersion" => (fun _ ->

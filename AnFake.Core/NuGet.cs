@@ -119,6 +119,9 @@ namespace AnFake.Core
 			MyBuild.Initialized += (s, p) =>
 			{
 				Defaults.ToolPath = Locations.AsFileSet().Select(x => x.Path).FirstOrDefault();
+
+				p.Properties.TryGetValue("NuGet.SourceUrl", out Defaults.SourceUrl);
+				p.Properties.TryGetValue("NuGet.AccessKey", out Defaults.AccessKey);				
 			};
 		}
 
