@@ -10,7 +10,7 @@ namespace AnFake.Integration.Tfs2012
 {
 	[ActivityTracking(ActivityTrackingOption.ActivityOnly)]
 	[BuildActivity(HostEnvironmentOption.All)]
-	public sealed class RunPipeline : CodeActivity
+	public sealed class RunPipeline : AsyncCodeActivity
 	{
 		[RequiredArgument]
 		public InArgument<IBuildDetail> BuildDetail { get; set; }
@@ -39,7 +39,7 @@ namespace AnFake.Integration.Tfs2012
 			metadata.RequireExtension<IBuildLoggingExtension>();
 		}
 
-		protected override void Execute(CodeActivityContext context)
+		protected override IAsyncResult BeginExecute(AsyncCodeActivityContext context, AsyncCallback callback, object state)
 		{
 			var buildDetail = BuildDetail.Get(context);
 			var pipelineDef = Pipeline.Get(context);
@@ -61,6 +61,29 @@ namespace AnFake.Integration.Tfs2012
 				.GetActivityTracking(context)
 				.ActivityInstanceId;
 
+			var doRun = new Action<IBuildDetail, string, string, TimeSpan, TimeSpan, string>(DoRun);
+			context.UserState = doRun;
+
+			return doRun.BeginInvoke(
+				buildDetail,
+				activityInstanceId,
+				pipelineDef,
+				spinTime,
+				timeout,
+				version,
+				callback, 
+				state);
+		}
+
+		protected override void EndExecute(AsyncCodeActivityContext context, IAsyncResult result)
+		{
+			var doRun = (Action<IBuildDetail, string, string, TimeSpan, TimeSpan, string>) context.UserState;
+
+			doRun.EndInvoke(result);
+		}
+
+		private static void DoRun(IBuildDetail buildDetail, string activityInstanceId, string pipelineDef, TimeSpan spinTime, TimeSpan timeout, string version)
+		{
 			using (var runner = new TfsPipelineRunner(buildDetail, activityInstanceId))
 			{
 				runner.Run(pipelineDef, spinTime, timeout);
