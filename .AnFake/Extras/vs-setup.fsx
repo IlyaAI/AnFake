@@ -14,39 +14,22 @@ open AnFake.Integration.Vs2012;
 
 Tfs.PlugInDeferred()
 
-let plugInTfs () =
-    if not <| MyBuild.HasProp("Tfs.Uri") then
-        MyBuild.SetProp(
-            "Tfs.Uri",
-            UserInterop.Prompt(
-                "TeamFoundation Collection Uri", 
-                "Please, enter an URI of Team Foundation Projects Collection, e.g. 'https://tf-server:8080/my-collection'.\n" + 
-                "Alternatively you can provide URI as command line parameter: \"Tfs.Uri=<your-uri>\"",
-                fun uri ->
-                    Tfs.CheckConnection(uri)
-                )
-        )
-        MyBuild.SaveProp("Tfs.Uri")
-    Tfs.PlugIn()
+let getProjectsHome () =
+    let projHome = MyBuild.GetProp("__1", @"C:\Projects")
+    if not <| projHome.AsFolder().Exists() then
+        MyBuild.Failed("Projects home folder '{0}' doesn't exist.", projHome)
 
-let getProjectsHome () =    
-    UserInterop.Prompt(
-        "Projects Home", 
-        "Please, enter a full path to your projects home folder, e.g. 'C:\\Projects'.",
-        fun projHome ->
-            if not <| projHome.AsFolder().Exists() then
-                MyBuild.Failed("Folder '{0}' doesn't exist.", projHome)
-        ).AsPath()
-        .Full
+    projHome.AsPath().Full // return
 
 let getTeamProject () =
-    UserInterop.Prompt(
-        "Team Project", 
-        "Please, enter a TFS team project name, e.g. 'MY-PROJ'.",
-        fun teamProj ->
-            if not <| Tfs.HasTeamProject(teamProj) then
-                MyBuild.Failed("Team project '{0}' doesn't exist.", teamProj)
-        )
+    if not <| MyBuild.HasProp("__1") then
+        MyBuild.Failed("Required argument <team-project-name> is missed.")
+
+    let teamProj = MyBuild.GetProp("__1")
+    if not <| Tfs.HasTeamProject(teamProj) then
+        MyBuild.Failed("Team Project '{0}' doesn't exist.", teamProj)
+        
+    teamProj // return;        
 
 let vsSupportedVersions =
     [
@@ -62,19 +45,22 @@ let vsExternalTools =
         "AnFake Build",        "anf.cmd",    "Build",             "$(SolutionDir)", ExternalTool.OptionPromptArgs
     ]
 
-"Build" => (fun _ ->
+"Help" => (fun _ ->
     Log.Info("")
-    Log.Info("Usage: vs-setup[.cmd] <command> [<param>] ...")
+    Log.Info("Usage: <command> [<param>] ...")
     Log.Info("COMMANDS:")
-    Log.Info("  Tools         - setup external tools in VisualStudio.")
-    Log.Info("  BuildTemplate - setup build process template in Team Build.")
+    Log.Info("  Tools [-p <local-projects-home>]")
+    Log.Info("    Setup external tools in VisualStudio.")
+    Log.Info("    If <local-projects-home> is ommitted then 'C:\\Projects' is used.")
+    Log.Info("  BuildTemplate -p <team-project-name>")
+    Log.Info("    Setup build process template in Team Build.")
     
     MyBuild.Failed "Command is missed."
 )
 
-"Tools" => (fun _ ->
-    plugInTfs()    
+"Build" <== ["Help"]
 
+"Tools" => (fun _ ->
     let projHome = getProjectsHome()
     let versions = 
         VisualStudio
@@ -91,7 +77,7 @@ let vsExternalTools =
         let tools = VisualStudio.GetExternalTools(version)
 
         for (title, cmd, args, dir, opt) in vsExternalTools do
-            if not <| tools.Any(fun x -> x.Title = title) then
+            if not <| tools.Any(fun x -> x.Title = title) && (cmd <> "anf-tf.cmd" || MyBuild.HasProp("Tfs.Uri")) then                
                 let tool = new ExternalTool()
                 tool.Title <- title            
                 tool.Command <- if cmd = "anf-tf.cmd" then (dstPath / cmd).Full else cmd
@@ -107,7 +93,8 @@ let vsExternalTools =
 )
 
 "BuildTemplate" => (fun _ ->
-    plugInTfs()
+    Tfs.PlugIn()
+    MyBuild.SaveProp("Tfs.Uri")
 
     let teamProj = getTeamProject()
 

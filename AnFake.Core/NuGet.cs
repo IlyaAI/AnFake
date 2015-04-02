@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
 using AnFake.Api;
-using AnFake.Core.Exceptions;
 
 namespace AnFake.Core
 {
@@ -32,9 +31,17 @@ namespace AnFake.Core
 			public string Version;
 
 			/// <summary>
-			///		Output folder for installed package. Default: 'packages'
+			///		Output folder for installed package. Default: 'packages'.
 			/// </summary>
+			/// <remarks>
+			///		Can be set via command line as "NuGet.OutputDirectory=&lt;value&gt;" or settings file as "NuGet.OutputDirectory": "&lt;value&gt;".
+			/// </remarks>
 			public FileSystemPath OutputDirectory;
+
+			/// <summary>
+			///		Specifies the solution directory. Used by <c>Restore</c> command.
+			/// </summary>
+			public FileSystemPath SolutionDirectory;
 
 			/// <summary>
 			///		Whether to include referenced projects into package or not.
@@ -64,16 +71,26 @@ namespace AnFake.Core
 			/// <summary>
 			///		Access key for package push.
 			/// </summary>
+			/// <remarks>
+			///		Can be set via command line as "NuGet.AccessKey=&lt;value&gt;" or settings file as "NuGet.AccessKey": "&lt;value&gt;".
+			/// </remarks>
 			public string AccessKey;
 
 			/// <summary>
 			///		Package source URL.
 			/// </summary>
+			/// <remarks>
+			///		<para>Can be set via command line as "NuGet.SourceUrl=&lt;value&gt;" or settings file as "NuGet.SourceUrl": "&lt;value&gt;".</para>
+			///		<para>If ommitted then default NuGet source is used.</para>
+			/// </remarks>
 			public string SourceUrl;
 
 			/// <summary>
 			///		(v2.5) The NuGet configuation file. If not specified, file %AppData%\NuGet\NuGet.config is used as configuration file.
 			/// </summary>
+			/// <remarks>
+			///		Can be set via command line as "NuGet.ConfigFile=&lt;value&gt;" or settings file as "NuGet.ConfigFile": "&lt;value&gt;".
+			/// </remarks>
 			public FileSystemPath ConfigFile;
 
 			/// <summary>
@@ -120,8 +137,23 @@ namespace AnFake.Core
 			{
 				Defaults.ToolPath = Locations.AsFileSet().Select(x => x.Path).FirstOrDefault();
 
-				p.Properties.TryGetValue("NuGet.SourceUrl", out Defaults.SourceUrl);
-				p.Properties.TryGetValue("NuGet.AccessKey", out Defaults.AccessKey);				
+				string value;
+				if (p.Properties.TryGetValue("NuGet.SourceUrl", out value))
+				{
+					Defaults.SourceUrl = value;
+				}
+				if (p.Properties.TryGetValue("NuGet.AccessKey", out value))
+				{
+					Defaults.AccessKey = value;
+				}
+				if (p.Properties.TryGetValue("NuGet.OutputDirectory", out value))
+				{
+					Defaults.OutputDirectory = value.AsPath();
+				}
+				if (p.Properties.TryGetValue("NuGet.ConfigFile", out value))
+				{
+					Defaults.ConfigFile = value.AsPath();
+				}
 			};
 		}
 
@@ -199,24 +231,12 @@ namespace AnFake.Core
 		}
 
 		///  <summary>
-		/// 		Equals to <see cref="Restore(AnFake.Core.FileItem,System.Action{AnFake.Core.NuGet.Params})">Restore("*.sln".AsFileSet().Single(), p => {})</see>.
+		/// 		Equals to 'NuGet.exe restore' with no additional arguments.
 		///  </summary>		
 		///  <seealso cref="http://docs.nuget.org/docs/reference/command-line-reference"/>		
 		public static void Restore()
 		{
-			var slns = "*.sln".AsFileSet().ToArray();
-			
-			if (slns.Length == 0)
-				throw new InvalidConfigurationException(String.Format("There is no one solution found in '{0}'.", FileSystemPath.Base));
-
-			if (slns.Length > 1)
-				throw new InvalidConfigurationException(
-					String.Format(
-						"There are multiple solutions found in '{0}'.\n" +
-						"Hint: use NuGet.Restore(\"<my-solution>.sln\".AsFile()) instead.", 
-						FileSystemPath.Base));
-
-			Restore(slns[0], p => { });
+			DoRestore(null, p => { });
 		}
 
 		///  <summary>
@@ -231,7 +251,10 @@ namespace AnFake.Core
 		///  </example>
 		public static void Restore(FileItem slnOrConfigFile)
 		{
-			Restore(slnOrConfigFile, p => { });
+			if (slnOrConfigFile == null)
+				throw new ArgumentException("NuGet.Restore(slnOrConfigFile): slnOrConfigFile must not be null");
+
+			DoRestore(slnOrConfigFile, p => { });
 		}
 
 		///  <summary>
@@ -250,18 +273,36 @@ namespace AnFake.Core
 			if (setParams == null)
 				throw new ArgumentException("NuGet.Restore(slnOrConfigFile, setParams): setParams must not be null");
 
+			DoRestore(slnOrConfigFile, setParams);
+		}
+
+		private static void DoRestore(FileItem slnOrConfigFile, Action<Params> setParams)
+		{
 			var parameters = Defaults.Clone();
 			setParams(parameters);
 
 			EnsureToolPath(parameters);
 
-			Trace.InfoFormat("NuGet.Restore => {0}", slnOrConfigFile);
+			if (slnOrConfigFile != null)
+			{
+				Trace.InfoFormat("NuGet.Restore => {0}", slnOrConfigFile);
+			}
+			else
+			{
+				Trace.Info("NuGet.Restore");
+			}			
 
 			var args = new Args("-", " ")
-				.Command("restore")
-				.Param(slnOrConfigFile.Path.Full)
-				.Option("Source", parameters.SourceUrl)
+				.Command("restore");
+
+			if (slnOrConfigFile != null)
+			{
+				args.Param(slnOrConfigFile.Path.Full);
+			}
+				
+			args.Option("Source", parameters.SourceUrl)
 				.Option("OutputDirectory", parameters.OutputDirectory)
+				.Option("SolutionDirectory", parameters.SolutionDirectory)
 				.Option("ConfigFile", parameters.ConfigFile)
 				.Option("NoCache", parameters.NoCache)
 				.Option("NonInteractive", true)
@@ -276,8 +317,11 @@ namespace AnFake.Core
 
 			result
 				.FailIfAnyError("Target terminated due to NuGet errors.")
-				.FailIfExitCodeNonZero(String.Format("NuGet.Restore failed with exit code {0}. Solution: {1}", result.ExitCode, slnOrConfigFile));
-		}		
+				.FailIfExitCodeNonZero(
+					slnOrConfigFile != null
+						? String.Format("NuGet.Restore failed with exit code {0}. Solution: {1}", result.ExitCode, slnOrConfigFile)
+						: String.Format("NuGet.Restore failed with exit code {0}.", result.ExitCode));
+		}
 
 		/// <summary>
 		///		Creates package spec of version 2.0

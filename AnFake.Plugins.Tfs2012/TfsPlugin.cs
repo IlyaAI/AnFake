@@ -11,6 +11,7 @@ using AnFake.Integration.Tfs2012;
 using Microsoft.TeamFoundation;
 using Microsoft.TeamFoundation.Build.Client;
 using Microsoft.TeamFoundation.Client;
+using Microsoft.TeamFoundation.Framework.Common;
 using Microsoft.TeamFoundation.VersionControl.Client;
 
 namespace AnFake.Plugins.Tfs2012
@@ -55,6 +56,7 @@ namespace AnFake.Plugins.Tfs2012
 			props.TryGetValue("Tfs.PrivateDropLocation", out privateDropLocation);
 
 			_teamProjectCollection = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(new Uri(tfsUri));
+			_teamProjectCollection.Connect(ConnectOptions.IncludeServices);
 
 			if (!String.IsNullOrEmpty(buildUri))
 			{

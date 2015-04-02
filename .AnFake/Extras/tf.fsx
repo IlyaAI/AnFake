@@ -164,6 +164,10 @@ let plugInTfs () =
             MyBuild.Failed("Operation cancelled.")
     
     TfsWorkspace.Checkout(serverPath, localPath, workspaceName)
+
+    let packagesConfig = (localPath / ".nuget/packages.config").AsFile()
+    if packagesConfig.Exists() then
+        NuGet.Restore(packagesConfig, fun p -> (p.SolutionDirectory <- localPath))
 )
 
 "Checkout" ==> "co"

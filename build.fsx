@@ -50,9 +50,9 @@ let productDescription =
     "forget about build process templates! " +
     "Integration with TFS 2012/2013 provided out-of-box."
 let productAuthor = "Ilya A. Ivanov"
-let productVersion = "1.0.4".AsVersion()
+let productVersion = "1.0.5".AsVersion()
 let productHome = "http://ilyaai.github.io/AnFake"
-let productTags = "build f# c# tfs"
+let productTags = "team build f# c# tfs"
 
 //
 // IMPORTANT! 
@@ -215,6 +215,6 @@ let xamlVersion = "2"
 
 "Compile" <== ["EmbedAssemblyInfo"]
 
-"Build" <== ["Compile"; "Custom.ZipHtmlSummary"; "Test.Unit"]
+"Build" <== ["NuGetRestore"; "Compile"; "Custom.ZipHtmlSummary"; "Test.Unit"]
 
 "Package" <== ["Package.Zip"; "Package.Pack"; "Package.Push"]

@@ -29,39 +29,17 @@ let getSolutionRoot() =
 
     let anfakePath = (~~"[AnFake]").ToRelative(slnRoot).Spec
 
-    let mutable undoNeeded = false
-    let nugetConfig = (slnRoot / ".nuget/NuGet.config").AsFile()
-    if not <| nugetConfig.Exists() then
-        undoNeeded <- true
-
-        let nugetConfigBody = "<configuration/>".AsXmlDoc()
-        let node = 
-            nugetConfigBody.Root
-                .Append("solution")
-                .Append("add")
-        node.SetAttr("key", "disableSourceControlIntegration")
-        node.SetAttr("value", "true")
-
-        nugetConfigBody.SaveTo(nugetConfig)
-        Log.Info("  NuGet.config generated.")
-    else
-        Log.Info("  NuGet.config Ok.")
-
     let anfCmd = (slnRoot / "anf.cmd").AsFile()    
     let anfCmdBody = "[AnFake]/anf.cmd".AsFile().AsTextDoc()
     anfCmdBody.Replace(@"\[\.AnFake\]", anfakePath)
-    anfCmdBody.SaveTo(anfCmd, Text.Encoding.ASCII)
-    Log.Info("  anf.cmd generated.")    
+    anfCmdBody.SaveTo(anfCmd, Text.Encoding.ASCII)        
     
-    for sx in ["fsx"; "csx"] do
-        let buildSx = (slnRoot / "build." + sx).AsFile()
-        if not <| buildSx.Exists() then
-            let buildSxBody = ("[AnFake]/build.tmpl." + sx).AsFile().AsTextDoc()
-            buildSxBody.Replace(@"\[\.AnFake\]", anfakePath)
-            buildSxBody.SaveTo(buildSx)
-            Log.InfoFormat("  build.{0} generated.", sx)
-        else
-            Log.InfoFormat("  build.{0} Ok.", sx)
+    let buildFsx = (slnRoot / "build.fsx").AsFile()
+    if not <| buildFsx.Exists() then
+        let buildFsxBody = ("[AnFake]/build.tmpl.fsx").AsFile().AsTextDoc()
+        buildFsxBody.Replace(@"\[\.AnFake\]", anfakePath)
+        buildFsxBody.SaveTo(buildFsx)
+        Log.Info("  build.fsx generated.")
 
     let wsFile = (slnRoot / TfsWorkspace.Defaults.WorkspaceFile).AsFile()
     if not <| wsFile.Exists() then
@@ -72,24 +50,33 @@ let getSolutionRoot() =
             MyBuild.SetProp("Tfs.Uri", tfsUri)
             MyBuild.SaveProp("Tfs.Uri")
 
-            Log.InfoFormat("  TFS detected: {0}.", tfsUri)
+            Log.InfoFormat("Team Foundation detected at '{0}'.", tfsUri)
             
             Tfs.PlugIn()
 
-            TfsWorkspace.SaveLocal(slnRoot)
-            Log.InfoFormat("  {0} generated.", wsFile.Name)
+            let nugetConfig = (slnRoot / ".nuget/NuGet.config").AsFile()
+            if not <| nugetConfig.Exists() then
+                Log.Info("== Configuring NuGet to avoid checking-in binaries to version control...")
 
-            TfsWorkspace.PendAdd([wsFile; anfCmd; nugetConfig])
-            TfsWorkspace.PendAdd(
-                ["fsx"; "csx"].Select(
-                    fun sx -> (slnRoot / "build." + sx).AsFile()
-                )
-            )
-            
-            if undoNeeded then
+                let nugetConfigBody = "<configuration/>".AsXmlDoc()
+                let node = 
+                    nugetConfigBody.Root
+                        .Append("solution")
+                        .Append("add")
+                node.SetAttr("key", "disableSourceControlIntegration")
+                node.SetAttr("value", "true")
+                nugetConfigBody.SaveTo(nugetConfig)
+
                 TfsWorkspace.Undo(!!!MyBuild.GetProp("__1"))
-    else
-        Log.InfoFormat("  {0} Ok.", wsFile.Name)
+
+                Log.Info("== NuGet configured.")
+
+            Log.Info("== Preparing workspace...")
+            TfsWorkspace.PendAdd([anfCmd; nugetConfig; buildFsx])
+
+            if SafeOp.Try((fun x -> TfsWorkspace.SaveLocal(x)), slnRoot) then
+                TfsWorkspace.PendAdd([wsFile])
+                Log.Info("== Workspace ready.")
         
-    Log.InfoFormat("Solution '{0}' is ready to use AnFake.", sln.NameWithoutExt)
+    Log.InfoFormat("Solution '{0}' is ready to use AnFake.", sln.NameWithoutExt)    
 )

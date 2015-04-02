@@ -286,6 +286,7 @@ namespace AnFake
 
 				Api.Trace.InfoFormat("AnFakeVersion: {0}", MyBuild.Current.AnFakeVersion);
 
+				Api.Trace.Info("Loading script...");
 				evaluator.Evaluate(scriptFile);
 
 				Api.Trace.Info("Configuring plugins...");
