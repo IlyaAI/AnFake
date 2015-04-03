@@ -128,7 +128,7 @@ namespace AnFake.Core
 
 		public IEnumerator<FileItem> GetEnumerator()
 		{
-			var files = new List<FileItem>();
+			/*var files = new List<FileItem>();
 
 			foreach (var pattern in _patterns)
 			{
@@ -153,7 +153,40 @@ namespace AnFake.Core
 				}
 			}
 
-			return files.Distinct().GetEnumerator();
+			return files.Distinct().GetEnumerator();*/
+
+			return SearchIn(FileSystemPath.Base).GetEnumerator();
+		}
+
+		public IEnumerable<FileItem> SearchIn(FileSystemPath searchPath)
+		{
+			var files = new List<FileItem>();
+
+			foreach (var pattern in _patterns)
+			{
+				var basePath = searchPath / pattern.BasePath;
+				if (basePath.IsWildcarded)
+				{
+					foreach (var folder in FileSystem.MatchFolders(basePath))
+					{
+						MergeFiles(
+							pattern.Type,
+							folder,
+							FileSystem.MatchFiles(folder, pattern.WildcardedPath),
+							files);
+					}
+				}
+				else
+				{
+					MergeFiles(
+						pattern.Type,
+						basePath,
+						FileSystem.MatchFiles(basePath, pattern.WildcardedPath),
+						files);
+				}
+			}
+
+			return files.Distinct();
 		}
 
 		public override string ToString()
@@ -238,7 +271,7 @@ namespace AnFake.Core
 		public static FileSet operator -(FileSet files, FileSet otherFiles)
 		{
 			return files.Exclude(otherFiles);
-		}
+		}		
 
 		private static void MergeFiles(PatternType mergeType, FileSystemPath basePath, IEnumerable<FileSystemPath> src, ICollection<FileItem> dst)
 		{
