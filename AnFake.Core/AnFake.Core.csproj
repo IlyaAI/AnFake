@@ -86,7 +86,6 @@
     <Compile Include="Integration\Tracking\ReleaseNote.cs" />
     <Compile Include="Integration\Tracking\ReleaseNotes.cs" />
     <Compile Include="Robocopy.cs" />
-    <Compile Include="JunctionPoint.cs" />
     <Compile Include="TicketExtension.cs" />
     <Compile Include="VsTest.cs" />
     <Compile Include="Zip.cs" />

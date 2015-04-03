@@ -86,12 +86,10 @@ namespace AnFake.Plugins.NHibernate
 				if (memberAttr == null)
 					continue;
 
-				var name = memberAttr.Name ?? member.Name;
-
 				var idAttr = member.GetCustomAttribute<IdAttribute>();
-				if (idAttr != null || "id".Equals(name, StringComparison.OrdinalIgnoreCase))
+				if (idAttr != null || "id".Equals(member.Name, StringComparison.OrdinalIgnoreCase))
 				{
-					MapId(name, idAttr != null && idAttr.IsNative, member, @class);
+					MapId(member, idAttr != null && idAttr.IsNative, @class);
 					idMapped = true;
 				}
 				else
@@ -99,18 +97,18 @@ namespace AnFake.Plugins.NHibernate
 					var retType = ReturnTypeOf(member);
 					if (retType.IsValueType || retType == typeof (String))
 					{
-						MapProperty(name, retType, memberAttr.IsRequired, member, @class);
+						MapProperty(member, retType, memberAttr.IsRequired, @class);
 					}
 					else if (typeof (IEnumerable).IsAssignableFrom(retType))
 					{
 						var elementType = ElementTypeOf(retType);
 						Push(elementType);
-						MapOneToMany(name, elementType, retType, member, @class);
+						MapOneToMany(member, elementType, retType, @class);
 					}					
 					else
 					{
 						Push(retType);
-						MapManyToOne(name, retType, memberAttr.IsRequired, member, @class);
+						MapManyToOne(member, retType, memberAttr.IsRequired, @class);
 					}
 				}
 			}
@@ -125,11 +123,11 @@ namespace AnFake.Plugins.NHibernate
 			return mapping;
 		}
 
-		private static void MapId(string name, bool isNative, MemberInfo member, HbmClass @class)
+		private static void MapId(MemberInfo member, bool isNative, HbmClass @class)
 		{
 			@class.Item = new HbmId
 			{
-				name = name,
+				name = member.Name,
 				generator = new HbmGenerator
 				{
 					@class = isNative ? "native" : "assigned"
@@ -147,9 +145,9 @@ namespace AnFake.Plugins.NHibernate
 			};
 		}
 
-		private static void MapProperty(string name, Type type, bool isRequired, MemberInfo member, HbmClass @class)
+		private static void MapProperty(MemberInfo member, Type type, bool isRequired, HbmClass @class)
 		{
-			var property = new HbmProperty {name = name};
+			var property = new HbmProperty {name = member.Name};
 
 			if (isRequired || (type.IsValueType && !(type.IsGenericType && type.GetGenericTypeDefinition() == typeof (Nullable<>))))
 			{
@@ -175,7 +173,7 @@ namespace AnFake.Plugins.NHibernate
 				.ToArray();
 		}
 
-		private static void MapOneToMany(string name, Type subType, Type collectionType, MemberInfo member, HbmClass @class)
+		private static void MapOneToMany(MemberInfo member, Type subType, Type collectionType, HbmClass @class)
 		{
 			object relation = null;
 			var parentName = NameOf(member.DeclaringType);
@@ -196,7 +194,7 @@ namespace AnFake.Plugins.NHibernate
 				{
 					relation = new HbmList
 					{
-						name = name,
+						name = member.Name,
 						cascade = "all",
 						key = key,
 						Item = index,
@@ -211,7 +209,7 @@ namespace AnFake.Plugins.NHibernate
 				{
 					relation = new HbmBag
 					{
-						name = name,
+						name = member.Name,
 						cascade = "all",
 						key = key,
 						Item = new HbmOneToMany
@@ -229,7 +227,7 @@ namespace AnFake.Plugins.NHibernate
 				{
 					relation = new HbmSet
 					{
-						name = name,
+						name = member.Name,
 						cascade = "all",
 						key = key,
 						Item = new HbmOneToMany
@@ -255,11 +253,11 @@ namespace AnFake.Plugins.NHibernate
 				.ToArray();
 		}
 
-		private static void MapManyToOne(string name, Type type, bool isRequired, MemberInfo member, HbmClass @class)
+		private static void MapManyToOne(MemberInfo member, Type type, bool isRequired, HbmClass @class)
 		{
 			var manyToOne = new HbmManyToOne
 			{
-				name = name,
+				name = member.Name,
 				@class = type.FullName,
 				entityname = NameOf(type)
 			};
@@ -311,7 +309,7 @@ namespace AnFake.Plugins.NHibernate
 
 		private static string NameOf(Type type)
 		{
-			return type.GetCustomAttribute<DataContractAttribute>().Name ?? type.Name;
+			return type.Name;
 		}
 	}
 }

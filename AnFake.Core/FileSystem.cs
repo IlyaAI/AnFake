@@ -97,6 +97,8 @@ namespace AnFake.Core
 		{
 			if (path == null)
 				throw new ArgumentException("FileSystem.AsFile(path): path must not be null");
+			if (path.IsWildcarded)
+				throw new ArgumentException("FileSystem.AsFile(path): path must not contain wildcard characters");
 
 			return new FileItem(path, path.IsRooted ? path.Parent : FileSystemPath.Base);
 		}
@@ -125,8 +127,12 @@ namespace AnFake.Core
 		{
 			if (path == null)
 				throw new ArgumentException("FileSystem.AsFileFrom(path, basePath): path must not be null");
+			if (path.IsWildcarded)
+				throw new ArgumentException("FileSystem.AsFileFrom(path, basePath): path must not contain wildcard characters");
 			if (basePath == null)
 				throw new ArgumentException("FileSystem.AsFileFrom(path, basePath): basePath must not be null");
+			if (basePath.IsWildcarded)
+				throw new ArgumentException("FileSystem.AsFileFrom(path, basePath): basePath must not contain wildcard characters");
 
 			return new FileItem(path, basePath);
 		}
@@ -140,12 +146,10 @@ namespace AnFake.Core
 		/// <seealso cref="FileItem.RelPath"/>
 		public static FileItem AsFileFrom(this FileSystemPath path, string basePath)
 		{
-			if (path == null)
-				throw new ArgumentException("FileSystem.AsFileFrom(path, basePath): path must not be null");
 			if (basePath == null)
 				throw new ArgumentException("FileSystem.AsFileFrom(path, basePath): basePath must not be null");
 
-			return new FileItem(path, basePath.AsPath());
+			return AsFileFrom(path, basePath.AsPath());
 		}
 
 		///  <summary>
@@ -159,10 +163,8 @@ namespace AnFake.Core
 		{
 			if (path == null)
 				throw new ArgumentException("FileSystem.AsFileFrom(path, basePath): path must not be null");
-			if (basePath == null)
-				throw new ArgumentException("FileSystem.AsFileFrom(path, basePath): basePath must not be null");
-
-			return new FileItem(path.AsPath(), basePath);
+			
+			return AsFileFrom(path.AsPath(), basePath);
 		}
 
 		///  <summary>
@@ -179,7 +181,7 @@ namespace AnFake.Core
 			if (basePath == null)
 				throw new ArgumentException("FileSystem.AsFileFrom(path, basePath): basePath must not be null");
 
-			return new FileItem(path.AsPath(), basePath.AsPath());
+			return AsFileFrom(path.AsPath(), basePath.AsPath());
 		}
 
 		///  <summary>
@@ -324,6 +326,8 @@ namespace AnFake.Core
 		{
 			if (path == null)
 				throw new ArgumentException("FileSystem.AsFolder(path): path must not be null");
+			if (path.IsWildcarded)
+				throw new ArgumentException("FileSystem.AsFolder(path): path must not contain wildcard characters");
 
 			return new FolderItem(path);
 		}

@@ -205,6 +205,11 @@ namespace AnFake.Core
 			return sb.ToString();
 		}
 
+		public static FileSet Empty()
+		{
+			return new FileSet();
+		}
+
 		public static FileSet operator +(FileSet files, FileSystemPath wildcardedPath)
 		{
 			return files.Include(wildcardedPath);

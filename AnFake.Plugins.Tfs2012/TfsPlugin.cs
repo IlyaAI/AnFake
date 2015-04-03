@@ -26,7 +26,9 @@ namespace AnFake.Plugins.Tfs2012
 		private const int SummaryPriority = 199;
 		private const string OverviewKey = "AnFakeOverview";
 		private const string OverviewHeader = "Overview";
-		private const int OverviewPriority = 150;		
+		private const int OverviewPriority = 150;
+
+		public static readonly string[] InformationTypes = { "ActivityTracking", CustomInformationNode };
 		
 		private readonly Queue<TraceMessage> _messages = new Queue<TraceMessage>();
 		private DateTime _lastFlushed;
@@ -258,7 +260,7 @@ namespace AnFake.Plugins.Tfs2012
 
 			var build = buildSvc.QueryBuildsByUri(
 				new[] { uri },
-				new[] { "ActivityTracking", CustomInformationNode },
+				InformationTypes,
 				QueryOptions.Definitions).Single();
 
 			if (build == null)
@@ -314,6 +316,24 @@ namespace AnFake.Plugins.Tfs2012
 
 		// IBuildServer members
 
+		private IBuildDetail _pipeInBuild;
+
+		private IBuildDetail PipeInBuild
+		{
+			get
+			{
+				if (_pipeInBuild != null)
+					return _pipeInBuild;
+
+				if (!MyBuild.HasProp("Tfs.PipeIn"))
+					throw new InvalidConfigurationException("Build isn't a part of pipeline.");
+
+				_pipeInBuild = GetBuildByUri(new Uri(MyBuild.GetProp("Tfs.PipeIn")));
+
+				return _pipeInBuild;				
+			}
+		}
+
 		public bool IsLocal
 		{
 			get { return _build == null; }
@@ -328,6 +348,16 @@ namespace AnFake.Plugins.Tfs2012
 						? !String.IsNullOrEmpty(_build.DropLocation)
 						: BuildServer.Local.CanExposeArtifacts;
 			}
+		}
+
+		public bool HasPipeIn
+		{
+			get { return PipeInBuild != null; }
+		}
+
+		public int PipeInChangesetId
+		{
+			get { throw new NotImplementedException(); }
 		}
 
 		public Uri ExposeArtifact(FileItem file, ArtifactType type)
@@ -389,7 +419,27 @@ namespace AnFake.Plugins.Tfs2012
 
 			var dstPath = _build.DropLocation.AsPath()/type.ToString();
 			Files.Copy(files, dstPath);
-		}		
+		}
+
+		public void GetPipeInArtifact(FileItem file, FileSystemPath dstPath, ArtifactType type)
+		{
+			Trace.InfoFormat("TfsPlugin: Getting pipe-in artifact '{0}\\{1}' to '{2}'...", type, file, dstPath);			
+			Files.Copy(PipeInBuild.DropLocation.AsPath() / type.ToString() / file.Path, dstPath / file.RelPath);			
+		}
+
+		public void GetPipeInArtifact(FolderItem folder, FileSystemPath dstPath, ArtifactType type)
+		{
+			Trace.InfoFormat("TfsPlugin: Getting pipe-in artifact '{0}\\{1}' to '{2}'...", type, folder, dstPath);
+			Files.Copy(
+				"*/**".AsFileFrom(
+					PipeInBuild.DropLocation.AsPath() / type.ToString() / folder.Path), 
+				dstPath);
+		}
+
+		public void GetPipeInArtifacts(FileSet files, FileSystemPath dstPath, ArtifactType type)
+		{
+			throw new NotImplementedException();
+		}
 
 		private void EnsureCanExpose()
 		{

@@ -89,7 +89,7 @@ let plugInTfs () =
         MyBuild.SaveProp("Tfs.Uri")
     Tfs.PlugIn()
 
-"Build" => (fun _ ->
+"Help" => (fun _ ->
     Log.Info ""
     Log.Info "Usage: anf-tf[.cmd] <command> [<param>] ..."
     Log.Info "COMMANDS:"    
@@ -99,6 +99,8 @@ let plugInTfs () =
 
     MyBuild.Failed "Command is missed."
 )
+
+"Build" <== ["Help"]
 
 "Checkout" => (fun _ ->
     plugInTfs()
@@ -251,7 +253,7 @@ let plugInTfs () =
 
     TfsWorkspace.PendAdd(srcFiles)
 
-    Log.InfoFormat("Folder '{0}' is ready to check-in. Carefully review all pending changes in '{1}' workspace and commit them.", localPath, workspaceName)
+    Trace.InfoFormat("Folder '{0}' is ready to check-in. Carefully review all pending changes in '{1}' workspace and commit them.", localPath, workspaceName)
 )
 
 "Checkin" ==> "ci"
@@ -260,7 +262,7 @@ let plugInTfs () =
     plugInTfs()
 
     Folders.Delete("[LocalApplicationData]/Microsoft/Team Foundation/4.0/Cache")
-    Log.Info("Hint: if delete operation failed ensure all instances of Visual Studio are closed.")
+    Trace.Info("Hint: if delete operation failed ensure all instances of Visual Studio are closed.")
 
     TfsWorkspace.UpdateInfoCache()
 )

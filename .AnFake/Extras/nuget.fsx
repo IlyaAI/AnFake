@@ -25,7 +25,7 @@ let getSolutionRoot() =
     if sln = null then
         MyBuild.Failed("Expecting solution file in '{0}' but no one was found.", slnRoot)
 
-    Log.InfoFormat("Initiating solution '{0}'...", sln.NameWithoutExt)
+    Trace.InfoFormat("Initiating solution '{0}'...", sln.NameWithoutExt)
 
     let anfakePath = (~~"[AnFake]").ToRelative(slnRoot).Spec
 
@@ -39,7 +39,7 @@ let getSolutionRoot() =
         let buildFsxBody = ("[AnFake]/build.tmpl.fsx").AsFile().AsTextDoc()
         buildFsxBody.Replace(@"\[\.AnFake\]", anfakePath)
         buildFsxBody.SaveTo(buildFsx)
-        Log.Info("  build.fsx generated.")
+        Trace.Info("  build.fsx generated.")
 
     let wsFile = (slnRoot / TfsWorkspace.Defaults.WorkspaceFile).AsFile()
     if not <| wsFile.Exists() then
@@ -50,13 +50,13 @@ let getSolutionRoot() =
             MyBuild.SetProp("Tfs.Uri", tfsUri)
             MyBuild.SaveProp("Tfs.Uri")
 
-            Log.InfoFormat("Team Foundation detected at '{0}'.", tfsUri)
+            Trace.InfoFormat("Team Foundation detected at '{0}'.", tfsUri)
             
             Tfs.PlugIn()
 
             let nugetConfig = (slnRoot / ".nuget/NuGet.config").AsFile()
             if not <| nugetConfig.Exists() then
-                Log.Info("== Configuring NuGet to avoid checking-in binaries to version control...")
+                Trace.Info("== Configuring NuGet to avoid checking-in binaries to version control...")
 
                 let nugetConfigBody = "<configuration/>".AsXmlDoc()
                 let node = 
@@ -69,14 +69,14 @@ let getSolutionRoot() =
 
                 TfsWorkspace.Undo(!!!MyBuild.GetProp("__1"))
 
-                Log.Info("== NuGet configured.")
+                Trace.Info("== NuGet configured.")
 
-            Log.Info("== Preparing workspace...")
+            Trace.Info("== Preparing workspace...")
             TfsWorkspace.PendAdd([anfCmd; nugetConfig; buildFsx])
 
-            if SafeOp.Try((fun x -> TfsWorkspace.SaveLocal(x)), slnRoot) then
-                TfsWorkspace.PendAdd([wsFile])
-                Log.Info("== Workspace ready.")
-        
-    Log.InfoFormat("Solution '{0}' is ready to use AnFake.", sln.NameWithoutExt)    
+            TfsWorkspace.SaveLocal(slnRoot)
+            TfsWorkspace.PendAdd([wsFile])
+            Trace.Info("== Workspace ready.")            
+
+    Trace.InfoFormat("Solution '{0}' is ready to use AnFake.", sln.NameWithoutExt)    
 )

@@ -68,6 +68,16 @@ namespace AnFake.Core.Exceptions
 			var msgBuilder = new StringBuilder();
 			msgBuilder.Append(InnerException != null ? InnerException.Message : base.Message);
 
+			var ex = InnerException ?? this;
+			for (var level = 1; ex.InnerException != null; level++)
+			{
+				ex = ex.InnerException;
+				msgBuilder
+					.AppendLine()
+					.Append('>', level).Append(' ')
+					.Append(ex.Message);
+			}
+			
 			var stackTrace = new StackTrace(InnerException ?? this, true);
 			
 			if (MyBuild.Current != null && MyBuild.Current.ScriptFile != null)

@@ -374,6 +374,51 @@ namespace AnFake.Plugins.Tfs2012
 
 			var results = buildSvc.QueryBuilds(spec);
 			return results.Builds.Select(x => new BuildDetail(x));
-		}		
+		}
+
+		/// <summary>
+		///		Queries build by name. Throws if no one found.
+		/// </summary>
+		/// <param name="buildName">build name</param>		
+		/// <returns>build</returns>
+		public static BuildDetail QueryByName(string buildName)
+		{
+			if (String.IsNullOrEmpty(buildName))
+				throw new ArgumentException("TfsBuild.QueryByName(buildName): buildName must not be null or empty");
+
+			var buildSvc = Impl.TeamProjectCollection.GetService<IBuildServer>();
+
+			var spec = buildSvc.CreateBuildDefinitionSpec(Impl.TeamProject);			
+			return 
+				new BuildDetail(
+					buildSvc.GetBuild(spec, buildName, TfsPlugin.InformationTypes, QueryOptions.Definitions));
+		}
+
+		/// <summary>
+		///		Queries last good build related to specified build definition. Throws if no one found.
+		/// </summary>
+		/// <param name="definitionName">build definition name</param>
+		/// <returns>build</returns>
+		public static BuildDetail QueryLastGood(string definitionName)
+		{
+			if (String.IsNullOrEmpty(definitionName))
+				throw new ArgumentException("TfsBuild.QueryLastGood(definitionName): definitionName must not be null or empty");
+
+			var buildSvc = Impl.TeamProjectCollection.GetService<IBuildServer>();
+
+			var definition = buildSvc.GetBuildDefinition(Impl.TeamProject, definitionName);
+			var spec = buildSvc.CreateBuildDetailSpec(definition);
+			spec.MaxBuildsPerDefinition = 1;
+			spec.QueryOrder = BuildQueryOrder.FinishTimeDescending;
+			spec.Status = BuildStatus.Succeeded | BuildStatus.PartiallySucceeded;
+			spec.QueryDeletedOption = QueryDeletedOption.ExcludeDeleted;
+			spec.InformationTypes = TfsPlugin.InformationTypes;
+
+			var build = buildSvc.QueryBuilds(spec).Builds.FirstOrDefault();
+			if (build == null)
+				throw new InvalidConfigurationException(String.Format("There is no good builds of '{0}'.", definitionName));
+
+			return new BuildDetail(build);
+		}
 	}
 }

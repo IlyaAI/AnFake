@@ -15,6 +15,16 @@ namespace AnFake.Core.Integration
 			get { return true; }
 		}
 
+		public bool HasPipeIn
+		{
+			get { return false; }
+		}
+
+		public int PipeInChangesetId
+		{
+			get { throw new NotSupportedException("Local build server doesn't support pipelined builds."); }
+		}
+
 		public Uri ExposeArtifact(FileItem file, ArtifactType type)
 		{
 			return new UriBuilder(Uri.UriSchemeFile, "") {Path = file.Path.Full}.Uri;
@@ -33,6 +43,21 @@ namespace AnFake.Core.Integration
 		public void ExposeArtifacts(FileSet files, ArtifactType type)
 		{
 			// do nothing
+		}		
+
+		public void GetPipeInArtifact(FileItem file, FileSystemPath dstPath, ArtifactType type)
+		{
+			throw new NotSupportedException("Local build server doesn't support pipelined builds.");
+		}
+
+		public void GetPipeInArtifact(FolderItem folder, FileSystemPath dstPath, ArtifactType type)
+		{
+			throw new NotSupportedException("Local build server doesn't support pipelined builds.");
+		}
+
+		public void GetPipeInArtifacts(FileSet files, FileSystemPath dstPath, ArtifactType type)
+		{
+			throw new NotSupportedException("Local build server doesn't support pipelined builds.");
 		}		
 	}
 }

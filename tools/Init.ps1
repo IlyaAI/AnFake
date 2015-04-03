@@ -7,7 +7,7 @@ $anfake = Join-Path $installPath bin\AnFake.exe
 
 IF ($LASTEXITCODE -NE 0) 
 {
-	Write-Error "There are some errors in initiating solution. See output above."
+	Write-Host "There are some errors in initiating solution. See output above." -ForegroundColor White -BackgroundColor Red
 } 
 ELSE
 { 
