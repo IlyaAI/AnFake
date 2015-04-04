@@ -54,6 +54,44 @@ let product =
 "Build" <== ["Compile"; "Test"]
 ```
 
+The same using C#:
+```csharp
+Tfs.PlugIn();
+
+var outDir = ".out".AsPath();
+var productOut = out / "product";
+var testsOut = out / "tests";
+
+var tests = "*/*.Test.csproj".AsFileSet();
+var product = "*/*.csproj".AsFileSet() - tests;
+
+"Clean".AsTarget().Do(() => 
+{
+    var obj = "*/obj".AsFolderSet();
+    var bin = "*/bin".AsFolderSet();
+
+    Folders.Clean(obj);
+    Folders.Clean(bin);
+    Folders.Clean(out);
+});
+
+"Compile".AsTarget().Do(() => 
+{
+    MsBuild.BuildRelease(product, productOut);
+
+    MsBuild.BuildRelease(tests, testsOut);
+});
+
+"Test.Unit".AsTarget().Do(() => 
+{
+    VsTest.Run(testsOut % "*.Test.dll");
+});
+
+"Test".AsTarget().DependsOn("Test.Unit");
+
+"Build".AsTarget().DependsOn("Compile", "Test");
+```
+
 You can run build either locally...
 
 ```
