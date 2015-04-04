@@ -72,3 +72,7 @@ You can run build either locally...
 * it's possible to test build locally before commit;
 * for most developers it is easier to edit script (in usual editor with IntelliSense working!) instead of build process template;
 * it's significantly easy to debug local script than build workflow on remote machine.
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/IlyaAI/anfake/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
