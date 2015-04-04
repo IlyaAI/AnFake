@@ -25,9 +25,7 @@ let productOut = out / "product"
 let testsOut = out / "tests"
 
 let tests = !!"*/*.Test.csproj"
-let product = 
-    !!"*/*.csproj"
-    - tests
+let product = !!"*/*.csproj" - tests
 
 "Clean" => (fun _ ->    
     let obj = !!!"*/obj"
@@ -40,17 +38,14 @@ let product =
 
 "Compile" => (fun _ ->
     MsBuild.BuildRelease(product, productOut)
-
     MsBuild.BuildRelease(tests, testsOut)
 )
 
 "Test.Unit" => (fun _ -> 
-    VsTest.Run(
-        testsOut % "*.Test.dll")
+    VsTest.Run(testsOut % "*.Test.dll")
 )
 
 "Test" <== ["Test.Unit"]
-
 "Build" <== ["Compile"; "Test"]
 ```
 
@@ -78,7 +73,6 @@ var product = "*/*.csproj".AsFileSet() - tests;
 "Compile".AsTarget().Do(() => 
 {
     MsBuild.BuildRelease(product, productOut);
-
     MsBuild.BuildRelease(tests, testsOut);
 });
 
@@ -88,7 +82,6 @@ var product = "*/*.csproj".AsFileSet() - tests;
 });
 
 "Test".AsTarget().DependsOn("Test.Unit");
-
 "Build".AsTarget().DependsOn("Compile", "Test");
 ```
 
