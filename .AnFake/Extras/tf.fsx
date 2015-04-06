@@ -169,7 +169,11 @@ let plugInTfs () =
 
     let packagesConfig = (localPath / ".nuget/packages.config").AsFile()
     if packagesConfig.Exists() then
-        NuGet.Restore(packagesConfig, fun p -> (p.SolutionDirectory <- localPath))
+        NuGet.Restore(
+            packagesConfig, 
+            fun p -> 
+                p.SolutionDirectory <- localPath
+                p.OutputDirectory <- null)
 )
 
 "Checkout" ==> "co"
