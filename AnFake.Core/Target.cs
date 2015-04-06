@@ -106,6 +106,7 @@ namespace AnFake.Core
 		private TargetState _state;
 		private bool _skipErrors;
 		private bool _failIfAnyWarning;
+		private bool _partialSucceedIfAnyWarning;
 		private TimeSpan _runTime = TimeSpan.Zero;
 		private event EventHandler<ExecutionReason> Failed;
 		private event EventHandler<ExecutionReason> Finalized;
@@ -306,6 +307,17 @@ namespace AnFake.Core
 		public Target FailIfAnyWarning()
 		{
 			_failIfAnyWarning = true;
+
+			return this;
+		}
+
+		/// <summary>
+		///     Instructs this target to partial succeed if any warning message was written to tracer.
+		/// </summary>
+		/// <returns></returns>
+		public Target PartialSucceedIfAnyWarning()
+		{
+			_partialSucceedIfAnyWarning = true;
 
 			return this;
 		}
@@ -537,7 +549,7 @@ namespace AnFake.Core
 					return;
 			}
 
-			if (_state == TargetState.PartiallySucceeded)
+			if (_state == TargetState.PartiallySucceeded && (!_partialSucceedIfAnyWarning || _messages.WarningsCount == 0))
 			{
 				_state = TargetState.Succeeded;
 			}

@@ -31,6 +31,8 @@ let skipErrors (target: Target) = target.SkipErrors()
 
 let failIfAnyWarning (target: Target) = target.FailIfAnyWarning()
 
+let partialSucceedIfAnyWarning (target: Target) = target.PartialSucceedIfAnyWarning()
+
 let nullInt () = new Nullable<Int32>()
 
 let nullLong () = new Nullable<Int64>()

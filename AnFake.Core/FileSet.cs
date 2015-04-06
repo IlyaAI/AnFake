@@ -128,33 +128,6 @@ namespace AnFake.Core
 
 		public IEnumerator<FileItem> GetEnumerator()
 		{
-			/*var files = new List<FileItem>();
-
-			foreach (var pattern in _patterns)
-			{
-				if (pattern.BasePath.IsWildcarded)
-				{
-					foreach (var folder in FileSystem.MatchFolders(pattern.BasePath))
-					{
-						MergeFiles(
-							pattern.Type,
-							folder,
-							FileSystem.MatchFiles(folder, pattern.WildcardedPath),
-							files);
-					}
-				}
-				else
-				{
-					MergeFiles(
-						pattern.Type,
-						pattern.BasePath,
-						FileSystem.MatchFiles(pattern.BasePath, pattern.WildcardedPath),
-						files);
-				}
-			}
-
-			return files.Distinct().GetEnumerator();*/
-
 			return SearchIn(FileSystemPath.Base).GetEnumerator();
 		}
 

@@ -318,5 +318,21 @@ namespace AnFake.Core.Test
 			// assert
 			Assert.AreEqual(TargetState.PartiallySucceeded, a.State);
 		}
+
+		[TestCategory("Functional")]
+		[TestMethod]
+		public void TargetRun_should_eval_state_as_partially_succeeded_if_any_warning_and_partial_succeed_by_warnings_enabled()
+		{
+			// arrange			
+			var a = "a".AsTarget()
+				.Do(() => Trace.Warn("Fatal Warning"))
+				.PartialSucceedIfAnyWarning();
+
+			// act
+			a.Run();
+
+			// assert
+			Assert.AreEqual(TargetState.PartiallySucceeded, a.State);
+		}
 	}
 }
