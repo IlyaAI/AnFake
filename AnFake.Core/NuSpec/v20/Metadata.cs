@@ -138,8 +138,6 @@ namespace AnFake.Core.NuSpec.v20
 		[XmlElement("tags")]
 		public string Tags { get; set; }
 
-		// TODO: insert other
-
 		/// <summary>
 		///     (v1.5) Names of assemblies under lib that are added as project references. If unspecified, all references in lib
 		///     are added as project references. When specifying a reference, only specify the name and not the path inside the
@@ -149,5 +147,15 @@ namespace AnFake.Core.NuSpec.v20
 		[XmlArray("references")]
 		[XmlArrayItem("reference")]
 		public Reference[] References { get; set; }
+
+		/// <summary>
+		///     The list of dependencies for the package.
+		/// </summary>
+		/// <seealso cref="http://docs.nuget.org/create/nuspec-reference#specifying-dependencies" />
+		[XmlArray("dependencies")]
+		[XmlArrayItem("dependency")]
+		public Dependency[] Dependencies { get; set; }
+
+		// TODO: insert other
 	}
 }

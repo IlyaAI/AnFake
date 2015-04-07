@@ -157,6 +157,34 @@ let xamlVersion = "2"
         p.SourceUrl <- MyBuild.GetProp("NuGet.SourcePushUrl"))
 )
 
+"Package.Alias" => (fun _ -> 
+    let nuspec = NuGet.Spec25(fun meta -> 
+        meta.Id <- "TeamBuild.ScriptTemplate"
+        meta.Version <- productVersion
+        meta.Authors <- productAuthor
+        meta.Description <-             
+            "Use eighther F# or C# script for your build definitions in Ms Team Build, " + 
+            "forget about build process templates! " +
+            "Integration with TFS 2012/2013 provided out-of-box.\n\n" +
+            "This package is just an ALIAS for AnFake, which is installed as dependent one."
+        meta.ProjectUrl <- productHome
+        meta.Summary <- "Use eighther F# or C# script for your build definitions in Ms Team Build."
+        meta.Tags <- productTags
+    )    
+
+    nuspec.Metadata.AddDependencies(productName, productVersion)
+
+    nuspec.AddFiles(~~".AnFake" % "README.txt", "")
+    
+    let nupkg = NuGet.Pack(nuspec, out, fun p -> 
+        p.NoPackageAnalysis <- true
+        p.NoDefaultExcludes <- true)
+
+    NuGet.Push(nupkg, fun p -> 
+        p.AccessKey <- MyBuild.GetProp("NuGet.AccessKey")
+        p.SourceUrl <- MyBuild.GetProp("NuGet.SourcePushUrl"))
+)
+
 "SetApiVersion" => (fun _ ->
     let files =
         [

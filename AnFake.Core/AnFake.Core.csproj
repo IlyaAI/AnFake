@@ -75,12 +75,15 @@
     <Compile Include="Integration\User.cs" />
     <Compile Include="Json.cs" />
     <Compile Include="NuSpec\IPackage.cs" />
+    <Compile Include="NuSpec\v20\Dependency.cs" />
     <Compile Include="NuSpec\v20\File.cs" />
     <Compile Include="NuSpec\v20\Framework.cs" />
     <Compile Include="NuSpec\v20\Metadata.cs" />
     <Compile Include="NuSpec\v20\Package.cs" />
     <Compile Include="NuSpec\v20\Reference.cs" />
     <Compile Include="NullableExtension.cs" />
+    <Compile Include="NuSpec\v25\DependencyGroup.cs" />
+    <Compile Include="NuSpec\v25\Dependency.cs" />
     <Compile Include="ReleaseNotes.cs" />
     <Compile Include="Integration\Tracking\ITicket.cs" />
     <Compile Include="Integration\Tracking\ReleaseNote.cs" />
