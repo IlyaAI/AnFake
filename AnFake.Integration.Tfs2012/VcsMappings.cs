@@ -12,7 +12,7 @@ namespace AnFake.Integration.Tfs2012
 		public const string CloackedMarker = "-";
 		public const char Separator = ':';
 
-		public static WorkingFolder[] Parse(string workspace, string serverPath, string localPath)
+		public static ExtendedMapping[] Parse(string workspace, string serverPath, string localPath)
 		{
 			if (workspace == null)
 				throw new ArgumentException(String.Format("VcsMappings.Parse(workspace, localPath): workspace must not be null"));
@@ -21,9 +21,9 @@ namespace AnFake.Integration.Tfs2012
 			if (!Path.IsPathRooted(localPath))
 				throw new ArgumentException(String.Format("VcsMappings.Parse(workspace, localPath): localPath must be an absolute path"));
 
-			var folders = new List<WorkingFolder>
+			var folders = new List<ExtendedMapping>
 			{
-				new WorkingFolder(serverPath, localPath)
+				ExtendedMapping.Map(serverPath, localPath)
 			};
 
 			foreach (var mappingLine in workspace.Split('\n', '\r').Select(x => x.Trim()).Where(x => x.Length > 0))
@@ -39,7 +39,7 @@ namespace AnFake.Integration.Tfs2012
 						serverPath,
 						mappingLine.Remove(0, CloackedMarker.Length).Trim(' ', Separator));					
 
-					folders.Add(new WorkingFolder(mapFrom, String.Empty, WorkingFolderType.Cloak));
+					folders.Add(ExtendedMapping.Cloak(mapFrom));
 				}
 				else
 				{
@@ -55,6 +55,9 @@ namespace AnFake.Integration.Tfs2012
 						serverPath,
 						mappingParts[0].Trim());
 
+					VersionSpec[] versionSpecs;
+					VersionSpec.ParseVersionedFileSpec(mapFrom, ".", out mapFrom, out versionSpecs);
+					
 					var mapTo = mappingParts[1].Trim();
 					if (Path.IsPathRooted(mapTo))
 						throw new FormatException(
@@ -62,11 +65,16 @@ namespace AnFake.Integration.Tfs2012
 
 					mapTo = Path.Combine(localPath, mapTo);
 
-					folders.Add(new WorkingFolder(mapFrom, mapTo, WorkingFolderType.Map));
+					folders.Add(ExtendedMapping.Map(mapFrom, mapTo, versionSpecs.FirstOrDefault()));
 				}
 			}
 
 			return folders.ToArray();
+		}
+
+		public static WorkingFolder[] AsTfsMappings(this IEnumerable<ExtendedMapping> mappings)
+		{
+			return mappings.Select(x => x.WorkingFolder).ToArray();
 		}
 	}
 }

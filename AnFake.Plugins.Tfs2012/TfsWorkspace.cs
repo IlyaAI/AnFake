@@ -161,10 +161,14 @@ namespace AnFake.Plugins.Tfs2012
 
 			TraceMappings(mappings);
 
-			ws = Vcs.CreateWorkspace(workspaceName, User.Current, String.Format("AnFake: {0} => {1}", serverPath, localPath), mappings);
+			ws = Vcs.CreateWorkspace(
+				workspaceName, 
+				User.Current, 
+				String.Format("AnFake: {0} => {1}", serverPath, localPath), 
+				mappings.AsTfsMappings());
 			Trace.InfoFormat("Workspace '{0}' successfully created for '{1}'.", workspaceName, User.Current);
 
-			UpdateFiles(ws, VersionSpec.Latest);
+			UpdateFiles(ws, mappings, VersionSpec.Latest);
 		}		
 
 		/// <summary>
@@ -233,10 +237,14 @@ namespace AnFake.Plugins.Tfs2012
 
 			TraceMappings(mappings);
 
-			ws = Vcs.CreateWorkspace(workspaceName, User.Current, String.Format("AnFake: {0} => {1}", serverPath, localPath), mappings);
+			ws = Vcs.CreateWorkspace(
+				workspaceName, 
+				User.Current, 
+				String.Format("AnFake: {0} => {1}", serverPath, localPath), 
+				mappings.AsTfsMappings());
 			Trace.InfoFormat("Workspace '{0}' successfully created for '{1}'.", workspaceName, User.Current);
 
-			UpdateFiles(ws, versionSpec);
+			UpdateFiles(ws, mappings, versionSpec);
 		}
 
 		/// <summary>
@@ -305,11 +313,11 @@ namespace AnFake.Plugins.Tfs2012
 
 			TraceMappings(mappings);
 
-			ws.Update(ws.Name, ws.Comment, mappings);
+			ws.Update(ws.Name, ws.Comment, mappings.AsTfsMappings());
 
 			Trace.InfoFormat("Workspace '{0}' successfully updated.", ws.Name);
 
-			UpdateFiles(ws, versionSpec);
+			UpdateFiles(ws, mappings, versionSpec);
 		}		
 
 		public static void SaveLocal(FileSystemPath localPath)
@@ -512,14 +520,14 @@ namespace AnFake.Plugins.Tfs2012
 			return VersionSpec.ParseSingleSpec(parameters.VersionSpec, User.Current);
 		}
 
-		private static void TraceMappings(IEnumerable<WorkingFolder> mappings)
+		private static void TraceMappings(IEnumerable<ExtendedMapping> mappings)
 		{
 			Trace.DebugFormat(
 				"Mappings:\n  {0}", 
 				String.Join("\n  ", 
 					mappings.Select(
 						m => String.Format("{0} => {1}", 
-							m.ServerItem, 
+							m.VersionSpec != null ? m.VersionSpec.Format(m.ServerItem) : m.ServerItem, 
 							m.IsCloaked ? "(cloacked)" : m.LocalItem))));
 		}
 
@@ -565,24 +573,44 @@ namespace AnFake.Plugins.Tfs2012
 			writer.WriteLine();
 		}
 
-		private static void UpdateFiles(Workspace ws, VersionSpec versionSpec)
+		private static void UpdateFiles(Workspace ws, ExtendedMapping[] mappings, VersionSpec versionSpec)
 		{
 			Trace.Info("Updating files...");
 			var status = ws.Get(versionSpec, GetOptions.NoAutoResolve);
-			
+
 			foreach (var failure in status.GetFailures())
 			{
-				Trace.Warn(failure.GetFormattedMessage());				
+				Trace.Warn(failure.GetFormattedMessage());
 			}
 
-			if (status.NumConflicts > 0)
+			var numConflicts = status.NumConflicts;
+			var numFiles = status.NumFiles;
+			var numFailures = status.NumFailures;
+
+			foreach (var mapping in mappings.Where(x => x.VersionSpec != null))
 			{
-				Trace.WarnFormat("There are {0} conflicts detected.", status.NumConflicts);
+				status = ws.Get(
+					new GetRequest(mapping.ServerItem, RecursionType.None, mapping.VersionSpec),
+					GetOptions.NoAutoResolve);
+
+				foreach (var failure in status.GetFailures())
+				{
+					Trace.Warn(failure.GetFormattedMessage());
+				}
+
+				numConflicts += status.NumConflicts;
+				numFiles += status.NumFiles;
+				numFailures += status.NumFailures;
+			}
+
+			if (numConflicts > 0)
+			{
+				Trace.WarnFormat("There are {0} conflicts detected.", numConflicts);
 			}
 
 			Trace.InfoFormat(
 				"{0}: {1} file(s) updated. {2} warning(s), {3} conflict(s)", 
-				versionSpec.DisplayString, status.NumFiles, status.NumFailures, status.NumConflicts);
+				versionSpec.DisplayString, numFiles, numFailures, numConflicts);
 		}
 	}
 }

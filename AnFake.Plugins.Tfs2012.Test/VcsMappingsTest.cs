@@ -1,5 +1,6 @@
 ﻿using System;
 using AnFake.Integration.Tfs2012;
+using Microsoft.TeamFoundation.VersionControl.Client;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AnFake.Plugins.Tfs2012.Test
@@ -185,6 +186,38 @@ namespace AnFake.Plugins.Tfs2012.Test
 			VcsMappings.Parse(workspace, "$/", @"c:\another\root");
 
 			// assert			
+		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void VcsMappings_should_parse_versioned_by_changeset_path()
+		{
+			// arrange
+			const string workspace = " $/server/path/01;C100: 01";
+
+			// act
+			var mappings = VcsMappings.Parse(workspace, "$/server/root", @"c:\");
+
+			// assert
+			Assert.AreEqual(2, mappings.Length);
+			Assert.AreEqual("$/server/path/01", mappings[1].ServerItem);
+			Assert.AreEqual(new ChangesetVersionSpec(100), mappings[1].VersionSpec);			
+		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void VcsMappings_should_parse_versioned_as_latest_path()
+		{
+			// arrange
+			const string workspace = " $/server/path/01;T: 01";
+
+			// act
+			var mappings = VcsMappings.Parse(workspace, "$/server/root", @"c:\");
+
+			// assert
+			Assert.AreEqual(2, mappings.Length);
+			Assert.AreEqual("$/server/path/01", mappings[1].ServerItem);
+			Assert.AreEqual(VersionSpec.Latest, mappings[1].VersionSpec);
 		}
 	}
 }

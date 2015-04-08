@@ -51,6 +51,7 @@
     <Compile Include="AnFakeBuildProcessException.cs" />
     <Compile Include="BuildInformationExtension.cs" />
     <Compile Include="ExpandWorkspace.cs" />
+    <Compile Include="ExtendedMapping.cs" />
     <Compile Include="ProcessOutputBuffer.cs" />
     <Compile Include="RestorePackages.cs" />
     <Compile Include="Pipeline\TfsPipelineBuild.cs" />

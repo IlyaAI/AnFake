@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Activities;
 using System.IO;
+using System.Linq;
 using Microsoft.TeamFoundation.Build.Client;
 using Microsoft.TeamFoundation.Build.Workflow.Activities;
 using Microsoft.TeamFoundation.Client;
@@ -72,7 +73,10 @@ namespace AnFake.Integration.Tfs2012
 				context.TrackBuildMessage(String.Format("  {0} => {1}", mapping.ServerItem, mapping.IsCloaked ? "(cloacked)" : mapping.LocalItem));
 			}
 
-			workspace.Update(workspace.Name, workspace.Comment, mappings);
+			workspace.Update(
+				workspace.Name, 
+				workspace.Comment, 
+				mappings.AsTfsMappings());
 
 			context.TrackBuildMessage("Workspace sucessfully expanded.");
 		}
