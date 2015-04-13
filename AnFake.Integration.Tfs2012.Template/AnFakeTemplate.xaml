@@ -79,6 +79,7 @@
       <x:String>System.Windows.Markup</x:String>
       <x:String>TfsBuild</x:String>
       <x:String>System.IO</x:String>
+      <x:String>AnFake.Integration.Tfs2012</x:String>
     </sco:Collection>
   </TextExpression.NamespacesForImplementation>
   <TextExpression.ReferencesForImplementation>
@@ -97,6 +98,7 @@
       <AssemblyReference>System.Xaml</AssemblyReference>
       <AssemblyReference>System</AssemblyReference>
       <AssemblyReference>System.ServiceModel</AssemblyReference>
+      <AssemblyReference>AnFake.Integration.Tfs2012.v2</AssemblyReference>
     </sco:Collection>
   </TextExpression.ReferencesForImplementation>
   <Sequence DisplayName="AnFake Build Root" sap2010:WorkflowViewState.IdRef="Sequence_16" mtbwt:BuildTrackingParticipant.Importance="None">
@@ -130,13 +132,16 @@
         </If>
       </Sequence>
       <Sequence DisplayName="Initialize Workspace" sap2010:WorkflowViewState.IdRef="Sequence_9" mtbwt:BuildTrackingParticipant.Importance="Low">
+        <Sequence.Variables>
+          <Variable x:TypeArguments="ait:ExtendedMapping[]" Name="ExtendedMappings" />
+        </Sequence.Variables>
         <If Condition="[CleanWorkspace = CleanWorkspaceOption.All]" DisplayName="If CleanWorkspace = All" sap2010:WorkflowViewState.IdRef="If_6" mtbwt:BuildTrackingParticipant.Importance="Low">
           <If.Then>
             <mtbwa:DeleteWorkspace DeleteLocalItems="[True]" DisplayName="Delete Workspace" sap2010:WorkflowViewState.IdRef="DeleteWorkspace_2" mtbwt:BuildTrackingParticipant.Importance="Low" Name="[WorkspaceName]" />
           </If.Then>
         </If>
         <mtbwa:CreateWorkspace BuildDirectory="[BuildDirectory]" Comment="[&quot;Workspace Created by Team Build&quot;]" DisplayName="Create Workspace" sap2010:WorkflowViewState.IdRef="CreateWorkspace_1" Name="[WorkspaceName]" Result="[Workspace]" SourcesDirectory="[BuildDirectory]" />
-        <ait:ExpandWorkspace BuildDetail="[BuildDetail]" sap2010:WorkflowViewState.IdRef="ExpandWorkspace_1" Version="[GetVersion]" Workspace="[Workspace]" WorkspaceFile=".workspace" WorkspaceSource="File" />
+        <ait:ExpandWorkspace BuildDetail="[BuildDetail]" sap2010:WorkflowViewState.IdRef="ExpandWorkspace_1" Result="[ExtendedMappings]" Version="[GetVersion]" Workspace="[Workspace]" WorkspaceFile=".workspace" WorkspaceSource="File" />
         <mtbwa:SyncWorkspace DisplayName="Get Workspace" sap2010:WorkflowViewState.IdRef="SyncWorkspace_1" mva:VisualBasic.Settings="Assembly references and imported namespaces serialized as XML namespaces" VersionOverride="[GetVersion]" Workspace="[Workspace]">
           <mtbwa:SyncWorkspace.RequestsFailed>
             <ActivityAction x:TypeArguments="scg:ICollection(mtbc:IQueuedBuild)">
@@ -147,17 +152,18 @@
             </ActivityAction>
           </mtbwa:SyncWorkspace.RequestsFailed>
         </mtbwa:SyncWorkspace>
+        <ait:GetWorkspaceVersionedItems DisplayName="Get Workspace Versioned Items" ExtendedMappings="[ExtendedMappings]" sap2010:WorkflowViewState.IdRef="GetWorkspaceVersionedItems_1" Version="[BuildDetail.SourceGetVersion]" Workspace="[Workspace]" />
       </Sequence>
       <ait:RestorePackages BuildDirectory="[BuildDirectory]" sap2010:WorkflowViewState.IdRef="RestorePackages_1" Options="[NuGetOptions]" PackagesConfig="[NuGetPackagesConfig]" />
       <ait:InvokeAnFake BuildDetail="[BuildDetail]" BuildDirectory="[BuildDirectory]" CleanWorkspace="[CleanWorkspace]" sap2010:WorkflowViewState.IdRef="InvokeAnFake_1" PrivateDropLocation="[PrivateDropLocation]" Properties="[AnFakeProperties]" Script="[AnFakeScript]" Targets="[AnFakeTargets]" Verbosity="[Verbosity]" />
     </mtbwa:AgentScope>
-    <sads:DebugSymbol.Symbol>d0pDOlxQcm9qZWN0c1xBbkZha2VcQW5GYWtlLkludGVncmF0aW9uLlRmczIwMTIuVGVtcGxhdGVcQW5GYWtlVGVtcGxhdGUueGFtbEkBwAYBxgYBCgHVBAGVBQEJAbcHAcYHAQgBrQIBvAQBBwHmBgH1BgEGAekHAYAIAQUBwgEBkAIBBAGRBwGbBwEDAWUBpAEBAmYDmwEOAgEBawVrswECAWBsBW4dAgFcbwWZARgCAQJroQFrsAECAWFtB22iAQIBXW+xAW/OAQIBB2+CAW+kAQIBBm/fAW+KAgIBBHQ2dFECAQN3B4MBEgIBR4QBB5YBEgIBIJcBB5cBtAECARmYAQeYAcICAgEIbTJtRwIBXngJeLQBAgFZeQl5ygECAVZ6CXqWAwIBUnsJggEOAgFIhQEJiQEOAgFBigEJigGfAgIBN4sBCYsB0QECAS6MAQmVAR8CASGXASuXAT0CAR6XAXqXAYoBAgEclwGaAZcBsQECARqYAeEBmAH1AQIBF5gB/QGYAY0CAgEVmAGyApgBvwICAROYASWYATQCARGYAZYCmAGnAgIBD5gBRJgBVgIBDZgBvgGYAdUBAgELmAFmmAF4AgEJeKMBeLEBAgFaebUBeccBAgFXeswBepMDAgFVerQBesUBAgFTexd7jAECAUl9DYABGAIBSoUBF4UBRAIBQocBDYcB2gECAUOKAS+KAUECAT+KAUqKAXkCAT6KAesBigH4AQIBPIoBigKKAZwCAgE6igHSAYoB4wECATiLAcgBiwHOAQIBNosBKosBOQIBNIsBqwGLAbcBAgEziwF2iwGEAQIBMYsBjwGLAZwBAgEvjAHgAYwB7gECASmMAfkBjAGGAgIBJ5IBD5IBowICASJ+D374AwIBT38Pf94CAgFLhwE1hwE9AgFGhwHGAYcB1wECAUSSAS2SAXwCASWSAY4CkgGgAgIBJH6RAX6RAwIBUX/aAX/bAgIBTn/CAX/TAQIBTA==</sads:DebugSymbol.Symbol>
+    <sads:DebugSymbol.Symbol>d0pDOlxQcm9qZWN0c1xBbkZha2VcQW5GYWtlLkludGVncmF0aW9uLlRmczIwMTIuVGVtcGxhdGVcQW5GYWtlVGVtcGxhdGUueGFtbE4BwAYBxgYBCgHVBAGVBQEJAbcHAcYHAQgBrQIBvAQBBwHmBgH1BgEGAekHAYAIAQUBwgEBkAIBBAGRBwGbBwEDAWUBpAEBAmgDoQEOAgEBbQVtswECAWhuBXAdAgFkcQWfARgCAQJtoQFtsAECAWlvB2+iAQIBZXGxAXHOAQIBB3GCAXGkAQIBBnHfAXGKAgIBBHY2dlECAQN5B4UBEgIBT4YBB5wBEgIBIJ0BB50BtAECARmeAQeeAcICAgEIbzJvRwIBZnoJerQBAgFhewl7ygECAV58CXyWAwIBWn0JhAEOAgFQigEJjgEOAgFJjwEJjwGfAgIBP5ABCZAB7QECATSRAQmaAR8CASebAQmbAf0BAgEhnQErnQE9AgEenQF6nQGKAQIBHJ0BmgGdAbEBAgEangHhAZ4B9QECAReeAf0BngGNAgIBFZ4BsgKeAb8CAgETngElngE0AgERngGWAp4BpwICAQ+eAUSeAVYCAQ2eAb4BngHVAQIBC54BZp4BeAIBCXqjAXqxAQIBYnu1AXvHAQIBX3zMAXyTAwIBXXy0AXzFAQIBW30XfYwBAgFRfw2CARgCAVKKAReKAUQCAUqMAQ2MAdoBAgFLjwEvjwFBAgFHjwFKjwF5AgFGjwHrAY8B+AECAUSPAYoCjwGcAgIBQo8B0gGPAeMBAgFAkAHkAZAB6gECAT6QASqQATkCATyQAccBkAHTAQIBO5ABkgGQAaABAgE5kAF1kAGJAQIBN5ABqwGQAbgBAgE1kQHgAZEB7gECAS+RAfkBkQGGAgIBLZcBD5cBowICASibAWabAXoCASWbAcIBmwHiAQIBJJsB7QGbAfoBAgEigAEPgAH4AwIBV4EBD4EB3gICAVOMATWMAT0CAU6MAcYBjAHXAQIBTJcBLZcBfAIBK5cBjgKXAaACAgEqgAGRAYABkQMCAVmBAdoBgQHbAgIBVoEBwgGBAdMBAgFU</sads:DebugSymbol.Symbol>
   </Sequence>
   <sap2010:WorkflowViewState.ViewStateManager>
     <sap2010:ViewStateManager>
-      <sap2010:ViewStateData Id="GetBuildDetail_1" sap:VirtualizedContainerService.HintSize="222,22" />
+      <sap2010:ViewStateData Id="GetBuildDetail_1" sap:VirtualizedContainerService.HintSize="244,22" />
       <sap2010:ViewStateData Id="UpdateBuildNumber_1" sap:VirtualizedContainerService.HintSize="200,22" />
-      <sap2010:ViewStateData Id="InvokeForReason_1" sap:VirtualizedContainerService.HintSize="222,51">
+      <sap2010:ViewStateData Id="InvokeForReason_1" sap:VirtualizedContainerService.HintSize="244,51">
         <sap:WorkflowViewStateService.ViewState>
           <scg:Dictionary x:TypeArguments="x:String, x:Object">
             <x:Boolean x:Key="IsExpanded">False</x:Boolean>
@@ -185,7 +191,7 @@
           </scg:Dictionary>
         </sap:WorkflowViewStateService.ViewState>
       </sap2010:ViewStateData>
-      <sap2010:ViewStateData Id="Sequence_5" sap:VirtualizedContainerService.HintSize="200,51">
+      <sap2010:ViewStateData Id="Sequence_5" sap:VirtualizedContainerService.HintSize="222,51">
         <sap:WorkflowViewStateService.ViewState>
           <scg:Dictionary x:TypeArguments="x:String, x:Object">
             <x:Boolean x:Key="IsExpanded">False</x:Boolean>
@@ -194,7 +200,7 @@
         </sap:WorkflowViewStateService.ViewState>
       </sap2010:ViewStateData>
       <sap2010:ViewStateData Id="DeleteWorkspace_2" sap:VirtualizedContainerService.HintSize="200,22" />
-      <sap2010:ViewStateData Id="If_6" sap:VirtualizedContainerService.HintSize="234,51">
+      <sap2010:ViewStateData Id="If_6" sap:VirtualizedContainerService.HintSize="200,51">
         <sap:WorkflowViewStateService.ViewState>
           <scg:Dictionary x:TypeArguments="x:String, x:Object">
             <x:Boolean x:Key="IsExpanded">False</x:Boolean>
@@ -202,18 +208,10 @@
           </scg:Dictionary>
         </sap:WorkflowViewStateService.ViewState>
       </sap2010:ViewStateData>
-      <sap2010:ViewStateData Id="CreateWorkspace_1" sap:VirtualizedContainerService.HintSize="234,22" />
-      <sap2010:ViewStateData Id="ExpandWorkspace_1" sap:VirtualizedContainerService.HintSize="234,22" />
+      <sap2010:ViewStateData Id="CreateWorkspace_1" sap:VirtualizedContainerService.HintSize="200,22" />
+      <sap2010:ViewStateData Id="ExpandWorkspace_1" sap:VirtualizedContainerService.HintSize="200,22" />
       <sap2010:ViewStateData Id="RetryRequests_1" sap:VirtualizedContainerService.HintSize="200,22" />
-      <sap2010:ViewStateData Id="SyncWorkspace_1" sap:VirtualizedContainerService.HintSize="234,157">
-        <sap:WorkflowViewStateService.ViewState>
-          <scg:Dictionary x:TypeArguments="x:String, x:Object">
-            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
-            <x:Boolean x:Key="IsPinned">False</x:Boolean>
-          </scg:Dictionary>
-        </sap:WorkflowViewStateService.ViewState>
-      </sap2010:ViewStateData>
-      <sap2010:ViewStateData Id="Sequence_9" sap:VirtualizedContainerService.HintSize="200,51">
+      <sap2010:ViewStateData Id="SyncWorkspace_1" sap:VirtualizedContainerService.HintSize="200,51">
         <sap:WorkflowViewStateService.ViewState>
           <scg:Dictionary x:TypeArguments="x:String, x:Object">
             <x:Boolean x:Key="IsExpanded">False</x:Boolean>
@@ -221,17 +219,26 @@
           </scg:Dictionary>
         </sap:WorkflowViewStateService.ViewState>
       </sap2010:ViewStateData>
-      <sap2010:ViewStateData Id="RestorePackages_1" sap:VirtualizedContainerService.HintSize="200,22" />
-      <sap2010:ViewStateData Id="InvokeAnFake_1" sap:VirtualizedContainerService.HintSize="200,22" />
-      <sap2010:ViewStateData Id="AgentScope_1" sap:VirtualizedContainerService.HintSize="222,390" />
-      <sap2010:ViewStateData Id="Sequence_16" sap:VirtualizedContainerService.HintSize="244,667">
+      <sap2010:ViewStateData Id="GetWorkspaceVersionedItems_1" sap:VirtualizedContainerService.HintSize="200,22" />
+      <sap2010:ViewStateData Id="Sequence_9" sap:VirtualizedContainerService.HintSize="222,452">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            <x:Boolean x:Key="IsPinned">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="RestorePackages_1" sap:VirtualizedContainerService.HintSize="222,22" />
+      <sap2010:ViewStateData Id="InvokeAnFake_1" sap:VirtualizedContainerService.HintSize="222,22" />
+      <sap2010:ViewStateData Id="AgentScope_1" sap:VirtualizedContainerService.HintSize="244,791" />
+      <sap2010:ViewStateData Id="Sequence_16" sap:VirtualizedContainerService.HintSize="266,1068">
         <sap:WorkflowViewStateService.ViewState>
           <scg:Dictionary x:TypeArguments="x:String, x:Object">
             <x:Boolean x:Key="IsExpanded">True</x:Boolean>
           </scg:Dictionary>
         </sap:WorkflowViewStateService.ViewState>
       </sap2010:ViewStateData>
-      <sap2010:ViewStateData Id="TfsBuild.Process_1" sap:VirtualizedContainerService.HintSize="284,747" />
+      <sap2010:ViewStateData Id="TfsBuild.Process_1" sap:VirtualizedContainerService.HintSize="306,1148" />
     </sap2010:ViewStateManager>
   </sap2010:WorkflowViewState.ViewStateManager>
 </Activity>

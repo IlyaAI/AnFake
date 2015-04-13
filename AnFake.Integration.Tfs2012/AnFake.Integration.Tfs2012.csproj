@@ -50,6 +50,7 @@
   <ItemGroup>
     <Compile Include="AnFakeBuildProcessException.cs" />
     <Compile Include="BuildInformationExtension.cs" />
+    <Compile Include="GetWorkspaceVersionedItems.cs" />
     <Compile Include="ExpandWorkspace.cs" />
     <Compile Include="ExtendedMapping.cs" />
     <Compile Include="ProcessOutputBuffer.cs" />

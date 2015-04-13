@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Activities;
 using System.IO;
-using System.Linq;
 using Microsoft.TeamFoundation.Build.Client;
 using Microsoft.TeamFoundation.Build.Workflow.Activities;
 using Microsoft.TeamFoundation.Client;
@@ -10,7 +9,7 @@ using Microsoft.TeamFoundation.VersionControl.Client;
 namespace AnFake.Integration.Tfs2012
 {
 	[BuildActivity(HostEnvironmentOption.All)]
-	public sealed class ExpandWorkspace : CodeActivity
+	public sealed class ExpandWorkspace : CodeActivity<ExtendedMapping[]>
 	{
 		[RequiredArgument]
 		public InArgument<IBuildDetail> BuildDetail { get; set; }
@@ -31,7 +30,7 @@ namespace AnFake.Integration.Tfs2012
 			WorkspaceFile = new InArgument<string>(".workspace");
 		}
 
-		protected override void Execute(CodeActivityContext context)
+		protected override ExtendedMapping[] Execute(CodeActivityContext context)
 		{
 			var buildDetail = BuildDetail.Get(context);
 			var workspace = Workspace.Get(context);
@@ -79,6 +78,8 @@ namespace AnFake.Integration.Tfs2012
 				mappings.AsTfsMappings());
 
 			context.TrackBuildMessage("Workspace sucessfully expanded.");
+
+			return mappings;
 		}
 
 		private static string GetTextContent(TfsConnection tfs, string tfsPath, VersionSpec version)

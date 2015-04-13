@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using AnFake.Api;
 using AnFake.Api.Pipeline;
 using Microsoft.TeamFoundation.Build.Client;
@@ -13,9 +14,13 @@ namespace AnFake.Integration.Tfs2012.Pipeline
 		private const string SummaryHeader = "AnFake Pipeline Summary";
 		private const int SummaryPriority = 199;
 
+		static TfsPipelineRunner()
+		{
+			Trace.Set(new BypassTracer());
+		}
+
 		private readonly IBuildDetail _currentBuild;
-		private readonly IBuildInformation _tracker;
-		private readonly ITracer _prevTracer;
+		private readonly IBuildInformation _tracker;		
 
 		public TfsPipelineRunner(IBuildDetail currentBuild, string activityInstanceId)
 		{
@@ -26,18 +31,16 @@ namespace AnFake.Integration.Tfs2012.Pipeline
 				throw new AnFakeBuildProcessException("TfsPipelineRunner unable to find activity with InstanceId='{0}'", activityInstanceId);
 
 			_tracker = activity.Node.Children;			
-
-			_prevTracer = Trace.Set(new BypassTracer());
+			
 			Trace.MessageReceived += OnMessageReceived;
 		}
 
 		public void Dispose()
 		{
-			Trace.MessageReceived -= OnMessageReceived;
-			Trace.Set(_prevTracer);
+			Trace.MessageReceived -= OnMessageReceived;			
 		}
 
-		public void Run(string pipelineDef, TimeSpan spinTime, TimeSpan timeout)
+		public void Run(string pipelineDef, TimeSpan spinTime, TimeSpan timeout, CancellationToken cancellationToken)
 		{
 			var finalStatus = PipelineStepStatus.None;
 			var pipeline = (Api.Pipeline.Pipeline) null;
@@ -48,7 +51,7 @@ namespace AnFake.Integration.Tfs2012.Pipeline
 					pipelineDef,
 					new TfsPipelineImplementor(_currentBuild));
 
-				finalStatus = pipeline.Run(spinTime, timeout);
+				finalStatus = pipeline.Run(spinTime, timeout, cancellationToken);
 			}
 			catch (Exception e)
 			{
@@ -109,6 +112,9 @@ namespace AnFake.Integration.Tfs2012.Pipeline
 
 		private void OnMessageReceived(object sender, TraceMessage message)
 		{
+			if (message.ThreadId != Thread.CurrentThread.ManagedThreadId)
+				return;
+
 			_tracker.TraceMessage(message, true);
 			_tracker.Save();
 		}

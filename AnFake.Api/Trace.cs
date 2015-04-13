@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
+using System.Threading;
 
 namespace AnFake.Api
 {
@@ -17,6 +19,7 @@ namespace AnFake.Api
 	/// </remarks>
 	public static class Trace
 	{
+		private static readonly int CurrentProcessId = Process.GetCurrentProcess().Id;
 		private static ITracer _tracer = new NoopTracer();
 
 		private static ITracer Tracer
@@ -42,6 +45,9 @@ namespace AnFake.Api
 
 		public static void Message(TraceMessage message)
 		{
+			message.ProcessId = CurrentProcessId;
+			message.ThreadId = Thread.CurrentThread.ManagedThreadId;
+
 			Tracer.Write(message);
 			Log.TraceMessage(message);
 		}

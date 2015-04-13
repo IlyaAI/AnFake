@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading;
 using AnFake.Integration.Tfs2012.Pipeline;
 using Microsoft.TeamFoundation.Build.Client;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -51,7 +52,7 @@ namespace AnFake.Plugins.Tfs2012.Test
 				TfsSettings.Get("PipelineBuildRunB"));
 
 			// act
-			PipelineRunner.Run(pipelineDef, TimeSpan.FromSeconds(10), TimeSpan.FromMinutes(5));
+			PipelineRunner.Run(pipelineDef, TimeSpan.FromSeconds(10), TimeSpan.FromMinutes(5), new CancellationToken(false));
 
 			// assert
 			Build.Refresh(new[] {"*"}, QueryOptions.All);

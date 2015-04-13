@@ -49,6 +49,12 @@ namespace AnFake.Api
 		[DataMember(EmitDefaultValue = false)]
 		public int NodeId { get; set; }
 
+		[DataMember(EmitDefaultValue = false)]
+		public int ProcessId { get; set; }
+
+		[DataMember(EmitDefaultValue = false)]
+		public int ThreadId { get; set; }
+
 		[DataMember]
 		public List<Hyperlink> Links
 		{

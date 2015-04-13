@@ -12,7 +12,7 @@ namespace AnFake.Api.Pipeline
 		private readonly PipelineStep _initialStep;
 
 		private readonly List<IPipelineBuild> _triggeredBuilds = new List<IPipelineBuild>();
-		private PipelineStepStatus _status;
+		private PipelineStepStatus _status;	
 
 		public Pipeline(string pipelineDef, IPipelineImplementor impl)
 		{
@@ -59,7 +59,7 @@ namespace AnFake.Api.Pipeline
 			return _status;
 		}
 
-		public PipelineStepStatus Run(TimeSpan spinTime, TimeSpan timeout)
+		public PipelineStepStatus Run(TimeSpan spinTime, TimeSpan timeout, CancellationToken cancellationToken)
 		{
 			if (_status > PipelineStepStatus.InProgress)
 				return _status;
@@ -75,9 +75,12 @@ namespace AnFake.Api.Pipeline
 				if (DateTime.UtcNow - startTime > timeout)
 					throw new TimeoutException(String.Format("Pipeline execution time has reached the limit {0}.", timeout));
 
-				Thread.Sleep(spinTime);				
+				if (cancellationToken.IsCancellationRequested)
+					throw new OperationCanceledException("Pipeline execution has been cancelled.");
+
+				Thread.Sleep(spinTime);
 			}
-		}
+		}		
 		
 		internal IPipelineBuild GetBuild(string name)
 		{

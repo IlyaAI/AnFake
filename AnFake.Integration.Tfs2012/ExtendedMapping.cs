@@ -29,6 +29,11 @@ namespace AnFake.Integration.Tfs2012
 			get { return WorkingFolder.IsCloaked; }
 		}
 
+		public RecursionType Depth
+		{
+			get { return WorkingFolder.Depth; }
+		}
+
 		public static ExtendedMapping Map(string serverItem, string localItem)
 		{
 			return new ExtendedMapping(new WorkingFolder(serverItem, localItem), null);

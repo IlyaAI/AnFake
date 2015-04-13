@@ -168,11 +168,11 @@ namespace AnFake.Plugins.Tfs2012
 				mappings.AsTfsMappings());
 			Trace.InfoFormat("Workspace '{0}' successfully created for '{1}'.", workspaceName, User.Current);
 
-			UpdateFiles(ws, mappings, VersionSpec.Latest);
+			GetFiles(ws, mappings, VersionSpec.Latest);
 		}		
 
 		/// <summary>
-		///		Checkouts brunch with default parameters. 
+		///		Checkouts branch with default parameters. 
 		/// </summary>		
 		/// <param name="serverPath">TFS path (not null)</param>
 		/// <param name="localPath">local path (not null)</param>
@@ -184,7 +184,7 @@ namespace AnFake.Plugins.Tfs2012
 		}
 
 		/// <summary>
-		///		Checkouts brunch.
+		///		Checkouts branch.
 		/// </summary>
 		/// <remarks>
 		///		<para>First method lookups workspace definition file at specified server path. If file not found then exception is thrown.</para>
@@ -244,7 +244,7 @@ namespace AnFake.Plugins.Tfs2012
 				mappings.AsTfsMappings());
 			Trace.InfoFormat("Workspace '{0}' successfully created for '{1}'.", workspaceName, User.Current);
 
-			UpdateFiles(ws, mappings, versionSpec);
+			GetFiles(ws, mappings, versionSpec);
 		}
 
 		/// <summary>
@@ -317,14 +317,23 @@ namespace AnFake.Plugins.Tfs2012
 
 			Trace.InfoFormat("Workspace '{0}' successfully updated.", ws.Name);
 
-			UpdateFiles(ws, mappings, versionSpec);
+			GetFiles(ws, mappings, versionSpec);
 		}		
 
+		/// <summary>
+		///		Saves workspace to local workspace definition file.
+		/// </summary>
+		/// <param name="localPath">local workspace root (not null)</param>
 		public static void SaveLocal(FileSystemPath localPath)
 		{
 			SaveLocal(localPath, p => { });
 		}
 
+		/// <summary>
+		///		Saves workspace to local workspace definition file.
+		/// </summary>
+		/// <param name="localPath">local workspace root (not null)</param>
+		/// <param name="setParams">action which overrides default parameters (not null)</param>
 		public static void SaveLocal(FileSystemPath localPath, Action<Params> setParams)
 		{
 			if (localPath == null)
@@ -434,6 +443,10 @@ namespace AnFake.Plugins.Tfs2012
 			Trace.InfoFormat("Workspace '{0}' successfully saved.", ws.Name);
 		}		
 
+		/// <summary>
+		///		Pends addition.
+		/// </summary>
+		/// <param name="files">files to be added (not null)</param>
 		public static void PendAdd(IEnumerable<FileItem> files)
 		{
 			if (files == null)
@@ -458,6 +471,10 @@ namespace AnFake.Plugins.Tfs2012
 			Trace.InfoFormat("{0} file(s) pended for add.", pended);
 		}
 
+		/// <summary>
+		///		Undoes changes.
+		/// </summary>
+		/// <param name="files">files to be undone (not null)</param>
 		public static void Undo(IEnumerable<FileItem> files)
 		{
 			if (files == null)
@@ -482,6 +499,10 @@ namespace AnFake.Plugins.Tfs2012
 			Trace.InfoFormat("{0} file(s) reverted.", reverted);
 		}
 
+		/// <summary>
+		///		Undoes all changes in specified folders recursively.
+		/// </summary>
+		/// <param name="folders">folders to be undone (not null)</param>
 		public static void Undo(IEnumerable<FolderItem> folders)
 		{
 			if (folders == null)
@@ -506,6 +527,7 @@ namespace AnFake.Plugins.Tfs2012
 			Trace.InfoFormat("{0} item(s) reverted.", reverted);
 		}
 
+		// ReSharper disable once UnusedParameter.Local
 		private static void EnsureWorkspaceFile(Params parameters)
 		{
 			if (String.IsNullOrEmpty(parameters.WorkspaceFile))
@@ -573,10 +595,11 @@ namespace AnFake.Plugins.Tfs2012
 			writer.WriteLine();
 		}
 
-		private static void UpdateFiles(Workspace ws, ExtendedMapping[] mappings, VersionSpec versionSpec)
+		private static void GetFiles(Workspace ws, ExtendedMapping[] mappings, VersionSpec versionSpec)
 		{
-			Trace.Info("Updating files...");
-			var status = ws.Get(versionSpec, GetOptions.NoAutoResolve);
+			Trace.InfoFormat("Getting files @ {0}...", versionSpec.DisplayString);
+			
+			var status = ws.Get(versionSpec, GetOptions.None);
 
 			foreach (var failure in status.GetFailures())
 			{
@@ -587,11 +610,13 @@ namespace AnFake.Plugins.Tfs2012
 			var numFiles = status.NumFiles;
 			var numFailures = status.NumFailures;
 
-			foreach (var mapping in mappings.Where(x => x.VersionSpec != null))
+			foreach (var mapping in mappings.Where(x => x.VersionSpec != null && x.VersionSpec != versionSpec))
 			{
+				Trace.InfoFormat(">> Getting '{0}' @ {1}...", mapping.ServerItem, mapping.VersionSpec.DisplayString);
+
 				status = ws.Get(
-					new GetRequest(mapping.ServerItem, RecursionType.None, mapping.VersionSpec),
-					GetOptions.NoAutoResolve);
+					new GetRequest(mapping.ServerItem, mapping.Depth, mapping.VersionSpec),
+					GetOptions.None);
 
 				foreach (var failure in status.GetFailures())
 				{

@@ -220,7 +220,7 @@ let xamlVersion = "2"
                 ]
             "AnFake.Integration.Tfs2012.Template/AnFake.Integration.Tfs2012.Template.csproj",
                 [                    
-                    @"<HintPath>\.\.\\\.AnFake\\Plugins\\AnFake.Integration\.Tfs2012\.v(\d+)\.dll</HintPath>"
+                    @"<HintPath>\.\.\\\.AnFake\\AnFake.Integration\.Tfs2012\.v(\d+)\.dll</HintPath>"
                 ]
             "AnFake.Integration.Tfs2012.Template/AnFakeTemplate.xaml",
                 [

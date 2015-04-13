@@ -1,0 +1,5 @@
+## Release Notes ##
+
+### 1.0.6
+
+* [+] Version specific mappings in TFS workspace
