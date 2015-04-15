@@ -20,7 +20,8 @@ namespace AnFake.Integration.Tfs2012.Pipeline
 		}
 
 		private readonly IBuildDetail _currentBuild;
-		private readonly IBuildInformation _tracker;		
+		private readonly IBuildInformation _tracker;
+		private readonly int _myThreadId;
 
 		public TfsPipelineRunner(IBuildDetail currentBuild, string activityInstanceId)
 		{
@@ -30,7 +31,8 @@ namespace AnFake.Integration.Tfs2012.Pipeline
 			if (activity == null)
 				throw new AnFakeBuildProcessException("TfsPipelineRunner unable to find activity with InstanceId='{0}'", activityInstanceId);
 
-			_tracker = activity.Node.Children;			
+			_tracker = activity.Node.Children;
+			_myThreadId = Thread.CurrentThread.ManagedThreadId;
 			
 			Trace.MessageReceived += OnMessageReceived;
 		}
@@ -112,7 +114,7 @@ namespace AnFake.Integration.Tfs2012.Pipeline
 
 		private void OnMessageReceived(object sender, TraceMessage message)
 		{
-			if (message.ThreadId != Thread.CurrentThread.ManagedThreadId)
+			if (message.ThreadId != _myThreadId)
 				return;
 
 			_tracker.TraceMessage(message, true);
