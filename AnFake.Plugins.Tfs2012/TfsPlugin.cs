@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using AnFake.Api;
@@ -385,9 +386,9 @@ namespace AnFake.Plugins.Tfs2012
 			Trace.InfoFormat("TfsPlugin: Exposing folder '{0}'...", folder);
 
 			var dstPath = _build.DropLocation.AsPath()/type.ToString()/folder.Name;
-			Robocopy.Copy(folder.Path, dstPath, p => p.Recursion = Robocopy.RecursionMode.All);			
+			Robocopy.Copy(folder.Path, dstPath, p => p.Recursion = Robocopy.RecursionMode.All);
 
-			return new Uri(dstPath.Full);
+			return new Uri(dstPath.Full + Path.DirectorySeparatorChar);
 		}
 
 		public Uri ExposeArtifact(string name, string content, Encoding encoding, ArtifactType type)

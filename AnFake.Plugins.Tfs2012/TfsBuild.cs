@@ -175,6 +175,14 @@ namespace AnFake.Plugins.Tfs2012
 			}
 
 			/// <summary>
+			///		User for whom this build requested.
+			/// </summary>
+			public string RequestedFor
+			{
+				get { return _impl.RequestedFor; }
+			}
+
+			/// <summary>
 			///		Returns subfolder inside drop location for specified artifact type. Throws if drop location not specified.
 			/// </summary>
 			public FileSystemPath GetDropLocationOf(ArtifactType type)

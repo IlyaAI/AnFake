@@ -68,8 +68,11 @@ let vsExternalTools =
             .Intersect(vsSupportedVersions)
 
     let dstPath = ~~"[LocalApplicationData]/AnFake";
+    let tfConvFsx = ~~"Extras/tf-conv.fsx";
     Trace.InfoFormat("Copying AnFake to '{0}'...", dstPath)    
-    Files.Copy(~~"[AnFake]" % "**/*", dstPath, true);
+    Files.Copy(~~"[AnFake]" % "**/*" - tfConvFsx, dstPath, true);
+    if not <| (dstPath / tfConvFsx).AsFile().Exists() then
+        Files.Copy(~~"[AnFake]" / tfConvFsx, dstPath / tfConvFsx, false);
 
     for version in versions do
         Trace.InfoFormat("Setting up external tools in VisualStudio {0}...", version)

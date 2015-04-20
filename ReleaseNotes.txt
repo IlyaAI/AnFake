@@ -3,3 +3,4 @@
 ### 1.0.6
 
 * [+] Version specific mappings in TFS workspace
+* [*] Convention is defined in standalone file tf-conv.fsx (might be customized by end-user)

@@ -2,6 +2,7 @@
 #r "../AnFake.Core.dll"
 #r "../AnFake.Fsx.dll"
 #r "../AnFake.Plugins.Tfs2012.dll"
+#load "tf-conv.fsx"
 
 open System
 open System.Linq
@@ -9,6 +10,7 @@ open AnFake.Api
 open AnFake.Core
 open AnFake.Fsx.Dsl
 open AnFake.Plugins.Tfs2012
+open TfsConvention
 
 // Necessary for Clipboard accessing
 #r "System.Windows.Forms.dll"
@@ -25,23 +27,6 @@ let clipboardText =
 //
 
 let curDir = Folders.Current.Path;
-let serviceNames = 
-    [
-        "release"
-        "releases"
-        "branch"
-        "branches"
-        "feature"
-        "features"
-    ]
-
-let getProductName (serverPath: ServerPath) =
-    serverPath
-        .Split()
-        .Reverse()
-        .Skip(1)
-        .Except(serviceNames, StringComparer.OrdinalIgnoreCase)
-        .FirstOrDefault()
 
 let printCheckoutUsage () =
     Log.Info "{Checkout|co} [<server-path> [<local-path> [<workspace-name>]]]"
@@ -131,7 +116,8 @@ let plugInTfs () =
         "Simply select project root in Source Control Explorer, click on 'Source location' and press Ctrl+C then re-run command."
     )
 
-    let productName = getProductName(serverPath)
+    let productName = getProductNameByConvention(serverPath)
+    let branchName = getBranchNameByConvention(serverPath)
 
     if productName = null && not <| MyBuild.HasProp("__2") && not <| MyBuild.HasProp("__3") then
         printCheckoutUsage()
@@ -142,20 +128,14 @@ let plugInTfs () =
             curDir / MyBuild.GetProp("__2")
         else
             needConfirmation <- true
-            curDir / productName / NameGen.Generate(
-                serverPath.LastName,
-                fun n -> (curDir / productName / n).AsFolder().IsEmpty()
-            )
+            getLocalPathByConvention curDir productName branchName
 
     let workspaceName =
         if MyBuild.HasProp("__3") then
             MyBuild.GetProp("__3")
         else
             needConfirmation <- true
-            NameGen.Generate(
-                String.Format("{0}.{1}", productName, localPath.LastName),
-                TfsWorkspace.UniqueName
-            )
+            getWorkspaceNameByConvention productName branchName
 
     if needConfirmation then
         let confirmed = 
@@ -216,7 +196,9 @@ let plugInTfs () =
             MyBuild.Failed("Required parameter <server-path> is missed.")
             null    
 
-    let productName = getProductName(serverPath)
+    let productName = getProductNameByConvention(serverPath)
+    let branchName = getBranchNameByConvention(serverPath)
+
     if productName = null && not <| MyBuild.HasProp("__2") && not <| MyBuild.HasProp("__3") then
         printCheckinUsage()
         MyBuild.Failed("Unable to auto-detect product name. Please, specify <local-path> and <workspace-name> explicitly.")
@@ -232,10 +214,7 @@ let plugInTfs () =
             MyBuild.GetProp("__3")
         else
             needConfirmation <- true
-            NameGen.Generate(
-                String.Format("{0}.{1}", productName, serverPath.LastName),
-                TfsWorkspace.UniqueName
-            )
+            getWorkspaceNameByConvention productName branchName
 
     if needConfirmation then
         let confirmed = 
