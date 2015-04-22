@@ -116,7 +116,8 @@ namespace AnFake.Core.Integration.Tests
 				return TestStatus.Passed;
 
 			if ("inconclusive".Equals(outcome, StringComparison.OrdinalIgnoreCase) ||
-				"ignored".Equals(outcome, StringComparison.OrdinalIgnoreCase))
+				"ignored".Equals(outcome, StringComparison.OrdinalIgnoreCase) ||
+				"notexecuted".Equals(outcome, StringComparison.OrdinalIgnoreCase))
 				return TestStatus.Skipped;
 
 			if ("failed".Equals(outcome, StringComparison.OrdinalIgnoreCase))
