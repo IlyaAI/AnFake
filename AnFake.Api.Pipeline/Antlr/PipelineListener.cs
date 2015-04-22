@@ -27,7 +27,7 @@ using IToken = Antlr4.Runtime.IToken;
 /// <see cref="PipelineParser"/>.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("ANTLR", "4.5")]
-//[System.CLSCompliant(false)]
+[System.CLSCompliant(false)]
 public interface IPipelineListener : IParseTreeListener {
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="PipelineParser.pipeline"/>.
@@ -153,5 +153,15 @@ public interface IPipelineListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitBuildRunName([NotNull] PipelineParser.BuildRunNameContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="PipelineParser.buildRunParams"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterBuildRunParams([NotNull] PipelineParser.BuildRunParamsContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="PipelineParser.buildRunParams"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitBuildRunParams([NotNull] PipelineParser.BuildRunParamsContext context);
 }
 } // namespace AnFake.Api.Pipeline.Antlr

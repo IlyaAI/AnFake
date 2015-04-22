@@ -23,15 +23,19 @@ optionalBuildRun:
 	;
 
 buildRun:
-	buildRunName										# InternalBuildRunVoid
-	| buildRunName '(' Identifier ')'					# InternalBuildRunIn
-	| buildRunName 'as' Identifier						# InternalBuildRunOut
-	| buildRunName '(' Identifier ')' 'as' Identifier	# InternalBuildRunInOut
+	buildRunName											# InternalBuildRunVoid
+	| buildRunName '(' buildRunParams ')'					# InternalBuildRunIn
+	| buildRunName 'as' Identifier							# InternalBuildRunOut
+	| buildRunName '(' buildRunParams ')' 'as' Identifier	# InternalBuildRunInOut
 	;
 
 buildRunName:
 	Identifier 
 	| QuotedIdentifier
+	;
+
+buildRunParams:
+	Identifier (',' QuotedIdentifier)*	
 	;
 
 /*

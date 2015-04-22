@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AnFake.Api.Pipeline
 {
 	internal sealed class QueueBuildStep : PipelineStep
 	{
-		private readonly IDictionary<string, object> _parameters = new Dictionary<string, object>();
+		private readonly List<string> _parameters = new List<string>();
 		private readonly string _name;
 		private readonly string _pipeIn;
 		private readonly string _pipeOut;
@@ -36,7 +37,7 @@ namespace AnFake.Api.Pipeline
 			get { return _pipeOut; }
 		}
 
-		public IDictionary<string, object> Parameters
+		public List<string> Parameters
 		{
 			get { return _parameters; }
 		}
@@ -98,7 +99,7 @@ namespace AnFake.Api.Pipeline
 				return _status;
 			}
 
-			var input = _pipeIn != null
+			var input = _pipeIn != null && _pipeIn != "_"
 				? pipeline.ResolveAlias(_pipeIn)
 				: null;
 
@@ -122,7 +123,7 @@ namespace AnFake.Api.Pipeline
 
 			Trace.InfoFormat("Queuing build '{0}'...", _build.Name);
 
-			return (_status = pipeline.QueueBuild(_build, input));
+			return (_status = pipeline.QueueBuild(_build, input, _parameters.ToArray()));
 		}		
 	}
 }

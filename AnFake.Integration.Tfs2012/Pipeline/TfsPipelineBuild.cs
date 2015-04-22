@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using AnFake.Api.Pipeline;
 using Microsoft.TeamFoundation.Build.Client;
 using Microsoft.TeamFoundation.Build.Workflow;
@@ -106,7 +107,7 @@ namespace AnFake.Integration.Tfs2012.Pipeline
 					String.Format("Build '{0}' doesn't support output which might be used by futher pipeline step. Hint: ensure drop location set properly.", Name));
 		}
 
-		public void Queue(IBuildServer buildSvc, string sourcesVersion, string requestedFor, IPipelineBuild input)
+		public void Queue(IBuildServer buildSvc, string sourcesVersion, string requestedFor, IPipelineBuild input, string[] @params)
 		{			
 			var buildRequest = buildSvc.CreateBuildRequest(_buildDef.Uri);
 
@@ -118,7 +119,7 @@ namespace AnFake.Integration.Tfs2012.Pipeline
 				buildRequest.RequestedFor = requestedFor;
 			}
 			
-			if (input != null)
+			if (input != null || (@params != null && @params.Length > 0))
 			{
 				var processParams = WorkflowHelpers.DeserializeProcessParameters(_buildDef.ProcessParameters);
 
@@ -127,11 +128,15 @@ namespace AnFake.Integration.Tfs2012.Pipeline
 				{
 					anfakeProps = "";
 				}
-				else
+				
+				if (input != null)
 				{
-					anfakeProps += " ";
+					anfakeProps += " " + String.Format("{0}={1}", "Tfs.PipeIn", input.Uri);
 				}
-				anfakeProps += String.Format("{0}={1}", "Tfs.PipeIn", input.Uri);
+				if (@params != null && @params.Length > 0)
+				{
+					anfakeProps += " " + String.Join(" ", @params.Select(p => String.Format("{0}", p)));
+				}
 
 				processParams["AnFakeProperties"] = anfakeProps;
 

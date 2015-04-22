@@ -29,23 +29,24 @@ using Antlr4.Runtime.Tree;
 using DFA = Antlr4.Runtime.Dfa.DFA;
 
 [System.CodeDom.Compiler.GeneratedCode("ANTLR", "4.5")]
-//[System.CLSCompliant(false)]
+[System.CLSCompliant(false)]
 public partial class PipelineParser : Parser {
 	public const int
-		T__0=1, T__1=2, T__2=3, T__3=4, T__4=5, T__5=6, T__6=7, Identifier=8, 
-		QuotedIdentifier=9, Spaces=10;
+		T__0=1, T__1=2, T__2=3, T__3=4, T__4=5, T__5=6, T__6=7, T__7=8, Identifier=9, 
+		QuotedIdentifier=10, Spaces=11;
 	public const int
 		RULE_pipeline = 0, RULE_step = 1, RULE_unaryStep = 2, RULE_optionalBuildRun = 3, 
-		RULE_buildRun = 4, RULE_buildRunName = 5;
+		RULE_buildRun = 4, RULE_buildRunName = 5, RULE_buildRunParams = 6;
 	public static readonly string[] ruleNames = {
-		"pipeline", "step", "unaryStep", "optionalBuildRun", "buildRun", "buildRunName"
+		"pipeline", "step", "unaryStep", "optionalBuildRun", "buildRun", "buildRunName", 
+		"buildRunParams"
 	};
 
 	private static readonly string[] _LiteralNames = {
-		null, "'=>'", "'->'", "'('", "')'", "'['", "']'", "'as'"
+		null, "'=>'", "'->'", "'('", "')'", "'['", "']'", "'as'", "','"
 	};
 	private static readonly string[] _SymbolicNames = {
-		null, null, null, null, null, null, null, null, "Identifier", "QuotedIdentifier", 
+		null, null, null, null, null, null, null, null, null, "Identifier", "QuotedIdentifier", 
 		"Spaces"
 	};
 	public static readonly IVocabulary DefaultVocabulary = new Vocabulary(_LiteralNames, _SymbolicNames);
@@ -96,7 +97,7 @@ public partial class PipelineParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 12; step(0);
+			State = 14; step(0);
 			}
 		}
 		catch (RecognitionException re) {
@@ -192,10 +193,10 @@ public partial class PipelineParser : Parser {
 			Context = _localctx;
 			_prevctx = _localctx;
 
-			State = 15; unaryStep();
+			State = 17; unaryStep();
 			}
 			Context.Stop = TokenStream.Lt(-1);
-			State = 25;
+			State = 27;
 			ErrorHandler.Sync(this);
 			_alt = Interpreter.AdaptivePredict(TokenStream,1,Context);
 			while ( _alt!=2 && _alt!=global::Antlr4.Runtime.Atn.ATN.InvalidAltNumber ) {
@@ -204,32 +205,32 @@ public partial class PipelineParser : Parser {
 						TriggerExitRuleEvent();
 					_prevctx = _localctx;
 					{
-					State = 23;
+					State = 25;
 					switch ( Interpreter.AdaptivePredict(TokenStream,0,Context) ) {
 					case 1:
 						{
 						_localctx = new InternalParallelStepContext(new StepContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_step);
-						State = 17;
+						State = 19;
 						if (!(Precpred(Context, 2))) throw new FailedPredicateException(this, "Precpred(Context, 2)");
-						State = 18; Match(T__0);
-						State = 19; unaryStep();
+						State = 20; Match(T__0);
+						State = 21; unaryStep();
 						}
 						break;
 					case 2:
 						{
 						_localctx = new InternalSequentialStepContext(new StepContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_step);
-						State = 20;
+						State = 22;
 						if (!(Precpred(Context, 1))) throw new FailedPredicateException(this, "Precpred(Context, 1)");
-						State = 21; Match(T__1);
-						State = 22; unaryStep();
+						State = 23; Match(T__1);
+						State = 24; unaryStep();
 						}
 						break;
 					}
 					} 
 				}
-				State = 27;
+				State = 29;
 				ErrorHandler.Sync(this);
 				_alt = Interpreter.AdaptivePredict(TokenStream,1,Context);
 			}
@@ -276,27 +277,27 @@ public partial class PipelineParser : Parser {
 		UnaryStepContext _localctx = new UnaryStepContext(Context, State);
 		EnterRule(_localctx, 4, RULE_unaryStep);
 		try {
-			State = 34;
+			State = 36;
 			switch (TokenStream.La(1)) {
 			case Identifier:
 			case QuotedIdentifier:
 				EnterOuterAlt(_localctx, 1);
 				{
-				State = 28; buildRun();
+				State = 30; buildRun();
 				}
 				break;
 			case T__4:
 				EnterOuterAlt(_localctx, 2);
 				{
-				State = 29; optionalBuildRun();
+				State = 31; optionalBuildRun();
 				}
 				break;
 			case T__2:
 				EnterOuterAlt(_localctx, 3);
 				{
-				State = 30; Match(T__2);
-				State = 31; step(0);
-				State = 32; Match(T__3);
+				State = 32; Match(T__2);
+				State = 33; step(0);
+				State = 34; Match(T__3);
 				}
 				break;
 			default:
@@ -340,9 +341,9 @@ public partial class PipelineParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 36; Match(T__4);
-			State = 37; buildRun();
-			State = 38; Match(T__5);
+			State = 38; Match(T__4);
+			State = 39; buildRun();
+			State = 40; Match(T__5);
 			}
 		}
 		catch (RecognitionException re) {
@@ -386,10 +387,10 @@ public partial class PipelineParser : Parser {
 		public BuildRunNameContext buildRunName() {
 			return GetRuleContext<BuildRunNameContext>(0);
 		}
-		public ITerminalNode[] Identifier() { return GetTokens(PipelineParser.Identifier); }
-		public ITerminalNode Identifier(int i) {
-			return GetToken(PipelineParser.Identifier, i);
+		public BuildRunParamsContext buildRunParams() {
+			return GetRuleContext<BuildRunParamsContext>(0);
 		}
+		public ITerminalNode Identifier() { return GetToken(PipelineParser.Identifier, 0); }
 		public InternalBuildRunInOutContext(BuildRunContext context) { CopyFrom(context); }
 		public override void EnterRule(IParseTreeListener listener) {
 			IPipelineListener typedListener = listener as IPipelineListener;
@@ -404,7 +405,9 @@ public partial class PipelineParser : Parser {
 		public BuildRunNameContext buildRunName() {
 			return GetRuleContext<BuildRunNameContext>(0);
 		}
-		public ITerminalNode Identifier() { return GetToken(PipelineParser.Identifier, 0); }
+		public BuildRunParamsContext buildRunParams() {
+			return GetRuleContext<BuildRunParamsContext>(0);
+		}
 		public InternalBuildRunInContext(BuildRunContext context) { CopyFrom(context); }
 		public override void EnterRule(IParseTreeListener listener) {
 			IPipelineListener typedListener = listener as IPipelineListener;
@@ -436,44 +439,44 @@ public partial class PipelineParser : Parser {
 		BuildRunContext _localctx = new BuildRunContext(Context, State);
 		EnterRule(_localctx, 8, RULE_buildRun);
 		try {
-			State = 57;
+			State = 59;
 			switch ( Interpreter.AdaptivePredict(TokenStream,3,Context) ) {
 			case 1:
 				_localctx = new InternalBuildRunVoidContext(_localctx);
 				EnterOuterAlt(_localctx, 1);
 				{
-				State = 40; buildRunName();
+				State = 42; buildRunName();
 				}
 				break;
 			case 2:
 				_localctx = new InternalBuildRunInContext(_localctx);
 				EnterOuterAlt(_localctx, 2);
 				{
-				State = 41; buildRunName();
-				State = 42; Match(T__2);
-				State = 43; Match(Identifier);
-				State = 44; Match(T__3);
+				State = 43; buildRunName();
+				State = 44; Match(T__2);
+				State = 45; buildRunParams();
+				State = 46; Match(T__3);
 				}
 				break;
 			case 3:
 				_localctx = new InternalBuildRunOutContext(_localctx);
 				EnterOuterAlt(_localctx, 3);
 				{
-				State = 46; buildRunName();
-				State = 47; Match(T__6);
-				State = 48; Match(Identifier);
+				State = 48; buildRunName();
+				State = 49; Match(T__6);
+				State = 50; Match(Identifier);
 				}
 				break;
 			case 4:
 				_localctx = new InternalBuildRunInOutContext(_localctx);
 				EnterOuterAlt(_localctx, 4);
 				{
-				State = 50; buildRunName();
-				State = 51; Match(T__2);
-				State = 52; Match(Identifier);
-				State = 53; Match(T__3);
-				State = 54; Match(T__6);
-				State = 55; Match(Identifier);
+				State = 52; buildRunName();
+				State = 53; Match(T__2);
+				State = 54; buildRunParams();
+				State = 55; Match(T__3);
+				State = 56; Match(T__6);
+				State = 57; Match(Identifier);
 				}
 				break;
 			}
@@ -515,13 +518,70 @@ public partial class PipelineParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 59;
+			State = 61;
 			_la = TokenStream.La(1);
 			if ( !(_la==Identifier || _la==QuotedIdentifier) ) {
 			ErrorHandler.RecoverInline(this);
 			}
 			else {
 			    Consume();
+			}
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			ErrorHandler.ReportError(this, re);
+			ErrorHandler.Recover(this, re);
+		}
+		finally {
+			ExitRule();
+		}
+		return _localctx;
+	}
+
+	public partial class BuildRunParamsContext : ParserRuleContext {
+		public ITerminalNode Identifier() { return GetToken(PipelineParser.Identifier, 0); }
+		public ITerminalNode[] QuotedIdentifier() { return GetTokens(PipelineParser.QuotedIdentifier); }
+		public ITerminalNode QuotedIdentifier(int i) {
+			return GetToken(PipelineParser.QuotedIdentifier, i);
+		}
+		public BuildRunParamsContext(ParserRuleContext parent, int invokingState)
+			: base(parent, invokingState)
+		{
+		}
+		public override int RuleIndex { get { return RULE_buildRunParams; } }
+		public override void EnterRule(IParseTreeListener listener) {
+			IPipelineListener typedListener = listener as IPipelineListener;
+			if (typedListener != null) typedListener.EnterBuildRunParams(this);
+		}
+		public override void ExitRule(IParseTreeListener listener) {
+			IPipelineListener typedListener = listener as IPipelineListener;
+			if (typedListener != null) typedListener.ExitBuildRunParams(this);
+		}
+	}
+
+	[RuleVersion(0)]
+	public BuildRunParamsContext buildRunParams() {
+		BuildRunParamsContext _localctx = new BuildRunParamsContext(Context, State);
+		EnterRule(_localctx, 12, RULE_buildRunParams);
+		int _la;
+		try {
+			EnterOuterAlt(_localctx, 1);
+			{
+			State = 63; Match(Identifier);
+			State = 68;
+			ErrorHandler.Sync(this);
+			_la = TokenStream.La(1);
+			while (_la==T__7) {
+				{
+				{
+				State = 64; Match(T__7);
+				State = 65; Match(QuotedIdentifier);
+				}
+				}
+				State = 70;
+				ErrorHandler.Sync(this);
+				_la = TokenStream.La(1);
 			}
 			}
 		}
@@ -551,28 +611,31 @@ public partial class PipelineParser : Parser {
 	}
 
 	public static readonly string _serializedATN =
-		"\x3\x430\xD6D1\x8206\xAD2D\x4417\xAEF1\x8D80\xAADD\x3\f@\x4\x2\t\x2\x4"+
-		"\x3\t\x3\x4\x4\t\x4\x4\x5\t\x5\x4\x6\t\x6\x4\a\t\a\x3\x2\x3\x2\x3\x3\x3"+
-		"\x3\x3\x3\x3\x3\x3\x3\x3\x3\x3\x3\x3\x3\x3\x3\a\x3\x1A\n\x3\f\x3\xE\x3"+
-		"\x1D\v\x3\x3\x4\x3\x4\x3\x4\x3\x4\x3\x4\x3\x4\x5\x4%\n\x4\x3\x5\x3\x5"+
-		"\x3\x5\x3\x5\x3\x6\x3\x6\x3\x6\x3\x6\x3\x6\x3\x6\x3\x6\x3\x6\x3\x6\x3"+
-		"\x6\x3\x6\x3\x6\x3\x6\x3\x6\x3\x6\x3\x6\x3\x6\x5\x6<\n\x6\x3\a\x3\a\x3"+
-		"\a\x2\x3\x4\b\x2\x4\x6\b\n\f\x2\x3\x3\x2\n\v@\x2\xE\x3\x2\x2\x2\x4\x10"+
-		"\x3\x2\x2\x2\x6$\x3\x2\x2\x2\b&\x3\x2\x2\x2\n;\x3\x2\x2\x2\f=\x3\x2\x2"+
-		"\x2\xE\xF\x5\x4\x3\x2\xF\x3\x3\x2\x2\x2\x10\x11\b\x3\x1\x2\x11\x12\x5"+
-		"\x6\x4\x2\x12\x1B\x3\x2\x2\x2\x13\x14\f\x4\x2\x2\x14\x15\a\x3\x2\x2\x15"+
-		"\x1A\x5\x6\x4\x2\x16\x17\f\x3\x2\x2\x17\x18\a\x4\x2\x2\x18\x1A\x5\x6\x4"+
-		"\x2\x19\x13\x3\x2\x2\x2\x19\x16\x3\x2\x2\x2\x1A\x1D\x3\x2\x2\x2\x1B\x19"+
-		"\x3\x2\x2\x2\x1B\x1C\x3\x2\x2\x2\x1C\x5\x3\x2\x2\x2\x1D\x1B\x3\x2\x2\x2"+
-		"\x1E%\x5\n\x6\x2\x1F%\x5\b\x5\x2 !\a\x5\x2\x2!\"\x5\x4\x3\x2\"#\a\x6\x2"+
-		"\x2#%\x3\x2\x2\x2$\x1E\x3\x2\x2\x2$\x1F\x3\x2\x2\x2$ \x3\x2\x2\x2%\a\x3"+
-		"\x2\x2\x2&\'\a\a\x2\x2\'(\x5\n\x6\x2()\a\b\x2\x2)\t\x3\x2\x2\x2*<\x5\f"+
-		"\a\x2+,\x5\f\a\x2,-\a\x5\x2\x2-.\a\n\x2\x2./\a\x6\x2\x2/<\x3\x2\x2\x2"+
-		"\x30\x31\x5\f\a\x2\x31\x32\a\t\x2\x2\x32\x33\a\n\x2\x2\x33<\x3\x2\x2\x2"+
-		"\x34\x35\x5\f\a\x2\x35\x36\a\x5\x2\x2\x36\x37\a\n\x2\x2\x37\x38\a\x6\x2"+
-		"\x2\x38\x39\a\t\x2\x2\x39:\a\n\x2\x2:<\x3\x2\x2\x2;*\x3\x2\x2\x2;+\x3"+
-		"\x2\x2\x2;\x30\x3\x2\x2\x2;\x34\x3\x2\x2\x2<\v\x3\x2\x2\x2=>\t\x2\x2\x2"+
-		">\r\x3\x2\x2\x2\x6\x19\x1B$;";
+		"\x3\x430\xD6D1\x8206\xAD2D\x4417\xAEF1\x8D80\xAADD\x3\rJ\x4\x2\t\x2\x4"+
+		"\x3\t\x3\x4\x4\t\x4\x4\x5\t\x5\x4\x6\t\x6\x4\a\t\a\x4\b\t\b\x3\x2\x3\x2"+
+		"\x3\x3\x3\x3\x3\x3\x3\x3\x3\x3\x3\x3\x3\x3\x3\x3\x3\x3\a\x3\x1C\n\x3\f"+
+		"\x3\xE\x3\x1F\v\x3\x3\x4\x3\x4\x3\x4\x3\x4\x3\x4\x3\x4\x5\x4\'\n\x4\x3"+
+		"\x5\x3\x5\x3\x5\x3\x5\x3\x6\x3\x6\x3\x6\x3\x6\x3\x6\x3\x6\x3\x6\x3\x6"+
+		"\x3\x6\x3\x6\x3\x6\x3\x6\x3\x6\x3\x6\x3\x6\x3\x6\x3\x6\x5\x6>\n\x6\x3"+
+		"\a\x3\a\x3\b\x3\b\x3\b\a\b\x45\n\b\f\b\xE\bH\v\b\x3\b\x2\x3\x4\t\x2\x4"+
+		"\x6\b\n\f\xE\x2\x3\x3\x2\v\fJ\x2\x10\x3\x2\x2\x2\x4\x12\x3\x2\x2\x2\x6"+
+		"&\x3\x2\x2\x2\b(\x3\x2\x2\x2\n=\x3\x2\x2\x2\f?\x3\x2\x2\x2\xE\x41\x3\x2"+
+		"\x2\x2\x10\x11\x5\x4\x3\x2\x11\x3\x3\x2\x2\x2\x12\x13\b\x3\x1\x2\x13\x14"+
+		"\x5\x6\x4\x2\x14\x1D\x3\x2\x2\x2\x15\x16\f\x4\x2\x2\x16\x17\a\x3\x2\x2"+
+		"\x17\x1C\x5\x6\x4\x2\x18\x19\f\x3\x2\x2\x19\x1A\a\x4\x2\x2\x1A\x1C\x5"+
+		"\x6\x4\x2\x1B\x15\x3\x2\x2\x2\x1B\x18\x3\x2\x2\x2\x1C\x1F\x3\x2\x2\x2"+
+		"\x1D\x1B\x3\x2\x2\x2\x1D\x1E\x3\x2\x2\x2\x1E\x5\x3\x2\x2\x2\x1F\x1D\x3"+
+		"\x2\x2\x2 \'\x5\n\x6\x2!\'\x5\b\x5\x2\"#\a\x5\x2\x2#$\x5\x4\x3\x2$%\a"+
+		"\x6\x2\x2%\'\x3\x2\x2\x2& \x3\x2\x2\x2&!\x3\x2\x2\x2&\"\x3\x2\x2\x2\'"+
+		"\a\x3\x2\x2\x2()\a\a\x2\x2)*\x5\n\x6\x2*+\a\b\x2\x2+\t\x3\x2\x2\x2,>\x5"+
+		"\f\a\x2-.\x5\f\a\x2./\a\x5\x2\x2/\x30\x5\xE\b\x2\x30\x31\a\x6\x2\x2\x31"+
+		">\x3\x2\x2\x2\x32\x33\x5\f\a\x2\x33\x34\a\t\x2\x2\x34\x35\a\v\x2\x2\x35"+
+		">\x3\x2\x2\x2\x36\x37\x5\f\a\x2\x37\x38\a\x5\x2\x2\x38\x39\x5\xE\b\x2"+
+		"\x39:\a\x6\x2\x2:;\a\t\x2\x2;<\a\v\x2\x2<>\x3\x2\x2\x2=,\x3\x2\x2\x2="+
+		"-\x3\x2\x2\x2=\x32\x3\x2\x2\x2=\x36\x3\x2\x2\x2>\v\x3\x2\x2\x2?@\t\x2"+
+		"\x2\x2@\r\x3\x2\x2\x2\x41\x46\a\v\x2\x2\x42\x43\a\n\x2\x2\x43\x45\a\f"+
+		"\x2\x2\x44\x42\x3\x2\x2\x2\x45H\x3\x2\x2\x2\x46\x44\x3\x2\x2\x2\x46G\x3"+
+		"\x2\x2\x2G\xF\x3\x2\x2\x2H\x46\x3\x2\x2\x2\a\x1B\x1D&=\x46";
 	public static readonly ATN _ATN =
 		new ATNDeserializer().Deserialize(_serializedATN.ToCharArray());
 }

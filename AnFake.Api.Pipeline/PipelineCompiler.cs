@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using AnFake.Api.Pipeline.Antlr;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
@@ -50,11 +51,15 @@ namespace AnFake.Api.Pipeline
 
 			public override void EnterInternalBuildRunIn(PipelineParser.InternalBuildRunInContext ctx)
 			{
-				_steps.Push(
-					new QueueBuildStep(
-						Unquote(ctx.buildRunName()),
-						ctx.Identifier().GetText(),
-						null));
+				var step = new QueueBuildStep(
+					Unquote(ctx.buildRunName()),
+					GetPipeIn(ctx.buildRunParams()),
+					null);
+
+				step.Parameters.AddRange(
+					GetCustomParams(ctx.buildRunParams()));
+				
+				_steps.Push(step);
 			}
 
 			public override void EnterInternalBuildRunOut(PipelineParser.InternalBuildRunOutContext ctx)
@@ -68,11 +73,15 @@ namespace AnFake.Api.Pipeline
 
 			public override void EnterInternalBuildRunInOut(PipelineParser.InternalBuildRunInOutContext ctx)
 			{
-				_steps.Push(
-					new QueueBuildStep(
-						Unquote(ctx.buildRunName()),
-						ctx.Identifier(0).GetText(),
-						ctx.Identifier(1).GetText()));
+				var step = new QueueBuildStep(
+					Unquote(ctx.buildRunName()),
+					GetPipeIn(ctx.buildRunParams()),
+					ctx.Identifier().GetText());
+
+				step.Parameters.AddRange(
+					GetCustomParams(ctx.buildRunParams()));
+
+				_steps.Push(step);
 			}
 
 			private static string Unquote(PipelineParser.BuildRunNameContext ctx)
@@ -82,6 +91,18 @@ namespace AnFake.Api.Pipeline
 
 				var quotedId = ctx.QuotedIdentifier().GetText();
 				return quotedId.Substring(1, quotedId.Length - 2);
+			}
+
+			private static string GetPipeIn(PipelineParser.BuildRunParamsContext ctx)
+			{
+				return ctx.Identifier().GetText();
+			}
+
+			private static IEnumerable<string> GetCustomParams(PipelineParser.BuildRunParamsContext ctx)
+			{
+				return ctx.QuotedIdentifier()
+					.Select(param => param.GetText())
+					.Select(quotedVal => quotedVal.Substring(1, quotedVal.Length - 2));
 			}
 		}
 

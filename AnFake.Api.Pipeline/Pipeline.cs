@@ -87,9 +87,9 @@ namespace AnFake.Api.Pipeline
 			return _impl.GetBuild(name);
 		}
 
-		internal PipelineStepStatus QueueBuild(IPipelineBuild build, IPipelineBuild input)
+		internal PipelineStepStatus QueueBuild(IPipelineBuild build, IPipelineBuild input, string[] @params)
 		{
-			var status = _impl.QueueBuild(build, input);
+			var status = _impl.QueueBuild(build, input, @params);
 			Debug.Assert(status != PipelineStepStatus.None);
 
 			_triggeredBuilds.Add(build);

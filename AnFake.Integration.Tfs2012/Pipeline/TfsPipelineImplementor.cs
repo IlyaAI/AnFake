@@ -22,7 +22,7 @@ namespace AnFake.Integration.Tfs2012.Pipeline
 			return new TfsPipelineBuild(buildDef);
 		}
 
-		public PipelineStepStatus QueueBuild(IPipelineBuild build, IPipelineBuild input)
+		public PipelineStepStatus QueueBuild(IPipelineBuild build, IPipelineBuild input, string[] @params)
 		{
 			var requestedFor = (string) null;
 			
@@ -32,7 +32,7 @@ namespace AnFake.Integration.Tfs2012.Pipeline
 				requestedFor = requestForCurrent.RequestedFor;
 			}
 
-			((TfsPipelineBuild)build).Queue(_buildSvc, _currentBuild.SourceGetVersion, requestedFor, input);
+			((TfsPipelineBuild)build).Queue(_buildSvc, _currentBuild.SourceGetVersion, requestedFor, input, @params);
 
 			return build.Status;
 		}						

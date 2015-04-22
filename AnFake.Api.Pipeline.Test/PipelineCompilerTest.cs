@@ -163,5 +163,22 @@ namespace AnFake.Api.Pipeline.Test
 			Assert.AreEqual("A", ((QueueBuildStep)step1.First).Name);
 			Assert.AreEqual("B", ((QueueBuildStep)step1.Second).Name);
 		}
+
+		[TestCategory("Functional")]
+		[TestMethod]
+		public void PipelineCompiler_should_compile_single_buildrun_with_multiple_params()
+		{
+			// arrange
+			const string src = "A(_, 'P1=V1', 'P2=V2')";
+
+			// act
+			var step = PipelineCompiler.Compile(src) as QueueBuildStep;
+
+			// assert
+			Assert.IsNotNull(step);
+			Assert.AreEqual(2, step.Parameters.Count);
+			Assert.AreEqual("P1=V1", step.Parameters[0]);
+			Assert.AreEqual("P2=V2", step.Parameters[1]);
+		}
 	}
 }

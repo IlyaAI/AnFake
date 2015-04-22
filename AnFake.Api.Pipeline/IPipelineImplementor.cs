@@ -4,6 +4,6 @@
 	{
 		IPipelineBuild GetBuild(string name);
 
-		PipelineStepStatus QueueBuild(IPipelineBuild build, IPipelineBuild input);
+		PipelineStepStatus QueueBuild(IPipelineBuild build, IPipelineBuild input, string[] @params);
 	}
 }
