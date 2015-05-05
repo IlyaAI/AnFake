@@ -344,7 +344,9 @@ namespace AnFake.Plugins.Tfs2012
 			spec.MaxBuildsPerDefinition = limit;
 			spec.QueryOrder = BuildQueryOrder.FinishTimeDescending;
 			spec.Status = BuildStatus.Succeeded | BuildStatus.PartiallySucceeded | BuildStatus.Failed;
-			spec.QueryDeletedOption = QueryDeletedOption.ExcludeDeleted;			
+			spec.QueryDeletedOption = QueryDeletedOption.ExcludeDeleted;
+			spec.QueryOptions = TfsPlugin.DefaultQueryOptions;
+			spec.InformationTypes = TfsPlugin.InformationTypes;
 
 			var results = buildSvc.QueryBuilds(spec);
 			return results.Builds.Select(x => new BuildDetail(x));
@@ -379,6 +381,8 @@ namespace AnFake.Plugins.Tfs2012
 			spec.Status = BuildStatus.Succeeded | BuildStatus.PartiallySucceeded;
 			spec.QueryDeletedOption = QueryDeletedOption.ExcludeDeleted;
 			spec.Quality = quality;
+			spec.QueryOptions = TfsPlugin.DefaultQueryOptions;
+			spec.InformationTypes = TfsPlugin.InformationTypes;
 
 			var results = buildSvc.QueryBuilds(spec);
 			return results.Builds.Select(x => new BuildDetail(x));
@@ -399,7 +403,7 @@ namespace AnFake.Plugins.Tfs2012
 			var spec = buildSvc.CreateBuildDefinitionSpec(Impl.TeamProject);			
 			return 
 				new BuildDetail(
-					buildSvc.GetBuild(spec, buildName, TfsPlugin.InformationTypes, QueryOptions.Definitions));
+					buildSvc.GetBuild(spec, buildName, TfsPlugin.InformationTypes, TfsPlugin.DefaultQueryOptions));
 		}
 
 		/// <summary>
@@ -420,6 +424,7 @@ namespace AnFake.Plugins.Tfs2012
 			spec.QueryOrder = BuildQueryOrder.FinishTimeDescending;
 			spec.Status = BuildStatus.Succeeded | BuildStatus.PartiallySucceeded;
 			spec.QueryDeletedOption = QueryDeletedOption.ExcludeDeleted;
+			spec.QueryOptions = TfsPlugin.DefaultQueryOptions;
 			spec.InformationTypes = TfsPlugin.InformationTypes;
 
 			var build = buildSvc.QueryBuilds(spec).Builds.FirstOrDefault();

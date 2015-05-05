@@ -94,5 +94,33 @@ namespace AnFake.Plugins.Tfs2012.Test
 			// assert			
 			Assert.IsTrue(build.Uri.ToString().StartsWith("http", StringComparison.OrdinalIgnoreCase));
 		}
+
+		[TestCategory("Integration")]
+		[TestMethod]
+		public void TfsBuild_should_return_requested_for_on_current()
+		{
+			// arrange
+
+			// act
+			var requestedFor = TfsBuild.Current.RequestedFor;
+
+			// assert			
+			Assert.IsFalse(String.IsNullOrEmpty(requestedFor));
+		}
+
+		[TestCategory("Integration")]
+		[TestMethod]
+		public void TfsBuild_should_return_requested_for_on_any()
+		{
+			// arrange
+
+			// act
+			var requestedFor = TfsBuild.QueryAll(1)
+				.First()
+				.RequestedFor;
+
+			// assert			
+			Assert.IsFalse(String.IsNullOrEmpty(requestedFor));
+		}
 	}
 }

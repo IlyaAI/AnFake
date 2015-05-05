@@ -30,6 +30,7 @@ namespace AnFake.Plugins.Tfs2012
 		private const int OverviewPriority = 150;
 
 		public static readonly string[] InformationTypes = { "ActivityTracking", CustomInformationNode };
+		public const QueryOptions DefaultQueryOptions = QueryOptions.Definitions | QueryOptions.BatchedRequests;
 		
 		private readonly Queue<TraceMessage> _messages = new Queue<TraceMessage>();
 		private DateTime _lastFlushed;
@@ -262,7 +263,8 @@ namespace AnFake.Plugins.Tfs2012
 			var build = buildSvc.QueryBuildsByUri(
 				new[] { uri },
 				InformationTypes,
-				QueryOptions.Definitions).Single();
+				DefaultQueryOptions)
+				.Single();
 
 			if (build == null)
 				throw new InvalidConfigurationException(String.Format("TFS plugin unable to find build '{0}'", uri));
