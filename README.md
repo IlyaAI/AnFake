@@ -104,5 +104,5 @@ You can run build either locally...
 * for most developers it is easier to edit script (in usual editor with IntelliSense working!) instead of build process template;
 * it's significantly easy to debug local script than build workflow on remote machine.
 
-[[Getting Started]]
+[Getting Started](https://github.com/IlyaAI/AnFake/wiki/Getting-Started)
 
