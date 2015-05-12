@@ -13,7 +13,7 @@ namespace AnFake.Scripting
 	{
 		public void Evaluate(FileItem script)
 		{
-			var cfg = Shell.FsiEvaluationSession.GetDefaultConfiguration();
+			var cfg = Shell.FsiEvaluationSession.GetDefaultConfiguration();			
 
 			var fsx = Shell.FsiEvaluationSession.Create(
 				cfg,

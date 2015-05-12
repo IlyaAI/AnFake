@@ -5,6 +5,9 @@ using AnFake.Integration.Tfs2012;
 
 namespace AnFake.Plugins.Tfs2012
 {
+	/// <summary>
+	///		Represents path in TFS source control repo.
+	/// </summary>
 	public sealed class ServerPath : IComparable<ServerPath>
 	{
 		private readonly string _value;
@@ -17,16 +20,28 @@ namespace AnFake.Plugins.Tfs2012
 			_value = normalized ? value : ServerPathUtils.Normalize(value);
 		}
 
+		/// <summary>
+		///		Is path rooted (i.e. started from $/)?
+		/// </summary>
 		public bool IsRooted
 		{
 			get { return ServerPathUtils.IsRooted(_value); }
 		}
 
+		/// <summary>
+		///		String representation of path as was specified when constructed.
+		/// </summary>
 		public string Spec
 		{
 			get { return _value; }
 		}
 
+		/// <summary>
+		///		String representation of full path.
+		/// </summary>
+		/// <remarks>
+		///		Relative paths aren't support this method because there is no well defined base for relative server paths.
+		/// </remarks>
 		public string Full
 		{
 			get
@@ -38,33 +53,77 @@ namespace AnFake.Plugins.Tfs2012
 			}
 		}
 
+		/// <summary>
+		///		Last name in the path steps including extension if any.
+		/// </summary>
 		public string LastName
 		{
 			get { return Path.GetFileName(_value); }
 		}
 
+		/// <summary>
+		///		Last name in the path steps without extension.
+		/// </summary>
 		public string LastNameWithoutExt
 		{
 			get { return Path.GetFileNameWithoutExtension(_value); }
 		}
 
+		/// <summary>
+		///		Extension with preceeded dot. <c>String.Empty</c> if none.
+		/// </summary>
 		public string Ext
 		{
 			get { return Path.GetExtension(_value); }
 		}
 
+		/// <summary>
+		///		Does path have parent?
+		/// </summary>		
+		public bool HasParent
+		{
+			get
+			{
+				var parent = Path.GetDirectoryName(_value);
+				return !String.IsNullOrEmpty(parent);
+			}
+		}
+
+		/// <summary>
+		///		Parent folder. If path is root or just file name then exception is thrown.
+		/// </summary>
 		public ServerPath Parent
 		{
-			get { return new ServerPath(Path.GetDirectoryName(_value), true); }
-		}		
+			get
+			{
+				var parent = Path.GetDirectoryName(_value);
+				if (String.IsNullOrEmpty(parent))
+					throw new InvalidConfigurationException(String.Format("Server path '{0}' does not have parent.", _value));
 
+				return new ServerPath(parent, true);
+			}
+		}
+
+		/// <summary>
+		///		Splits path onto steps.
+		/// </summary>
+		/// <returns>array of path steps</returns>
 		public string[] Split()
 		{
 			return _value.Split(ServerPathUtils.SeparatorChar);
 		}
 
+		/// <summary>
+		///		Converts this path to relative against given base.
+		///		Returns this path if it isn't a sub-path of base one.
+		/// </summary>
+		/// <param name="basePath"></param>
+		/// <returns>relative path</returns>
 		public ServerPath ToRelative(ServerPath basePath)
 		{
+			if (basePath == null)
+				throw new ArgumentException("ServerPath.ToRelative(basePath): basePath must not be null");
+
 			var myFull = Full;
 			var baseFull = basePath.Full;
 
@@ -100,16 +159,34 @@ namespace AnFake.Plugins.Tfs2012
 			return _value;
 		}		
 
+		/// <summary>
+		///		Returns true if paths are equals and false otherwise.
+		/// </summary>
+		/// <param name="left"></param>
+		/// <param name="right"></param>
+		/// <returns></returns>
 		public static bool operator ==(ServerPath left, ServerPath right)
 		{
 			return Equals(left, right);
 		}
 
+		/// <summary>
+		///		Returns true if paths aren't equals and false otherwise.
+		/// </summary>
+		/// <param name="left"></param>
+		/// <param name="right"></param>
+		/// <returns></returns>
 		public static bool operator !=(ServerPath left, ServerPath right)
 		{
 			return !Equals(left, right);
 		}
 
+		/// <summary>
+		///		Combines base path and sub path.
+		/// </summary>
+		/// <param name="basePath"></param>
+		/// <param name="subPath"></param>
+		/// <returns>combined path</returns>
 		public static ServerPath operator /(ServerPath basePath, string subPath)
 		{
 			return new ServerPath(
@@ -119,6 +196,12 @@ namespace AnFake.Plugins.Tfs2012
 				true);
 		}
 
+		/// <summary>
+		///		Combines base path and sub path.
+		/// </summary>
+		/// <param name="basePath"></param>
+		/// <param name="subPath"></param>
+		/// <returns>combined path</returns>
 		public static ServerPath operator /(ServerPath basePath, ServerPath subPath)
 		{
 			return new ServerPath(
@@ -128,6 +211,12 @@ namespace AnFake.Plugins.Tfs2012
 				true);
 		}
 
+		/// <summary>
+		///		Combines path with file name.
+		/// </summary>
+		/// <param name="basePath"></param>
+		/// <param name="fileName"></param>
+		/// <returns>path with file name</returns>
 		public static ServerPath operator +(ServerPath basePath, string fileName)
 		{
 			// TODO: check fileName doesn't contain path separators

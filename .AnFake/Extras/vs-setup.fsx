@@ -40,9 +40,9 @@ let vsSupportedVersions =
 let vsExternalTools = 
     [
         "AnFake Checkout",     "anf-tf.cmd", "Checkout",          null,             ExternalTool.OptionNone
-        "AnFake Get Specific", "anf-tf.cmd", "GetSpecific Cnnnn", "$(SolutionDir)", ExternalTool.OptionPromptArgs
-        "AnFake Get Latest",   "anf-tf.cmd", "GetLatest",         "$(SolutionDir)", ExternalTool.OptionNone
-        "AnFake Build",        "anf.cmd",    "Build",             "$(SolutionDir)", ExternalTool.OptionPromptArgs
+        "AnFake Get Specific", "anf-tf.cmd", "GetSpecific Cnnnn", "$(SolutionDir)", ExternalTool.OptionPromptArgs + ExternalTool.OptionUseOutWindow
+        "AnFake Get Latest",   "anf-tf.cmd", "GetLatest",         "$(SolutionDir)", ExternalTool.OptionUseOutWindow
+        "AnFake Build",        "anf.cmd",    "Build",             "$(SolutionDir)", ExternalTool.OptionPromptArgs + ExternalTool.OptionUseOutWindow
     ]
 
 "Help" => (fun _ ->

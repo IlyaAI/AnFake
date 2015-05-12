@@ -74,6 +74,15 @@ let plugInTfs () =
         MyBuild.SaveProp("Tfs.Uri")
     Tfs.PlugIn()
 
+let restoreAnFake (localPath:FileSystemPath) =
+    let packagesConfig = (localPath / ".nuget/packages.config").AsFile()
+    if packagesConfig.Exists() then
+        NuGet.Restore(
+            packagesConfig,
+            fun p -> 
+                p.SolutionDirectory <- localPath
+                p.OutputDirectory <- null)
+
 "Help" => (fun _ ->
     Log.Info ""
     Log.Info "Usage: anf-tf[.cmd] <command> [<param>] ..."
@@ -146,14 +155,7 @@ let plugInTfs () =
             MyBuild.Failed("Operation cancelled.")
     
     TfsWorkspace.Checkout(serverPath, localPath, workspaceName)
-
-    let packagesConfig = (localPath / ".nuget/packages.config").AsFile()
-    if packagesConfig.Exists() then
-        NuGet.Restore(
-            packagesConfig, 
-            fun p -> 
-                p.SolutionDirectory <- localPath
-                p.OutputDirectory <- null)
+    restoreAnFake(localPath)
 )
 
 "Checkout" ==> "co"
@@ -168,6 +170,7 @@ let plugInTfs () =
             curDir
     
     TfsWorkspace.Get(localPath)
+    restoreAnFake(localPath)
 )
 
 "GetSpecific" => (fun _ ->
@@ -181,6 +184,7 @@ let plugInTfs () =
             curDir
     
     TfsWorkspace.Get(localPath, fun p -> (p.VersionSpec <- versionSpec))
+    restoreAnFake(localPath)
 )
 
 "Checkin" => (fun _ ->

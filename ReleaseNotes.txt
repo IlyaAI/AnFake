@@ -6,3 +6,9 @@
 * [*] Convention is defined in standalone file tf-conv.fsx now and might be customized by end-user.
 * [*] Bug with interference in pipeline's log messages fixed.
 * [+] Additional params for pipeline steps now supported.
+
+### 1.0.7
+
+* [*] Fail to setup tools into partiall VS installation. Fixed.
+* [*] GetLatest/GetSpecific commands restore solution-level packages.
+* [*] AnFake tools use VS Output Window instead of standalone console.

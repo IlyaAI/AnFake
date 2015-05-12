@@ -214,7 +214,7 @@ namespace AnFake.Core
 		}
 
 		/// <summary>
-		///		Is path has parent?
+		///		Does path have parent?
 		/// </summary>
 		/// <example>
 		/// C:\Projects\MySolution\build.fsx

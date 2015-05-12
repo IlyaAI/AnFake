@@ -29,7 +29,7 @@ namespace AnFake.Integration.Vs2012
 
 		public static List<ExternalTool> GetExternalTools(Version version)
 		{
-			using (var key = OpenSubKey(Registry.CurrentUser, version, KeyExternalTools))
+			using (var key = OpenOrCreateSubKey(Registry.CurrentUser, version, KeyExternalTools))
 			{
 				return ExternalTool.Read(key);
 			}
@@ -37,19 +37,33 @@ namespace AnFake.Integration.Vs2012
 
 		public static void SetExternalTools(Version version, List<ExternalTool> tools)
 		{
-			using (var key = OpenSubKey(Registry.CurrentUser, version, KeyExternalTools, true))
+			using (var key = OpenOrCreateSubKey(Registry.CurrentUser, version, KeyExternalTools))
 			{
 				ExternalTool.Write(key, tools);
 			}
 		}
 
-		private static RegistryKey OpenSubKey(RegistryKey parent, Version version, string subKey, bool writeable = false)
+		private static RegistryKey OpenSubKey(RegistryKey parent, Version version, string subKey)
 		{
 			var keyPath = String.Format(@"{0}\{1}\{2}", KeyBase, version, subKey);
-			var key = parent.OpenSubKey(keyPath, writeable);
+			var key = parent.OpenSubKey(keyPath, true);
 			if (key == null)
 				throw new InvalidOperationException(String.Format(@"Unable to open registry key '{0}\{1}'.", parent.Name, keyPath));
 
+			return key;
+		}
+
+		private static RegistryKey OpenOrCreateSubKey(RegistryKey parent, Version version, string subKey)
+		{
+			var keyPath = String.Format(@"{0}\{1}\{2}", KeyBase, version, subKey);
+			var key = parent.OpenSubKey(keyPath, true);
+			if (key != null)
+				return key;
+
+			key = parent.CreateSubKey(keyPath);
+			if (key == null)
+				throw new InvalidOperationException(String.Format(@"Unable to neighter open nor create registry key '{0}\{1}'.", parent.Name, keyPath));
+		
 			return key;
 		}
 	}
