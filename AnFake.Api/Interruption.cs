@@ -12,12 +12,16 @@ namespace AnFake.Api
 			}
 		}
 
-		private static volatile bool _interrupted;
+		private static readonly object Mutex = new object();
+		private static bool _interrupted;
 
 		public static void CheckPoint()
 		{
-			if (!_interrupted)
-				return;
+			lock (Mutex)
+			{
+				if (!_interrupted)
+					return;
+			}			
 
 			Log.Debug("Interruption check-point activated.");
 			
@@ -28,7 +32,10 @@ namespace AnFake.Api
 		{
 			Log.Debug("Interruption requested.");
 
-			_interrupted = true;
+			lock (Mutex)
+			{
+				_interrupted = true;
+			}			
 		}
 	}
 }

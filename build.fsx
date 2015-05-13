@@ -25,6 +25,8 @@ let fsharp =
     ~~"[ProgramFilesX86]/Reference Assemblies/Microsoft/FSharp/.NETFramework/v4.0/4.3.1.0" % "FSharp.Core.dll"
     + "FSharp.Core.optdata"
     + "FSharp.Core.sigdata"
+let installer = 
+    !!"AnFake.Installer/*.csproj"
 let tests = !!"*/*.Test.csproj"
 let nugetFiles = 
     productOut % "AnFake.exe"
@@ -157,6 +159,14 @@ let xamlVersion = "2"
         p.SourceUrl <- MyBuild.GetProp("NuGet.SourcePushUrl"))
 )
 
+"Package.Installer" => (fun _ ->
+    let nupkg = (out / String.Format("{0}.{1}.nupkg", productName, productVersion)).AsFile()
+
+    Files.Copy(nupkg, ~~"AnFake.Installer/AnFake.nupkg", true)
+    
+    MsBuild.BuildRelease(installer, out)
+)
+
 "Package.Alias" => (fun _ -> 
     let nuspec = NuGet.Spec25(fun meta -> 
         meta.Id <- "TeamBuild.ScriptTemplate"
@@ -245,4 +255,6 @@ let xamlVersion = "2"
 
 "Build" <== ["NuGetRestore"; "Compile"; "Custom.ZipHtmlSummary"; "Test.Unit"]
 
-"Package" <== ["Package.Zip"; "Package.Pack"; "Package.Push"]
+"Package" <== ["Package.Zip"; "Package.Pack"; "Package.Installer"; "Package.Push"]
+
+"Package.Installer" <== ["Package.Pack"]

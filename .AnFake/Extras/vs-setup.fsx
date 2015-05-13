@@ -95,6 +95,65 @@ let vsExternalTools =
         Trace.SummaryFormat("VisualStudio {0}: external tools configured.", version)
 )
 
+"Wizard" => (fun _ ->
+    if not <| MyBuild.HasProp("Tfs.Uri") then
+        MyBuild.SetProp(
+            "Tfs.Uri",
+            UserInterop.Prompt(
+                "Team Foundation Collection Uri", 
+                "Please, enter an URI of Team Foundation projects collection, e.g. 'https://tf-server:8080/my-collection'.",
+                fun uri ->
+                    Tfs.CheckConnection(uri)
+                )
+        )
+        MyBuild.SaveProp("Tfs.Uri")
+        Trace.Summary("Team Foundation collection uri verified and saved.")
+    else
+        Trace.Summary("Team Foundation collection uri already configured.")
+
+    if not <| MyBuild.HasProp("TfExtension.ProjectsHome") then
+        MyBuild.SetProp(
+            "TfExtension.ProjectsHome",
+            UserInterop.Prompt(
+                "Projects Home", 
+                "Please, enter a full path to your projects home folder, e.g. 'C:\\Projects'.\n" +
+                "(AnFake will checkout sources into this folder by default)",
+                fun projHome ->
+                    if not <| projHome.AsFolder().Exists() then
+                        MyBuild.Failed("Folder '{0}' doesn't exist.", projHome)
+                ).AsPath().Full
+            )
+        MyBuild.SaveProp("TfExtension.ProjectsHome")
+        Trace.Summary("Projects home verified and saved.")
+    else
+        Trace.Summary("Projects home already configured.")
+
+    let projHome = MyBuild.GetProp("TfExtension.ProjectsHome")
+    
+    let tfConvFsx = ~~"[AnFakeExtras]/tf-conv.fsx"
+    if not <| tfConvFsx.AsFile().Exists() then
+        let layout = 
+            UserInterop.Prompt(
+                "Projects Layout", 
+                "Choose a default projects layout:\n" +
+                String.Format(" (F)lat    $/TeamProject/Module/branch => {0}\\Module.branch\n", projHome) +            
+                String.Format(" (T)tree   $/TeamProject/Module/branch => {0}\\Module\n", projHome) + 
+                new String(' ', projHome.Length + 49) + "\\branch\n" + 
+                "(AnFake will checkout sources with given layout by default)",
+                fun lt ->
+                    if lt <> "f" && lt <> "F" && lt <> "t" && lt <> "T" then
+                        MyBuild.Failed("Please, pick 'F' or 'T'.")
+                )
+        if layout = "f" || layout = "F" then
+            Files.Copy(~~"[AnFakeExtras]/tf-conv-flat.fsx", tfConvFsx, false)
+            Trace.Summary("Projects layout configured as FLAT.")
+        else
+            Files.Copy(~~"[AnFakeExtras]/tf-conv-tree.fsx", tfConvFsx, false)
+            Trace.Summary("Projects layout configured as TREE.")
+    else
+        Trace.Summary("Projects layout already configured.")
+)
+
 "BuildTemplate" => (fun _ ->
     Tfs.PlugIn()
     MyBuild.SaveProp("Tfs.Uri")

@@ -107,12 +107,12 @@ namespace AnFake
 
 			Console.Title = "AnFake: Another F# Make";
 
-			var consoleWidth = (int)(Console.LargestWindowWidth * 0.75);
+			/*var consoleWidth = (int)(Console.LargestWindowWidth * 0.75);
 			var consoleHeight = (int)(Console.LargestWindowHeight * 0.75);
 			if (consoleWidth > Console.WindowWidth || consoleHeight > Console.WindowHeight)
 			{
 				Console.SetWindowSize(consoleWidth, consoleHeight);
-			}
+			}*/
 		}
 
 		private static void ParseConfig(RunOptions options)

@@ -1,4 +1,5 @@
 ﻿using System;
+using AnFake.Api;
 
 namespace AnFake.Core
 {
@@ -28,6 +29,8 @@ namespace AnFake.Core
 				Console.ForegroundColor = ConsoleColor.White;
 				var value = Console.ReadLine();
 				Console.WriteLine();
+
+				Interruption.CheckPoint();
 
 				if (validate != null)
 				{
