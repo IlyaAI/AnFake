@@ -14,23 +14,6 @@ open AnFake.Integration.Vs2012;
 
 Tfs.PlugInDeferred()
 
-let getProjectsHome () =
-    let projHome = MyBuild.GetProp("__1", @"C:\Projects")
-    if not <| projHome.AsFolder().Exists() then
-        MyBuild.Failed("Projects home folder '{0}' doesn't exist.", projHome)
-
-    projHome.AsPath().Full // return
-
-let getTeamProject () =
-    if not <| MyBuild.HasProp("__1") then
-        MyBuild.Failed("Required argument <team-project-name> is missed.")
-
-    let teamProj = MyBuild.GetProp("__1")
-    if not <| Tfs.HasTeamProject(teamProj) then
-        MyBuild.Failed("Team Project '{0}' doesn't exist.", teamProj)
-        
-    teamProj // return;        
-
 let vsSupportedVersions =
     [
         "11.0".AsVersion()
@@ -44,6 +27,60 @@ let vsExternalTools =
         "AnFake Get Latest",   "anf-tf.cmd", "GetLatest",         "$(SolutionDir)", ExternalTool.OptionUseOutWindow
         "AnFake Build",        "anf.cmd",    "Build",             "$(SolutionDir)", ExternalTool.OptionPromptArgs + ExternalTool.OptionUseOutWindow
     ]
+
+let getProjectsHome () =
+    let projHome = 
+        if MyBuild.HasProp("__1") then
+            MyBuild.GetProp("__1")
+        else if MyBuild.HasProp("TfExtension.ProjectsHome") then
+            MyBuild.GetProp("TfExtension.ProjectsHome")
+        else
+            @"C:\Projects"
+
+    if not <| projHome.AsFolder().Exists() then
+        MyBuild.Failed("Projects home folder '{0}' doesn't exist.", projHome)
+
+    ~~projHome // return
+
+
+let getTeamProject () =
+    if not <| MyBuild.HasProp("__1") then
+        MyBuild.Failed("Required argument <team-project-name> is missed.")
+
+    let teamProj = MyBuild.GetProp("__1")
+    if not <| Tfs.HasTeamProject(teamProj) then
+        MyBuild.Failed("Team Project '{0}' doesn't exist.", teamProj)
+        
+    teamProj // return;        
+
+
+let configureVsTools (anfHome:FileSystemPath) (projHome:FileSystemPath) =
+    let versions = 
+        VisualStudio
+            .GetInstalledVersions()
+            .Intersect(vsSupportedVersions)
+
+    for version in versions do
+        Trace.InfoFormat("Setting up external tools in VisualStudio {0}...", version)
+
+        let tools = VisualStudio.GetExternalTools(version)
+
+        for (title, cmd, args, dir, opt) in vsExternalTools do
+            if cmd <> "anf-tf.cmd" || MyBuild.HasProp("Tfs.Uri") then                
+                let mutable tool = tools.FirstOrDefault(fun x -> x.Title = title)
+                if tool = null then
+                    tool <- new ExternalTool()
+                    tool.Title <- title
+                    tools.Insert(0, tool)
+            
+                tool.Command <- if cmd = "anf-tf.cmd" then (anfHome / cmd).Full else cmd
+                tool.Arguments <- args
+                tool.InitialDirectory <- if dir <> null then dir else projHome.Full
+                tool.Options <- tool.Options ||| opt            
+    
+        VisualStudio.SetExternalTools(version, tools)
+        Trace.SummaryFormat("VisualStudio {0}: external tools configured.", version)
+
 
 "Help" => (fun _ ->
     Log.Info("")
@@ -62,37 +99,15 @@ let vsExternalTools =
 
 "Tools" => (fun _ ->
     let projHome = getProjectsHome()
-    let versions = 
-        VisualStudio
-            .GetInstalledVersions()
-            .Intersect(vsSupportedVersions)
-
-    let dstPath = ~~"[LocalApplicationData]/AnFake";
-    let tfConvFsx = ~~"Extras/tf-conv.fsx";
-    Trace.InfoFormat("Copying AnFake to '{0}'...", dstPath)    
-    Files.Copy(~~"[AnFake]" % "**/*" - tfConvFsx, dstPath, true);
-    if not <| (dstPath / tfConvFsx).AsFile().Exists() then
-        Files.Copy(~~"[AnFake]" / tfConvFsx, dstPath / tfConvFsx, false);
-
-    for version in versions do
-        Trace.InfoFormat("Setting up external tools in VisualStudio {0}...", version)
-
-        let tools = VisualStudio.GetExternalTools(version)
-
-        for (title, cmd, args, dir, opt) in vsExternalTools do
-            if not <| tools.Any(fun x -> x.Title = title) && (cmd <> "anf-tf.cmd" || MyBuild.HasProp("Tfs.Uri")) then                
-                let tool = new ExternalTool()
-                tool.Title <- title            
-                tool.Command <- if cmd = "anf-tf.cmd" then (dstPath / cmd).Full else cmd
-                tool.Arguments <- args
-                tool.InitialDirectory <- if dir <> null then dir else projHome
-                tool.Options <- tool.Options ||| opt
-            
-                tools.Insert(0, tool)
     
-        VisualStudio.SetExternalTools(version, tools)
+    let anfHome = ~~"[LocalApplicationData]/AnFake";
+    let tfConvFsx = ~~"Extras/tf-conv.fsx";
+    Trace.InfoFormat("Copying AnFake to '{0}'...", anfHome)    
+    Files.Copy(~~"[AnFake]" % "**/*", anfHome, true);
+    if not <| (anfHome / tfConvFsx).AsFile().Exists() then
+        Files.Copy(~~"[AnFakeExtras]/tf-conv-flat.fsx", anfHome / tfConvFsx, false);
 
-        Trace.SummaryFormat("VisualStudio {0}: external tools configured.", version)
+    configureVsTools anfHome projHome
 )
 
 "Wizard" => (fun _ ->
@@ -152,6 +167,8 @@ let vsExternalTools =
             Trace.Summary("Projects layout configured as TREE.")
     else
         Trace.Summary("Projects layout already configured.")
+
+    configureVsTools (~~"[AnFake]") (~~projHome)
 )
 
 "BuildTemplate" => (fun _ ->

@@ -18,7 +18,7 @@ namespace AnFake.Installer
 
 			var dstPath = Path.Combine(
 				Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-				"AnFake2");
+				"AnFake");
 			
 			Unpack(dstPath);
 			RunSetup(dstPath);
