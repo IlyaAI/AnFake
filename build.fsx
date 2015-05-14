@@ -255,6 +255,6 @@ let xamlVersion = "2"
 
 "Build" <== ["NuGetRestore"; "Compile"; "Custom.ZipHtmlSummary"; "Test.Unit"]
 
-"Package" <== ["Package.Zip"; "Package.Pack"; "Package.Installer"; "Package.Push"]
+"Package" <== ["Package.Pack"; "Package.Installer"; "Package.Push"]
 
 "Package.Installer" <== ["Package.Pack"]
