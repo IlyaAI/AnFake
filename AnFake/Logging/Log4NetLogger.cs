@@ -34,42 +34,59 @@ namespace AnFake.Logging
 
 		private void SetUp(string logPath, Verbosity verbosity, int consoleWidth)
 		{
-			var consoleAppender = new ColoredConsoleAppender
+			IAppender consoleAppender;
+			if (Runtime.IsMono)
 			{
-				Threshold = Level.All,
-				Layout = new ConsolePattern(consoleWidth)
-			};
-			consoleAppender.AddMapping(
-				new ColoredConsoleAppender.LevelColors
+				var monoConsoleAppender = new ConsoleAppender
 				{
-					ForeColor = ColoredConsoleAppender.Colors.White,
-					Level = Level.Trace
-				});
-			consoleAppender.AddMapping(
-				new ColoredConsoleAppender.LevelColors
+					Threshold = Level.All,
+					Layout = new ConsolePattern(consoleWidth)
+				};
+				monoConsoleAppender.ActivateOptions();
+
+				consoleAppender = monoConsoleAppender;
+			}
+			else
+			{
+				var coloredConsoleAppender = new ColoredConsoleAppender
 				{
-					ForeColor = ColoredConsoleAppender.Colors.White | ColoredConsoleAppender.Colors.HighIntensity,
-					Level = Level.Debug
-				});
-			consoleAppender.AddMapping(
-				new ColoredConsoleAppender.LevelColors
-				{
-					ForeColor = ColoredConsoleAppender.Colors.Green | ColoredConsoleAppender.Colors.HighIntensity,
-					Level = Level.Info
-				});
-			consoleAppender.AddMapping(
-				new ColoredConsoleAppender.LevelColors
-				{
-					ForeColor = ColoredConsoleAppender.Colors.Yellow | ColoredConsoleAppender.Colors.HighIntensity,
-					Level = Level.Warn
-				});
-			consoleAppender.AddMapping(
-				new ColoredConsoleAppender.LevelColors
-				{
-					ForeColor = ColoredConsoleAppender.Colors.Red | ColoredConsoleAppender.Colors.HighIntensity,
-					Level = Level.Error
-				});
-			consoleAppender.ActivateOptions();
+					Threshold = Level.All,
+					Layout = new ConsolePattern(consoleWidth)
+				};
+				coloredConsoleAppender.AddMapping(
+					new ColoredConsoleAppender.LevelColors
+					{
+						ForeColor = ColoredConsoleAppender.Colors.White,
+						Level = Level.Trace
+					});
+				coloredConsoleAppender.AddMapping(
+					new ColoredConsoleAppender.LevelColors
+					{
+						ForeColor = ColoredConsoleAppender.Colors.White | ColoredConsoleAppender.Colors.HighIntensity,
+						Level = Level.Debug
+					});
+				coloredConsoleAppender.AddMapping(
+					new ColoredConsoleAppender.LevelColors
+					{
+						ForeColor = ColoredConsoleAppender.Colors.Green | ColoredConsoleAppender.Colors.HighIntensity,
+						Level = Level.Info
+					});
+				coloredConsoleAppender.AddMapping(
+					new ColoredConsoleAppender.LevelColors
+					{
+						ForeColor = ColoredConsoleAppender.Colors.Yellow | ColoredConsoleAppender.Colors.HighIntensity,
+						Level = Level.Warn
+					});
+				coloredConsoleAppender.AddMapping(
+					new ColoredConsoleAppender.LevelColors
+					{
+						ForeColor = ColoredConsoleAppender.Colors.Red | ColoredConsoleAppender.Colors.HighIntensity,
+						Level = Level.Error
+					});
+				coloredConsoleAppender.ActivateOptions();
+
+				consoleAppender = coloredConsoleAppender;
+			}			
 
 			var fileAppender = new FileAppender
 			{

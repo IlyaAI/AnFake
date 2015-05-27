@@ -2,8 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.Serialization.Json;
 using AnFake.Core.Exceptions;
+using Newtonsoft.Json;
 
 namespace AnFake.Core
 {
@@ -156,12 +156,9 @@ namespace AnFake.Core
 			var cfgFile = _storePath.AsFile();
 			cfgFile.EnsurePath();
 
-			using (var stream = new FileStream(cfgFile.Path.Full, FileMode.Create, FileAccess.Write))
+			using (var writer = new JsonTextWriter(File.CreateText(cfgFile.Path.Full)))
 			{
-				new DataContractJsonSerializer(
-					typeof (Dictionary<string, string>),
-					new DataContractJsonSerializerSettings {UseSimpleDictionaryFormat = true}
-					).WriteObject(stream, _settings);
+				GetSerializer().Serialize(writer, _settings);
 			}
 		}
 
@@ -178,15 +175,22 @@ namespace AnFake.Core
 				_settings = new Dictionary<string, string>();
 			}
 			else
-			{
-				using (var stream = new FileStream(_storePath.Full, FileMode.Open, FileAccess.Read))
+			{				
+				using (var reader = new JsonTextReader(File.OpenText(_storePath.Full)))
 				{
-					_settings = (IDictionary<string, string>) new DataContractJsonSerializer(
-						typeof (Dictionary<string, string>),
-						new DataContractJsonSerializerSettings {UseSimpleDictionaryFormat = true}
-						).ReadObject(stream);
+					_settings = GetSerializer().Deserialize<Dictionary<string, string>>(reader);
 				}
 			}
+		}
+
+		private static JsonSerializer GetSerializer()
+		{
+			var serializer = new JsonSerializer
+			{
+				Formatting = Formatting.Indented				
+			};
+
+			return serializer;
 		}
 	}
 }

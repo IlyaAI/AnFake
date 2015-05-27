@@ -47,7 +47,7 @@ namespace AnFake.Integration.Tfs2012
 					if (mappingParts.Length != 2)
 						throw new FormatException(
 							String.Format(
-								@"Invalid mapping detected: '{0}'.\nMapping must contain one and only one separator character. E.g. '$/tfs/path{1} subpath'.",
+								"Invalid mapping detected: '{0}'.\nMapping must contain one and only one separator character. E.g. '$/tfs/path{1} subpath'.",
 								mappingLine,
 								Separator));
 

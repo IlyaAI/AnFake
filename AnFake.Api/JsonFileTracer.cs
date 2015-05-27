@@ -1,15 +1,17 @@
 using System;
 using System.IO;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Json;
+using System.Text;
 using System.Threading;
+using Newtonsoft.Json;
 
 namespace AnFake.Api
 {
 	public sealed class JsonFileTracer : ITracer
 	{
+		private readonly static Encoding Utf8 = new UTF8Encoding(false);
+
 		private readonly string _logFile;
-		private readonly XmlObjectSerializer _serializer;
+		private readonly JsonSerializer _serializer;
 		private TraceMessageLevel _threshold = TraceMessageLevel.Info;
 		private TimeSpan _trackingInterval = TimeSpan.FromSeconds(2);
 		private TimeSpan _retryInterval = TimeSpan.FromMilliseconds(50);
@@ -81,7 +83,11 @@ namespace AnFake.Api
 			var log = OpenLog(FileMode.Append, FileAccess.Write, _maxRetries);
 			try
 			{
-				_serializer.WriteObject(log, message);
+				using (var streamWriter = new StreamWriter(log, Utf8, 4096, true))
+				using (var jsonWriter = new JsonTextWriter(streamWriter) { CloseOutput = false })
+				{
+					_serializer.Serialize(jsonWriter, message);
+				}				
 
 				log.WriteByte(0x0A);
 			}
@@ -164,11 +170,10 @@ namespace AnFake.Api
 
 		public event EventHandler Idle;
 
-		private static XmlObjectSerializer InitSerializer()
+		private static JsonSerializer InitSerializer()
 		{
-			return new DataContractJsonSerializer(
-				typeof(TraceMessage),
-				new DataContractJsonSerializerSettings { EmitTypeInformation = EmitTypeInformation.AsNeeded });
+			var serizlizer = new JsonSerializer();
+			return serizlizer;
 		}
 
 		private static string InitLog(string logFile, bool append)

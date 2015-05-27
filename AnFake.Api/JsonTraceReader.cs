@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Json;
+using System.Text;
+using Newtonsoft.Json;
 
 namespace AnFake.Api
 {
@@ -15,13 +15,13 @@ namespace AnFake.Api
 	/// </remarks>
 	public sealed class JsonTraceReader
 	{
-		private readonly XmlObjectSerializer _serializer;
+		private readonly JsonSerializer _serializer;
 		private byte[] _buffer;
 		private int _offset;
 
 		public JsonTraceReader()
 		{
-			_serializer = new DataContractJsonSerializer(typeof (TraceMessage));
+			_serializer = new JsonSerializer();
 		}
 
 		/// <summary>
@@ -74,10 +74,11 @@ namespace AnFake.Api
 
 			if (index >= end)
 				throw new FormatException("Inconsistency in trace stream: unable to locate end-of-object marker.");
-
-			using (var mem = new MemoryStream(_buffer, start, index - start, false))
+			
+			using (var stringReader = new StringReader(Encoding.UTF8.GetString(_buffer, start, index - start)))
+			using (var jsonReader = new JsonTextReader(stringReader))
 			{
-				message = (TraceMessage) _serializer.ReadObject(mem);
+				message = _serializer.Deserialize<TraceMessage>(jsonReader);
 			}
 
 			return ++index;

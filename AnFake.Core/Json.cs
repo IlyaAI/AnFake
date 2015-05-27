@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
-using System.Runtime.Serialization.Json;
 using System.Text;
+using Newtonsoft.Json;
 
 namespace AnFake.Core
 {
@@ -47,8 +47,14 @@ namespace AnFake.Core
 		}
 
 		private static T Deserialize<T>(Stream stream)
-		{
-			return (T)new DataContractJsonSerializer(typeof(T)).ReadObject(stream);
+		{			
+			using (var streamReader = new StreamReader(stream))
+			using (var jsonReader = new JsonTextReader(streamReader))
+			{
+				var serializer = new JsonSerializer();
+
+				return serializer.Deserialize<T>(jsonReader);
+			}			
 		}
 	}
 }

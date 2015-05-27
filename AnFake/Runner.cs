@@ -105,14 +105,7 @@ namespace AnFake
 				},
 				true);
 
-			Console.Title = "AnFake: Another F# Make";
-
-			/*var consoleWidth = (int)(Console.LargestWindowWidth * 0.75);
-			var consoleHeight = (int)(Console.LargestWindowHeight * 0.75);
-			if (consoleWidth > Console.WindowWidth || consoleHeight > Console.WindowHeight)
-			{
-				Console.SetWindowSize(consoleWidth, consoleHeight);
-			}*/
+			Console.Title = "AnFake: Another F# Make";			
 		}
 
 		private static void ParseConfig(RunOptions options)
@@ -311,7 +304,7 @@ namespace AnFake
 
 			Console.ForegroundColor = ConsoleColor.Red;
 			Console.WriteLine(message);
-			Console.WriteLine(exception.Message);
+			Console.WriteLine(exception);
 			Console.ForegroundColor = prevColor;
 		}		
 	}

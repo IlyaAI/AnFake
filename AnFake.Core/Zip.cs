@@ -114,7 +114,7 @@ namespace AnFake.Core
 							file.RelPath.Spec, file.Path.Full);
 					}
 
-					var entry = new ZipEntry(file.RelPath.Spec);
+					var entry = new ZipEntry(ZipEntry.CleanName(file.RelPath.Spec));
 					zip.PutNextEntry(entry);
 
 					using (var src = new FileStream(file.Path.Full, FileMode.Open, FileAccess.Read))

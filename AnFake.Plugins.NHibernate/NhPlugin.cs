@@ -5,6 +5,7 @@ using AnFake.Core;
 using AnFake.Core.Exceptions;
 using AnFake.Core.Integration;
 using NHibernate;
+using NHibernate.AdoNet;
 using NHibernate.Cfg;
 using NHibernate.Cfg.MappingSchema;
 using NHibernate.Connection;
@@ -34,10 +35,15 @@ namespace AnFake.Plugins.NHibernate
 				{
 					dbi.ConnectionProvider<DriverConnectionProvider>();
 					dbi.Dialect<MsSql2005Dialect>();
-					dbi.Driver<SqlClientDriver>();
+					dbi.Driver<SqlClientDriver>();					
 					dbi.LogSqlInConsole = false;
 					dbi.SchemaAction = SchemaAutoAction.Update;
 					dbi.ConnectionString = connectionString;
+
+					if (Runtime.IsMono)
+					{
+						dbi.Batcher<NonBatchingBatcherFactory>();
+					}
 				})
 				.CurrentSessionContext<ThreadStaticSessionContext>();
 
