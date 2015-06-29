@@ -42,7 +42,7 @@ let nugetFiles =
     + "FSharp.Core.sigdata"
     + "Extras/*"
     - "Microsoft.*"
-    + ~~"packages/NuGet.CommandLine.2.8.3/tools" % "NuGet.exe"
+    + ~~"packages/NuGet.CommandLine.2.8.5/tools" % "NuGet.exe"
 
 let productName = "AnFake"
 let productTitle = "AnFake: Another F# Make. Use eighther F# or C# script for your build definitions in Ms Team Build."

@@ -303,6 +303,57 @@ namespace AnFake.Core
 			}
 
 			/// <summary>
+			///     Performs action for each parsed line. Only one matched group is expected. Group value is passed to action.
+			/// </summary>
+			/// <param name="pattern">Regex pattern (not null)</param>
+			/// <param name="action">action to be performed (not null)</param>
+			/// <param name="ignoreCase">true to match ignoring case</param>
+			public void ForEachParsedLine(string pattern, Action<string> action, bool ignoreCase = false)
+			{
+				if (pattern == null)
+					throw new ArgumentException("TextDoc.ForEachParsedLine(pattern, action[, ignoreCase]): pattern must not be null");
+				if (action == null)
+					throw new ArgumentException("TextDoc.ForEachParsedLine(pattern, action[, ignoreCase]): action must not be null");
+
+				ForEachParsedLine(pattern, m => action(m.Groups[1].Value), ignoreCase, 1);				
+			}
+
+			/// <summary>
+			///     Performs action for each parsed line. Exactly two matched groups is expected. Group values are passed to action.
+			/// </summary>
+			/// <param name="pattern">Regex pattern (not null)</param>
+			/// <param name="action">action to be performed (not null)</param>
+			/// <param name="ignoreCase">true to match ignoring case</param>
+			public void ForEachParsedLine(string pattern, Action<string, string> action, bool ignoreCase = false)
+			{
+				if (pattern == null)
+					throw new ArgumentException("TextDoc.ForEachParsedLine(pattern, action[, ignoreCase]): pattern must not be null");
+				if (action == null)
+					throw new ArgumentException("TextDoc.ForEachParsedLine(pattern, action[, ignoreCase]): action must not be null");
+
+				ForEachParsedLine(pattern, m => action(m.Groups[1].Value, m.Groups[2].Value), ignoreCase, 2);
+			}
+
+			private void ForEachParsedLine(string pattern, Action<Match> action, bool ignoreCase, int requiredGroups)
+			{
+				var rx = Rx(pattern, ignoreCase);
+
+				var lines = GetLines(true);
+				var line = lines.First;
+
+				while (line != null)
+				{
+					var matches = rx.Matches(line.Value);
+					if (matches.Count > 0)
+					{						
+						action(GetMatch(matches, requiredGroups));
+					}
+
+					line = line.Next;
+				}
+			}
+
+			/// <summary>
 			///     Performs action for each line in document.
 			/// </summary>
 			/// <param name="action">action to be performed (not null)</param>

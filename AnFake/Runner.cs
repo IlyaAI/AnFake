@@ -18,7 +18,7 @@ namespace AnFake
 		private static readonly IDictionary<string, IScriptEvaluator> SupportedScripts =
 			new Dictionary<string, IScriptEvaluator>(StringComparer.OrdinalIgnoreCase)
 			{
-				{".fsx", new FSharpEvaluator()},
+				{".fsx", new FSharpFscEvaluator()},
 				{".csx", new CSharpEvaluator()}
 			};		
 

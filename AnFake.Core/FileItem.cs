@@ -72,6 +72,11 @@ namespace AnFake.Core
 			return File.Exists(_path.Full);
 		}
 
+		public FileItem WithExt(string newExt)
+		{
+			return new FileItem(System.IO.Path.ChangeExtension(_path.Spec, newExt).AsPath(), _basePath);
+		}
+
 		public void SetReadOnly(bool readOnly)
 		{
 			if (readOnly)

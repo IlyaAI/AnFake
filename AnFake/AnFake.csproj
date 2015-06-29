@@ -41,9 +41,9 @@
       <HintPath>..\packages\CS-Script.3.9.10.0\lib\net45\CSScriptLibrary.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="FSharp.Compiler.Service, Version=0.0.89.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\FSharp.Compiler.Service.0.0.89\lib\net45\FSharp.Compiler.Service.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="FSharp.Compiler.Service, Version=0.0.90.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\FSharp.Compiler.Service.0.0.90\lib\net45\FSharp.Compiler.Service.dll</HintPath>
     </Reference>
     <Reference Include="FSharp.Core, Version=4.3.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <Private>False</Private>
@@ -72,6 +72,8 @@
     <Compile Include="RunOptions.cs" />
     <None Include="experimental-02.fsx" />
     <Compile Include="Scripting\CSharpEvaluator.cs" />
+    <Compile Include="Scripting\EvaluationException.cs" />
+    <Compile Include="Scripting\FSharpFscEvaluator.cs" />
     <Compile Include="Scripting\FSharpEvaluator.cs" />
     <Compile Include="Scripting\IScriptEvaluator.cs" />
     <Compile Include="Logging\LogWriter.cs" />

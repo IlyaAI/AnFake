@@ -1,8 +1,6 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using AnFake.Api;
 using AnFake.Core;
-using AnFake.Core.Exceptions;
 using AnFake.Logging;
 using Microsoft.FSharp.Compiler.Interactive;
 using Microsoft.FSharp.Core;
@@ -23,14 +21,7 @@ namespace AnFake.Scripting
 				new LogWriter(LogMessageLevel.Error),
 				FSharpOption<bool>.None);
 
-			try
-			{
-				fsx.EvalScript(script.Path.Full);
-			}
-			catch (Exception e)
-			{				
-				throw new TerminateTargetException("Evaluation aborted.", e);
-			}			
+			fsx.EvalScript(script.Path.Full);						
 		}
-	}
+	}	
 }
