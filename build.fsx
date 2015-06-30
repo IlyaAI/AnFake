@@ -51,7 +51,7 @@ let productDescription =
     "Use eighther F# or C# script for your build definitions in Ms Team Build, " + 
     "forget about build process templates! " +
     "Integration with TFS 2012/2013 provided out-of-box."
-let productAuthor = "Ilya A. Ivanov"
+let productAuthor = "IlyaAI"
 let productVersion = "1.0.7".AsVersion()
 let productHome = "http://ilyaai.github.io/AnFake"
 let productTags = "team build f# c# tfs"
@@ -189,6 +189,33 @@ let xamlVersion = "2"
     let nupkg = NuGet.Pack(nuspec, out, fun p -> 
         p.NoPackageAnalysis <- true
         p.NoDefaultExcludes <- true)
+
+    NuGet.Push(nupkg, fun p -> 
+        p.AccessKey <- MyBuild.GetProp("NuGet.AccessKey")
+        p.SourceUrl <- MyBuild.GetProp("NuGet.SourcePushUrl"))
+)
+
+"Package.TfsApi" => (fun _ -> 
+    let src = ~~"//ivanov-i/c$/Program Files (x86)/Microsoft Visual Studio 11.0/Common7/IDE/ReferenceAssemblies"
+    
+    let ver = 
+        System.Diagnostics.FileVersionInfo
+            .GetVersionInfo((src / "v2.0/Microsoft.TeamFoundation.dll").Full)
+            .ProductVersion
+            .AsVersion()
+
+    let nuspec = NuGet.Spec25(fun meta -> 
+        meta.Id <- "Tfs2012.Api"
+        meta.Version <- ver
+        meta.Authors <- productAuthor
+        meta.Description <- "Contains the reference assemblies for Microsoft Team Foundation 2012 client."
+        meta.Summary <- "Team Foundation 2012 API"    
+    )
+
+    nuspec.AddFiles(src % "*/*.*", "ref-lib");
+    
+    let nupkg = NuGet.Pack(nuspec, out, fun p -> 
+        p.NoPackageAnalysis <- true)
 
     NuGet.Push(nupkg, fun p -> 
         p.AccessKey <- MyBuild.GetProp("NuGet.AccessKey")
