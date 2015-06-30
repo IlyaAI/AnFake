@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using AnFake.Api;
 using AnFake.Core;
+using AnFake.Core.Exceptions;
 using Microsoft.FSharp.Compiler;
 using Microsoft.FSharp.Compiler.SimpleSourceCodeServices;
 
@@ -19,12 +21,18 @@ namespace AnFake.Scripting
 
 		public sealed class CompiledScript
 		{
-			public CompiledScript(FileItem assembly)
+			public CompiledScript(FileItem assembly, FileItem source, int linesOffset)
 			{
-				Assembly = assembly;				
+				Assembly = assembly;
+				Source = source;
+				LinesOffset = linesOffset;
 			}
 
 			public FileItem Assembly { get; private set; }
+
+			public FileItem Source { get; private set; }
+
+			public int LinesOffset { get; private set; }
 
 			public void Evaluate()
 			{
@@ -40,12 +48,25 @@ namespace AnFake.Scripting
 							RootTypeName, VersionPropertyName, Assembly));
 
 				// getting value of static property also triggers script evaluation
-				var ver = versionProp.GetValue(null);
-				if (!InternalVersion.AsVersion().Equals(ver))
-					throw new EvaluationException(
-						String.Format(
-							"Pre-compiled assembly has incompatible version. Expected {0}, actual {1}, assembly path '{2}'.",
-							InternalVersion, ver, Assembly));
+				try
+				{
+					var ver = versionProp.GetValue(null);
+					if (!InternalVersion.AsVersion().Equals(ver))
+						throw new EvaluationException(
+							String.Format(
+								"Pre-compiled assembly has incompatible version. Expected {0}, actual {1}, assembly path '{2}'.",
+								InternalVersion, ver, Assembly));
+				}
+				catch (TargetInvocationException e)
+				{
+					Exception anfakeEx = e;
+					while (anfakeEx != null && !(anfakeEx is AnFakeException))
+					{
+						anfakeEx = anfakeEx.InnerException;
+					}
+
+					throw anfakeEx ?? e;
+				}
 
 				/*var entryPoint = System.Reflection.Assembly
 					.LoadFile(Assembly.Path.Full)
@@ -72,13 +93,36 @@ namespace AnFake.Scripting
 
 		private class PseudoProject
 		{
-			public string Source { get; private set; }
+			public string Code { get; private set; }
 			public FileItem[] References { get; private set; }
+			public string Name { get; private set; }
+			public int LinesOffset { get; private set; }
 
-			public PseudoProject(string source, FileItem[] references)
+			public FileItem Input
 			{
-				Source = source;
+				get { return (TempAnFakeFsc.AsPath() / Name + ".g.fs").AsFile(); }
+			}
+
+			public FileItem Output
+			{
+				get { return (TempAnFakeFsc.AsPath() / Name + ".dll").AsFile(); }
+			}
+
+			public PseudoProject(FileItem script, string code, FileItem[] references, int linesOffset)
+			{
+				Code = code;
 				References = references;
+				LinesOffset = linesOffset;
+
+				var hash = MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(code));
+				var name = new StringBuilder(256);
+				name.Append(script.Name).Append('.');
+				foreach (var b in hash)
+				{
+					name.AppendFormat("{0:x}", b);
+				}
+
+				Name = name.ToString();
 			}
 		}
 
@@ -87,24 +131,21 @@ namespace AnFake.Scripting
 			Log.DebugFormat("FSC: Compilation requested: '{0}'.", script);
 
 			var fsproj = GeneratePseudoProject(script);
-			var hash = MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(fsproj.Source));
 
-			var assembly = GetAssemblyFileItem(script, hash);
-			
-			Log.DebugFormat("FSC: Looking for pre-compiled assembly: '{0}'.", assembly);
+			Log.DebugFormat("FSC: Looking for pre-compiled assembly: '{0}'.", fsproj.Output);
 
-			if (!assembly.Exists())
+			if (!fsproj.Output.Exists())
 			{
 				Log.Debug("FSC: Pre-compiled assembly NOT found. Will compile.");
 
-				DoCompile(fsproj, assembly);
+				DoCompile(fsproj);
 			}
 			else
 			{
 				Log.Debug("FSC: Pre-compiled assembly found. No compilation needed.");
 			}
 
-			return new CompiledScript(assembly);
+			return new CompiledScript(fsproj.Output, fsproj.Input, fsproj.LinesOffset);
 		}
 
 		public static void Cleanup()
@@ -118,23 +159,21 @@ namespace AnFake.Scripting
 			}
 		}
 
-		private static void DoCompile(PseudoProject fsproj, FileItem assembly)
+		private static void DoCompile(PseudoProject fsproj)
 		{
 			Log.Debug("FSC: Compiling...");
-
-			var srcFs = assembly.WithExt(".g.fs");
-			Text.WriteTo(srcFs, fsproj.Source);
+			
+			Text.WriteTo(fsproj.Input, fsproj.Code);
 
 			var args = new List<string>
 			{
-				"fsc.exe",
-				"--debug:full",
-				"--optimize-",
-				"--tailcalls-",
+				"fsc.exe",				
 				"-o",
-				assembly.Path.Full,
+				fsproj.Output.Path.Full,
 				"-a",
-				srcFs.Path.Full,
+				fsproj.Input.Path.Full,
+				"--debug:pdbonly",
+				"--optimize+",
 				"--noframework"
 			};
 
@@ -166,21 +205,8 @@ namespace AnFake.Scripting
 			if (ret.Item2 != 0)
 				throw new EvaluationException(String.Format("Unable to pre-compile script. fsc.exe exit code {0}.", ret.Item2));
 
-			Log.DebugFormat("FSC: Pre-compiled assembly created: '{0}'.", assembly);
-		}
-
-		private static FileItem GetAssemblyFileItem(FileItem script, byte[] hash)
-		{
-			var name = new StringBuilder(256);
-			name.Append(script.Name).Append('.');
-			foreach (var b in hash)
-			{
-				name.AppendFormat("{0:x}", b);
-			}
-			name.Append(".dll");
-
-			return (TempAnFakeFsc.AsPath() / name.ToString()).AsFile();
-		}
+			Log.DebugFormat("FSC: Pre-compiled assembly created: '{0}'.", fsproj.Output);
+		}		
 
 		private static PseudoProject GeneratePseudoProject(FileItem script)
 		{
@@ -190,9 +216,10 @@ namespace AnFake.Scripting
 					.GetAssemblies()
 					.Where(x => PredefinedReferences.Contains(x.GetName().Name))
 					.Select(x => x.Location.AsFile()));
-
+			
 			var header = new StringBuilder(1024);
 			header.Append("module ").Append(RootTypeName).AppendLine();
+			var linesOffset = 1;
 
 			var body = new StringBuilder(10240);
 			
@@ -208,6 +235,7 @@ namespace AnFake.Scripting
 					else if (line.Text.StartsWith("open "))
 					{
 						header.AppendLine(line.Text);
+						linesOffset++;
 
 						body.Append("//").AppendLine(line.Text);
 					}
@@ -226,7 +254,7 @@ namespace AnFake.Scripting
 
 			body.Append("let ").Append(VersionPropertyName).Append("=new Version(\"").Append(InternalVersion).AppendLine("\")");
 
-			return new PseudoProject(header.ToString() + body, refs.ToArray());
+			return new PseudoProject(script, header.ToString() + body, refs.ToArray(), linesOffset);
 		}
 
 		private static FileItem GetFileRefFromDerictive(string line, string derictiveName)
@@ -244,12 +272,16 @@ namespace AnFake.Scripting
 	{
 		public void Evaluate(FileItem script)
 		{
-			EmbeddedFsxCompiler
-				.Cleanup();
+			EmbeddedFsxCompiler.Cleanup();
 
-			EmbeddedFsxCompiler
-				.Compile(script)
-				.Evaluate();		
+			var compiledScript = EmbeddedFsxCompiler.Compile(script);
+
+			AnFakeException.ScriptSource = new ScriptSourceInfo(
+				script.Name, 
+				compiledScript.Source.Name, 
+				compiledScript.LinesOffset);
+
+			compiledScript.Evaluate();		
 		}
 	}
 }

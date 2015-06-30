@@ -80,21 +80,23 @@ namespace AnFake.Core.Exceptions
 			
 			var stackTrace = new StackTrace(InnerException ?? this, true);
 			
-			if (MyBuild.Current != null && MyBuild.Current.ScriptFile != null)
+			if (ScriptSource != null && ScriptSource.GeneratedName != null)
 			{
 				var frames = stackTrace.GetFrames();
 				if (frames != null)
-				{
-					var scriptName = MyBuild.Current.ScriptFile.Name;
+				{					
 					var scriptFrame = frames.FirstOrDefault(f =>
 					{
 						var file = f.GetFileName();
-						return file != null && file.EndsWith(scriptName, StringComparison.OrdinalIgnoreCase);
+						return file != null && file.EndsWith(ScriptSource.GeneratedName, StringComparison.OrdinalIgnoreCase);
 					});
 
 					if (scriptFrame != null)
 					{
-						msgBuilder.Append(" @@ ").Append(scriptName).Append(' ').Append(scriptFrame.GetFileLineNumber());			
+						msgBuilder.Append(" @@ ")
+							.Append(ScriptSource.OriginalName)
+							.Append(' ')
+							.Append(scriptFrame.GetFileLineNumber() - ScriptSource.LinesOffset);
 					}
 				}
 			}
@@ -120,6 +122,8 @@ namespace AnFake.Core.Exceptions
 		}
 
 		public static StackTraceMode StackTraceMode { get; set; }
+
+		public static ScriptSourceInfo ScriptSource { get; set; }		
 
 		public static AnFakeException Wrap(Exception e)
 		{

@@ -74,7 +74,7 @@
     <Compile Include="Scripting\CSharpEvaluator.cs" />
     <Compile Include="Scripting\EvaluationException.cs" />
     <Compile Include="Scripting\FSharpFscEvaluator.cs" />
-    <Compile Include="Scripting\FSharpEvaluator.cs" />
+    <Compile Include="Scripting\FSharpFsiEvaluator.cs" />
     <Compile Include="Scripting\IScriptEvaluator.cs" />
     <Compile Include="Logging\LogWriter.cs" />
     <Compile Include="Runner.cs" />

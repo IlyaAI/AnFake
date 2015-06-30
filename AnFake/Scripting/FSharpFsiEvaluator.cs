@@ -1,13 +1,15 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using AnFake.Api;
 using AnFake.Core;
+using AnFake.Core.Exceptions;
 using AnFake.Logging;
 using Microsoft.FSharp.Compiler.Interactive;
 using Microsoft.FSharp.Core;
 
 namespace AnFake.Scripting
 {
-	internal class FSharpEvaluator : IScriptEvaluator
+	internal class FSharpFsiEvaluator : IScriptEvaluator
 	{
 		public void Evaluate(FileItem script)
 		{
@@ -21,7 +23,16 @@ namespace AnFake.Scripting
 				new LogWriter(LogMessageLevel.Error),
 				FSharpOption<bool>.None);
 
-			fsx.EvalScript(script.Path.Full);						
+			AnFakeException.ScriptSource = new ScriptSourceInfo(script.Name);
+
+			try
+			{
+				fsx.EvalScript(script.Path.Full);
+			}
+			catch (Exception)
+			{
+				throw new EvaluationException("Evaluation aborted.");
+			}			
 		}
 	}	
 }

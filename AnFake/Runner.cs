@@ -42,6 +42,13 @@ namespace AnFake
 				Console.WriteLine("  <name>=<value> Additional build parameters. Optional. Multiple.");
 				Console.WriteLine("                 Multiple pairs might be specified via space separator.");
 				Console.WriteLine("");
+				Console.WriteLine("  -p             Threat the following arguments as anonymous values.");
+				Console.WriteLine("                 '-p Val1 Val2 ...' is equal to '__1=Val1 __2=Val2 ...'");
+				Console.WriteLine("");
+				Console.WriteLine("  -fsi           Use F# Interactive for script evaluation.");
+				Console.WriteLine("                 By default pre-compilation based evaluator is used");
+				Console.WriteLine("                 which provides fast start-up when script isn't changing.");
+				Console.WriteLine("");
 				Console.WriteLine("  -dbg           Attach debugger just after AnFake start.");
 				Console.WriteLine("");
 				Console.WriteLine("  -stack         Enables full stack traces for thrown exception.");
@@ -162,23 +169,26 @@ namespace AnFake
 					continue;
 				}
 
-				if (arg == "-p" || arg == "/p")
+				switch (arg)
 				{
-					propMode = true;
-					continue;
+					case "-p":
+					case "/p":
+						propMode = true;
+						continue;
+					case "-fsi":
+					case "/fsi":
+						SupportedScripts[".fsx"] = new FSharpFsiEvaluator();
+						continue;
+					case "-dbg":
+					case "/dbg":
+						SupportedScripts[".fsx"] = new FSharpFsiEvaluator();
+						Debugger.Launch();
+						continue;
+					case "-stack":
+					case "/stack":
+						AnFakeException.StackTraceMode = StackTraceMode.Full;
+						continue;
 				}
-
-				if (arg == "-dbg" || arg == "/dbg")
-				{
-					Debugger.Launch();
-					continue;
-				}
-
-				if (arg == "-stack" || arg == "/stack")
-				{
-					AnFakeException.StackTraceMode = StackTraceMode.Full;
-					continue;
-				}				
 
 				if (propMode)
 				{

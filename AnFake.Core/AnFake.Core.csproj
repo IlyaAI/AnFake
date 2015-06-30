@@ -62,6 +62,7 @@
     <Compile Include="Deployment\DeploymentStep.cs" />
     <Compile Include="Deployment\UpdateFileInplaceStep.cs" />
     <Compile Include="Deployment\UpdateFilesStep.cs" />
+    <Compile Include="Exceptions\ScriptSourceInfo.cs" />
     <Compile Include="Exceptions\StackTraceMode.cs" />
     <Compile Include="ArtifactType.cs" />
     <Compile Include="FormatExtension.cs" />
