@@ -218,5 +218,23 @@ namespace AnFake.Core.Test
 			Assert.AreEqual(1, doc.Lines.Count());
 			Assert.AreEqual(String.Empty, doc.Lines.First());
 		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void TextDoc_should_return_lines_without_cr_lf()
+		{
+			// arrange
+			var doc = "line 1\nline 2\rline 3\r\nline 4".AsTextDoc();
+			
+			// act
+			var lines = doc.Lines.ToArray();
+			
+			// assert			
+			Assert.AreEqual(4, lines.Length);
+			Assert.AreEqual("line 1", lines[0]);
+			Assert.AreEqual("line 2", lines[1]);
+			Assert.AreEqual("line 3", lines[2]);
+			Assert.AreEqual("line 4", lines[3]);			
+		}
 	}
 }

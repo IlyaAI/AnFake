@@ -35,24 +35,31 @@ namespace AnFake.Plugins.TeamCity
 
 		private void OnTraceMessage(object sender, TraceMessage message)
 		{
-			var status = "NORMAL";
+			var formattedMessage = (string)null;
 			switch (message.Level)
 			{
 				case TraceMessageLevel.Warning:
-					status = "WARNING";
+					formattedMessage = _formatter.FormatMessage("message", new
+					{
+						text = message.ToString("mlf"),
+						status = "WARNING"
+					});
 					break;
+
 				case TraceMessageLevel.Error:
-					status = "ERROR";
+					formattedMessage = _formatter.FormatMessage("message", new
+					{
+						text = message.ToString("mlf"),
+						status = "ERROR",
+						errorDetails = message.Details ?? String.Empty
+					});
 					break;		
+
+				default:
+					formattedMessage = message.ToString("mlfd");
+					break;
 			}
-
-			var formattedMessage = _formatter.FormatMessage("message", new
-			{
-				text = message.ToString("mlf"),
-				status = status,
-				errorDetails = message.Details ?? String.Empty
-			});
-
+			
 			Console.WriteLine(formattedMessage);
 		}		
 	}

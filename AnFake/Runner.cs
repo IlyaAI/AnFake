@@ -99,20 +99,23 @@ namespace AnFake
 
 		private static void ConfigureConsole()
 		{
-			SetConsoleCtrlHandler(
-				@event =>
-				{
-					Interruption.Requested();
+			Console.Title = "AnFake: Another F# Make";
 
-					// Take some time for main thread to reach interruption check-point and perform all neccessary cleanups.
-					// This sleep doesn't prevent application from exit if main thread finished first. Treat the value as 'interruption timeout'.
-					Thread.Sleep(TimeSpan.FromSeconds(15));
-					
-					return true;
-				},
-				true);
+			if (!Runtime.IsMono)
+			{
+				SetConsoleCtrlHandler(
+					@event =>
+					{
+						Interruption.Requested();
 
-			Console.Title = "AnFake: Another F# Make";			
+						// Take some time for main thread to reach interruption check-point and perform all neccessary cleanups.
+						// This sleep doesn't prevent application from exit if main thread finished first. Treat the value as 'interruption timeout'.
+						Thread.Sleep(TimeSpan.FromSeconds(15));
+
+						return true;
+					},
+					true);
+			}			
 		}
 
 		private static void ParseConfig(RunOptions options)
@@ -229,8 +232,12 @@ namespace AnFake
 				options.Properties.Remove("Verbosity");
 			}
 
-			var maxWidth = 180;
-			SafeOp.Try(() => maxWidth = Math.Min(Console.WindowWidth, maxWidth));
+			var maxWidth = 0;
+			SafeOp.Try(() => maxWidth = Console.WindowWidth);
+			if (maxWidth <= 0)
+			{
+				maxWidth = Int32.MaxValue;
+			}
 			
 			Log.Set(new Log4NetLogger(options.LogPath, options.Verbosity, maxWidth));
 		}
@@ -289,7 +296,7 @@ namespace AnFake
 
 				Api.Trace.InfoFormat("AnFakeVersion: {0}", MyBuild.Current.AnFakeVersion);
 
-				Api.Trace.Info("Loading script...");
+				Api.Trace.Info("Loading script...");				
 				evaluator.Evaluate(scriptFile);
 
 				Api.Trace.Info("Configuring plugins...");
