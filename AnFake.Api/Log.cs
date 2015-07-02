@@ -25,6 +25,11 @@ namespace AnFake.Api
 			return prevLogger;
 		}
 
+		public static void DisableConsoleEcho()
+		{
+			Logger.DisableConsoleEcho();
+		}
+
 		public static void Message(LogMessageLevel level, string message)
 		{
 			Logger.Write(level, message);

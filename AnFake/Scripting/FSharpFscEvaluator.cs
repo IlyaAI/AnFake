@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -67,19 +68,6 @@ namespace AnFake.Scripting
 
 					throw anfakeEx ?? e;
 				}
-
-				/*var entryPoint = System.Reflection.Assembly
-					.LoadFile(Assembly.Path.Full)
-					.GetType(_rootType, true)
-					.GetMethod(_entryPoint);
-
-				if (entryPoint == null)
-					throw new EvaluationException(
-						String.Format(
-							"Entry point '{0}.{1}' not found in pre-compiled assembly '{2}'",
-							_rootType, _entryPoint, Assembly.Path));
-
-				entryPoint.Invoke(null, new object[0]);*/
 			}
 		}
 
@@ -155,7 +143,7 @@ namespace AnFake.Scripting
 			foreach (var file in "*".AsFileSetFrom(TempAnFakeFsc)
 				.Where(file => file.Info.LastAccessTimeUtc < threshold))
 			{
-				Files.Delete(file);
+				File.Delete(file.Path.Full);
 			}
 		}
 

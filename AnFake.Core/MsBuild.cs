@@ -10,7 +10,7 @@ namespace AnFake.Core
 	/// </summary>
 	public static class MsBuild
 	{
-		private static readonly string[] Locations =
+		private static readonly string[] MsLocations =
 		{
 			"[ProgramFilesX86]/MSBuild/12.0/Bin/MsBuild.exe",
 			"[ProgramFilesX86]/MSBuild/11.0/Bin/MsBuild.exe",
@@ -18,6 +18,16 @@ namespace AnFake.Core
             "[Windows]/Microsoft.NET/Framework/v4.0.30128/MsBuild.exe"
 		};
 
+		private static readonly string[] MonoLocations =
+		{
+			"[MonoBin]/xbuild.bat",
+			"[MonoBin]/xbuild"
+		};
+
+		private static readonly string[] Locations = Runtime.IsMono
+			? MonoLocations
+			: MsLocations;
+			
 		/// <summary>
 		///		MSBuild parameters.
 		/// </summary>
@@ -259,7 +269,7 @@ namespace AnFake.Core
 				throw new ArgumentException(
 					String.Format(
 						"MsBuild.Params.ToolPath must not be null.\nHint: probably, MsBuild.exe not found.\nSearch path:\n  {0}",
-						String.Join("\n  ", Locations)));
+						String.Join("\n  ", MsLocations)));
 			// TODO: check other parameters
 
 			Trace.InfoFormat("MsBuild.Build\n => {0}", String.Join("\n => ", projArray.Select(x => x.RelPath)));

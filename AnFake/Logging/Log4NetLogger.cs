@@ -10,6 +10,8 @@ namespace AnFake.Logging
 	internal class Log4NetLogger : Api.ILogger
 	{
 		private const string LoggerName = "AnFake";
+		private const string ConsoleAppenderName = "console";
+		private const string FileAppenderName = "file";
 
 		private readonly log4net.Core.ILogger _logger;
 
@@ -30,6 +32,14 @@ namespace AnFake.Logging
 				return;
 
 			_logger.Log(typeof(Log4NetLogger), GetLevel(level), message, null);
+		}
+
+		public void DisableConsoleEcho()
+		{
+			var hierarchy = (Hierarchy)LogManager.GetRepository();
+
+			var anfake = hierarchy.GetLogger(LoggerName, hierarchy.LoggerFactory);
+			anfake.RemoveAppender(ConsoleAppenderName);			
 		}
 
 		private void SetUp(string logPath, Verbosity verbosity, int consoleWidth)
@@ -86,7 +96,8 @@ namespace AnFake.Logging
 				coloredConsoleAppender.ActivateOptions();
 
 				consoleAppender = coloredConsoleAppender;
-			}			
+			}
+			consoleAppender.Name = ConsoleAppenderName;
 
 			var fileAppender = new FileAppender
 			{
@@ -97,6 +108,7 @@ namespace AnFake.Logging
 				Layout = new FilePattern(LoggerName)
 			};
 			fileAppender.ActivateOptions();
+			fileAppender.Name = FileAppenderName;
 
 			var hierarchy = (Hierarchy)LogManager.GetRepository();
 

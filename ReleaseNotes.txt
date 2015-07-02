@@ -16,3 +16,4 @@
 * [*] Back slashes inside zip. Fixed.
 * [*] Migrated on Newtonsoft.Json
 * [+] Mono support started.
+* [+] TeamCity support started.

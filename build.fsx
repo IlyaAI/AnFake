@@ -196,7 +196,7 @@ let xamlVersion = "2"
 )
 
 "Package.TfsApi" => (fun _ -> 
-    let src = ~~"//ivanov-i/c$/Program Files (x86)/Microsoft Visual Studio 11.0/Common7/IDE/ReferenceAssemblies"
+    let src = ~~"[ProgramFilesX86]/Microsoft Visual Studio 11.0/Common7/IDE/ReferenceAssemblies"
     
     let ver = 
         System.Diagnostics.FileVersionInfo
@@ -244,6 +244,7 @@ let xamlVersion = "2"
 
         for pattern in patterns do
             doc.Replace(pattern, fun i v -> if i = 1 then apiVersion else null)
+                |> ignore
 
         doc.Save()    
 )
@@ -274,6 +275,7 @@ let xamlVersion = "2"
 
         for pattern in patterns do
             doc.Replace(pattern, fun i v -> if i = 1 then xamlVersion else null)
+                |> ignore
 
         doc.Save()    
 )

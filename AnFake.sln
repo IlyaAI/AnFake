@@ -25,6 +25,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		build.csx = build.csx
 		build.fsx = build.fsx
+		mono-build.fsx = mono-build.fsx
 		README.md = README.md
 		ReleaseNotes.txt = ReleaseNotes.txt
 	EndProjectSection
@@ -98,6 +99,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnFake.Integration.Vs2012", "AnFake.Integration.Vs2012\AnFake.Integration.Vs2012.csproj", "{9767DF8D-952A-42D2-AE8D-B4728A901020}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnFake.Installer", "AnFake.Installer\AnFake.Installer.csproj", "{64F6CFD2-5215-4103-8425-74C1B93C2DFC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnFake.Plugins.TeamCity", "AnFake.Plugins.TeamCity\AnFake.Plugins.TeamCity.csproj", "{79D5C17C-2DF3-4A6F-93CC-F73C325261E2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -215,6 +218,12 @@ Global
 		{64F6CFD2-5215-4103-8425-74C1B93C2DFC}.Install|Any CPU.ActiveCfg = Release|Any CPU
 		{64F6CFD2-5215-4103-8425-74C1B93C2DFC}.Install|Any CPU.Build.0 = Release|Any CPU
 		{64F6CFD2-5215-4103-8425-74C1B93C2DFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{79D5C17C-2DF3-4A6F-93CC-F73C325261E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{79D5C17C-2DF3-4A6F-93CC-F73C325261E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{79D5C17C-2DF3-4A6F-93CC-F73C325261E2}.Install|Any CPU.ActiveCfg = Release|Any CPU
+		{79D5C17C-2DF3-4A6F-93CC-F73C325261E2}.Install|Any CPU.Build.0 = Release|Any CPU
+		{79D5C17C-2DF3-4A6F-93CC-F73C325261E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{79D5C17C-2DF3-4A6F-93CC-F73C325261E2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -243,5 +252,6 @@ Global
 		{965CFD7F-F118-4486-A62A-D1DC7C1FE912} = {29EE3C45-D196-4946-A87E-D9525E8B7E60}
 		{9767DF8D-952A-42D2-AE8D-B4728A901020} = {29EE3C45-D196-4946-A87E-D9525E8B7E60}
 		{64F6CFD2-5215-4103-8425-74C1B93C2DFC} = {E31DE28C-674E-41AF-8A75-A3252C044AAE}
+		{79D5C17C-2DF3-4A6F-93CC-F73C325261E2} = {29EE3C45-D196-4946-A87E-D9525E8B7E60}
 	EndGlobalSection
 EndGlobal

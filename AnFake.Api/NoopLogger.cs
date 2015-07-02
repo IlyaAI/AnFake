@@ -8,6 +8,10 @@ namespace AnFake.Api
 			set { }
 		}
 
+		public void DisableConsoleEcho()
+		{			
+		}
+
 		public void Write(LogMessageLevel level, string message)
 		{
 		}

@@ -79,6 +79,7 @@
     <Compile Include="Integration\Tests\TestStatus.cs" />
     <Compile Include="Integration\User.cs" />
     <Compile Include="Json.cs" />
+    <Compile Include="Mono.cs" />
     <Compile Include="NuSpec\IPackage.cs" />
     <Compile Include="NuSpec\v20\Dependency.cs" />
     <Compile Include="NuSpec\v20\File.cs" />

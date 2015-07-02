@@ -65,12 +65,15 @@ namespace AnFake.Core
 			/// </summary>
 			/// <param name="line">new line (not null)</param>
 			/// <param name="args">formating arguments</param>
-			public void Replace(string line, params object[] args)
+			/// <returns>this</returns>
+			public TextLine Replace(string line, params object[] args)
 			{
 				if (line == null)
 					throw new ArgumentException("TextLine.Replace(line, ...): line must not be null");
 
 				_line.Value = String.Format(line, args);
+
+				return this;
 			}
 
 			/// <summary>
@@ -79,7 +82,8 @@ namespace AnFake.Core
 			/// <param name="pattern">Regex pattern (not null)</param>
 			/// <param name="value">value to be replaced to (not null)</param>
 			/// <param name="ignoreCase">true to match ignoring case</param>
-			public void Replace(string pattern, string value, bool ignoreCase = false)
+			/// <returns>this</returns>
+			public TextLine Replace(string pattern, string value, bool ignoreCase = false)
 			{
 				if (pattern == null)
 					throw new ArgumentException("TextLine.Replace(pattern, value[, ignoreCase]): pattern must not be null");
@@ -90,6 +94,8 @@ namespace AnFake.Core
 				_line.Value = new TextReplacer(_line.Value, value)
 					.Replace(rx.Matches(_line.Value))
 					.ToString();
+
+				return this;
 			}
 
 			/// <summary>
@@ -98,7 +104,8 @@ namespace AnFake.Core
 			/// <param name="pattern">Regex pattern (not null)</param>
 			/// <param name="newValue">function which evaluates new value (not null)</param>
 			/// <param name="ignoreCase">true to match ignoring case</param>
-			public void Replace(string pattern, Func<int, string, string> newValue, bool ignoreCase = false)
+			/// <returns>this</returns>
+			public TextLine Replace(string pattern, Func<int, string, string> newValue, bool ignoreCase = false)
 			{
 				if (pattern == null)
 					throw new ArgumentException("TextLine.Replace(pattern, newValue[, ignoreCase]): pattern must not be null");
@@ -113,7 +120,40 @@ namespace AnFake.Core
 				}
 
 				_line.Value = replacer.ToString();
-			}			
+
+				return this;
+			}
+
+			/// <summary>
+			/// 
+			/// </summary>
+			/// <param name="text"></param>			
+			/// <returns>this</returns>
+			public TextLine Append(string text)
+			{
+				if (text == null)
+					throw new ArgumentException("TextLine.Append(text, ...): text must not be null");
+
+				_line.Value += text;
+
+				return this;
+			}
+
+			/// <summary>
+			/// 
+			/// </summary>
+			/// <param name="text"></param>
+			/// <param name="args"></param>
+			/// <returns>this</returns>
+			public TextLine AppendFormat(string text, params object[] args)
+			{
+				if (text == null)
+					throw new ArgumentException("TextLine.AppendFormat(text, ...): text must not be null");
+
+				_line.Value += String.Format(text, args);
+
+				return this;
+			}
 
 			/// <summary>
 			///     Removes current line.
@@ -377,7 +417,8 @@ namespace AnFake.Core
 			/// <param name="pattern">Regex pattern (not null)</param>
 			/// <param name="value">value to be replaced to (not null)</param>
 			/// <param name="ignoreCase">true to match ignoring case</param>
-			public void Replace(string pattern, string value, bool ignoreCase = false)
+			/// <returns>this</returns>
+			public TextDoc Replace(string pattern, string value, bool ignoreCase = false)
 			{
 				if (pattern == null)
 					throw new ArgumentException("TextDoc.Replace(pattern, value[, ignoreCase]): pattern must not be null");
@@ -390,6 +431,8 @@ namespace AnFake.Core
 					new TextReplacer(text, value)
 						.Replace(rx.Matches(text))
 						.ToString());
+
+				return this;
 			}
 
 			/// <summary>
@@ -398,7 +441,8 @@ namespace AnFake.Core
 			/// <param name="pattern">Regex pattern (not null)</param>
 			/// <param name="newValue">function which evaluates new value (not null)</param>
 			/// <param name="ignoreCase">true to match ignoring case</param>
-			public void Replace(string pattern, Func<int, string, string> newValue, bool ignoreCase = false)
+			/// <returns>this</returns>
+			public TextDoc Replace(string pattern, Func<int, string, string> newValue, bool ignoreCase = false)
 			{
 				if (pattern == null)
 					throw new ArgumentException("TextDoc.Replace(pattern, newValue[, ignoreCase]): pattern must not be null");
@@ -415,6 +459,44 @@ namespace AnFake.Core
 				}
 
 				SetText(replacer.ToString());
+
+				return this;
+			}
+
+			/// <summary>
+			/// 
+			/// </summary>
+			/// <param name="text"></param>			
+			/// <returns>this</returns>
+			public TextDoc Append(string text)
+			{
+				LastLine().Append(text);
+
+				return this;
+			}
+
+			/// <summary>
+			/// 
+			/// </summary>
+			/// <param name="text"></param>
+			/// <param name="args"></param>
+			/// <returns>this</returns>
+			public TextDoc AppendFormat(string text, params object[] args)
+			{
+				LastLine().AppendFormat(text, args);
+
+				return this;
+			}
+
+			/// <summary>
+			/// 
+			/// </summary>
+			/// <returns></returns>
+			public TextDoc NewLine()
+			{
+				LastLine().InsertAfter("");
+
+				return this;
 			}
 
 			/// <summary>

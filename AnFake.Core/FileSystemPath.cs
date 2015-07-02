@@ -463,20 +463,25 @@ namespace AnFake.Core
 			var macro = path.Substring(1, end - 1);
 			var subPath = path.Substring(end + 1).TrimStart(Path.DirectorySeparatorChar);
 
-			if (macro == "Temp")
-				return Path.Combine(Path.GetTempPath(), subPath);
-
-			// ReSharper disable AssignNullToNotNullAttribute
-			if (macro == "AnFake")
-				return Path.Combine(
-					Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
-					subPath);			
-
-			if (macro == "AnFakeExtras")
-				return Path.Combine(
-					Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
-					Path.Combine("Extras", subPath));
-			// ReSharper restore AssignNullToNotNullAttribute
+			switch (macro)
+			{
+				case "Temp":
+					return Path.Combine(Path.GetTempPath(), subPath);
+				case "MonoLib":
+					return Path.Combine(Mono.Lib, subPath);
+				case "MonoBin":
+					return Path.Combine(Mono.Bin, subPath);
+				case "AnFake":
+					return Path.Combine(
+						// ReSharper disable once AssignNullToNotNullAttribute
+						Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+						subPath);
+				case "AnFakeExtras":
+					return Path.Combine(
+						// ReSharper disable once AssignNullToNotNullAttribute
+						Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+						Path.Combine("Extras", subPath));
+			}			
 
 			Environment.SpecialFolder specialFolder;
 			if (!Enum.TryParse(macro, false, out specialFolder))

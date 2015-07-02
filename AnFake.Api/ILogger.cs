@@ -4,6 +4,8 @@
 	{
 		LogMessageLevel Threshold { get; set; }
 
+		void DisableConsoleEcho();
+
 		void Write(LogMessageLevel level, string message);		
 	}
 }

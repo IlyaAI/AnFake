@@ -12,7 +12,6 @@ IF ($LASTEXITCODE -NE 0)
 ELSE
 { 
 	Write-Host "Use '.\anf ""[AnFakeExtras]/vs-setup.fsx"" Tools -p <local-projects-home>' to setup AnFake tools into Visual Studio." -ForegroundColor White -BackgroundColor DarkGreen
-	Write-Host "Use '.\anf ""[AnFakeExtras]/vs-setup.fsx"" BuildTemplate -p <team-project-name>' to setup AnFake build process template into Team Build." -ForegroundColor White -BackgroundColor DarkGreen
-	Write-Host "Read about managing TFS workspaces with AnFake here: 'http://ilyaai.github.io/AnFake/reference?q=tfs-workspace'." -ForegroundColor White -BackgroundColor DarkGreen
+	Write-Host "Use '.\anf ""[AnFakeExtras]/vs-setup.fsx"" BuildTemplate -p <team-project-name>' to setup AnFake build process template into Team Build." -ForegroundColor White -BackgroundColor DarkGreen	
 	Write-Host "Use '.\anf Build' to build your solution with AnFake." -ForegroundColor White -BackgroundColor DarkGreen
 }

@@ -31,14 +31,16 @@ let getSolutionRoot() =
 
     let anfCmd = (slnRoot / "anf.cmd").AsFile()    
     let anfCmdBody = "[AnFake]/anf.cmd".AsFile().AsTextDoc()
-    anfCmdBody.Replace(@"\[\.AnFake\]", anfakePath)
-    anfCmdBody.SaveTo(anfCmd, Text.Encoding.ASCII)        
+    anfCmdBody
+        .Replace(@"\[\.AnFake\]", anfakePath)
+        .SaveTo(anfCmd, Text.Encoding.ASCII)        
     
     let buildFsx = (slnRoot / "build.fsx").AsFile()
     if not <| buildFsx.Exists() then
         let buildFsxBody = ("[AnFake]/build.tmpl.fsx").AsFile().AsTextDoc()
-        buildFsxBody.Replace(@"\[\.AnFake\]", anfakePath)
-        buildFsxBody.SaveTo(buildFsx)
+        buildFsxBody
+            .Replace(@"\[\.AnFake\]", anfakePath)
+            .SaveTo(buildFsx)
         Trace.Info("  build.fsx generated.")
 
     let wsFile = (slnRoot / TfsWorkspace.Defaults.WorkspaceFile).AsFile()
