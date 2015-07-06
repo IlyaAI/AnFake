@@ -85,7 +85,7 @@ namespace AnFake.Core
 			if (pathSteps == null)
 				throw new ArgumentException("FileSystem.AsPath(pathSteps): pathSteps must not be null");
 
-			return new FileSystemPath(String.Join(DirectorySeparatorString, pathSteps, start, count), true);
+			return new FileSystemPath(String.Join(DirectorySeparatorString, pathSteps, start, count), false);
 		}
 
 		/// <summary>

@@ -52,7 +52,7 @@ let productDescription =
     "forget about build process templates! " +
     "Integration with TFS 2012/2013 provided out-of-box."
 let productAuthor = "IlyaAI"
-let productVersion = "1.0.7".AsVersion()
+let productVersion = "1.1.0".AsVersion()
 let productHome = "http://ilyaai.github.io/AnFake"
 let productTags = "team build f# c# tfs"
 
@@ -65,12 +65,10 @@ let xamlVersion = "2"
 /////////////////////////////////////////////////////////////////
 
 "Clean" => (fun _ ->    
-    let obj = !!!"*/obj"
-    let bin = !!!"*/bin"
-
-    Folders.Clean obj
-    Folders.Clean bin
-    Folders.Clean out
+    Folders.Clean(!!!"*/obj")
+    Folders.Clean(!!!"*/bin")
+    Folders.Clean(out)
+    Folders.Clean("TestResults")
 )
 
 "NuGetRestore" => (fun _ ->

@@ -16,6 +16,7 @@ namespace AnFake.Core.Test
 			Assert.AreEqual("\\root\\path", "/root/path".AsPath().Spec);
 			Assert.AreEqual("root\\path\\", "root/path/".AsPath().Spec);
 			Assert.AreEqual("file", "file".AsPath().Spec);
+			Assert.AreEqual("", ".".AsPath().Spec);
 		}
 
 		[TestCategory("Unit")]
@@ -215,6 +216,19 @@ namespace AnFake.Core.Test
 
 		[TestCategory("Unit")]
 		[TestMethod]
+		public void FileSystemPath_should_return_empty_parent_on_file()
+		{
+			// arrange
+
+			// act
+			var parent = "file.txt".AsPath().Parent;
+
+			// assert
+			Assert.AreEqual("", parent.Spec);
+		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
 		public void FileSystemPath_should_return_full_parent_on_full_path()
 		{
 			// arrange
@@ -236,8 +250,9 @@ namespace AnFake.Core.Test
 			// act & assert
 			try
 			{
+				// ReSharper disable once UnusedVariable
 				var parent = path.Parent;
-
+				
 				Assert.Fail("InvalidConfigurationException is expected.");
 			}
 			catch (InvalidConfigurationException)
@@ -256,6 +271,7 @@ namespace AnFake.Core.Test
 			// act & assert
 			try
 			{
+				// ReSharper disable once UnusedVariable
 				var parent = path.Parent;
 
 				Assert.Fail("InvalidConfigurationException is expected.");
@@ -264,18 +280,19 @@ namespace AnFake.Core.Test
 			{
 				// it's expected
 			}
-		}		
+		}
 
 		[TestCategory("Unit")]
 		[TestMethod]
-		public void FileSystemPath_should_throw_when_getting_parent_on_file()
+		public void FileSystemPath_should_throw_when_getting_parent_on_empty()
 		{
 			// arrange
-			var path = "file.txt".AsPath();
+			var path = "".AsPath();
 
 			// act & assert
 			try
 			{
+				// ReSharper disable once UnusedVariable
 				var parent = path.Parent;
 
 				Assert.Fail("InvalidConfigurationException is expected.");
@@ -312,6 +329,59 @@ namespace AnFake.Core.Test
 
 			//assert
 			Assert.AreEqual("c:\\", parent.Spec);
+		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void FileSystemPath_should_combine_with_upstep_relative_path()
+		{
+			// act & assert
+			Assert.AreEqual("\\base\\sub-path", ("/base/path".AsPath() / "../sub-path").Spec);
+			Assert.AreEqual("\\base\\sub-path", ("/base/step1/step2".AsPath() / "../../sub-path").Spec);
+			Assert.AreEqual("\\sub-path", ("/base/path".AsPath() / "../../sub-path").Spec);
+			Assert.AreEqual("sub-path", ("base/path".AsPath() / "../../sub-path").Spec);
+		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void FileSystemPath_should_not_combine_with_upstep_in_middle_relative_path_1()
+		{
+			// arrange
+			var basePath = "/base/path".AsPath();
+
+			// act & assert
+			try
+			{
+				// ReSharper disable once UnusedVariable
+				var result = basePath / "/../subPath";
+
+				Assert.Fail("InvalidConfigurationException is expected.");
+			}
+			catch (InvalidConfigurationException)
+			{
+				// it's expected
+			}
+		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void FileSystemPath_should_not_combine_with_upstep_in_middle_relative_path_2()
+		{
+			// arrange
+			var basePath = "/base/path".AsPath();
+
+			// act & assert
+			try
+			{
+				// ReSharper disable once UnusedVariable
+				var result = basePath / "step/../subPath";
+
+				Assert.Fail("InvalidConfigurationException is expected.");
+			}
+			catch (InvalidConfigurationException)
+			{
+				// it's expected
+			}
 		}
 	}
 }

@@ -216,7 +216,7 @@ namespace AnFake.Scripting
 				{
 					if (line.Text.StartsWith("#r "))
 					{
-						refs.Add(GetFileRefFromDerictive(line.Text, "r"));
+						refs.Add((script.Folder / GetDerictiveValue(line.Text, "r")).AsFile());
 
 						body.Append("//").AppendLine(line.Text);
 					}
@@ -229,7 +229,7 @@ namespace AnFake.Scripting
 					}
 					else if (line.Text.StartsWith("#load "))
 					{
-						var compiledScript = Compile(GetFileRefFromDerictive(line.Text, "load"));
+						var compiledScript = Compile((script.Folder / GetDerictiveValue(line.Text, "load")).AsFile());
 						refs.Add(compiledScript.Assembly);
 
 						body.Append("//").AppendLine(line.Text);
@@ -245,14 +245,14 @@ namespace AnFake.Scripting
 			return new PseudoProject(script, header.ToString() + body, refs.ToArray(), linesOffset);
 		}
 
-		private static FileItem GetFileRefFromDerictive(string line, string derictiveName)
+		private static string GetDerictiveValue(string line, string derictiveName)
 		{
 			var beg = line.IndexOf('"');
 			var end = line.LastIndexOf('"');
 			if (beg < 0 || end <= beg)
-				throw new EvaluationException(String.Format("Invalid #{0} syntax. Expected: '#{0} \"<file-path>\"' but '{1}' given.", derictiveName, line));
+				throw new EvaluationException(String.Format("Invalid #{0} syntax. Expected: '#{0} \"<value>\"' but '{1}' given.", derictiveName, line));
 
-			return line.Substring(beg + 1, end - beg - 1).AsFile();
+			return line.Substring(beg + 1, end - beg - 1);
 		}
 	}
 

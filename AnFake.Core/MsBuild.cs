@@ -278,11 +278,16 @@ namespace AnFake.Core
 			{
 				var args = new Args("/", ":")
 					.Param(proj.Path.Full)
-					.Option("t", parameters.Targets, ";")
-					.Option("m", parameters.MaxCpuCount)
+					.Option("t", parameters.Targets, ";")					
 					.Option("nodeReuse", parameters.NodeReuse)
-					.Option("v", parameters.Verbosity)
-					.Other(parameters.ToolArguments);
+					.Option("v", parameters.Verbosity);
+
+				if (!Runtime.IsMono)
+				{
+					args.Option("m", parameters.MaxCpuCount);
+				}
+					
+				args.Other(parameters.ToolArguments);
 
 				var propArgs = new Args("/", "=");
 				foreach (var prop in parameters.Properties)

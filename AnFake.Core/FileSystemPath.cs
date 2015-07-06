@@ -237,8 +237,8 @@ namespace AnFake.Core
 		{
 			get
 			{
-				var parent = Path.GetDirectoryName(_value);
-				return !String.IsNullOrEmpty(parent);
+				var parent = _value.Length > 0 ? Path.GetDirectoryName(_value) : String.Empty;
+				return !(parent == null || parent.Length == 0 && _value.Length == 0);
 			}
 		}
 
@@ -253,7 +253,8 @@ namespace AnFake.Core
 		/// </code>
 		/// <code>
 		/// let path = ~~"solution.sln"
-		/// let parent = path.Parent  // throws InvalidConfigurationException
+		/// let parent1 = path.Parent     // ""
+		/// let parent2 = parent1.Parent  // throws InvalidConfigurationException
 		/// </code>
 		/// <code>
 		/// let path = ~~"C:/MySolution/build.fsx"
@@ -267,8 +268,8 @@ namespace AnFake.Core
 		{
 			get
 			{
-				var parent = Path.GetDirectoryName(_value);
-				if (String.IsNullOrEmpty(parent))
+				var parent = _value.Length > 0 ? Path.GetDirectoryName(_value) : String.Empty;
+				if (parent == null || parent.Length == 0 && _value.Length == 0)
 					throw new InvalidConfigurationException(String.Format("Path '{0}' does not have parent.", _value));
 
 				return new FileSystemPath(parent, true);
@@ -319,6 +320,18 @@ namespace AnFake.Core
 				.Append(full.Substring(2));
 
 			return new FileSystemPath(unc.ToString(), true);
+		}
+
+		/// <summary>
+		///		Converts this path to Unix-style path.
+		/// </summary>		
+		/// <returns>Unix-style path</returns>
+		public string ToUnix()
+		{
+			if (_value.Length >= 2 && _value[1] == ':')
+				throw new InvalidOperationException(String.Format("Unix-style path cann't contain driver letter: '{0}'", _value));
+
+			return _value.Replace(Path.DirectorySeparatorChar, '/');
 		}
 
 		/// <summary>
@@ -384,7 +397,20 @@ namespace AnFake.Core
 
 		public static FileSystemPath operator /(FileSystemPath basePath, string subPath)
 		{
-			return basePath/new FileSystemPath(subPath, false);
+			var subSteps = subPath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+			
+			var i = 0;
+			var realBase = basePath;
+			while (i < subSteps.Length && subSteps[i] == "..")
+			{
+				if (!realBase.HasParent)
+					throw new InvalidConfigurationException(String.Format("Unable to combine paths: sub-path '{0}' is beyond of base '{1}'. ", subPath, basePath));
+
+				realBase = realBase.Parent;
+				i++;
+			}
+
+			return realBase / subSteps.AsPath(i, subSteps.Length - i);
 		}
 
 		public static FileSystemPath operator /(FileSystemPath basePath, FileSystemPath subPath)
@@ -410,6 +436,9 @@ namespace AnFake.Core
 
 		private static string Normalize(string path)
 		{
+			if (path == ".")
+				return String.Empty;
+
 			var nzPath = new StringBuilder(path.Length);
 
 			var valid = true;
