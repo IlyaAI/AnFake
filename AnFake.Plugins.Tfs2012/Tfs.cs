@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using AnFake.Api;
 using AnFake.Core;
 using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.Framework.Common;
@@ -13,6 +15,44 @@ namespace AnFake.Plugins.Tfs2012
 	/// </summary>
 	public static class Tfs
 	{
+		// Assembly resolution stuff
+		private static Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
+		{
+			var asmName = new AssemblyName(args.Name);
+
+			if (!asmName.Name.StartsWith("Microsoft.TeamFoundation", StringComparison.OrdinalIgnoreCase))
+				return null;
+
+			if (asmName.Version != new Version(11, 0, 0, 0))
+				return null;
+
+			Log.DebugFormat("TFS assembly '{0}' not found. Trying alternative versions...", args.Name);
+
+			try
+			{
+				asmName.Version = new Version(12, 0, 0, 0);
+				var asm = Assembly.Load(asmName);
+
+				Log.DebugFormat("Loaded: '{0}'.", asmName);
+
+				return asm;
+			}
+			catch (Exception)
+			{
+				// skip it
+			}
+
+			Log.Debug("There is no alternative versions found.");
+
+			return null;
+		}
+
+		static Tfs()
+		{
+			AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
+		}
+		// /////////////////////////
+
 		private static bool _registered;
 
 		/// <summary>

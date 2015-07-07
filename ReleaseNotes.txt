@@ -7,7 +7,7 @@
 * [*] Bug with interference in pipeline's log messages fixed.
 * [+] Additional params for pipeline steps now supported.
 
-### 1.0.7
+### 1.1.0
 
 * [+] Installer implemented
 * [*] Fail to setup tools into partiall VS installation. Fixed.
@@ -17,3 +17,4 @@
 * [*] Migrated on Newtonsoft.Json
 * [+] Mono support started.
 * [+] TeamCity support started.
+* [*] Automatically load TFS 2013 assemblies if TFS 2012 one not found.
