@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using AnFake.Api;
 
@@ -292,7 +293,25 @@ namespace AnFake.Core
 				var propArgs = new Args("/", "=");
 				foreach (var prop in parameters.Properties)
 				{
-					propArgs.Option(String.Format("p:{0}", prop.Key), prop.Value);
+					if (prop.Value == null)
+						throw new ArgumentException(String.Format("MsBuild.Params.Properties['{0}']: must not be null", prop.Key));
+
+					var value = prop.Value;
+					/* Mono specific: xbuild requires OutDir ends on slash. */
+					if ("OutDir".Equals(prop.Key, StringComparison.OrdinalIgnoreCase))						
+					{
+						if (value.Length == 0)
+						{
+							value = ".";
+						}
+
+						if (value.Last() != Path.DirectorySeparatorChar)
+						{
+							value += Path.DirectorySeparatorChar;
+						}						
+					}
+
+					propArgs.Option(String.Format("p:{0}", prop.Key), value);
 				}
 
 				args.Space().NonQuotedValue(propArgs.ToString());

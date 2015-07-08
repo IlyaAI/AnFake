@@ -74,26 +74,27 @@ namespace AnFake.Integration.MsBuild
 					break;
 			}
 
+			/* Mono specific: the commented properties doesn't exist under mono */
 			TraceMessage(
-				level, 
-				e.ProjectFile,
-				e.File,
-				e.ColumnNumber, 
-				e.LineNumber, 
-				e.Code, 
+				level,
+				null,	// ProjectFile
+				null,	// File
+				0,		// ColumnNumber
+				0,		// LineNumber
+				null,	// Code
 				e.Message,
-				e.BuildEventContext != null ? e.BuildEventContext.NodeId : 0);
+				e.BuildEventContext != null ? e.BuildEventContext.NodeId : 0);			
 		}
 
 		private void OnWarning(object sender, BuildWarningEventArgs e)
-		{
+		{			
 			TraceMessage(
-				TraceMessageLevel.Warning, 
-				e.ProjectFile, 
-				e.File, 
-				e.LineNumber, 
-				e.ColumnNumber, 
-				e.Code, 
+				TraceMessageLevel.Warning,
+				e.ProjectFile,
+				e.File,
+				e.LineNumber,
+				e.ColumnNumber,
+				e.Code,
 				e.Message,
 				e.BuildEventContext != null ? e.BuildEventContext.NodeId : 0);
 		}
