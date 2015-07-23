@@ -21,10 +21,6 @@ let extras = ~~".AnFake/Extras" % "*"
 let cmds = ~~".AnFake" % "*.cmd"
 let xaml = ~~"AnFake.Integration.Tfs2012.Template" % "*.xaml"
 let buildTmpls = ~~".AnFake" % "*.tmpl.fsx" + "*.tmpl.csx"
-let fsharp = 
-    ~~"[ProgramFilesX86]/Reference Assemblies/Microsoft/FSharp/.NETFramework/v4.0/4.3.1.0" % "FSharp.Core.dll"
-    + "FSharp.Core.optdata"
-    + "FSharp.Core.sigdata"
 let installer = 
     !!"AnFake.Installer/*.csproj"
 let tests = !!"*/*.Test.csproj"
@@ -90,8 +86,7 @@ let xamlVersion = "2"
 "Compile" => (fun _ ->
     MsBuild.BuildRelease(product, productOut)
 
-    Files.Copy(cmds, productOut, true)
-    Files.Copy(fsharp, productOut, true)
+    Files.Copy(cmds, productOut, true)    
     Files.Copy(buildTmpls, productOut, true)
 
     Files.Copy(extras, extrasOut, true)

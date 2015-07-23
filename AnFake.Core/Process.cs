@@ -28,10 +28,13 @@ namespace AnFake.Core
 				if (String.IsNullOrWhiteSpace(evt.Data))
 					return;
 
-				while (_buffer.Count >= _capacity)
-					_buffer.Dequeue();
+				lock (_buffer)
+				{
+					while (_buffer.Count >= _capacity)
+						_buffer.Dequeue();
 
-				_buffer.Enqueue(evt.Data);
+					_buffer.Enqueue(evt.Data);
+				}
 			}
 
 			public override string ToString()
@@ -170,14 +173,28 @@ namespace AnFake.Core
 
 			if (parameters.OnStdOut != null)
 			{
-				process.OutputDataReceived += 
-					(sender, evt) => { if (!String.IsNullOrWhiteSpace(evt.Data)) parameters.OnStdOut(evt.Data); };
+				process.OutputDataReceived +=
+					(sender, evt) =>
+					{
+						if (!String.IsNullOrWhiteSpace(evt.Data))
+						{
+							lock (parameters)
+								parameters.OnStdOut(evt.Data);
+						}
+					};
 			}
 
 			if (parameters.OnStdErr != null)
 			{
 				process.ErrorDataReceived +=
-					(sender, evt) => { if (!String.IsNullOrWhiteSpace(evt.Data)) parameters.OnStdErr(evt.Data); };
+					(sender, evt) =>
+					{
+						if (!String.IsNullOrWhiteSpace(evt.Data))
+						{
+							lock (parameters)
+								parameters.OnStdErr(evt.Data);
+						}
+					};
 			}
 
 			var outputBuffer = new OutputBuffer(parameters.OutputBufferCapacity);

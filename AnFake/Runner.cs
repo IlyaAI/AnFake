@@ -229,7 +229,7 @@ namespace AnFake
 			if (options.Properties.TryGetValue("LogPath", out value) && !String.IsNullOrWhiteSpace(value))
 			{
 				options.LogPath = Path.Combine(options.BuildPath, value);
-				options.Properties.Remove("Verbosity");
+				options.Properties.Remove("LogPath");
 			}
 
 			var maxWidth = 0;
@@ -270,6 +270,7 @@ namespace AnFake
 				Api.Trace.InfoFormat("BuildPath    : {0}", options.BuildPath);
 				Api.Trace.InfoFormat("LogFile      : {0}", logFile);
 				Api.Trace.InfoFormat("ScriptFile   : {0}", scriptFile);
+				Api.Trace.InfoFormat("Verbosity    : {0}", options.Verbosity);
 				Api.Trace.InfoFormat("Targets      : {0}", String.Join(" ", options.Targets));
 				Api.Trace.InfoFormat("Parameters   :\n  {0}", String.Join("\n  ", options.Properties.Select(x => x.Key + " = " + x.Value)));
 

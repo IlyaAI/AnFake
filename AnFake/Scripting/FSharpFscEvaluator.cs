@@ -138,7 +138,7 @@ namespace AnFake.Scripting
 
 		public static void Cleanup()
 		{
-			var threshold = DateTime.UtcNow - TimeSpan.FromHours(24);
+			var threshold = DateTime.UtcNow - TimeSpan.FromDays(7);
 
 			foreach (var file in "*".AsFileSetFrom(TempAnFakeFsc)
 				.Where(file => file.Info.LastAccessTimeUtc < threshold))
@@ -208,25 +208,27 @@ namespace AnFake.Scripting
 			var header = new StringBuilder(1024);
 			header.Append("module ").Append(RootTypeName).AppendLine();
 			var linesOffset = 1;
-
+			
 			var body = new StringBuilder(10240);
 			
 			script.AsTextDoc().ForEachLine(
 				line =>
 				{
+					if (line.Text.StartsWith("module "))
+					{
+						header.Clear();
+						linesOffset = 0;
+					}
 					if (line.Text.StartsWith("#r "))
 					{
-						refs.Add((script.Folder / GetDerictiveValue(line.Text, "r")).AsFile());
+						var value = GetDerictiveValue(line.Text, "r");
+						refs.Add(
+							value.StartsWith("System.")				// w/a to handle system assemblies
+								? value.AsFile() 
+								: (script.Folder/value).AsFile());
 
 						body.Append("//").AppendLine(line.Text);
-					}
-					else if (line.Text.StartsWith("open "))
-					{
-						header.AppendLine(line.Text);
-						linesOffset++;
-
-						body.Append("//").AppendLine(line.Text);
-					}
+					}					
 					else if (line.Text.StartsWith("#load "))
 					{
 						var compiledScript = Compile((script.Folder / GetDerictiveValue(line.Text, "load")).AsFile());

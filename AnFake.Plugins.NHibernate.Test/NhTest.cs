@@ -116,18 +116,23 @@ namespace AnFake.Plugins.NHibernate.Test
 			public string Value { get; set; }
 		}		
 
-		public static int NextId = 1;
-
+		public static int NextId = 1;		
+		
 		[ClassInitialize]
 		public static void Initialize(TestContext ctx)
 		{
+			var settings = new Settings("[ApplicationData]/AnFake/nh-test.json".AsPath());
+
+			if (!settings.Has("ConnectionString"))
+				Assert.Inconclusive("There is no settings provided for NHibernate test. Put connection string into '[ApplicationData]/AnFake/nh-test.json' file.");
+
 			MyBuildTesting.Initialize();
 			MyBuildTesting.ConfigurePlugins(PluginsRegistrator);
 
 			Nh.Configuration.Integrate
 				.Schema.Recreating();
 			Nh.Configuration.Integrate
-				.Connected.Using("Data Source=.;Initial Catalog=AnFake.Test;Integrated Security=True");
+				.Connected.Using(settings.Get("ConnectionString"));
 		}
 
 		private static void PluginsRegistrator()
