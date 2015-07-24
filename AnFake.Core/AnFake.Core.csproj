@@ -40,7 +40,6 @@
     <Reference Include="ICSharpCode.SharpZipLib">
       <HintPath>..\packages\SharpZipLib.0.86.0\lib\20\ICSharpCode.SharpZipLib.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Build.Framework" />
     <Reference Include="Newtonsoft.Json, Version=7.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Newtonsoft.Json.7.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
@@ -149,10 +148,6 @@
     <ProjectReference Include="..\AnFake.Api\AnFake.Api.csproj">
       <Project>{E08FA8A9-33D4-4F27-B29E-C9388A291C45}</Project>
       <Name>AnFake.Api</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\AnFake.Integration.MsBuild\AnFake.Integration.MsBuild.csproj">
-      <Project>{6aa209ff-e1b6-4bfd-9a56-6a9adada0565}</Project>
-      <Name>AnFake.Integration.MsBuild</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

@@ -16,6 +16,7 @@ let product =
     !!"AnFake/*.csproj"
     + "AnFake.Api.Pipeline/*.csproj"
     + "AnFake.Plugins.*/*.csproj" - "AnFake.Plugins.*.Test/*.csproj"
+    + "AnFake.Integration.MsBuild/*.csproj"
     + "AnFake.Integration.Vs2012/*.csproj"
 let extras = ~~".AnFake/Extras" % "*"
 let cmds = ~~".AnFake" % "*.cmd"

@@ -316,12 +316,14 @@ namespace AnFake.Core
 
 				args.Space().NonQuotedValue(propArgs.ToString());
 
-				var loggerT = typeof (AnFake.Integration.MsBuild.Logger);
+				//
+				// Using string literals here to prevent Microsoft.Build.Framework dependency.
+				//
 				args.Space()
 					.ValuedOption("logger")
-					.NonQuotedValue(loggerT.FullName)
+					.NonQuotedValue("AnFake.Integration.MsBuild.Logger")
 					.NonQuotedValue(",")
-					.QuotedValue(loggerT.Assembly.Location)
+					.QuotedValue("[AnFake]/AnFake.Integration.MsBuild.dll".AsPath().Full)
 					.NonQuotedValue(";")
 					.QuotedValue(Trace.Uri + "#" + Target.Current.Name);
 

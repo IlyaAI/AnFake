@@ -20,6 +20,16 @@ namespace AnFake.Scripting
 		private const string VersionPropertyName = "__anfake_fsc_evaluator_version";
 		private const string InternalVersion = "1.0";
 
+		private static readonly Dictionary<string, FileItem> GeneratedAssemblies = new Dictionary<string, FileItem>();
+
+		private static readonly ISet<string> PredefinedReferences = new HashSet<string>
+		{
+			"mscorlib",
+			"System",
+			"System.Core",
+			"FSharp.Core"
+		};		
+
 		public sealed class CompiledScript
 		{
 			public CompiledScript(FileItem assembly, FileItem source, int linesOffset)
@@ -71,14 +81,6 @@ namespace AnFake.Scripting
 			}
 		}
 
-		private static readonly ISet<string> PredefinedReferences = new HashSet<string>
-		{
-			"mscorlib",
-			"System",
-			"System.Core",
-			"FSharp.Core"
-		};		
-
 		private class PseudoProject
 		{
 			public string Code { get; private set; }
@@ -114,6 +116,31 @@ namespace AnFake.Scripting
 			}
 		}
 
+		static EmbeddedFsxCompiler()
+		{
+			AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
+		}
+
+		private static Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
+		{
+			var asmName = new AssemblyName(args.Name);
+
+			FileItem asmFile;
+			if (!GeneratedAssemblies.TryGetValue(asmName.Name, out asmFile))
+				return null;
+
+			try
+			{
+				return Assembly.LoadFile(asmFile.Path.Full);
+			}
+			catch (Exception)
+			{
+				// skip it
+			}
+
+			return null;
+		}
+
 		public static CompiledScript Compile(FileItem script)
 		{
 			Log.DebugFormat("FSC: Compilation requested: '{0}'.", script);
@@ -132,6 +159,8 @@ namespace AnFake.Scripting
 			{
 				Log.Debug("FSC: Pre-compiled assembly found. No compilation needed.");
 			}
+
+			GeneratedAssemblies[fsproj.Name] = fsproj.Output;
 
 			return new CompiledScript(fsproj.Output, fsproj.Input, fsproj.LinesOffset);
 		}

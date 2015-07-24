@@ -18,3 +18,4 @@
 * [+] Mono support started.
 * [+] TeamCity support started.
 * [*] Automatically load TFS 2013 assemblies if TFS 2012 one not found.
+* [+] Speed-up start: using pre-compiled fsx script if possible.
