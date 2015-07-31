@@ -355,7 +355,7 @@ namespace AnFake.Core
 				if (action == null)
 					throw new ArgumentException("TextDoc.ForEachParsedLine(pattern, action[, ignoreCase]): action must not be null");
 
-				ForEachParsedLine(pattern, m => action(m.Groups[1].Value), ignoreCase, 1);				
+				GetLines(true).ForEachParsedLine(pattern, m => action(m.Groups[1].Value), ignoreCase, 1);
 			}
 
 			/// <summary>
@@ -371,27 +371,8 @@ namespace AnFake.Core
 				if (action == null)
 					throw new ArgumentException("TextDoc.ForEachParsedLine(pattern, action[, ignoreCase]): action must not be null");
 
-				ForEachParsedLine(pattern, m => action(m.Groups[1].Value, m.Groups[2].Value), ignoreCase, 2);
-			}
-
-			private void ForEachParsedLine(string pattern, Action<Match> action, bool ignoreCase, int requiredGroups)
-			{
-				var rx = Rx(pattern, ignoreCase);
-
-				var lines = GetLines(true);
-				var line = lines.First;
-
-				while (line != null)
-				{
-					var matches = rx.Matches(line.Value);
-					if (matches.Count > 0)
-					{						
-						action(GetMatch(matches, requiredGroups));
-					}
-
-					line = line.Next;
-				}
-			}
+				GetLines(true).ForEachParsedLine(pattern, m => action(m.Groups[1].Value, m.Groups[2].Value), ignoreCase, 2);
+			}			
 
 			/// <summary>
 			///     Performs action for each line in document.
@@ -653,6 +634,81 @@ namespace AnFake.Core
 		}
 
 		/// <summary>
+		/// Represents stream-lined text.
+		/// </summary>
+		public sealed class TextStream
+		{
+			private readonly FileItem _file;
+
+			internal TextStream(FileItem file)
+			{
+				_file = file;
+			}
+
+			/// <summary>
+			///     Performs action for each line from stream.
+			/// </summary>
+			/// <param name="action">action to be performed (not null)</param>
+			public void ForEachLine(Action<string> action)
+			{
+				if (action == null)
+					throw new ArgumentException("TextStream.ForEachLine(action): action must not be null");
+
+				foreach (var line in GetLines())
+				{
+					action(line);
+				}				
+			}
+
+			/// <summary>
+			///     Performs action for each parsed line. Only one matched group is expected. Group value is passed to action.
+			/// </summary>
+			/// <param name="pattern">Regex pattern (not null)</param>
+			/// <param name="action">action to be performed (not null)</param>
+			/// <param name="ignoreCase">true to match ignoring case</param>
+			public void ForEachParsedLine(string pattern, Action<string> action, bool ignoreCase = false)
+			{
+				if (pattern == null)
+					throw new ArgumentException("TextStream.ForEachParsedLine(pattern, action[, ignoreCase]): pattern must not be null");
+				if (action == null)
+					throw new ArgumentException("TextStream.ForEachParsedLine(pattern, action[, ignoreCase]): action must not be null");
+
+				GetLines().ForEachParsedLine(pattern, m => action(m.Groups[1].Value), ignoreCase, 1);
+			}
+
+			/// <summary>
+			///     Performs action for each parsed line. Exactly two matched groups is expected. Group values are passed to action.
+			/// </summary>
+			/// <param name="pattern">Regex pattern (not null)</param>
+			/// <param name="action">action to be performed (not null)</param>
+			/// <param name="ignoreCase">true to match ignoring case</param>
+			public void ForEachParsedLine(string pattern, Action<string, string> action, bool ignoreCase = false)
+			{
+				if (pattern == null)
+					throw new ArgumentException("TextStream.ForEachParsedLine(pattern, action[, ignoreCase]): pattern must not be null");
+				if (action == null)
+					throw new ArgumentException("TextStream.ForEachParsedLine(pattern, action[, ignoreCase]): action must not be null");
+
+				GetLines().ForEachParsedLine(pattern, m => action(m.Groups[1].Value, m.Groups[2].Value), ignoreCase, 2);
+			}
+
+			private IEnumerable<string> GetLines()
+			{
+				using (var reader = new StreamReader(_file.Path.Full))
+				{
+					while (true)
+					{
+						var line = reader.ReadLine();
+						if (line == null)
+							break;
+
+						yield return line;
+					}
+				}
+			}
+		}
+
+		/// <summary>
 		///     Creates TextDoc representation for specified file.
 		/// </summary>
 		/// <param name="file">file to be loaded as text (not null)</param>
@@ -664,6 +720,20 @@ namespace AnFake.Core
 				throw new ArgumentException("Text.AsTextDoc(file): file must not be null");
 
 			return new TextDoc(file);
+		}
+
+		/// <summary>
+		///     Creates TextStream representation for specified file.
+		/// </summary>
+		/// <param name="file">file to be loaded as stream-lined text (not null)</param>
+		/// <returns>TextStream instance</returns>
+		/// <seealso cref="TextDoc"/>
+		public static TextStream AsTextStream(this FileItem file)
+		{
+			if (file == null)
+				throw new ArgumentException("Text.AsTextStream(file): file must not be null");
+
+			return new TextStream(file);
 		}
 
 		/// <summary>
@@ -837,6 +907,20 @@ namespace AnFake.Core
 			return new Tuple<string, string>(match.Groups[1].Value, match.Groups[2].Value);
 		}
 
+		private static void ForEachParsedLine(this IEnumerable<string> lines, string pattern, Action<Match> action, bool ignoreCase, int requiredGroups)
+		{
+			var rx = Rx(pattern, ignoreCase);
+
+			foreach (var line in lines)
+			{
+				var matches = rx.Matches(line);
+				if (matches.Count > 0)
+				{
+					action(GetMatch(matches, requiredGroups));
+				}
+			}			
+		}
+
 		private static Match GetMatch(MatchCollection matches, int requiredGroups)
 		{
 			if (matches.Count == 0)
@@ -852,13 +936,27 @@ namespace AnFake.Core
 			return match;
 		}
 
+		private static readonly IDictionary<string, Regex> RxCache = new Dictionary<string, Regex>();
+
 		private static Regex Rx(string pattern, bool ignoreCase)
 		{
-			var options = ignoreCase
-				? RegexOptions.CultureInvariant | RegexOptions.IgnoreCase
-				: RegexOptions.CultureInvariant;
+			var options = RegexOptions.CultureInvariant;
+			var key = pattern;
 
-			return new Regex(pattern, options);
+			if (ignoreCase)
+			{
+				options |= RegexOptions.IgnoreCase;
+				key = "I" + key;
+			}
+
+			Regex rx;
+			if (RxCache.TryGetValue(key, out rx)) 
+				return rx;
+
+			rx = new Regex(pattern, options);
+			RxCache.Add(key, rx);
+
+			return rx;
 		}
 	}
 }

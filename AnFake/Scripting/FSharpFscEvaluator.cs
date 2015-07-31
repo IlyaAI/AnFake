@@ -20,7 +20,7 @@ namespace AnFake.Scripting
 		private const string VersionPropertyName = "__anfake_fsc_evaluator_version";
 		private const string InternalVersion = "1.0";
 
-		private static readonly Dictionary<string, FileItem> GeneratedAssemblies = new Dictionary<string, FileItem>();
+		private static readonly Dictionary<string, FileItem> ReferencedAssemblies = new Dictionary<string, FileItem>();
 
 		private static readonly ISet<string> PredefinedReferences = new HashSet<string>
 		{
@@ -126,7 +126,7 @@ namespace AnFake.Scripting
 			var asmName = new AssemblyName(args.Name);
 
 			FileItem asmFile;
-			if (!GeneratedAssemblies.TryGetValue(asmName.Name, out asmFile))
+			if (!ReferencedAssemblies.TryGetValue(asmName.Name, out asmFile))
 				return null;
 
 			try
@@ -160,7 +160,16 @@ namespace AnFake.Scripting
 				Log.Debug("FSC: Pre-compiled assembly found. No compilation needed.");
 			}
 
-			GeneratedAssemblies[fsproj.Name] = fsproj.Output;
+			ReferencedAssemblies[fsproj.Name] = fsproj.Output;
+			foreach (var reference in fsproj.References)
+			{
+				if (reference.Name.StartsWith("AnFake.") 
+					|| reference.Name.StartsWith("System.") 
+					|| reference.Name.StartsWith("mscorlib."))
+					continue;
+
+				ReferencedAssemblies[reference.NameWithoutExt] = reference;
+			}
 
 			return new CompiledScript(fsproj.Output, fsproj.Input, fsproj.LinesOffset);
 		}
