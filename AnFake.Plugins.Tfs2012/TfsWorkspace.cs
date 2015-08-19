@@ -86,10 +86,7 @@ namespace AnFake.Plugins.Tfs2012
 		{
 			get
 			{
-				var usedNames = Vcs.QueryWorkspaces(null, User.Current, null)
-					.ToLookup(x => x.Name);
-
-				return name => !usedNames.Contains(name);
+				return name => Impl.FindWorkspace(name) == null;
 			}
 		}
 

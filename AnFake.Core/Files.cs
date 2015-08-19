@@ -36,6 +36,8 @@ namespace AnFake.Core
 			{
 				Trace.DebugFormat("Files.Copy:\n  From: {0}\n    To: {1}", file.Item1, file.Item2);
 				File.Copy(file.Item1.Full, file.Item2.Full);
+
+				Interruption.CheckPoint();
 			}
 
 			Trace.InfoFormat("{0} file(s) copied.", filePathes.Length);
@@ -94,7 +96,9 @@ namespace AnFake.Core
 			foreach (var file in filePathes)
 			{
 				Trace.DebugFormat("Files.Move:\n  From: {0}\n    To: {1}", file.Item1, file.Item2);
-				File.Copy(file.Item1.Full, file.Item2.Full);
+				File.Move(file.Item1.Full, file.Item2.Full);
+
+				Interruption.CheckPoint();
 			}
 
 			Trace.InfoFormat("{0} file(s) moved.", filePathes.Length);
@@ -122,7 +126,7 @@ namespace AnFake.Core
 			PrepareDestination(new[] { targetFilePath }, overwrite);
 
 			Trace.DebugFormat("Files.Move:\n  From: {0}\n    To: {1}", sourceFilePath, targetFilePath);
-			File.Copy(sourceFilePath.Full, targetFilePath.Full);
+			File.Move(sourceFilePath.Full, targetFilePath.Full);
 		}
 
 		public static void Move(string sourceFilePath, string targetFilePath, bool overwrite = false)

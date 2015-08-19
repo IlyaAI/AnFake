@@ -527,6 +527,8 @@ namespace AnFake.Core
 
 						deferred.Add(path);
 					}
+
+					Interruption.CheckPoint();
 				}
 
 				if (deferred.Count == 0)
