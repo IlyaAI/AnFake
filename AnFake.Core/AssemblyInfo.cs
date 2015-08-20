@@ -61,7 +61,8 @@ namespace AnFake.Core
 
 		private static readonly IDictionary<string, string> Patterns = new Dictionary<string, string>
 		{
-			{".cs", "^\\[assembly:\\s*{0}(?:Attribute)?\\s*\\(\\s*((?:@\\s*\".*?\")|(?:\"(?:[^\"\\\\]|\\\\.)*\"))\\s*\\)\\s*\\]\\s*$"}
+			{".cs",  "^\\[assembly:\\s*{0}(?:Attribute)?\\s*\\(\\s*((?:@\\s*\".*?\")|(?:\"(?:[^\"\\\\]|\\\\.)*\"))\\s*\\)\\s*\\]\\s*$"},
+			{".cpp", "^\\[assembly:\\s*{0}(?:Attribute)?\\s*\\(\\s*((?:\"(?:[^\"\\\\]|\\\\.)*\"))\\s*\\)\\s*\\]\\s*;?\\s*$"}
 		};
 
 		private static readonly IDictionary<string, Regex> RegExps = new Dictionary<string, Regex>();
