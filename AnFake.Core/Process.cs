@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Text;
 using AnFake.Api;
 using AnFake.Core.Exceptions;
 
@@ -25,7 +26,7 @@ namespace AnFake.Core
 
 			public void OnDataReceived(object sender, DataReceivedEventArgs evt)
 			{
-				if (String.IsNullOrWhiteSpace(evt.Data))
+				if (!IsValidOutput(evt.Data))
 					return;
 
 				lock (_buffer)
@@ -176,7 +177,7 @@ namespace AnFake.Core
 				process.OutputDataReceived +=
 					(sender, evt) =>
 					{
-						if (!String.IsNullOrWhiteSpace(evt.Data))
+						if (IsValidOutput(evt.Data))
 						{
 							lock (parameters)
 								parameters.OnStdOut(evt.Data);
@@ -189,7 +190,7 @@ namespace AnFake.Core
 				process.ErrorDataReceived +=
 					(sender, evt) =>
 					{
-						if (!String.IsNullOrWhiteSpace(evt.Data))
+						if (IsValidOutput(evt.Data))
 						{
 							lock (parameters)
 								parameters.OnStdErr(evt.Data);
@@ -282,5 +283,21 @@ namespace AnFake.Core
 			process.WaitForExit();
 			return true;
 		}
+
+		private static bool IsValidOutput(string data)
+		{
+			//
+			// WORKAROUND!
+			// In some cases stdout/stderr receives BOM marker on initialization. 
+			// However this marker isn't recognized as a marker and bypassed as regular char sequence.
+			// To prevent error w/strange message we need to ignore such marker.
+			//
+			// TODO: think about other possible markers
+			//
+			return
+				!String.IsNullOrWhiteSpace(data)
+				&& !(data.Length == 1 && (data[0] == 0xFEFF || data[0] == 0xFFFE)) // Unicode marker as char
+				&& !(data.Length == 2 && data[0] == 0xBBEF && data[1] == 0x00BF); // UTF8 marker as sequence of chars
+		}		
 	}
 }
