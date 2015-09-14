@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using System.Threading;
 using AnFake.Api;
 
@@ -50,6 +51,30 @@ namespace AnFake.Process.Test
 						case "--exit":
 							val = GetIntArgument(args, i, "<exit-code>");
 							return val;
+						case "--out-utf8":
+							text = GetStringArgument(args, i++, "<some-utf8-text-for-stdout>");
+							using (var stm = Console.OpenStandardOutput())
+							{
+								stm.WriteByte(0xEF);
+								stm.WriteByte(0xBB);
+								stm.WriteByte(0xBF);
+
+								var buffer = Encoding.UTF8.GetBytes(text);
+								stm.Write(buffer, 0, buffer.Length);
+							}
+							break;
+						case "--err-utf8":
+							text = GetStringArgument(args, i++, "<some-utf8-text-for-stderr>");
+							using (var stm = Console.OpenStandardError())
+							{								
+								stm.WriteByte(0xEF);
+								stm.WriteByte(0xBB);
+								stm.WriteByte(0xBF);
+
+								var buffer = Encoding.UTF8.GetBytes(text);
+								stm.Write(buffer, 0, buffer.Length);
+							}
+							break;						
 					}
 				}
 			}

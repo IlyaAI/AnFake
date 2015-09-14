@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using AnFake.Api;
 using AnFake.Core.Exceptions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -143,5 +144,67 @@ namespace AnFake.Core.Test
 				Assert.IsTrue(e.Message.Contains("noname.exe"));
 			}			
 		}
+
+		[TestCategory("Functional")]
+		[TestMethod]
+		public void ProcessRun_should_ignore_utf8_bom()
+		{
+			// arrange
+			var msg = Console.OutputEncoding.GetString(new byte[] {0xEF, 0xBB, 0xBF});
+
+			var logger = MockRepository.GenerateMock<ILogger>();
+			var tracer = MockRepository.GenerateMock<ITracer>();
+
+			var prevLogger = Log.Set(logger);
+			var prevTracer = Trace.Set(tracer);
+			try
+			{
+				// act
+				Process.Run(def =>
+				{
+					def.FileName = "AnFake.Process.Test.exe".AsPath();
+					def.Arguments = "--out-utf8 \"\" --err-utf8 \"\"";
+				}).FailIfExitCodeNonZero("Unexpected exit code.");
+
+				// assert
+				logger.AssertWasNotCalled(x => x.Write(LogMessageLevel.Debug, msg));
+				logger.AssertWasNotCalled(x => x.Write(LogMessageLevel.Error, msg));
+			}
+			finally
+			{
+				Trace.Set(prevTracer);
+				Log.Set(prevLogger);
+			}
+		}
+
+		[TestCategory("Functional")]
+		[TestMethod]
+		public void ProcessRun_should_process_utf8_output()
+		{
+			// arrange
+			var logger = MockRepository.GenerateMock<ILogger>();
+			var tracer = MockRepository.GenerateMock<ITracer>();
+
+			var prevLogger = Log.Set(logger);
+			var prevTracer = Trace.Set(tracer);
+			try
+			{
+				// act
+				Process.Run(def =>
+				{
+					def.FileName = "AnFake.Process.Test.exe".AsPath();
+					def.Arguments = "--out-utf8 \"по-русски\" --err-utf8 \"en español\"";
+				}).FailIfExitCodeNonZero("Unexpected exit code.");
+
+				// assert
+				logger.AssertWasCalled(x => x.Write(LogMessageLevel.Debug, "по-русски"));
+				logger.AssertWasCalled(x => x.Write(LogMessageLevel.Error, "en español"));
+			}
+			finally
+			{
+				Trace.Set(prevTracer);
+				Log.Set(prevLogger);
+			}
+		}				
 	}
 }

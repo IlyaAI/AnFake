@@ -24,23 +24,70 @@ namespace AnFake.Core
 				_buffer = new Queue<string>(capacity);
 			}
 
-			public void OnDataReceived(object sender, DataReceivedEventArgs evt)
+			public void Input(string line)
 			{
-				if (!IsValidOutput(evt.Data))
-					return;
+				while (_buffer.Count >= _capacity)
+					_buffer.Dequeue();
 
-				lock (_buffer)
-				{
-					while (_buffer.Count >= _capacity)
-						_buffer.Dequeue();
-
-					_buffer.Enqueue(evt.Data);
-				}
+				_buffer.Enqueue(line);
 			}
 
 			public override string ToString()
 			{
 				return String.Join("\n", _buffer);
+			}
+		}
+
+		private sealed class StringTranscoder
+		{
+			private readonly object _mutex;
+			private readonly Encoding _inEncoding;
+			private Encoding _outEncoding;
+
+			public StringTranscoder(object mutex, Encoding inEncoding)
+			{
+				_mutex = mutex;
+				_inEncoding = inEncoding;
+			}
+
+			public event Action<string> Output;
+
+			public void Input(object sender, DataReceivedEventArgs evt)
+			{
+				var line = evt.Data;
+
+				if (line == null)
+					return;
+
+				if (_outEncoding == null)
+				{
+					_outEncoding = DetectOutEncoding(ref line);					
+				} 
+				else if (!ReferenceEquals(_inEncoding, _outEncoding))
+				{
+					line = _outEncoding.GetString(_inEncoding.GetBytes(line));
+				}
+
+				if (Output != null && !String.IsNullOrWhiteSpace(line))
+				{
+					lock (_mutex)
+					{
+						Output.Invoke(line);
+					}					
+				}
+			}			
+
+			private Encoding DetectOutEncoding(ref string line)
+			{
+				var bytes = _inEncoding.GetBytes(line);
+
+				if (bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF)
+				{
+					line = Encoding.UTF8.GetString(bytes, 3, bytes.Length - 3);
+					return Encoding.UTF8;
+				}
+
+				return _inEncoding;
 			}
 		}
 
@@ -139,18 +186,28 @@ namespace AnFake.Core
 				throw new ArgumentException("Process.Params.FileName: must not be null");
 			if (parameters.WorkingDirectory == null)
 				throw new ArgumentException("Process.Params.WorkingDirectory: must not be null");
-
+			
+			var mutex = new Object();
+			var encoding = Console.OutputEncoding;
+			var outTranscoder = new StringTranscoder(mutex, encoding);
+			var errTranscoder = new StringTranscoder(mutex, encoding);
+			
 			var process = new System.Diagnostics.Process
-			{
+			{				
 				StartInfo =
 				{
 					FileName = parameters.FileName.Full,
 					WorkingDirectory = parameters.WorkingDirectory.Full,
 					UseShellExecute = false,
 					RedirectStandardOutput = true,
-					RedirectStandardError = true
+					RedirectStandardError = true,
+					StandardOutputEncoding = encoding,
+					StandardErrorEncoding = encoding
 				}
 			};
+
+			process.OutputDataReceived += outTranscoder.Input;
+			process.ErrorDataReceived += errTranscoder.Input;
 
 			if (!String.IsNullOrEmpty(parameters.Arguments))
 			{
@@ -174,33 +231,17 @@ namespace AnFake.Core
 
 			if (parameters.OnStdOut != null)
 			{
-				process.OutputDataReceived +=
-					(sender, evt) =>
-					{
-						if (IsValidOutput(evt.Data))
-						{
-							lock (parameters)
-								parameters.OnStdOut(evt.Data);
-						}
-					};
+				outTranscoder.Output += parameters.OnStdOut;
 			}
 
 			if (parameters.OnStdErr != null)
 			{
-				process.ErrorDataReceived +=
-					(sender, evt) =>
-					{
-						if (IsValidOutput(evt.Data))
-						{
-							lock (parameters)
-								parameters.OnStdErr(evt.Data);
-						}
-					};
+				errTranscoder.Output += parameters.OnStdErr;
 			}
 
 			var outputBuffer = new OutputBuffer(parameters.OutputBufferCapacity);
-			process.OutputDataReceived += outputBuffer.OnDataReceived;
-			process.ErrorDataReceived += outputBuffer.OnDataReceived;
+			outTranscoder.Output += outputBuffer.Input;
+			errTranscoder.Output += outputBuffer.Input;
 
 			try
 			{
@@ -211,7 +252,7 @@ namespace AnFake.Core
 					process.BeginOutputReadLine();
 					process.BeginErrorReadLine();
 				});
-
+				
 				bool completed;
 				if (parameters.TrackExternalMessages)
 				{
@@ -283,21 +324,5 @@ namespace AnFake.Core
 			process.WaitForExit();
 			return true;
 		}
-
-		private static bool IsValidOutput(string data)
-		{
-			//
-			// WORKAROUND!
-			// In some cases stdout/stderr receives BOM marker on initialization. 
-			// However this marker isn't recognized as a marker and bypassed as regular char sequence.
-			// To prevent error w/strange message we need to ignore such marker.
-			//
-			// TODO: think about other possible markers
-			//
-			return
-				!String.IsNullOrWhiteSpace(data)
-				&& !(data.Length == 1 && (data[0] == 0xFEFF || data[0] == 0xFFFE)) // Unicode marker as char
-				&& !(data.Length == 2 && data[0] == 0xBBEF && data[1] == 0x00BF); // UTF8 marker as sequence of chars
-		}		
 	}
 }
