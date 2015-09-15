@@ -209,6 +209,8 @@ namespace AnFake.Scripting
 				args.Add(reference.Path.Spec);
 			}
 
+			Log.DebugFormat("FSC: {0}", String.Join(" ", args));
+
 			var scs = new SimpleSourceCodeServices();
 			var ret = scs.Compile(args.ToArray());
 
