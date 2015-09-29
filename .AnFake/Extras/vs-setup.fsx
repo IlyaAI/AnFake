@@ -18,6 +18,7 @@ let vsSupportedVersions =
     [
         "11.0".AsVersion()
         "12.0".AsVersion()
+        "14.0".AsVersion()
     ]
 
 let vsExternalTools = 

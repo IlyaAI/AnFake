@@ -13,6 +13,7 @@ namespace AnFake.Core
 	{
 		private static readonly string[] MsLocations =
 		{
+			"[ProgramFilesX86]/MSBuild/14.0/Bin/MsBuild.exe",
 			"[ProgramFilesX86]/MSBuild/12.0/Bin/MsBuild.exe",
 			"[ProgramFilesX86]/MSBuild/11.0/Bin/MsBuild.exe",
 			"[Windows]/Microsoft.NET/Framework/v4.0.30319/MsBuild.exe",

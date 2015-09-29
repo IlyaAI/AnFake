@@ -14,6 +14,7 @@ namespace AnFake.Core
 	{
 		private static readonly string[] Locations =
 		{
+			"[ProgramFilesX86]/Microsoft Visual Studio 14.0/Common7/IDE/MsTest.exe",
 			"[ProgramFilesX86]/Microsoft Visual Studio 12.0/Common7/IDE/MsTest.exe",
 			"[ProgramFilesX86]/Microsoft Visual Studio 11.0/Common7/IDE/MsTest.exe"
 		};
