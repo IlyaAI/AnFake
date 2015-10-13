@@ -55,7 +55,8 @@ namespace AnFake.Plugins.StringTemplate
 
 		public static void PlugIn()
 		{
-			// nothing is required
+			Plugin.Register<STPlugin>()
+				.AsSelf();
 		}
 
 		public static string Render(string template, object context)

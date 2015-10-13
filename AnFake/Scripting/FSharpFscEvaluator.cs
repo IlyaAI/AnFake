@@ -32,11 +32,12 @@ namespace AnFake.Scripting
 
 		public sealed class CompiledScript
 		{
-			public CompiledScript(FileItem assembly, FileItem source, int linesOffset)
+			public CompiledScript(FileItem assembly, FileItem source, int linesOffset, string moduleName)
 			{
 				Assembly = assembly;
 				Source = source;
 				LinesOffset = linesOffset;
+				ModuleName = moduleName;
 			}
 
 			public FileItem Assembly { get; private set; }
@@ -44,6 +45,8 @@ namespace AnFake.Scripting
 			public FileItem Source { get; private set; }
 
 			public int LinesOffset { get; private set; }
+
+			public string ModuleName { get; private set; }
 
 			public void Evaluate()
 			{
@@ -87,6 +90,7 @@ namespace AnFake.Scripting
 			public FileItem[] References { get; private set; }
 			public string Name { get; private set; }
 			public int LinesOffset { get; private set; }
+			public string ModuleName { get; private set; }
 
 			public FileItem Input
 			{
@@ -98,21 +102,36 @@ namespace AnFake.Scripting
 				get { return (TempAnFakeFsc.AsPath() / Name + ".dll").AsFile(); }
 			}
 
-			public PseudoProject(FileItem script, string code, FileItem[] references, int linesOffset)
+			public PseudoProject(FileItem script, string code, FileItem[] references, int linesOffset, string moduleName)
 			{
 				Code = code;
 				References = references;
 				LinesOffset = linesOffset;
+				ModuleName = moduleName;
 
-				var hash = MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(code));
-				var name = new StringBuilder(256);
-				name.Append(script.Name).Append('.');
-				foreach (var b in hash)
+				var memStream = new MemoryStream();
+				var writer = new StreamWriter(memStream);
+				writer.Write(code);
+				foreach (var reference in references)
 				{
-					name.AppendFormat("{0:x}", b);
+					writer.Write(reference.Path.Spec);
 				}
+				writer.Flush();
+				memStream.Seek(0, SeekOrigin.Begin);
 
-				Name = name.ToString();
+				using (var md5 = MD5.Create())
+				{
+					var hash = md5.ComputeHash(memStream);
+
+					var name = new StringBuilder(256);
+					name.Append(script.Name).Append('.');
+					foreach (var b in hash)
+					{
+						name.AppendFormat("{0:x}", b);
+					}
+
+					Name = name.ToString();
+				}				
 			}
 		}
 
@@ -171,7 +190,7 @@ namespace AnFake.Scripting
 				ReferencedAssemblies[reference.NameWithoutExt] = reference;
 			}
 
-			return new CompiledScript(fsproj.Output, fsproj.Input, fsproj.LinesOffset);
+			return new CompiledScript(fsproj.Output, fsproj.Input, fsproj.LinesOffset, fsproj.ModuleName);
 		}
 
 		public static void Cleanup()
@@ -244,7 +263,9 @@ namespace AnFake.Scripting
 					.GetAssemblies()
 					.Where(x => PredefinedReferences.Contains(x.GetName().Name))
 					.Select(x => x.Location.AsFile()));
-			
+
+			var moduleName = RootTypeName;
+
 			var header = new StringBuilder(1024);
 			header.Append("module ").Append(RootTypeName).AppendLine();
 			var linesOffset = 1;
@@ -256,6 +277,7 @@ namespace AnFake.Scripting
 				{
 					if (line.Text.StartsWith("module "))
 					{
+						moduleName = line.Text.Substring(7).Trim();
 						header.Clear();
 						linesOffset = 0;
 					}
@@ -274,7 +296,11 @@ namespace AnFake.Scripting
 						var compiledScript = Compile((script.Folder / GetDerictiveValue(line.Text, "load")).AsFile());
 						refs.Add(compiledScript.Assembly);
 
-						body.Append("//").AppendLine(line.Text);
+						body.Append("//").AppendLine(line.Text);						
+						body.Append("let ").Append(VersionPropertyName).Append('_').Append(compiledScript.ModuleName)
+							.Append('=').Append(compiledScript.ModuleName).Append('.').Append(VersionPropertyName)
+							.Append(" // force sub-module static constructor")
+							.AppendLine();
 					}
 					else
 					{
@@ -284,7 +310,7 @@ namespace AnFake.Scripting
 
 			body.Append("let ").Append(VersionPropertyName).Append("=new Version(\"").Append(InternalVersion).AppendLine("\")");
 
-			return new PseudoProject(script, header.ToString() + body, refs.ToArray(), linesOffset);
+			return new PseudoProject(script, header.ToString() + body, refs.ToArray(), linesOffset, moduleName);
 		}
 
 		private static string GetDerictiveValue(string line, string derictiveName)

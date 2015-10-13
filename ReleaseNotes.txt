@@ -21,3 +21,8 @@
 * [+] Speed-up start: using pre-compiled fsx script if possible.
 * [+] AssemblyInfo.cpp support implemented.
 * [+] VS2015 support added.
+
+### 1.1.+
+
+* [*] BUGFIX: FSC Evaluator takes in account references when decides whether re-compile or not.
+* [*] BUGFIX: FSC Evaluator force sub-modules loading.
