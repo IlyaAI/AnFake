@@ -26,8 +26,7 @@ namespace AnFake.Scripting
 		{
 			"mscorlib",
 			"System",
-			"System.Core",
-			"FSharp.Core"
+			"System.Core"
 		};		
 
 		public sealed class CompiledScript
@@ -195,7 +194,12 @@ namespace AnFake.Scripting
 
 		public static void Cleanup()
 		{
+			var versionBarrier = new DateTime(2015, 10, 21, 4, 0, 0, DateTimeKind.Utc); // FSharp.Core version changed at this point
 			var threshold = DateTime.UtcNow - TimeSpan.FromDays(7);
+			if (threshold < versionBarrier)
+			{
+				threshold = versionBarrier;				
+			}
 
 			foreach (var file in "*".AsFileSetFrom(TempAnFakeFsc)
 				.Where(file => file.Info.LastAccessTimeUtc < threshold))
