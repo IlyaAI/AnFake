@@ -56,6 +56,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Extras", "Extras", "{CBAFFC16-B785-46E1-8C90-1CAD1115D3D3}"
 	ProjectSection(SolutionItems) = preProject
 		.AnFake\Extras\nuget.fsx = .AnFake\Extras\nuget.fsx
+		.AnFake\Extras\teamcity-tf.fsx = .AnFake\Extras\teamcity-tf.fsx
 		.AnFake\Extras\tf-conv-flat.fsx = .AnFake\Extras\tf-conv-flat.fsx
 		.AnFake\Extras\tf-conv-tree.fsx = .AnFake\Extras\tf-conv-tree.fsx
 		.AnFake\Extras\tf.fsx = .AnFake\Extras\tf.fsx

@@ -248,8 +248,8 @@ let restoreAnFake (localPath:FileSystemPath) =
 "ReCache" => (fun _ ->
     plugInTfs()
 
-    Folders.Delete("[LocalApplicationData]/Microsoft/Team Foundation/4.0/Cache")
     Trace.Info("Hint: if delete operation failed ensure all instances of Visual Studio are closed.")
+    Folders.Delete("[LocalApplicationData]/Microsoft/Team Foundation/4.0/Cache")    
 
     TfsWorkspace.UpdateInfoCache()
 )

@@ -257,10 +257,13 @@ namespace AnFake.Scripting
 				throw new EvaluationException(String.Format("Unable to pre-compile script. fsc.exe exit code {0}.", ret.Item2));
 
 			Log.DebugFormat("FSC: Pre-compiled assembly created: '{0}'.", fsproj.Output);
-		}		
+		}
 
 		private static PseudoProject GeneratePseudoProject(FileItem script)
 		{
+			if (!script.Exists())
+				throw new EvaluationException(String.Format("Script file '{0}' doesn't exist.", script));
+
 			var refs = new List<FileItem>();
 			refs.AddRange(
 				AppDomain.CurrentDomain

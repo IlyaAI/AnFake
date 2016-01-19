@@ -98,6 +98,35 @@ namespace AnFake.Plugins.Tfs2012
 			Workstation.Current.UpdateWorkspaceInfoCache(Vcs, User.Current);
 		}
 
+		/*
+		/// <summary>
+		///		Finds workspace by local path. Returns workpace name or null if no mapping.
+		/// </summary>
+		/// <param name="localPath">local path (not null)</param>
+		/// <returns>workpace name or null</returns>
+		public static string Find(FileSystemPath localPath)
+		{
+			if (localPath == null)
+				throw new ArgumentException("TfsWorkspace.Find(localPath): localPath must not be null");
+
+			var ws = Impl.FindWorkspace(localPath);
+			return ws != null ? ws.Name : null;
+		}
+
+		/// <summary>
+		///		Returns true if workspace with given name exist and false otherwise.
+		/// </summary>
+		/// <param name="name">workspace name (not null)</param>
+		/// <returns>true if workspace with given name exist and false otherwise</returns>
+		public static bool Exists(string name)
+		{
+			if (String.IsNullOrEmpty(name))
+				throw new ArgumentException("TfsWorkspace.Exists(name): name must not be null or empty");
+
+			return Impl.FindWorkspace(name) != null;
+		}
+		*/
+
 		/// <summary>
 		///		Creates new workspace using workspace definition file.
 		/// </summary>
