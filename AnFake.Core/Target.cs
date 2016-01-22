@@ -124,11 +124,18 @@ namespace AnFake.Core
 		/// <summary>
 		///     Fired when target started.
 		/// </summary>
+		/// <remarks>
+		///		This event fired for top-level targets only (i.e. for targets requested by user).
+		/// </remarks>
 		public static event EventHandler<RunDetails> Started;
 
 		/// <summary>
 		///     Fired when target finished either successful or failed.
 		/// </summary>
+		/// <remarks>
+		///		This event fired for top-level targets only (i.e. for targets requested by user).
+		///		Property RunDetails.ExecutedTargets includes top-level target itself and all dependent targets in order of execution.
+		/// </remarks>
 		public static event EventHandler<RunDetails> Finished;
 
 		/// <summary>

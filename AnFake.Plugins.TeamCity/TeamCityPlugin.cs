@@ -8,21 +8,39 @@ namespace AnFake.Plugins.TeamCity
 	internal sealed class TeamCityPlugin : /*Core.Integration.IBuildServer,*/ IDisposable
 	{
 		private readonly ServiceMessageFormatter _formatter;
+		private readonly bool _loggingEnabled;
+		private int _errorsCount;
+		private int _warningsCount;
 
 		public TeamCityPlugin()
 		{
 			_formatter = new ServiceMessageFormatter();
+			_loggingEnabled = "true".Equals(MyBuild.GetProp("TeamCity.Logging", ""), StringComparison.OrdinalIgnoreCase);
 
-			Log.DisableConsoleEcho();
-			Trace.MessageReceived += OnTraceMessage;			
+			if (_loggingEnabled)
+			{
+				Log.DisableConsoleEcho();
+				Trace.MessageReceived += OnTraceMessage;
+
+				Target.Started += OnTargetStarted;
+				Target.Finished += OnTargetFinished;
+
+				MyBuild.Started += OnBuildStarted;
+				MyBuild.Finished += OnBuildFinished;
+			}
 		}
 
 		// IDisposable members
 
 		public void Dispose()
 		{
+			MyBuild.Finished -= OnBuildFinished;
+
+			Target.Started -= OnTargetStarted;
+			Target.Finished -= OnTargetFinished;
+
 			Trace.MessageReceived -= OnTraceMessage;
-			
+
 			if (Disposed != null)
 			{
 				SafeOp.Try(Disposed);
@@ -33,34 +51,127 @@ namespace AnFake.Plugins.TeamCity
 
 		// Event Handlers
 
+		private void OnBuildStarted(object sender, MyBuild.RunDetails details)
+		{
+			_errorsCount = 0;
+			_warningsCount = 0;
+		}
+
+		private void OnBuildFinished(object sender, MyBuild.RunDetails details)
+		{
+			WriteBuildStatus(
+				String.Format("{{build.status.text}} {0} error(s) {1} warning(s)", _errorsCount, _warningsCount),
+				details.Status == MyBuild.Status.Succeeded || details.Status == MyBuild.Status.PartiallySucceeded);
+		}
+
+		private void OnTargetStarted(object sender, Target.RunDetails details)
+		{
+			var topTarget = (Target) sender;
+			WriteBlockOpened(topTarget.Name);
+		}
+
+		private void OnTargetFinished(object sender, Target.RunDetails details)
+		{
+			var topTarget = (Target) sender;
+
+			foreach (var target in details.ExecutedTargets)
+			{
+				_errorsCount += target.Messages.ErrorsCount;
+				_warningsCount += target.Messages.WarningsCount;
+
+				var msg = String.Format(@"{0}: {1} error(s) {2} warning(s) {3:hh\:mm\:ss} {4}",
+						target.Name, target.Messages.ErrorsCount, target.Messages.WarningsCount,
+						target.RunTime, target.State.ToHumanReadable().ToUpperInvariant());
+
+				if (target.Messages.ErrorsCount > 0)
+				{
+					WriteError(msg, null);
+					WriteBuildProblem(msg);
+				}
+				else if (target.Messages.WarningsCount > 0)
+				{
+					WriteWarning(msg);
+				}
+				else
+				{
+					WriteNormal(msg);
+				}				
+			}
+
+			WriteBlockClosed(topTarget.Name);
+		}
+
 		private void OnTraceMessage(object sender, TraceMessage message)
 		{
-			var formattedMessage = (string)null;
 			switch (message.Level)
 			{
 				case TraceMessageLevel.Warning:
-					formattedMessage = _formatter.FormatMessage("message", new
-					{
-						text = message.ToString("mlf"),
-						status = "WARNING"
-					});
+					WriteWarning(message.ToString("mlf"));
 					break;
 
 				case TraceMessageLevel.Error:
-					formattedMessage = _formatter.FormatMessage("message", new
-					{
-						text = message.ToString("mlf"),
-						status = "ERROR",
-						errorDetails = message.Details ?? String.Empty
-					});
-					break;		
+					WriteError("ERROR " + message.ToString("mlf"), message.Details);
+					WriteBuildProblem(message.ToString("a"));
+					break;
 
 				default:
-					formattedMessage = message.ToString("mlfd");
+					WriteNormal(message.ToString("mlfd"));
 					break;
-			}
-			
-			Console.WriteLine(formattedMessage);
-		}		
+			}			
+		}
+
+		private void WriteNormal(string text)
+		{
+			Console.WriteLine(
+				_formatter.FormatMessage("message", new
+				{
+					status = "NORMAL",
+					text
+				}));
+		}
+
+		private void WriteWarning(string text)
+		{
+			Console.WriteLine(
+				_formatter.FormatMessage("message", new
+				{
+					status = "WARNING",
+					text
+				}));
+		}
+
+		private void WriteError(string text, string errorDetails)
+		{
+			Console.WriteLine(
+				_formatter.FormatMessage("message", new
+				{
+					status = "ERROR",
+					text,
+					errorDetails = errorDetails ?? string.Empty
+				}));
+		}
+
+		private void WriteBlockOpened(string name)
+		{
+			Console.WriteLine(_formatter.FormatMessage("blockOpened", new { name }));
+		}
+
+		private void WriteBlockClosed(string name)
+		{
+			Console.WriteLine(_formatter.FormatMessage("blockClosed", new { name }));
+		}
+
+		private void WriteBuildProblem(string description)
+		{
+			Console.WriteLine(_formatter.FormatMessage("buildProblem", new {description}));
+		}
+
+		private void WriteBuildStatus(string text, bool succeeded)
+		{
+			Console.WriteLine(
+				succeeded 
+					? _formatter.FormatMessage("buildStatus", new {text, status="SUCCESS"})
+					: _formatter.FormatMessage("buildStatus", new {text}));
+		}
 	}
 }

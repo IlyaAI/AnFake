@@ -154,6 +154,31 @@ namespace AnFake.Api
 						}
 						break;
 
+					case 'a':
+						if (sb.Length > 0)
+							sb.AppendLine();
+
+						if (!String.IsNullOrEmpty(File))
+						{
+							if (File.Length > 48)							
+								sb.Append('\u2026').Append(File.Substring(File.Length - 47));							
+							else							
+								sb.Append(File);
+							
+							if (Line > 0)
+							{
+								sb.Append('(').Append(Line);
+								if (Column > 0)
+									sb.Append(", ").Append(Column).Append("): ");
+							}							
+						}
+
+						if (!String.IsNullOrEmpty(Code))			
+							sb.Append(Code).Append(": ");
+
+						sb.Append(Message);
+						break;
+
 					case 'd':
 						if (!String.IsNullOrWhiteSpace(Details))
 						{
