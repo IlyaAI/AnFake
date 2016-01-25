@@ -20,7 +20,7 @@ namespace AnFake.Plugins.HtmlSummary
 		
 		public HtmlSummaryPlugin()
 		{
-			Target.Finished += OnTargetFinished;
+			Target.TopFinished += OnTargetFinished;
 
 			MyBuild.Started += OnBuildStarted;			
 			MyBuild.Finished += OnBuildFinished;

@@ -20,7 +20,7 @@ namespace AnFake.Core.Integration.Tests
 			const int ident = 2;
 
 			var trxUri = (Uri) null;
-			if (BuildServer.CanExposeArtifacts)
+			if (!MyBuild.Current.DoNotExposeTestResults && BuildServer.CanExposeArtifacts)
 			{
 				trxUri = BuildServer.ExposeArtifact(testSet.TraceFile, ArtifactType.TestResults);
 				
@@ -28,56 +28,65 @@ namespace AnFake.Core.Integration.Tests
 				{
 					BuildServer.ExposeArtifact(testSet.AttachmentsFolder, ArtifactType.TestResults);
 				}
-			}						
+			}
 
-			var msg = (TraceMessage) null;
+			var text = new StringBuilder();
+			var msg = (TraceMessage.Builder) null;
 			var total = 0;
 			var passed = 0;
 			var skipped = 0;
 			var failed = 0;
-
+			
 			foreach (var test in testSet.Tests)
 			{
 				TestResultAware.Notify(test);
 
-				var report = new StringBuilder();
-				report.AppendFormat("{0} {1,-8} {2,-80} @ {3}",
+				text.Clear();
+				text.AppendFormat("{0} {1,-8} {2,-80} @ {3}",
 					test.RunTime, test.Status.ToString().ToUpperInvariant(), test.Name, test.Suite);
 				
 				switch (test.Status)
 				{
 					case TestStatus.Passed:
-						Api.Trace.Info(report.ToString());
+						Api.Trace.Begin()
+							.Info().WithText(text)
+							.AsTestTrace()
+							.End();
+
 						passed++;
 						break;
 
 					case TestStatus.Unknown:
 					case TestStatus.Skipped:
-						report
+						text
 							.AppendLine().Append(' ', ident)
 							.Append(test.ErrorMessage);
 
-						Api.Trace.Warn(report.ToString());
+						Api.Trace.Begin()
+							.Warn().WithText(text)
+							.AsTestTrace()
+							.End();
+						
 						skipped++;
 						break;
 
 					case TestStatus.Failed:
-						report
+						text
 							.AppendLine().Append(' ', ident)
 							.Append(test.ErrorMessage);
 
-						msg = new TraceMessage(TraceMessageLevel.Error, report.ToString())
-						{
-							Details = test.ErrorStackTrace							
-						};
-						msg.Links.AddRange(test.Links);
+						msg = Api.Trace.Begin()
+							.Error().WithText(text)
+							.WithDetails(test.ErrorStackTrace)
+							.WithLinks(test.Links)
+							.AsTestTrace();
 
 						if (trxUri != null)
 						{
-							msg.Links.Add(new Hyperlink(trxUri, "Trace"));
+							msg.WithLink(trxUri, "Trace");
 						}
-						
-						Api.Trace.Message(msg);
+						msg.End();
+												
 						failed++;
 						break;
 				}
@@ -87,26 +96,30 @@ namespace AnFake.Core.Integration.Tests
 				yield return test;
 			}
 
-			var summary = new StringBuilder(128)
-				.AppendFormat("{0}: {1} total / {2} passed", testSet.Name, total, passed);
+			TestSetAware.Notify(testSet);
+
+			text.Clear();
+			text.AppendFormat("{0}: {1} total / {2} passed", testSet.Name, total, passed);
 
 			if (skipped > 0)
 			{
-				summary.AppendFormat(" / {0} skipped", skipped);
+				text.AppendFormat(" / {0} skipped", skipped);
 			}
 
 			if (failed > 0)
 			{
-				summary.AppendFormat(" / {0} FAILED", failed);
+				text.AppendFormat(" / {0} FAILED", failed);
 			}
 
-			msg = new TraceMessage(TraceMessageLevel.Summary, summary.ToString());
+			msg = Api.Trace.Begin()
+				.Summary().WithText(text)
+				.AsTestSummary();
+
 			if (trxUri != null)
 			{
-				msg.Links.Add(new Hyperlink(trxUri, "Trace"));
+				msg.WithLink(trxUri, "Trace");
 			}
-
-			Api.Trace.Message(msg);
+			msg.End();
 		}
 
 		/// <summary>
@@ -154,7 +167,10 @@ namespace AnFake.Core.Integration.Tests
 				summary.AppendFormat(" / {0} FAILED", errors);
 			}			
 
-			Api.Trace.SummaryFormat(summary.ToString());
+			Api.Trace.Begin()
+				.Summary().WithText(summary)
+				.AsTestSummary()
+				.End();
 		}
 	}
 }

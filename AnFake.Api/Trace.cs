@@ -112,6 +112,11 @@ namespace AnFake.Api
 			Message(new TraceMessage(TraceMessageLevel.Error, String.Format(format, args)) {Details = e.StackTrace});
 		}
 
+		public static TraceMessage.Builder Begin()
+		{
+			return new TraceMessage.Builder(Message);
+		}
+
 		public static bool TrackExternal(Action externalStart, Func<TimeSpan, bool> externalWait, TimeSpan timeout)
 		{
 			Tracer.MessageReceived += OnMessageReceived;

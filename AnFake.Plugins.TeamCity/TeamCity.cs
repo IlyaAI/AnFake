@@ -1,4 +1,5 @@
-﻿using AnFake.Core;
+﻿using System;
+using AnFake.Core;
 
 namespace AnFake.Plugins.TeamCity
 {
@@ -7,13 +8,15 @@ namespace AnFake.Plugins.TeamCity
 	/// </summary>
 	public static class TeamCity
 	{
+		public static TimeSpan WaitAfterImport = TimeSpan.FromSeconds(1.5);
+
 		/// <summary>
 		///     Activates <c>TeamCity</c> plugin.
 		/// </summary>
 		public static void PlugIn()
 		{			
 			Plugin.Register<TeamCityPlugin>()				
-				//.As<Core.Integration.IBuildServer>()
+				.As<Core.Integration.IBuildServer>()
 				.AsSelf();
 		}		
 	}

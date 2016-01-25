@@ -27,6 +27,8 @@ namespace AnFake.Core
 			public readonly Verbosity Verbosity;
 			public readonly Version AnFakeVersion;
 
+			public bool DoNotExposeTestResults;
+
 			internal Params(FileSystemPath path, FileItem logFile, FileItem scriptFile,
 				Verbosity verbosity, string[] targets, IDictionary<string, string> properties)
 			{

@@ -26,7 +26,7 @@ namespace AnFake.Core.Integration.Tests
 				attachmentsFolder = (traceFile.Folder/deploymentRoot).AsFolder();
 			}
 			
-			var testSet = new TestSet(setName, traceFile, attachmentsFolder);
+			var testSet = new TestSet(setName, TestRunnerType.MsTest, traceFile, attachmentsFolder);
 
 			var defs = xdoc.Select("/t:TestRun/t:TestDefinitions/t:UnitTest")
 				.Select(x => new

@@ -17,9 +17,9 @@ using Microsoft.TeamFoundation.VersionControl.Client;
 
 namespace AnFake.Plugins.Tfs2012
 {
-	internal sealed class TfsPlugin : Core.Integration.IVersionControl, Core.Integration.IBuildServer, IDisposable
+	internal sealed class TfsPlugin : /*Core.Integration.*/IVersionControl, Core.Integration.IBuildServer, IDisposable
 	{
-		private readonly static TimeSpan FlushInterval = TimeSpan.FromSeconds(2);
+		private static readonly TimeSpan FlushInterval = TimeSpan.FromSeconds(2);
 
 		private const string CustomInformationNode = "AnFake";
 		private const string SummaryKey = "AnFakeSummary";
@@ -96,7 +96,7 @@ namespace AnFake.Plugins.Tfs2012
 					Trace.Idle += OnTraceIdle;
 
 					TestResultAware.Failed += OnTestFailed;
-					Target.Finished += OnTargetFinished;
+					Target.TopFinished += OnTopTargetFinished;
 
 					MyBuild.Started += OnBuildStarted;
 					MyBuild.Finished += OnBuildFinished;
@@ -120,7 +120,7 @@ namespace AnFake.Plugins.Tfs2012
 			Trace.Idle -= OnTraceIdle;
 
 			TestResultAware.Failed -= OnTestFailed;
-			Target.Finished -= OnTargetFinished;
+			Target.TopFinished -= OnTopTargetFinished;
 
 			MyBuild.Started -= OnBuildStarted;
 			MyBuild.Finished -= OnBuildFinished;
@@ -312,30 +312,12 @@ namespace AnFake.Plugins.Tfs2012
 			}
 		}
 
-		public Core.Integration.IChangeset GetChangeset(int changesetId)
+		public IChangeset GetChangeset(int changesetId)
 		{
 			return new TfsChangeset(Vcs.GetChangeset(changesetId));
 		}
 
 		// IBuildServer members
-
-		private IBuildDetail _pipeInBuild;
-
-		private IBuildDetail PipeInBuild
-		{
-			get
-			{
-				if (_pipeInBuild != null)
-					return _pipeInBuild;
-
-				if (!MyBuild.HasProp("Tfs.PipeIn"))
-					throw new InvalidConfigurationException("Build isn't a part of pipeline.");
-
-				_pipeInBuild = GetBuildByUri(new Uri(MyBuild.GetProp("Tfs.PipeIn")));
-
-				return _pipeInBuild;				
-			}
-		}
 
 		public bool IsLocal
 		{
@@ -351,16 +333,6 @@ namespace AnFake.Plugins.Tfs2012
 						? !String.IsNullOrEmpty(_build.DropLocation)
 						: BuildServer.Local.CanExposeArtifacts;
 			}
-		}
-
-		public bool HasPipeIn
-		{
-			get { return PipeInBuild != null; }
-		}
-
-		public int PipeInChangesetId
-		{
-			get { throw new NotImplementedException(); }
 		}
 
 		public Uri ExposeArtifact(FileItem file, ArtifactType type)
@@ -422,26 +394,6 @@ namespace AnFake.Plugins.Tfs2012
 
 			var dstPath = _build.DropLocation.AsPath()/type.ToString();
 			Files.Copy(files, dstPath);
-		}
-
-		public void GetPipeInArtifact(FileItem file, FileSystemPath dstPath, ArtifactType type)
-		{
-			Trace.InfoFormat("TfsPlugin: Getting pipe-in artifact '{0}\\{1}' to '{2}'...", type, file, dstPath);			
-			Files.Copy(PipeInBuild.DropLocation.AsPath() / type.ToString() / file.Path, dstPath / file.RelPath);			
-		}
-
-		public void GetPipeInArtifact(FolderItem folder, FileSystemPath dstPath, ArtifactType type)
-		{
-			Trace.InfoFormat("TfsPlugin: Getting pipe-in artifact '{0}\\{1}' to '{2}'...", type, folder, dstPath);
-			Files.Copy(
-				"*/**".AsFileFrom(
-					PipeInBuild.DropLocation.AsPath() / type.ToString() / folder.Path), 
-				dstPath);
-		}
-
-		public void GetPipeInArtifacts(FileSet files, FileSystemPath dstPath, ArtifactType type)
-		{
-			throw new NotImplementedException();
 		}
 
 		private void EnsureCanExpose()
@@ -614,7 +566,7 @@ namespace AnFake.Plugins.Tfs2012
 			}
 		}
 
-		private void OnTargetFinished(object sender, Target.RunDetails details)
+		private void OnTopTargetFinished(object sender, Target.RunDetails details)
 		{
 			Trace.Info(">>> TfsPlugin.OnTargetFinished");
 

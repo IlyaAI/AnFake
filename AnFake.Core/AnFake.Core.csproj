@@ -72,6 +72,8 @@
     <Compile Include="Integration\LocalBuildServer.cs" />
     <Compile Include="Integration\Tests\ITestPostProcessor.cs" />
     <Compile Include="Integration\Tests\TestPostProcessExtension.cs" />
+    <Compile Include="Integration\Tests\TestSetAware.cs" />
+    <Compile Include="Integration\Tests\TestRunnerType.cs" />
     <Compile Include="Integration\Tests\TestSet.cs" />
     <Compile Include="Integration\Tests\TestResult.cs" />
     <Compile Include="Integration\Tests\TestResultAware.cs" />

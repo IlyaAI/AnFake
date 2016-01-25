@@ -14,21 +14,25 @@ namespace AnFake.Core
 	/// </remarks>
 	public sealed class Target
 	{
+		public const string DoPhase = "Do";
+		public const string OnFailurePhase = "OnFailure";
+		public const string FinallyPhase = "Finally";
+
 		private static readonly IDictionary<string, Target> Targets
 			= new Dictionary<string, Target>(StringComparer.OrdinalIgnoreCase);
 
 		/// <summary>
-		///		Represents execution reason of on-failure or finally action.
+		///     Represents execution reason of on-failure or finally action.
 		/// </summary>
 		public sealed class ExecutionReason
 		{
 			/// <summary>
-			///		Whether top requested target failed or not.
+			///     Whether top requested target failed or not.
 			/// </summary>
 			public readonly bool IsTopFailed;
 
 			/// <summary>
-			///		Whether current target failed or not.
+			///     Whether current target failed or not.
 			/// </summary>
 			public readonly bool IsCurrentFailed;
 
@@ -40,29 +44,29 @@ namespace AnFake.Core
 		}
 
 		/// <summary>
-		///		Represents target run details. Used in <c>Started</c> and <c>Finished</c> events.
+		///     Represents target run details. Used in <c>Started</c> and <c>Finished</c> events.
 		/// </summary>
 		public sealed class RunDetails
 		{
 			/// <summary>
-			///		Target start time.
+			///     Target start time.
 			/// </summary>
 			public readonly DateTime StartTime;
 
 			/// <summary>
-			///		Target finish time.
+			///     Target finish time.
 			/// </summary>
 			/// <remarks>
-			///		This value is undefined for <c>Finished</c> event.
+			///     This value is undefined for <c>Finished</c> event.
 			/// </remarks>
 			public readonly DateTime FinishTime;
 
 			/// <summary>
-			///		Set of executed targets.
+			///     Set of executed targets.
 			/// </summary>
 			/// <remarks>
-			///		<para>This set contains all targets which Do action was invoked.</para>
-			///		<para>This set is empty for <c>Finished</c> event.</para>
+			///     <para>This set contains all targets which Do action was invoked.</para>
+			///     <para>This set is empty for <c>Finished</c> event.</para>
 			/// </remarks>
 			public readonly Target[] ExecutedTargets;
 
@@ -83,7 +87,7 @@ namespace AnFake.Core
 		private static Target _current;
 
 		/// <summary>
-		///		Currently running target.
+		///     Currently running target.
 		/// </summary>
 		public static Target Current
 		{
@@ -122,21 +126,32 @@ namespace AnFake.Core
 		}
 
 		/// <summary>
-		///     Fired when target started.
+		///     Fired when top target started.
 		/// </summary>
 		/// <remarks>
-		///		This event fired for top-level targets only (i.e. for targets requested by user).
+		///     This event fired for top-level targets only (i.e. for targets requested by user).
 		/// </remarks>
-		public static event EventHandler<RunDetails> Started;
+		public static event EventHandler<RunDetails> TopStarted;
 
 		/// <summary>
-		///     Fired when target finished either successful or failed.
+		///     Fired when top target finished either successful or failed.
 		/// </summary>
 		/// <remarks>
-		///		This event fired for top-level targets only (i.e. for targets requested by user).
-		///		Property RunDetails.ExecutedTargets includes top-level target itself and all dependent targets in order of execution.
+		///     This event fired for top-level targets only (i.e. for targets requested by user).
+		///     Property RunDetails.ExecutedTargets includes top-level target itself and all dependent targets in order of
+		///     execution.
 		/// </remarks>
-		public static event EventHandler<RunDetails> Finished;
+		public static event EventHandler<RunDetails> TopFinished;
+
+		/// <summary>
+		///     Fired when target's phase started.
+		/// </summary>
+		public static event EventHandler<string> PhaseStarted;
+
+		/// <summary>
+		///     Fired when target's phase finished either successful or failed.
+		/// </summary>		
+		public static event EventHandler<string> PhaseFinished;		
 
 		/// <summary>
 		///     Fired when currently running target failed.
@@ -297,7 +312,7 @@ namespace AnFake.Core
 		///     Instructs this target to skip errors, i.e. do not fail even some error occured.
 		/// </summary>
 		/// <remarks>
-		///		Error might be reported eigther by throwing an exception or by writing error message to tracer.
+		///     Error might be reported eigther by throwing an exception or by writing error message to tracer.
 		/// </remarks>
 		/// <returns></returns>
 		public Target SkipErrors()
@@ -397,9 +412,9 @@ namespace AnFake.Core
 			Trace.InfoFormat("'{0}' execution order: {1}.", _name, String.Join(", ", orderedTargets.Select(x => x.Name)));
 
 			var startTime = DateTime.UtcNow;
-			if (Started != null)
+			if (TopStarted != null)
 			{
-				Started.Invoke(this, new RunDetails(startTime));
+				TopStarted.Invoke(this, new RunDetails(startTime));
 			}
 
 			// Target.Do
@@ -434,7 +449,7 @@ namespace AnFake.Core
 			{
 				var executedTarget = orderedTargets[i];
 				executedTarget.DoFinally(new ExecutionReason(error != null, executedTarget._state == TargetState.Failed));
-			}			
+			}
 
 			// Summarize
 			var executedTargets = orderedTargets
@@ -447,9 +462,9 @@ namespace AnFake.Core
 			LogSummary(executedTargets);
 
 			var finishTime = DateTime.UtcNow;
-			if (Finished != null)
+			if (TopFinished != null)
 			{
-				Finished.Invoke(this, new RunDetails(startTime, finishTime, executedTargets));
+				TopFinished.Invoke(this, new RunDetails(startTime, finishTime, executedTargets));
 			}
 
 			// Re-throw
@@ -463,7 +478,7 @@ namespace AnFake.Core
 				throw new InvalidConfigurationException(String.Format("Target '{0}' has cycle dependency.", _name));
 
 			if (_state == TargetState.Queued ||
-				_state == TargetState.Succeeded || 
+				_state == TargetState.Succeeded ||
 				_state == TargetState.PartiallySucceeded ||
 				_state == TargetState.Failed)
 				return;
@@ -490,17 +505,25 @@ namespace AnFake.Core
 			Failed = null;
 			Finalized = null;
 
+			if (_do == null)
+			{
+				_state = TargetState.PartiallySucceeded;
+				return;
+			}
+			
 			_state = TargetState.Started;
 			try
-			{
-				if (_do != null)
+			{				
+				if (PhaseStarted != null)
 				{
-					Invoke("Do", _do, false);
-
-					if (_failIfAnyWarning && _messages.WarningsCount > 0)
-						throw new TerminateTargetException("Target terminated due to reported warning/error(s).");
+					PhaseStarted.Invoke(this, DoPhase);
 				}
 
+				Invoke(DoPhase, _do, false);
+
+				if (_failIfAnyWarning && _messages.WarningsCount > 0)
+					throw new TerminateTargetException("Target terminated due to reported warning/error(s).");
+				
 				_state = TargetState.PartiallySucceeded;
 			}
 			catch (Exception)
@@ -508,6 +531,13 @@ namespace AnFake.Core
 				_state = TargetState.Failed;
 				if (!_skipErrors)
 					throw;
+			}
+			finally
+			{
+				if (PhaseFinished != null)
+				{
+					SafeOp.Try(PhaseFinished.Invoke, this, DoPhase);
+				}
 			}
 		}
 
@@ -517,10 +547,18 @@ namespace AnFake.Core
 				throw new InvalidOperationException(
 					String.Format("Inconsistence in build order: trying to run OnFailure action for non-failed or non-executed target '{0}'.", _name));
 
-			if (_onFailure != null || Failed != null)
+			if (_onFailure == null && Failed == null) 
+				return;
+
+			try
 			{
+				if (PhaseStarted != null)
+				{
+					PhaseStarted.Invoke(this, OnFailurePhase);
+				}
+
 				Invoke(
-					"OnFailure",
+					OnFailurePhase,
 					() =>
 					{
 						if (_onFailure != null)
@@ -531,6 +569,13 @@ namespace AnFake.Core
 					},
 					true);
 			}
+			finally
+			{
+				if (PhaseFinished != null)
+				{
+					SafeOp.Try(PhaseFinished.Invoke, this, OnFailurePhase);
+				}	
+			}			
 		}
 
 		private void DoFinally(ExecutionReason reason)
@@ -538,10 +583,21 @@ namespace AnFake.Core
 			if (_state != TargetState.PartiallySucceeded && _state != TargetState.Failed)
 				throw new InvalidOperationException(String.Format("Inconsistence in build order: trying to run Finally action for non-executed target '{0}'.", _name));
 
-			if (_finally != null || Finalized != null)
+			if (_finally == null && Finalized == null)
 			{
+				UpgradeState();
+				return;
+			}
+
+			try
+			{
+				if (PhaseStarted != null)
+				{
+					PhaseStarted.Invoke(this, FinallyPhase);
+				}
+
 				var ret = Invoke(
-					"Finally",
+					FinallyPhase,
 					() =>
 					{
 						if (_finally != null)
@@ -552,10 +608,22 @@ namespace AnFake.Core
 					},
 					true);
 
-				if (!ret)
-					return;
+				if (ret)
+				{
+					UpgradeState();
+				}					
 			}
+			finally
+			{
+				if (PhaseFinished != null)
+				{
+					SafeOp.Try(PhaseFinished.Invoke, this, FinallyPhase);
+				}
+			}
+		}
 
+		private void UpgradeState()
+		{
 			if (_state == TargetState.PartiallySucceeded && (!_partialSucceedIfAnyWarning || _messages.WarningsCount == 0))
 			{
 				_state = TargetState.Succeeded;
@@ -662,7 +730,7 @@ namespace AnFake.Core
 			{
 				Trace.InfoFormat("<<< '{0}.{1}' finished.", _name, phase);
 				Trace.MessageReceived -= _messages.OnMessage;
-				Trace.MessageReceiving -= setTarget;
+				Trace.MessageReceiving -= setTarget;				
 
 				var finishTime = Environment.TickCount;
 				_runTime += TimeSpan.FromMilliseconds(finishTime - startTime);

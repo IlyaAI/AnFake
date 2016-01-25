@@ -64,23 +64,6 @@ namespace AnFake.Core.Integration
 		/// <param name="type"><see cref="ArtifactType"/></param>
 		/// <returns>URI of exposed artifact (not null)</returns>
 		/// <seealso cref="ExposeArtifact(AnFake.Core.FileItem,AnFake.Core.ArtifactType)"/>
-		void ExposeArtifacts(FileSet files, ArtifactType type);
-
-		//
-		// Experimental Stuff
-		//
-
-		/// <summary>
-		///		Is in pipeline mode?
-		/// </summary>
-		bool HasPipeIn { get; }
-
-		int PipeInChangesetId { get; }
-
-		void GetPipeInArtifact(FileItem file, FileSystemPath dstPath, ArtifactType type);
-
-		void GetPipeInArtifact(FolderItem folder, FileSystemPath dstPath, ArtifactType type);
-
-		void GetPipeInArtifacts(FileSet files, FileSystemPath dstPath, ArtifactType type);
+		void ExposeArtifacts(FileSet files, ArtifactType type);		
 	}	
 }

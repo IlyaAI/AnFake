@@ -11,7 +11,126 @@ namespace AnFake.Api
 	[DataContract(Name = "Generic", Namespace = "")]
 	public sealed class TraceMessage : IFormattable
 	{
+		public sealed class Builder
+		{
+			private readonly TraceMessage _msg = new TraceMessage();
+			private readonly Action<TraceMessage> _endAction;
+
+			public Builder(Action<TraceMessage> endAction)
+			{
+				if (endAction == null)
+					throw new ArgumentException("TraceMessage.Builder(endAction): endAction must not be null");
+
+				_endAction = endAction;
+			}
+
+			public Builder Info()
+			{
+				_msg.Level = TraceMessageLevel.Info;
+				return this;
+			}
+
+			public Builder Warn()
+			{
+				_msg.Level = TraceMessageLevel.Warning;
+				return this;
+			}
+
+			public Builder Error()
+			{
+				_msg.Level = TraceMessageLevel.Error;
+				return this;
+			}
+
+			public Builder Summary()
+			{
+				_msg.Level = TraceMessageLevel.Summary;
+				return this;
+			}
+
+			public Builder WithText(string text)
+			{
+				if (String.IsNullOrEmpty(text))
+					throw new ArgumentException("TraceMessage.Builder.WithText(text): text must not be null or empty");
+
+				_msg.Message = text;
+				return this;
+			}
+
+			public Builder WithText(StringBuilder text)
+			{
+				if (text == null)
+					throw new ArgumentException("TraceMessage.Builder.WithText(text): text must not be null");
+
+				_msg.Message = text.ToString();
+				return this;
+			}
+
+			public Builder WithFormat(string fmt, params object[] args)
+			{
+				if (String.IsNullOrEmpty(fmt))
+					throw new ArgumentException("TraceMessage.Builder.WithFormat(fmt, ...): fmt must not be null or empty");
+
+				_msg.Message = String.Format(fmt, args);
+				return this;
+			}
+
+			public Builder WithDetails(string details)
+			{
+				_msg.Details = details;
+				return this;
+			}
+
+			public Builder WithLinks(IEnumerable<Hyperlink> links)
+			{
+				if (links == null)
+					throw new ArgumentException("TraceMessage.Builder.WithLinks(links): links must not be null");
+
+				_msg.Links.AddRange(links);
+				return this;
+			}
+
+			public Builder WithLink(Uri href, string label)
+			{
+				_msg.Links.Add(new Hyperlink(href, label));
+				return this;
+			}
+
+			public Builder WithCategory(string category)
+			{
+				if (String.IsNullOrEmpty(category))
+					throw new ArgumentException("TraceMessage.Builder.WithCategory(category): category must not be null or empty");
+
+				_msg.Category = category;
+				return this;
+			}
+
+			public Builder AsTestTrace()
+			{
+				_msg.Category = TraceMessageCategory.TestTrace;
+				return this;
+			}
+
+			public Builder AsTestSummary()
+			{
+				_msg.Category = TraceMessageCategory.TestSummary;
+				return this;
+			}
+
+			public void End()
+			{
+				if (String.IsNullOrEmpty(_msg.Message))
+					throw new ArgumentException("TraceMessage.Builder.End: message must not be null or empty");
+
+				_endAction.Invoke(_msg);
+			}
+		}
+
 		private List<Hyperlink> _links;
+
+		private TraceMessage()
+		{			
+		}
 
 		public TraceMessage(TraceMessageLevel level, string message)
 		{
@@ -55,6 +174,9 @@ namespace AnFake.Api
 		[DataMember(EmitDefaultValue = false)]
 		public int ThreadId { get; set; }
 
+		[DataMember(EmitDefaultValue = false)]
+		public string Category { get; set; }
+
 		[DataMember]
 		public List<Hyperlink> Links
 		{
@@ -86,6 +208,12 @@ namespace AnFake.Api
 		///     <para>
 		///         d - details if specified;
 		///     </para>
+		///		<para>
+		///			a - compactly formatted message with file, line and column number;
+		///		</para>
+		///		<para>
+		///			p - project if specified;
+		///		</para>
 		/// </remarks>
 		/// <param name="format"></param>
 		/// <param name="formatProvider"></param>
