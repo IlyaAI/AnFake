@@ -625,7 +625,7 @@ namespace AnFake.Plugins.Tfs2012
 
 			foreach (var target in details.ExecutedTargets)
 			{
-				summary						
+				summary
 					.AppendFormat(@"{0}: {1,3} error(s) {2,3} warning(s) {3,3} messages(s)  {4:hh\:mm\:ss}  {5}",
 						target.Name, target.Messages.ErrorsCount, target.Messages.WarningsCount, target.Messages.SummariesCount,
 						target.RunTime, target.State.ToHumanReadable().ToUpperInvariant())

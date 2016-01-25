@@ -154,6 +154,16 @@ namespace AnFake.Api
 						}
 						break;
 
+					case 'p':
+						if (!String.IsNullOrEmpty(Project))
+						{
+							if (sb.Length > 0)
+								sb.AppendLine();
+
+							sb.Append(' ', ident).Append(Project);
+						}
+						break;
+
 					case 'a':
 						if (sb.Length > 0)
 							sb.AppendLine();

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using AnFake.Api;
 using AnFake.Core;
 using JetBrains.TeamCity.ServiceMessages.Write;
@@ -7,17 +9,17 @@ namespace AnFake.Plugins.TeamCity
 {
 	internal sealed class TeamCityPlugin : /*Core.Integration.IBuildServer,*/ IDisposable
 	{
+		private readonly IList<string> _summary = new List<string>();
 		private readonly ServiceMessageFormatter _formatter;
-		private readonly bool _loggingEnabled;
 		private int _errorsCount;
 		private int _warningsCount;
 
 		public TeamCityPlugin()
 		{
 			_formatter = new ServiceMessageFormatter();
-			_loggingEnabled = "true".Equals(MyBuild.GetProp("TeamCity.Logging", ""), StringComparison.OrdinalIgnoreCase);
 
-			if (_loggingEnabled)
+			var loggingEnabled = "true".Equals(MyBuild.GetProp("TeamCity.Logging", ""), StringComparison.OrdinalIgnoreCase);
+			if (loggingEnabled)
 			{
 				Log.DisableConsoleEcho();
 				Trace.MessageReceived += OnTraceMessage;
@@ -59,6 +61,13 @@ namespace AnFake.Plugins.TeamCity
 
 		private void OnBuildFinished(object sender, MyBuild.RunDetails details)
 		{
+			WriteBlockOpened("SUMMARY");
+			foreach (var line in _summary)
+			{
+				WriteNormal(line);
+			}
+			WriteBlockClosed("SUMMARY");
+
 			WriteBuildStatus(
 				String.Format("{{build.status.text}} {0} error(s) {1} warning(s)", _errorsCount, _warningsCount),
 				details.Status == MyBuild.Status.Succeeded || details.Status == MyBuild.Status.PartiallySucceeded);
@@ -79,8 +88,8 @@ namespace AnFake.Plugins.TeamCity
 				_errorsCount += target.Messages.ErrorsCount;
 				_warningsCount += target.Messages.WarningsCount;
 
-				var msg = String.Format(@"{0}: {1} error(s) {2} warning(s) {3:hh\:mm\:ss} {4}",
-						target.Name, target.Messages.ErrorsCount, target.Messages.WarningsCount,
+				var msg = String.Format(@"{0}: {1} error(s) {2} warning(s) {3} messages(s)  {4:hh\:mm\:ss}  {5}",
+						target.Name, target.Messages.ErrorsCount, target.Messages.WarningsCount, target.Messages.SummariesCount,
 						target.RunTime, target.State.ToHumanReadable().ToUpperInvariant());
 
 				if (target.Messages.ErrorsCount > 0)
@@ -95,7 +104,26 @@ namespace AnFake.Plugins.TeamCity
 				else
 				{
 					WriteNormal(msg);
-				}				
+				}
+
+				_summary.Add(msg);
+
+				foreach (var message in target.Messages.Where(x => x.Level == TraceMessageLevel.Summary))
+				{
+					_summary.Add(String.Format("    {0}", message.Message));					
+					foreach (var link in message.Links)
+					{
+						_summary.Add(
+							String.Format("    {0} {1}", link.Label, link.Href));
+					}
+				}
+
+				_summary.Add(new String('=', 48));
+				_summary.Add(
+					String.Format(
+						"'{0}' {1}",
+						topTarget.Name,
+						topTarget.State.ToHumanReadable().ToUpperInvariant()));
 			}
 
 			WriteBlockClosed(topTarget.Name);
@@ -111,7 +139,7 @@ namespace AnFake.Plugins.TeamCity
 
 				case TraceMessageLevel.Error:
 					WriteError("ERROR " + message.ToString("mlf"), message.Details);
-					WriteBuildProblem(message.ToString("a"));
+					WriteBuildProblem(message.ToString("apd"));
 					break;
 
 				default:

@@ -8,7 +8,7 @@ namespace AnFake.Api
 {
 	public sealed class JsonFileTracer : ITracer
 	{
-		private readonly static Encoding Utf8 = new UTF8Encoding(false);
+		private static readonly Encoding Utf8 = new UTF8Encoding(false);
 
 		private readonly string _logFile;
 		private readonly JsonSerializer _serializer;
