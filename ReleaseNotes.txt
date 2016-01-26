@@ -9,7 +9,7 @@
 
 ### 1.1.0
 
-* [+] Installer implemented
+* [+] Installer implemented.
 * [*] Fail to setup tools into partiall VS installation. Fixed.
 * [*] GetLatest/GetSpecific commands restore solution-level packages.
 * [*] AnFake tools use VS Output Window instead of standalone console.
@@ -22,7 +22,9 @@
 * [+] AssemblyInfo.cpp support implemented.
 * [+] VS2015 support added.
 
-### 1.1.+
+### 1.2.0
 
+* [+] TeamCity integration implemented.
+* [*] TFS plugin might operate in separate role now (VCS, CI, Tracking) and can be combined with TeamCity plugin.
 * [*] BUGFIX: FSC Evaluator takes in account references when decides whether re-compile or not.
 * [*] BUGFIX: FSC Evaluator force sub-modules loading.
