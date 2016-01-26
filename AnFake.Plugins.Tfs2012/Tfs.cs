@@ -15,6 +15,14 @@ namespace AnFake.Plugins.Tfs2012
 	/// </summary>
 	public static class Tfs
 	{
+		[Flags]
+		public enum Role
+		{
+			VersionControl			= 0x01,
+			ContinuousIntegration	= 0x02,
+			Tracking				= 0x04
+		}
+
 		// Assembly resolution stuff
 		private static Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
 		{
@@ -70,6 +78,34 @@ namespace AnFake.Plugins.Tfs2012
 					.As<Core.Integration.IVersionControl>()
 					.As<Core.Integration.IBuildServer>()
 					.AsSelf();
+
+				_registered = true;
+			}
+		}
+
+		/// <summary>
+		///     Activates <c>Tfs</c> plugin with specified roles only.
+		/// </summary>
+		/// <seealso cref="Tfs.Role"/>
+		public static void PlugIn(Role roles)
+		{
+			if (_registered)
+			{
+				Plugin.Get<TfsPlugin>(); // force instantiation
+			}
+			else
+			{
+				var registrator = Plugin.Register<TfsPlugin>().AsSelf();
+
+				if ((roles & Role.VersionControl) != 0)
+				{
+					registrator.As<Core.Integration.IVersionControl>();
+				}
+					
+				if ((roles & Role.ContinuousIntegration) != 0)
+				{
+					registrator.As<Core.Integration.IBuildServer>();
+				}
 
 				_registered = true;
 			}

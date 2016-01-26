@@ -138,7 +138,7 @@ namespace AnFake.Plugins.TeamCity
 			WriteBlockClosed("SUMMARY");
 
 			WriteBuildStatus(
-				String.Format("{{build.status.text}} {0} error(s) {1} warning(s)", _errorsCount, _warningsCount),
+				String.Format("{{build.status.text}} | {0} error(s) {1} warning(s) total", _errorsCount, _warningsCount),
 				details.Status == MyBuild.Status.Succeeded || details.Status == MyBuild.Status.PartiallySucceeded);
 		}
 
