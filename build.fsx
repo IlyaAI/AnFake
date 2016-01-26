@@ -18,6 +18,7 @@ let product =
     + "AnFake.Plugins.*/*.csproj" - "AnFake.Plugins.*.Test/*.csproj"
     + "AnFake.Integration.MsBuild/*.csproj"
     + "AnFake.Integration.Vs2012/*.csproj"
+    + "AnFake.Integration.TfWorkspacer/*.csproj"
 let extras = ~~".AnFake/Extras" % "*"
 let cmds = ~~".AnFake" % "*.cmd"
 let xaml = ~~"AnFake.Integration.Tfs2012.Template" % "*.xaml"
@@ -39,6 +40,7 @@ let nugetFiles =
     + "FSharp.Core.sigdata"
     + "Extras/*"
     - "Microsoft.*"
+    - "AnFake.Integration.TfWorkspacer.exe"
     + ~~"packages/NuGet.CommandLine.2.8.5/tools" % "NuGet.exe"
 
 let productName = "AnFake"

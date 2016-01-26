@@ -49,10 +49,6 @@
       <HintPath>..\packages\FSharp.Core.3.0.2\lib\net40\FSharp.Core.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="log4net, Version=1.2.13.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\log4net.2.0.3\lib\net40-full\log4net.dll</HintPath>
-    </Reference>
     <Reference Include="Mono.CSharp, Version=4.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
       <HintPath>..\packages\CS-Script.3.9.10.0\lib\net45\Mono.CSharp.dll</HintPath>
       <Private>True</Private>
@@ -67,16 +63,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Logging\FilePattern.cs" />
-    <Compile Include="Logging\ConsolePattern.cs" />
-    <Compile Include="Logging\Log4NetLogger.cs" />
     <Compile Include="RunOptions.cs" />
     <Compile Include="Scripting\CSharpEvaluator.cs" />
     <Compile Include="Scripting\EvaluationException.cs" />
     <Compile Include="Scripting\FSharpFscEvaluator.cs" />
     <Compile Include="Scripting\FSharpFsiEvaluator.cs" />
     <Compile Include="Scripting\IScriptEvaluator.cs" />
-    <Compile Include="Logging\LogWriter.cs" />
     <Compile Include="Runner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -112,6 +104,10 @@
     <ProjectReference Include="..\AnFake.Fsx\AnFake.Fsx.fsproj">
       <Project>{e90f8e77-1b63-4b7d-a2d9-4ddf272e05ea}</Project>
       <Name>AnFake.Fsx</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\AnFake.Logging\AnFake.Logging.csproj">
+      <Project>{2e8e5292-fc72-4e4d-bb75-29d76c3b0bec}</Project>
+      <Name>AnFake.Logging</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -31,6 +31,11 @@ namespace AnFake.Plugins.Tfs2012
 			///		Version specification. Default 'T' = Latest. Used by <c>Checkout</c> and <c>Get</c> methods.
 			/// </summary>
 			public string VersionSpec;
+
+			/// <summary>
+			///		Workspace comment.
+			/// </summary>
+			public string WorkspaceComment;
 			
 			internal Params()
 			{
@@ -97,8 +102,7 @@ namespace AnFake.Plugins.Tfs2012
 		{
 			Workstation.Current.UpdateWorkspaceInfoCache(Vcs, User.Current);
 		}
-
-		/*
+		
 		/// <summary>
 		///		Finds workspace by local path. Returns workpace name or null if no mapping.
 		/// </summary>
@@ -125,7 +129,6 @@ namespace AnFake.Plugins.Tfs2012
 
 			return Impl.FindWorkspace(name) != null;
 		}
-		*/
 
 		/// <summary>
 		///		Creates new workspace using workspace definition file.
@@ -190,7 +193,7 @@ namespace AnFake.Plugins.Tfs2012
 			ws = Vcs.CreateWorkspace(
 				workspaceName, 
 				User.Current, 
-				String.Format("AnFake: {0} => {1}", serverPath, localPath), 
+				FormatWorkspaceComment(parameters.WorkspaceComment, serverPath, localPath), 
 				mappings.AsTfsMappings());
 			Trace.InfoFormat("Workspace '{0}' successfully created for '{1}'.", workspaceName, User.Current);
 
@@ -265,8 +268,8 @@ namespace AnFake.Plugins.Tfs2012
 
 			ws = Vcs.CreateWorkspace(
 				workspaceName, 
-				User.Current, 
-				String.Format("AnFake: {0} => {1}", serverPath, localPath), 
+				User.Current,
+				FormatWorkspaceComment(parameters.WorkspaceComment, serverPath, localPath),
 				mappings.AsTfsMappings());
 			Trace.InfoFormat("Workspace '{0}' successfully created for '{1}'.", workspaceName, User.Current);
 
@@ -662,6 +665,11 @@ namespace AnFake.Plugins.Tfs2012
 			Trace.InfoFormat(
 				"{0}: {1} file(s) updated. {2} warning(s), {3} conflict(s)", 
 				versionSpec.DisplayString, numFiles, numFailures, numConflicts);
+		}
+
+		private static string FormatWorkspaceComment(string fmt, ServerPath serverPath, FileSystemPath localPath)
+		{
+			return String.IsNullOrEmpty(fmt) ? String.Format("AnFake: {0} => {1}", serverPath, localPath) : fmt;
 		}
 	}
 }

@@ -56,7 +56,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Extras", "Extras", "{CBAFFC16-B785-46E1-8C90-1CAD1115D3D3}"
 	ProjectSection(SolutionItems) = preProject
 		.AnFake\Extras\nuget.fsx = .AnFake\Extras\nuget.fsx
-		.AnFake\Extras\teamcity-tf.fsx = .AnFake\Extras\teamcity-tf.fsx
 		.AnFake\Extras\tf-conv-flat.fsx = .AnFake\Extras\tf-conv-flat.fsx
 		.AnFake\Extras\tf-conv-tree.fsx = .AnFake\Extras\tf-conv-tree.fsx
 		.AnFake\Extras\tf.fsx = .AnFake\Extras\tf.fsx
@@ -102,6 +101,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnFake.Installer", "AnFake.Installer\AnFake.Installer.csproj", "{64F6CFD2-5215-4103-8425-74C1B93C2DFC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnFake.Plugins.TeamCity", "AnFake.Plugins.TeamCity\AnFake.Plugins.TeamCity.csproj", "{79D5C17C-2DF3-4A6F-93CC-F73C325261E2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnFake.Integration.TfWorkspacer", "AnFake.Integration.TfWorkspacer\AnFake.Integration.TfWorkspacer.csproj", "{3AB4F985-648F-4CB7-A9B1-BB030DA47B46}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnFake.Logging", "AnFake.Logging\AnFake.Logging.csproj", "{2E8E5292-FC72-4E4D-BB75-29D76C3B0BEC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -225,6 +228,18 @@ Global
 		{79D5C17C-2DF3-4A6F-93CC-F73C325261E2}.Install|Any CPU.Build.0 = Release|Any CPU
 		{79D5C17C-2DF3-4A6F-93CC-F73C325261E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{79D5C17C-2DF3-4A6F-93CC-F73C325261E2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3AB4F985-648F-4CB7-A9B1-BB030DA47B46}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3AB4F985-648F-4CB7-A9B1-BB030DA47B46}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3AB4F985-648F-4CB7-A9B1-BB030DA47B46}.Install|Any CPU.ActiveCfg = Release|Any CPU
+		{3AB4F985-648F-4CB7-A9B1-BB030DA47B46}.Install|Any CPU.Build.0 = Release|Any CPU
+		{3AB4F985-648F-4CB7-A9B1-BB030DA47B46}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3AB4F985-648F-4CB7-A9B1-BB030DA47B46}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2E8E5292-FC72-4E4D-BB75-29D76C3B0BEC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2E8E5292-FC72-4E4D-BB75-29D76C3B0BEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2E8E5292-FC72-4E4D-BB75-29D76C3B0BEC}.Install|Any CPU.ActiveCfg = Release|Any CPU
+		{2E8E5292-FC72-4E4D-BB75-29D76C3B0BEC}.Install|Any CPU.Build.0 = Release|Any CPU
+		{2E8E5292-FC72-4E4D-BB75-29D76C3B0BEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2E8E5292-FC72-4E4D-BB75-29D76C3B0BEC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -254,5 +269,7 @@ Global
 		{9767DF8D-952A-42D2-AE8D-B4728A901020} = {29EE3C45-D196-4946-A87E-D9525E8B7E60}
 		{64F6CFD2-5215-4103-8425-74C1B93C2DFC} = {E31DE28C-674E-41AF-8A75-A3252C044AAE}
 		{79D5C17C-2DF3-4A6F-93CC-F73C325261E2} = {29EE3C45-D196-4946-A87E-D9525E8B7E60}
+		{3AB4F985-648F-4CB7-A9B1-BB030DA47B46} = {E31DE28C-674E-41AF-8A75-A3252C044AAE}
+		{2E8E5292-FC72-4E4D-BB75-29D76C3B0BEC} = {CFD32F43-BF31-42F9-9BDF-7B3E781F0E2A}
 	EndGlobalSection
 EndGlobal
