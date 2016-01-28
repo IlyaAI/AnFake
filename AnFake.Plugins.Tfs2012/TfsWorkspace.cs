@@ -602,18 +602,15 @@ namespace AnFake.Plugins.Tfs2012
 		private static FileItem LocateWorkspaceFile(FileSystemPath localPath, string wsFileName)
 		{
 			var wsFile = localPath.AsFile();
-			if (wsFile.Exists())
-			{
-				if (!wsFile.Name.Equals(wsFileName, StringComparison.OrdinalIgnoreCase))
-					throw new InvalidConfigurationException(String.Format("Local path should points to workspace definition file '{0}' but really '{1}'", wsFileName, localPath));
-			}
-			else
-			{
-				wsFile = (localPath / wsFileName).AsFile();
-				if (!wsFile.Exists())
-					throw new InvalidConfigurationException(String.Format("Unable to locate workspace definition file '{0}' in '{1}'", wsFileName, localPath));
-			}
+			if (wsFile.Name.Equals(wsFileName, StringComparison.OrdinalIgnoreCase))
+				return wsFile;
 
+			if (wsFile.Exists()) 
+				throw new InvalidConfigurationException(
+					String.Format("Local path should be either working directory or workspace definition file '{0}' but really it's a file '{1}'",
+					wsFileName, localPath));
+			
+			wsFile = (localPath / wsFileName).AsFile();			
 			return wsFile;
 		}
 

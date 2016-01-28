@@ -138,8 +138,8 @@ namespace AnFake.Plugins.TeamCity
 			WriteBlockClosed("SUMMARY");
 
 			WriteBuildStatus(
-				String.Format("{{build.status.text}} | {0} error(s) {1} warning(s) total", _errorsCount, _warningsCount),
-				details.Status == MyBuild.Status.Succeeded || details.Status == MyBuild.Status.PartiallySucceeded);
+				String.Format("{0} error(s) {1} warning(s) {2}", _errorsCount, _warningsCount, details.Status.ToHumanReadable().ToUpperInvariant()),
+				details.Status.IsGood());
 		}
 
 		private void OnTestSetProcessed(object sender, TestSet testSet)
