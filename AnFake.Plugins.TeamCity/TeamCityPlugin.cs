@@ -138,7 +138,9 @@ namespace AnFake.Plugins.TeamCity
 			WriteBlockClosed("SUMMARY");
 
 			WriteBuildStatus(
-				String.Format("{0} error(s) {1} warning(s) {2}", _errorsCount, _warningsCount, details.Status.ToHumanReadable().ToUpperInvariant()),
+				String.Format(
+					"{0} error(s) {1} warning(s) {2} | {{build.status.text}}", 
+					_errorsCount, _warningsCount, details.Status.ToHumanReadable().ToUpperInvariant()),
 				details.Status.IsGood());
 		}
 
