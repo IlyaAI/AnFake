@@ -186,13 +186,16 @@ namespace AnFake.Core
 			private LinkedList<string> _lines;
 			private string _text;
 
-			internal TextDoc(FileItem file)
+			internal TextDoc(FileItem file, Encoding encoding)
 			{
 				_file = file;
 
 				if (file.Exists())
 				{
-					using (var reader = new StreamReader(file.Path.Full))
+					var reader = encoding == null
+						? new StreamReader(file.Path.Full)
+						: new StreamReader(file.Path.Full, encoding);
+					using (reader)
 					{
 						_encoding = reader.CurrentEncoding;
 						LoadLines(reader);
@@ -200,7 +203,7 @@ namespace AnFake.Core
 				}
 				else
 				{
-					_encoding = Encoding.UTF8;
+					_encoding = encoding ?? Encoding.UTF8;
 					LoadEmpty();
 				}				
 			}
@@ -708,18 +711,43 @@ namespace AnFake.Core
 			}
 		}
 
-		/// <summary>
-		///     Creates TextDoc representation for specified file.
-		/// </summary>
-		/// <param name="file">file to be loaded as text (not null)</param>
+		///  <summary>
+		///      Creates TextDoc representation for specified file.
+		///  </summary>
+		///  <remarks>
+		/// 		If file doesn't exist then empty document is returned.
+		///  </remarks>
+		///  <param name="file">file to be loaded as text (not null)</param>
+		/// <param name="encoding">file encoding (UTF-8 used by default)</param>
 		/// <returns>TextDoc instance</returns>
-		/// <seealso cref="TextDoc"/>
-		public static TextDoc AsTextDoc(this FileItem file)
+		///  <seealso cref="TextDoc"/>
+		public static TextDoc AsTextDoc(this FileItem file, Encoding encoding = null)
 		{
 			if (file == null)
-				throw new ArgumentException("Text.AsTextDoc(file): file must not be null");
+				throw new ArgumentException("Text.AsTextDoc(file[, encoding]): file must not be null");
 
-			return new TextDoc(file);
+			return new TextDoc(file, encoding);
+		}
+
+		///  <summary>
+		///      Creates TextDoc representation for specified file.
+		///  </summary>
+		///  <remarks>
+		/// 		If file doesn't exist then exception is thrown.
+		///  </remarks>
+		///  <param name="file">file to be loaded as text (not null)</param>
+		/// <param name="encoding">file encoding (UTF-8 used by default)</param>
+		/// <returns>TextDoc instance</returns>
+		///  <seealso cref="TextDoc"/>
+		public static TextDoc AsExistingTextDoc(this FileItem file, Encoding encoding = null)
+		{
+			if (file == null)
+				throw new ArgumentException("Text.AsExistingTextDoc(file[, encoding]): file must not be null");
+
+			if (!file.Exists())
+				throw new ArgumentException("Text.AsExistingTextDoc(file[, encoding]): file must exist");
+
+			return new TextDoc(file, encoding);
 		}
 
 		/// <summary>

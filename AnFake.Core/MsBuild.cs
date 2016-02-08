@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using AnFake.Api;
+using AnFake.Core.Exceptions;
 
 namespace AnFake.Core
 {
@@ -29,7 +30,24 @@ namespace AnFake.Core
 		private static readonly string[] Locations = Runtime.IsMono
 			? MonoLocations
 			: MsLocations;
-			
+
+		public sealed class ConfigSpec
+		{
+			public readonly string Configuration;
+			public readonly string Platform;
+
+			internal ConfigSpec(string platform, string configuration)
+			{
+				Configuration = configuration;
+				Platform = platform;
+			}
+
+			public override string ToString()
+			{
+				return String.Format("{0}|{1}", Platform, Configuration);
+			}
+		}
+
 		/// <summary>
 		///		MSBuild parameters.
 		/// </summary>
@@ -280,7 +298,7 @@ namespace AnFake.Core
 			{
 				var args = new Args("/", ":")
 					.Param(proj.Path.Full)
-					.Option("t", parameters.Targets, ";")					
+					.Space().ValuedOption("t").NonQuotedValue(String.Join(";", parameters.Targets))
 					.Option("nodeReuse", parameters.NodeReuse)
 					.Option("v", parameters.Verbosity);
 
@@ -341,6 +359,30 @@ namespace AnFake.Core
 					.FailIfExitCodeNonZero(
 						String.Format("MsBuild failed with exit code {0}. Solution: {1}", result.ExitCode, proj));
 			}
+		}
+
+		/// <summary>
+		///		Parses string into set of 'platform|configuration' pairs.
+		/// </summary>
+		/// <param name="configSpecs"></param>
+		/// <returns></returns>
+		public static ConfigSpec[] AsMsBuildConfigSpecs(this string configSpecs)
+		{
+			if (configSpecs == null)
+				throw new ArgumentException("MsBuild.AsMsBuildConfigSpecs(configSpecs): configSpecs must not be null");
+
+			return configSpecs
+				.Split(',', ';')
+				.Select(spec => 
+				{
+					var pair = spec.Split('|');
+					if (pair.Length != 2 || String.IsNullOrWhiteSpace(pair[0]) || String.IsNullOrWhiteSpace(pair[1]))
+						throw new InvalidConfigurationException(
+							String.Format("Invalid MsBuild configuration spec: '{0}'. Expected: '<platform>|<configuration>'.", spec));
+
+					return new ConfigSpec(pair[0].Trim(), pair[1].Trim());
+				})
+				.ToArray();			
 		}
 	}
 }

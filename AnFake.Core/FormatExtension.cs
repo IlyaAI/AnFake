@@ -39,7 +39,7 @@ namespace AnFake.Core
 
 		private static string ToFormattedString(IEnumerable<FileItem> files)
 		{
-			return files.ToString();
+			return "...";
 		}
 
 		private static string ToFormattedString(FolderSet folders)
@@ -71,7 +71,7 @@ namespace AnFake.Core
 
 		private static string ToFormattedString(IEnumerable<FolderItem> folders)
 		{
-			return folders.ToString();
+			return "...";
 		}
 	}
 }

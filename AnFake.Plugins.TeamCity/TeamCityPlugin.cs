@@ -92,6 +92,9 @@ namespace AnFake.Plugins.TeamCity
 
 		public Uri ExposeArtifact(FileItem file, ArtifactType type)
 		{
+			if (IsLocal)
+				return BuildServer.Local.ExposeArtifact(file, type);
+
 			var dstPath = MakeArtifactPath(type, file.Name);
 			Files.Copy(file, ArtifactsFolder.AsPath()/dstPath, true);
 
@@ -100,6 +103,9 @@ namespace AnFake.Plugins.TeamCity
 
 		public Uri ExposeArtifact(FolderItem folder, ArtifactType type)
 		{
+			if (IsLocal)
+				return BuildServer.Local.ExposeArtifact(folder, type);
+
 			var dstPath = MakeArtifactPath(type, folder.Name);
 			Robocopy.Copy(folder.Path, ArtifactsFolder.AsPath()/dstPath, p => p.Recursion = Robocopy.RecursionMode.All);
 
@@ -108,6 +114,9 @@ namespace AnFake.Plugins.TeamCity
 
 		public Uri ExposeArtifact(string name, string content, Encoding encoding, ArtifactType type)
 		{
+			if (IsLocal)
+				return BuildServer.Local.ExposeArtifact(name, content, encoding, type);
+
 			var dstPath = MakeArtifactPath(type, name);
 			var dstFile = (ArtifactsFolder.AsPath()/dstPath).AsFile();
 			Text.WriteTo(dstFile, content, encoding);
@@ -117,6 +126,9 @@ namespace AnFake.Plugins.TeamCity
 
 		public void ExposeArtifacts(FileSet files, ArtifactType type)
 		{
+			if (IsLocal)
+				return;
+
 			Files.Copy(files, ArtifactsFolder.AsPath()/type.ToString(), true);
 		}
 

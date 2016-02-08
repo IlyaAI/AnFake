@@ -274,8 +274,8 @@ namespace AnFake.Scripting
 			var moduleName = RootTypeName;
 
 			var header = new StringBuilder(1024);
-			header.Append("module ").Append(RootTypeName).AppendLine();
-			var linesOffset = 1;
+			GenerateHeader(header, RootTypeName);
+			var linesOffset = 2;
 			
 			var body = new StringBuilder(10240);
 			
@@ -285,10 +285,10 @@ namespace AnFake.Scripting
 					if (line.Text.StartsWith("module "))
 					{
 						moduleName = line.Text.Substring(7).Trim();
-						header.Clear();
-						linesOffset = 0;
-					}
-					if (line.Text.StartsWith("#r "))
+						GenerateHeader(header, moduleName);						
+						linesOffset = 1;
+					} 
+					else if (line.Text.StartsWith("#r "))
 					{
 						var value = GetDerictiveValue(line.Text, "r");
 						refs.Add(
@@ -318,6 +318,13 @@ namespace AnFake.Scripting
 			body.Append("let ").Append(VersionPropertyName).Append("=new Version(\"").Append(InternalVersion).AppendLine("\")");
 
 			return new PseudoProject(script, header.ToString() + body, refs.ToArray(), linesOffset, moduleName);
+		}
+
+		private static void GenerateHeader(StringBuilder header, string moduleName)
+		{
+			header.Clear()
+				.Append("module ").Append(moduleName).AppendLine()
+				.Append("open System").AppendLine();
 		}
 
 		private static string GetDerictiveValue(string line, string derictiveName)
