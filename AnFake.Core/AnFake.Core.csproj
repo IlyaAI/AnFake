@@ -91,6 +91,7 @@
     <Compile Include="NullableExtension.cs" />
     <Compile Include="NuSpec\v25\DependencyGroup.cs" />
     <Compile Include="NuSpec\v25\Dependency.cs" />
+    <Compile Include="Os.cs" />
     <Compile Include="ReleaseNotes.cs" />
     <Compile Include="Integration\Tracking\ITicket.cs" />
     <Compile Include="Integration\Tracking\ReleaseNote.cs" />

@@ -291,12 +291,12 @@ namespace AnFake.Plugins.TeamCity
 				}));
 		}
 
-		private void WriteBlockOpened(string name)
+		public void WriteBlockOpened(string name)
 		{
 			Console.WriteLine(_formatter.FormatMessage("blockOpened", new {name}));
 		}
 
-		private void WriteBlockClosed(string name)
+		public void WriteBlockClosed(string name)
 		{
 			Console.WriteLine(_formatter.FormatMessage("blockClosed", new {name}));
 		}

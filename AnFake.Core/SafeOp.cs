@@ -13,6 +13,10 @@ namespace AnFake.Core
 
 				return true;
 			}
+			catch (Interruption.BuildInterruptedException)
+			{
+				throw;
+			}
 			catch (Exception e)
 			{
 				Log.Error("SafeOp.Try:", e);
@@ -28,6 +32,10 @@ namespace AnFake.Core
 				action(arg1);
 
 				return true;
+			}
+			catch (Interruption.BuildInterruptedException)
+			{
+				throw;
 			}
 			catch (Exception e)
 			{
@@ -45,6 +53,10 @@ namespace AnFake.Core
 
 				return true;
 			}
+			catch (Interruption.BuildInterruptedException)
+			{
+				throw;
+			}
 			catch (Exception e)
 			{
 				Log.Error("SafeOp.Try:", e);
@@ -60,6 +72,10 @@ namespace AnFake.Core
 				action(arg1, arg2, arg3);
 
 				return true;
+			}
+			catch (Interruption.BuildInterruptedException)
+			{
+				throw;
 			}
 			catch (Exception e)
 			{

@@ -84,7 +84,7 @@ namespace AnFake.Core
 				throw new ArgumentException(
 					String.Format(
 						"VsTest.Params.ToolPath must not be null.\nHint: probably, VsTest.Console.exe not found.\nSearch path:\n  {0}",
-						String.Join("\n  ", Locations)));			
+						String.Join("\n  ", Locations)));
 
 			var resultPath = "TestResults".AsPath();
 			if (parameters.SettingsPath != null && ".runsettings".Equals(parameters.SettingsPath.Ext, StringComparison.OrdinalIgnoreCase))
@@ -111,7 +111,7 @@ namespace AnFake.Core
 				var args = new Args("/", ":")
 					.Param(assembly.Path.Full)
 					.Option("TestCaseFilter", parameters.TestCaseFilter)					
-					.Option("Platform", parameters.Platform)
+					.Option("Platform", UnifiedPlatformName(parameters.Platform))
 					.Option("Framework", parameters.Framework)
 					.Option("EnableCodeCoverage", parameters.EnableCodeCoverage)
 					.Option("InIsolation", parameters.InIsolation)
@@ -124,7 +124,7 @@ namespace AnFake.Core
 				var stderr = new List<string>();
 
 				var startTime = DateTime.UtcNow;
-				Process.Run(p =>
+				var result = Process.Run(p =>
 				{
 					p.FileName = parameters.ToolPath;
 					p.WorkingDirectory = workDir;
@@ -152,6 +152,9 @@ namespace AnFake.Core
 				if (!processed)
 				{
 					stderr.ForEach(Trace.Error);
+
+					result.FailIfExitCodeNonZero(
+						String.Format("VsTest failed with exit code {0}. Assembly: {1}", result.ExitCode, assembly));
 				}
 			}
 
@@ -191,6 +194,14 @@ namespace AnFake.Core
 			}
 
 			return candidates[0].Path;
+		}
+
+		private static string UnifiedPlatformName(string platform)
+		{
+			return
+				"Win32".Equals(platform, StringComparison.OrdinalIgnoreCase)
+					? "x86"
+					: platform;
 		}
 	}
 }

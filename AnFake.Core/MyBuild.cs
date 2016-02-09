@@ -19,12 +19,39 @@ namespace AnFake.Core
 		/// </summary>
 		public sealed class Params
 		{
+			/// <summary>
+			///		Properties passed either via command line or settings file.
+			/// </summary>
 			public readonly IDictionary<string, string> Properties;
+			
+			/// <summary>
+			///		Working directory where AnFake was started.
+			/// </summary>
 			public readonly FileSystemPath Path;
+			
+			/// <summary>
+			///		Log file.
+			/// </summary>		
 			public readonly FileItem LogFile;
+			
+			/// <summary>
+			///		Script file.
+			/// </summary>
 			public readonly FileItem ScriptFile;
+
+			/// <summary>
+			///		Requested targets.
+			/// </summary>
 			public readonly string[] Targets;
+
+			/// <summary>
+			///		Build log verbosity (in MsBuild terms).
+			/// </summary>
 			public readonly Verbosity Verbosity;
+			
+			/// <summary>
+			///		Current AnFake version.
+			/// </summary>
 			public readonly Version AnFakeVersion;
 
 			public bool DoNotExposeTestResults;

@@ -90,6 +90,12 @@ namespace AnFake.Api
 				return this;
 			}
 
+			public Builder WithLink(string href, string label)
+			{
+				_msg.Links.Add(new Hyperlink(href, label));
+				return this;
+			}
+
 			public Builder WithLink(Uri href, string label)
 			{
 				_msg.Links.Add(new Hyperlink(href, label));

@@ -15,6 +15,8 @@ namespace AnFake.Core
 	/// </remarks>
 	public sealed class FileSet : IEnumerable<FileItem>
 	{
+		internal const string SkipPattern = "anf::skip";
+
 		private enum PatternType
 		{
 			Include,
@@ -58,6 +60,9 @@ namespace AnFake.Core
 			if (wildcardedPath == null)
 				throw new ArgumentException("FileSet.Include(wildcardedPath): wildcardedPath must not be null");
 
+			if (SkipPattern == wildcardedPath)
+				return this;
+
 			return Include(wildcardedPath.AsPath());
 		}
 
@@ -85,6 +90,9 @@ namespace AnFake.Core
 		{
 			if (wildcardedPath == null)
 				throw new ArgumentException("FileSet.Exclude(wildcardedPath): wildcardedPath must not be null");
+
+			if (SkipPattern == wildcardedPath)
+				return this;
 
 			return Exclude(wildcardedPath.AsPath());
 		}
