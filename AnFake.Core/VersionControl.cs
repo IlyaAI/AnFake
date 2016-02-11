@@ -8,7 +8,7 @@ namespace AnFake.Core
 	/// </summary>
 	public static class VersionControl
 	{
-		private readonly static Lazy<IVersionControl> Instance
+		private static readonly Lazy<IVersionControl> Instance
 			= new Lazy<IVersionControl>(Plugin.Get<IVersionControl>);
 
 		/// <summary>

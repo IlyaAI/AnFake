@@ -40,6 +40,9 @@
     <Reference Include="ICSharpCode.SharpZipLib">
       <HintPath>..\.AnFake\ICSharpCode.SharpZipLib.dll</HintPath>
     </Reference>
+    <Reference Include="NuGet">
+      <HintPath>..\packages\NuGet.CommandLine.2.8.5\tools\NuGet.exe</HintPath>
+    </Reference>
     <Reference Include="Rhino.Mocks">
       <HintPath>..\packages\RhinoMocks.3.6.1\lib\net\Rhino.Mocks.dll</HintPath>
     </Reference>
@@ -68,6 +71,7 @@
     </Content>
     <Compile Include="FolderItemTest.cs" />
     <Compile Include="FileItemTest.cs" />
+    <Compile Include="NuGetTest.cs" />
     <Compile Include="RobocopyTest.cs" />
     <Compile Include="FolderSetTest.cs" />
     <Compile Include="MyBuildTest.cs" />

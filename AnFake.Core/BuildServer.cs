@@ -9,7 +9,7 @@ namespace AnFake.Core
 	/// </summary>
 	public static class BuildServer
 	{
-		private readonly static Lazy<IBuildServer> Instance 
+		private static readonly Lazy<IBuildServer> Instance 
 			= new Lazy<IBuildServer>(Plugin.Get<IBuildServer>);
 
 		private static IBuildServer _local;
@@ -129,55 +129,6 @@ namespace AnFake.Core
 				throw new ArgumentException("BuildServer.ExposeArtifacts(files[, type]): files must not be null");
 
 			Instance.Value.ExposeArtifacts(files, type);
-		}
-
-		//
-		// Experimental Stuff
-		//
-
-		/*
-		public static bool HasPipeIn
-		{
-			get { return Instance.Value.HasPipeIn; }
-		}
-
-		public static class PipeIn
-		{
-			public static int ChangesetId
-			{
-				get { return Instance.Value.PipeInChangesetId; }
-			}
-
-			public static void GetArtifact(FileItem file, FileSystemPath dstPath, ArtifactType type = ArtifactType.Deliverables)
-			{
-				if (file == null)
-					throw new ArgumentException("BuildServer.PipeIn.GetArtifact(file, dstPath[, type]): file must not be null");
-				if (dstPath == null)
-					throw new ArgumentException("BuildServer.PipeIn.GetArtifact(file, dstPath[, type]): dstPath must not be null");
-
-				Instance.Value.GetPipeInArtifact(file, dstPath, type);
-			}
-
-			public static void GetArtifact(FolderItem folder, FileSystemPath dstPath, ArtifactType type = ArtifactType.Deliverables)
-			{
-				if (folder == null)
-					throw new ArgumentException("BuildServer.PipeIn.GetArtifact(folder, dstPath[, type]): folder must not be null");
-				if (dstPath == null)
-					throw new ArgumentException("BuildServer.PipeIn.GetArtifact(folder, dstPath[, type]): dstPath must not be null");
-
-				Instance.Value.GetPipeInArtifact(folder, dstPath, type);
-			}
-
-			public static void GetArtifacts(FileSet files, FileSystemPath dstPath, ArtifactType type = ArtifactType.Deliverables)
-			{
-				if (files == null)
-					throw new ArgumentException("BuildServer.PipeIn.GetArtifacts(files, dstPath[, type]): files must not be null");
-				if (dstPath == null)
-					throw new ArgumentException("BuildServer.PipeIn.GetArtifacts(files, dstPath[, type]): dstPath must not be null");
-
-				Instance.Value.GetPipeInArtifacts(files, dstPath, type);
-			}
-		}
-		*/
+		}		
 	}
 }

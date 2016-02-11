@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -15,13 +16,14 @@ namespace AnFake.Plugins.TeamCity
 	{
 		private const string ArtifactsFolder = ".artifacts";
 
-		private readonly IList<string> _summary = new List<string>();
+		private readonly Stack<string> _blockNames = new Stack<string>();
 		private readonly ServiceMessageFormatter _formatter;
 		private readonly string _tcUri;
 		private readonly string _tcBuildId;
 		private readonly string _tcBuildTypeId;
+		private readonly FolderItem _tcCheckoutFolder;
 		private int _errorsCount;
-		private int _warningsCount;
+		private int _warningsCount;		
 
 		public TeamCityPlugin()
 		{
@@ -30,6 +32,7 @@ namespace AnFake.Plugins.TeamCity
 			_tcUri = MyBuild.GetProp("TeamCity.Uri", null);
 			_tcBuildId = MyBuild.GetProp("TeamCity.BuildId", null);
 			_tcBuildTypeId = MyBuild.GetProp("TeamCity.BuildTypeId", null);
+			_tcCheckoutFolder = MyBuild.GetProp("TeamCity.CheckoutFolder", "").AsFolder();
 
 			if (_tcBuildId != null && _tcBuildTypeId == null || _tcBuildId == null && _tcBuildTypeId != null)
 				throw new InvalidConfigurationException("TeamCity plugin requires both 'TeamCity.BuildId' and 'TeamCity.BuildTypeId' to be specified in build properties.");
@@ -142,12 +145,9 @@ namespace AnFake.Plugins.TeamCity
 
 		private void OnBuildFinished(object sender, MyBuild.RunDetails details)
 		{
-			WriteBlockOpened("SUMMARY");
-			foreach (var line in _summary)
-			{
-				WriteNormal(line);
-			}
-			WriteBlockClosed("SUMMARY");
+			WriteBlockOpened("= SUMMARY =");
+			WriteSummary(details.ExecutedTargets);
+			WriteBlockClosed("= SUMMARY =");
 
 			WriteBuildStatus(
 				String.Format(
@@ -158,7 +158,7 @@ namespace AnFake.Plugins.TeamCity
 
 		private void OnTestSetProcessed(object sender, TestSet testSet)
 		{
-			WriteImportData(testSet.RunnerType.ToLowerInvariant(), testSet.TraceFile.Path.ToRelative(MyBuild.Current.Path).Spec);
+			WriteImportData(testSet.RunnerType.ToLowerInvariant(), testSet.TraceFile.Path.ToRelative(_tcCheckoutFolder).Spec);
 
 			if (TeamCity.WaitAfterImport != TimeSpan.Zero)
 			{
@@ -170,7 +170,7 @@ namespace AnFake.Plugins.TeamCity
 
 		private void OnTargetPhaseStarted(object sender, string phase)
 		{
-			WriteBlockOpened(String.Format("{0}.{1}", ((Target) sender).Name, phase));
+			WriteBlockOpened(String.Format("{0}.{1}", ((Target) sender).Name, phase));			
 		}
 
 		private void OnTargetPhaseFinished(object sender, string phase)
@@ -210,30 +210,8 @@ namespace AnFake.Plugins.TeamCity
 				else
 				{
 					WriteNormal(msg);
-				}
-
-				msg = String.Format(@"{0}: {1} error(s) {2} warning(s) {3} messages(s) {4:hh\:mm\:ss} {5}",
-					target.Name, target.Messages.ErrorsCount, target.Messages.WarningsCount, target.Messages.SummariesCount,
-					target.RunTime, target.State.ToHumanReadable().ToUpperInvariant());
-				_summary.Add(msg);
-
-				foreach (var message in target.Messages.Where(x => x.Level == TraceMessageLevel.Summary))
-				{
-					_summary.Add(String.Format("    {0}", message.Message));
-					foreach (var link in message.Links)
-					{
-						_summary.Add(
-							String.Format("    {0} {1}", link.Label, link.Href));
-					}
-				}
-			}
-
-			_summary.Add(new String('=', 48));
-			_summary.Add(
-				String.Format(
-					"'{0}' {1}",
-					topTarget.Name,
-					topTarget.State.ToHumanReadable().ToUpperInvariant()));
+				}				
+			}			
 
 			WriteBlockClosed(topTarget.Name);
 		}
@@ -246,17 +224,60 @@ namespace AnFake.Plugins.TeamCity
 			switch (message.Level)
 			{
 				case TraceMessageLevel.Warning:
-					WriteWarning(message.ToString("mlf"));
+					WriteWarning(message.ToString("nmlf"));
 					break;
 
 				case TraceMessageLevel.Error:
-					WriteError("ERROR " + message.ToString("mlf"), message.Details);
+					WriteError(message.ToString("nmlf"), message.Details);
 					WriteBuildProblem(message.ToString("apd"));
 					break;
 
 				default:
-					WriteNormal(message.ToString("mlfd"));
+					WriteNormal(message.ToString("nmlfd"));
 					break;
+			}
+		}
+
+		[SuppressMessage("ReSharper", "SwitchStatementMissingSomeCases")]
+		private void WriteSummary(IEnumerable<Target> executedTargets)
+		{
+			var index = 0;
+
+			foreach (var target in executedTargets)
+			{
+				var msg = String.Format(@"{0}: {1} error(s) {2} warning(s) {3} messages(s) {4:hh\:mm\:ss} {5}",
+					target.Name, target.Messages.ErrorsCount, target.Messages.WarningsCount, target.Messages.SummariesCount,
+					target.RunTime, target.State.ToHumanReadable().ToUpperInvariant());
+
+				if (target.Messages.ErrorsCount > 0)
+				{
+					WriteError(msg, null);					
+				}
+				else if (target.Messages.WarningsCount > 0)
+				{
+					WriteWarning(msg);
+				}
+				else
+				{
+					WriteNormal(msg);
+				}
+								
+				foreach (var message in target.Messages)
+				{
+					msg = String.Format("[{0,4}] {1}", ++index, message.ToString("apld"));					
+					switch (message.Level)
+					{
+						case TraceMessageLevel.Error:
+							WriteError(msg, null);
+							break;
+						case TraceMessageLevel.Warning:
+							WriteWarning(msg);
+							break;
+						default:
+							WriteNormal(msg);
+							break;
+					}
+				}
 			}
 		}
 
@@ -294,11 +315,17 @@ namespace AnFake.Plugins.TeamCity
 		public void WriteBlockOpened(string name)
 		{
 			Console.WriteLine(_formatter.FormatMessage("blockOpened", new {name}));
+
+			_blockNames.Push(name);
+
+			Console.WriteLine(_formatter.FormatMessage("progressMessage", String.Join(" > ", _blockNames.Reverse())));
 		}
 
 		public void WriteBlockClosed(string name)
 		{
 			Console.WriteLine(_formatter.FormatMessage("blockClosed", new {name}));
+
+			_blockNames.Pop();
 		}
 
 		private void WriteImportData(string type, string path)
