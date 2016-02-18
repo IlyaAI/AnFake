@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using AnFake.Api;
 using AnFake.Core.Integration.Tests;
 
@@ -32,11 +33,17 @@ namespace AnFake.Core
 			public bool EnableCodeCoverage;
 			public bool InIsolation;
 			public FileSystemPath SettingsPath;
-			public FileSystemPath TestAdapterPath;
+			public FileSystemPath TestAdapterPath;			
 			public FileSystemPath WorkingDirectory;
-			public TimeSpan Timeout;			
+			public TimeSpan Timeout;
 			public FileSystemPath ToolPath;
 			public string ToolArguments;
+
+			/// <summary>
+			///		Action invoked after .trx file processing for each assembly.
+			///		First argument is assembly name, second - .trx file (might be null).
+			/// </summary>
+			public Action<string, FileItem> OnTrace;
 
 			internal Params()
 			{
@@ -134,11 +141,11 @@ namespace AnFake.Core
 				});
 				var endTime = DateTime.UtcNow;
 
-				var processed = false;				
-				if (postProcessor != null)
+				var processed = false;
+				var trxPath = FindDotTrx(workDir/resultPath, startTime, endTime);
+				if (trxPath != null)
 				{
-					var trxPath = FindDotTrx(workDir/resultPath, startTime, endTime);
-					if (trxPath != null)
+					if (postProcessor != null)
 					{
 						var currentTests = postProcessor
 							.PostProcess(assembly.Name, trxPath.AsFile())
@@ -146,11 +153,19 @@ namespace AnFake.Core
 
 						tests.AddRange(currentTests);
 						processed = true;
-					}					
+					}
+				}
+
+				if (parameters.OnTrace != null)
+				{
+					parameters.OnTrace.Invoke(assembly.Name, trxPath != null ? trxPath.AsFile() : null);
 				}
 
 				if (!processed)
 				{
+					Trace.Info(result.LastOutput);
+					Trace.Info("");
+
 					stderr.ForEach(Trace.Error);
 
 					result.FailIfExitCodeNonZero(

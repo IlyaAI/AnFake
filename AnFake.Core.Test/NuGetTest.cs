@@ -2,6 +2,7 @@
 
 namespace AnFake.Core.Test
 {
+	[DeploymentItem("NuGet.exe")]
 	[TestClass]
 	public class NuGetTest
 	{
