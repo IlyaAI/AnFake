@@ -18,6 +18,8 @@ namespace AnFake.Core.Integration.Tracking
 
 		object GetField(string name);
 
+		object GetField(string name, object defaultValue);
+
 		void SetField(string name, object value);
 
 		void Save();

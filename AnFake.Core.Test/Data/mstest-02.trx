@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<TestRun id="3cbe46be-1b7a-4e24-8bdb-86e5df111142" name="IlyaAI 2014-10-15 17:33:14" runUser="IlyaAI" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">  
+  <Times creation="2014-10-15T17:33:14.0170486+07:00" queuing="2014-10-15T17:33:16.2902759+07:00" start="2014-10-15T17:33:16.8363305+07:00" finish="2014-10-15T17:33:38.1874654+07:00" />
+  <ResultSummary outcome="Failed">
+  </ResultSummary>
+  <TestDefinitions>
+    <UnitTest name="Test1" storage="test.dll" id="b0d5cfd2-e822-325d-c434-14d04893e64b">
+      <Execution id="3989ed8f-c65f-4cf0-b2ea-48114add52e7" />
+      <TestMethod codeBase="test.dll" adapterTypeName="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestAdapter, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.Adapter, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" className="AllInOne.TestDataTestSuite, AllInOne, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" name="Test1" />
+    </UnitTest>    
+  </TestDefinitions>
+  <Results>
+    <UnitTestResult executionId="3989ed8f-c65f-4cf0-b2ea-48114add52e7" testId="b0d5cfd2-e822-325d-c434-14d04893e64b" testName="Test1" computerName="IVANOV-I" duration="00:00:00.7088514" startTime="2014-10-15T17:33:17.1383607+07:00" endTime="2014-10-15T17:33:36.0892556+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d">
+      <Output>
+        <StdOut>Invalid char here: &#x0F;</StdOut>
+      </Output>      
+    </UnitTestResult>    
+  </Results>
+</TestRun>

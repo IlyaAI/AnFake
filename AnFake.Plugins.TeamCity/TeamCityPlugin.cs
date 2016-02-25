@@ -158,14 +158,45 @@ namespace AnFake.Plugins.TeamCity
 
 		private void OnTestSetProcessed(object sender, TestSet testSet)
 		{
-			WriteImportData(testSet.RunnerType.ToLowerInvariant(), testSet.TraceFile.Path.ToRelative(_tcCheckoutFolder).Spec);
-
-			if (TeamCity.WaitAfterImport != TimeSpan.Zero)
+			if (TeamCity.DoNotImportTestTrace)
 			{
-				// Give a little time to TeamCity to process trace file.
-				// This is neccessary to prevent log cloging.
-				Thread.Sleep(TeamCity.WaitAfterImport);
-			}			
+				WriteTestSuiteStarted(testSet.Name);
+
+				foreach (var test in testSet.Tests)
+				{
+					var fullName = test.Suite + '.' + test.Name;
+					if (test.Status == TestStatus.Skipped || test.Status == TestStatus.Unknown)
+					{
+						WriteTestIgnored(fullName, test.ErrorMessage);
+					}
+					else
+					{
+						WriteTestStarted(fullName);
+						if (!String.IsNullOrWhiteSpace(test.Output))
+						{
+							WriteTestStdOut(fullName, test.Output);
+						}
+						if (test.Status == TestStatus.Failed)
+						{
+							WriteTestFailed(fullName, test.ErrorMessage, test.ErrorStackTrace);
+						}
+						WriteTestFinished(fullName, test.RunTime);
+					}
+				}
+
+				WriteTestSuiteFinished(testSet.Name);
+			}
+			else
+			{
+				WriteImportData(testSet.RunnerType.ToLowerInvariant(), testSet.TraceFile.Path.ToRelative(_tcCheckoutFolder).Spec);
+
+				if (TeamCity.WaitAfterTestTraceImport != TimeSpan.Zero)
+				{
+					// Give a little time to TeamCity to process trace file.
+					// This is neccessary to prevent TeamCity's log cloging.
+					Thread.Sleep(TeamCity.WaitAfterTestTraceImport);
+				}
+			}						
 		}
 
 		private void OnTargetPhaseStarted(object sender, string phase)
@@ -331,6 +362,46 @@ namespace AnFake.Plugins.TeamCity
 		private void WriteImportData(string type, string path)
 		{
 			Console.WriteLine(_formatter.FormatMessage("importData", new {type, path}));
+		}
+
+		public void WriteTestSuiteStarted(string name)
+		{
+			Console.WriteLine(_formatter.FormatMessage("testSuiteStarted", new { name }));
+		}
+
+		public void WriteTestSuiteFinished(string name)
+		{
+			Console.WriteLine(_formatter.FormatMessage("testSuiteFinished", new { name }));
+		}
+
+		public void WriteTestStarted(string name)
+		{
+			Console.WriteLine(_formatter.FormatMessage("testStarted", new { name }));
+		}
+
+		public void WriteTestFinished(string name, TimeSpan duration)
+		{
+			Console.WriteLine(_formatter.FormatMessage("testFinished", new { name, duration = (long)duration.TotalMilliseconds }));
+		}
+
+		public void WriteTestIgnored(string name, string message)
+		{
+			Console.WriteLine(_formatter.FormatMessage("testIgnored", new { name, message }));
+		}
+
+		public void WriteTestFailed(string name, string message, string details)
+		{
+			Console.WriteLine(_formatter.FormatMessage("testFailed", new { name, message, details }));
+		}
+
+		public void WriteTestStdOut(string name, string @out)
+		{
+			Console.WriteLine(_formatter.FormatMessage("testStdOut", new { name, @out }));
+		}
+
+		public void WriteTestStdErr(string name, string @out)
+		{
+			Console.WriteLine(_formatter.FormatMessage("testStdErr", new { name, @out }));
 		}
 
 		private void WriteBuildProblem(string description)

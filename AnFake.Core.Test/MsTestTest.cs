@@ -7,6 +7,7 @@ using Rhino.Mocks;
 namespace AnFake.Core.Test
 {
 	[DeploymentItem("Data/mstest-01.trx", "Data")]
+	[DeploymentItem("Data/mstest-02.trx", "Data")]
 	[TestClass]
 	public class MsTestTest
 	{
@@ -46,6 +47,23 @@ namespace AnFake.Core.Test
 			Assert.AreEqual("TestDataNegativeTest", tests[0].Name);
 			Assert.IsFalse(String.IsNullOrWhiteSpace(tests[0].ErrorMessage));
 			Assert.IsFalse(String.IsNullOrWhiteSpace(tests[0].ErrorStackTrace));
+		}
+
+		[TestCategory("Functional")]
+		[TestMethod]
+		public void MsTestPostProcessor_should_parse_trx_with_some_invalid_chars()
+		{
+			// arrange
+			var pp = new MsTrxPostProcessor();
+
+			// act
+			var testSet = pp.PostProcess("Test", "Data/mstest-02.trx".AsFile());
+
+			// assert
+			var tests = testSet.Tests;
+			Assert.AreEqual(1, tests.Count);
+			Assert.IsNotNull(tests[0].Output);
+			Assert.IsTrue(tests[0].Output.Contains("Invalid char here: \x0F"));
 		}		
 	}
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Text;
+using System.Xml;
 
 namespace AnFake.Core.Integration.Tests
 {
@@ -15,7 +16,7 @@ namespace AnFake.Core.Integration.Tests
 		/// <returns></returns>
 		public TestSet PostProcess(string setName, FileItem traceFile)
 		{
-			var xdoc = traceFile.AsXmlDoc();
+			var xdoc = traceFile.AsXmlDoc(new XmlReaderSettings {CheckCharacters = false});
 			xdoc.Ns("t", "http://microsoft.com/schemas/VisualStudio/TeamTest/2010");
 
 			var attachmentsFolder = (FolderItem)null;

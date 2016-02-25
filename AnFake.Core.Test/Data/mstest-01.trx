@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
-<TestRun id="3cbe46be-1b7a-4e24-8bdb-86e5df111142" name="Ivanov_I@IVANOV-I 2014-10-15 17:33:14" runUser="KL\Ivanov_I" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+<TestRun id="3cbe46be-1b7a-4e24-8bdb-86e5df111142" name="IlyaAI 2014-10-15 17:33:14" runUser="IlyaAI" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
   <TestSettings name="TestSettings" id="4169238d-e018-4ec7-b0c2-5dc11902fc3f">
     <Description>These are default test settings for a local test run.</Description>
     <Deployment userDeploymentRoot="C:\Projects\Compliance\dev2\.out\test" useDefaultDeploymentRoot="false" enabled="false" runDeploymentRoot="Ivanov_I_IVANOV-I 2014-10-15 17_33_14" />

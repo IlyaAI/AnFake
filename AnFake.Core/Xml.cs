@@ -461,7 +461,31 @@ namespace AnFake.Core
 			{
 				return LoadXDoc(reader, file);
 			}
-		}		
+		}
+
+		///  <summary>
+		/// 		Loads XML document from given file.
+		///  </summary>
+		///  <remarks>
+		/// 		Returned document might be saved to the same file with <c>XDoc.Save</c> method.
+		///  </remarks>
+		///  <param name="file">file to load xml from (not null)</param>
+		/// <param name="settings">xml reader settings</param>
+		/// <returns>XML document</returns>
+		public static XDoc AsXmlDoc(this FileItem file, XmlReaderSettings settings)
+		{
+			if (file == null)
+				throw new ArgumentException("Xml.AsXmlDoc(file, settings): file must not be null");
+			if (settings == null)
+				throw new ArgumentException("Xml.AsXmlDoc(file, settings): settings must not be null");
+
+			using (var stream = new FileStream(file.Path.Full, FileMode.Open, FileAccess.Read))
+			using (var textReader = new StreamReader(stream))
+			using (var xmlReader = XmlReader.Create(textReader, settings))
+			{
+				return LoadXDoc(xmlReader, file);
+			}
+		}
 
 		/// <summary>
 		///		Loads XML document from given string.

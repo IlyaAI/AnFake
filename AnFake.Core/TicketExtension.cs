@@ -10,9 +10,19 @@ namespace AnFake.Core
 			return (string) ticket.GetField(name);
 		}
 
+		public static string GetStringField(this ITicket ticket, string name, string defaultValue)
+		{
+			return (string)ticket.GetField(name, defaultValue);
+		}
+
 		public static int GetIntField(this ITicket ticket, string name)
 		{
 			return (int) ticket.GetField(name);
+		}
+
+		public static int GetIntField(this ITicket ticket, string name, int defaultValue)
+		{
+			return (int)ticket.GetField(name, defaultValue);
 		}
 
 		public static bool GetBoolField(this ITicket ticket, string name)
@@ -20,9 +30,19 @@ namespace AnFake.Core
 			return (bool) ticket.GetField(name);
 		}
 
+		public static bool GetBoolField(this ITicket ticket, string name, bool defaultValue)
+		{
+			return (bool)ticket.GetField(name, defaultValue);
+		}
+
 		public static DateTime GetDateField(this ITicket ticket, string name)
 		{
 			return (DateTime) ticket.GetField(name);
+		}
+
+		public static DateTime GetDateField(this ITicket ticket, string name, DateTime defaultValue)
+		{
+			return (DateTime)ticket.GetField(name, defaultValue);
 		}
 
 		public static void SetStringField(this ITicket ticket, string name, string value)

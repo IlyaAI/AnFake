@@ -81,14 +81,27 @@ namespace AnFake.Plugins.Tfs2012
 			public string Reason
 			{
 				get { return _impl.Reason; }
-			}			
+			}
 
 			public object GetField(string name)
 			{
 				if (!_impl.Fields.Contains(name))
 					throw new InvalidConfigurationException(String.Format("WorkItem doesn't have '{0}' field.", name));
 
-				return _impl.Fields[name].Value;
+				var val = _impl.Fields[name].Value;
+				if (val == null)
+					throw new InvalidConfigurationException(String.Format("WorkItem field '{0}' is null.", name));
+
+				return val;
+			}
+
+			public object GetField(string name, object defaultValue)
+			{
+				if (!_impl.Fields.Contains(name))
+					return defaultValue;
+
+				var val = _impl.Fields[name].Value;
+				return val ?? defaultValue;
 			}
 
 			public void SetField(string name, object value)

@@ -8,7 +8,18 @@ namespace AnFake.Plugins.TeamCity
 	/// </summary>
 	public static class TeamCity
 	{
-		public static TimeSpan WaitAfterImport = TimeSpan.FromSeconds(1.5);
+		/// <summary>
+		///		Turns off import of whole test trace file into TeamCity. Instead each test will be reported separately by AnFake.
+		///		This mode might be used if you would like to use VsTest.Params.TestSetPrefix for example.
+		/// </summary>		
+		public static bool DoNotImportTestTrace = false;
+		
+		/// <summary>
+		///		Specifies delay after emitting TeamCity service message 'importData'.
+		///		TeamCity process data and writes messages to build log in parallel with build script which might clog the output.
+		///		This delay takes TeamCity a bit time to do it work.
+		/// </summary>
+		public static TimeSpan WaitAfterTestTraceImport = TimeSpan.FromSeconds(1.5);
 
 		private static TeamCityPlugin _impl;
 		private static TeamCityPlugin Impl

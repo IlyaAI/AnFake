@@ -112,6 +112,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Data\mstest-02.trx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="Data\mstest-01.trx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

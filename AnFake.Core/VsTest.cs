@@ -40,6 +40,14 @@ namespace AnFake.Core
 			public string ToolArguments;
 
 			/// <summary>
+			///		Prefix added to test-set name. Might be used to produce unique test-set names for different configurations.
+			/// </summary>
+			/// <remarks>
+			///		IMPORTANT! This prefix affect only AnFake handlers not a produced .trx file.
+			/// </remarks>
+			public string TestSetPrefix;
+
+			/// <summary>
 			///		Action invoked after .trx file processing for each assembly.
 			///		First argument is assembly name, second - .trx file (might be null).
 			/// </summary>
@@ -147,8 +155,12 @@ namespace AnFake.Core
 				{
 					if (postProcessor != null)
 					{
+						var testSetName = String.IsNullOrWhiteSpace(parameters.TestSetPrefix)
+							? assembly.Name
+							: parameters.TestSetPrefix + assembly.Name;
+						
 						var currentTests = postProcessor
-							.PostProcess(assembly.Name, trxPath.AsFile())
+							.PostProcess(testSetName, trxPath.AsFile())
 							.Trace();
 
 						tests.AddRange(currentTests);
