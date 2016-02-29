@@ -10,6 +10,21 @@ namespace AnFake.Core.Integration
 			get { return true; }
 		}
 
+		public int CurrentChangesetId
+		{
+			get { return 0; }
+		}
+
+		public string CurrentChangesetHash
+		{
+			get { return ""; }
+		}
+
+		public int CurrentBuildCounter
+		{
+			get { return 0; }
+		}
+
 		public bool CanExposeArtifacts
 		{
 			get { return true; }

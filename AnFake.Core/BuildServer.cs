@@ -38,6 +38,30 @@ namespace AnFake.Core
 		}
 
 		/// <summary>
+		///		Current build changeset id. Throws exception if VCS doesn't provide integer identifier.
+		/// </summary>
+		public static int CurrentChangesetId
+		{
+			get { return Instance.Value.CurrentChangesetId; }
+		}
+
+		/// <summary>
+		///		Current build changeset hash.
+		/// </summary>
+		public static string CurrentChangesetHash
+		{
+			get { return Instance.Value.CurrentChangesetHash; }
+		}
+
+		/// <summary>
+		///		Current build number. Throws exception if build server doesn't provide integer build number.
+		/// </summary>
+		public static int CurrentBuildCounter
+		{
+			get { return Instance.Value.CurrentBuildCounter; }
+		}
+
+		/// <summary>
 		///		Can this build expose artifacts?
 		/// </summary>
 		public static bool CanExposeArtifacts

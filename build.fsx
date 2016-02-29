@@ -51,7 +51,7 @@ let productDescription =
     "forget about build process templates! " +
     "Integration with TFS 2012/2013 provided out-of-box."
 let productAuthor = "IlyaAI"
-let productVersion = "1.2.0".AsVersion()
+let productVersion = "1.2.1".AsVersion()
 let productHome = "http://ilyaai.github.io/AnFake"
 let productTags = "team build f# c# tfs"
 

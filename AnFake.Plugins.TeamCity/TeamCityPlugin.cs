@@ -20,6 +20,8 @@ namespace AnFake.Plugins.TeamCity
 		private readonly string _tcBuildId;
 		private readonly string _tcBuildTypeId;
 		private readonly FolderItem _tcCheckoutFolder;
+		private readonly int _tcBuildCounter;
+		private readonly string _tcBuildVcsNumber;
 		private int _errorsCount;
 		private int _warningsCount;		
 
@@ -38,8 +40,18 @@ namespace AnFake.Plugins.TeamCity
 			if (_tcBuildId != null && _tcUri == null)
 				throw new InvalidConfigurationException("TeamCity plugin requires 'TeamCity.Uri' to be specified in build properties.");
 
+			if (!Int32.TryParse(MyBuild.GetProp("TeamCity.BuildCounter", "0"), out _tcBuildCounter))
+				throw new InvalidConfigurationException("TeamCity plugin requires 'TeamCity.BuildCounter' property to be an integer.");
+
+			if (_tcBuildCounter == 0 && _tcBuildId != null)
+				throw new InvalidConfigurationException("TeamCity plugin requires 'TeamCity.BuildCounter' to be specified in build properties.");
+
+			_tcBuildVcsNumber = MyBuild.GetProp("TeamCity.BuildVcsNumber", null);
+			if (_tcBuildVcsNumber == null && _tcBuildId != null)
+				throw new InvalidConfigurationException("TeamCity plugin requires 'TeamCity.BuildVcsNumber' to be specified in build properties.");
+
 			if (_tcUri != null)
-			{
+			{				
 				Log.DisableConsoleEcho();
 				Trace.MessageReceived += OnTraceMessage;
 
@@ -84,6 +96,45 @@ namespace AnFake.Plugins.TeamCity
 		public bool IsLocal
 		{
 			get { return _tcBuildId == null; }
+		}
+
+		public int CurrentChangesetId
+		{
+			get
+			{
+				if (_tcBuildVcsNumber != null)
+				{
+					int val;
+					if (Int32.TryParse(_tcBuildVcsNumber, out val))
+						return val;
+				}
+				else
+				{
+					if (_tcBuildId == null) // is local?
+						return 0;
+				}
+
+				throw new InvalidConfigurationException("VCS doesn't provide integer changeset identifier. Use CurrentChangesetHash instead.");
+			}
+		}
+
+		public string CurrentChangesetHash
+		{
+			get
+			{
+				if (_tcBuildVcsNumber != null)
+					return _tcBuildVcsNumber;
+				
+				if (_tcBuildId == null) // is local?
+					return "";
+
+				throw new InvalidOperationException("Inconsistency detected: TeamCity plugin requires 'TeamCity.BuildVcsNumber' for non-local builds but it is undefined.");
+			}
+		}
+
+		public int CurrentBuildCounter
+		{
+			get { return _tcBuildCounter; }
 		}
 
 		public bool CanExposeArtifacts

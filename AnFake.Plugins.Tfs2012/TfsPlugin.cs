@@ -306,10 +306,7 @@ namespace AnFake.Plugins.Tfs2012
 
 		public int CurrentChangesetId
 		{
-			get
-			{
-				return CurrentChangesetOf(MyBuild.Current.Path);
-			}
+			get { return CurrentChangesetOf(MyBuild.Current.Path); }
 		}
 
 		public IChangeset GetChangeset(int changesetId)
@@ -322,6 +319,16 @@ namespace AnFake.Plugins.Tfs2012
 		public bool IsLocal
 		{
 			get { return _build == null; }
+		}
+
+		public string CurrentChangesetHash
+		{
+			get { return CurrentChangesetId.ToString(); }
+		}
+
+		public int CurrentBuildCounter
+		{
+			get { throw new NotSupportedException("TFS doesn't provide integer build number."); }
 		}
 
 		public bool CanExposeArtifacts
