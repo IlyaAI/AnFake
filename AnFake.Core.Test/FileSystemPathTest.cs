@@ -383,5 +383,19 @@ namespace AnFake.Core.Test
 				// it's expected
 			}
 		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void FileSystemPath_should_return_path_itself_if_empty_appended()
+		{
+			// arrange
+			var path = "/some/path".AsPath();
+
+			// act 
+			var result = path/"";
+			
+			// assert
+			Assert.AreEqual("\\some\\path", result.Spec);
+		}
 	}
 }

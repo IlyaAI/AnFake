@@ -32,7 +32,7 @@ namespace AnFake.Core.Integration
 		/// <param name="file">file to be exposed</param>
 		/// <param name="type"><see cref="ArtifactType"/></param>
 		/// <returns>URI of exposed artifact (not null)</returns>
-		Uri ExposeArtifact(FileItem file, ArtifactType type);
+		Uri ExposeArtifact(FileItem file, string type);
 
 		/// <summary>
 		///		Exposes given folder (with all content) as build artifact of specified type and returns URI to access this artifact.
@@ -41,8 +41,8 @@ namespace AnFake.Core.Integration
 		/// <param name="folder">folder to be exposed</param>
 		/// <param name="type"><see cref="ArtifactType"/></param>
 		/// <returns>URI of exposed artifact (not null)</returns>
-		/// <seealso cref="ExposeArtifact(AnFake.Core.FileItem,AnFake.Core.ArtifactType)"/>
-		Uri ExposeArtifact(FolderItem folder, ArtifactType type);
+		/// <seealso cref="ExposeArtifact(AnFake.Core.FileItem,String)"/>
+		Uri ExposeArtifact(FolderItem folder, string type);
 
 		/// <summary>
 		///		Exposes given text content as build artifact of specified type with givent name and returns URI to access this artifact.
@@ -53,8 +53,8 @@ namespace AnFake.Core.Integration
 		/// <param name="encoding">content encoding</param>
 		/// <param name="type"><see cref="ArtifactType"/></param>
 		/// <returns>URI of exposed artifact (not null)</returns>
-		/// <seealso cref="ExposeArtifact(AnFake.Core.FileItem,AnFake.Core.ArtifactType)"/>
-		Uri ExposeArtifact(string name, string content, Encoding encoding, ArtifactType type);
+		/// <seealso cref="ExposeArtifact(AnFake.Core.FileItem,String)"/>
+		Uri ExposeArtifact(string name, string content, Encoding encoding, string type);
 
 		/// <summary>
 		///		Exposes files as build artifact of specified type.
@@ -63,7 +63,7 @@ namespace AnFake.Core.Integration
 		/// <param name="files">files to be exposed</param>
 		/// <param name="type"><see cref="ArtifactType"/></param>
 		/// <returns>URI of exposed artifact (not null)</returns>
-		/// <seealso cref="ExposeArtifact(AnFake.Core.FileItem,AnFake.Core.ArtifactType)"/>
-		void ExposeArtifacts(FileSet files, ArtifactType type);		
+		/// <seealso cref="ExposeArtifact(AnFake.Core.FileItem,String)"/>
+		void ExposeArtifacts(FileSet files, string type);
 	}	
 }

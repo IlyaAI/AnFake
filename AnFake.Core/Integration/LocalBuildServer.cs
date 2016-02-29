@@ -15,22 +15,22 @@ namespace AnFake.Core.Integration
 			get { return true; }
 		}
 
-		public Uri ExposeArtifact(FileItem file, ArtifactType type)
+		public Uri ExposeArtifact(FileItem file, string type)
 		{
 			return new UriBuilder(Uri.UriSchemeFile, "") {Path = file.Path.Full}.Uri;
 		}
 
-		public Uri ExposeArtifact(FolderItem folder, ArtifactType type)
+		public Uri ExposeArtifact(FolderItem folder, string type)
 		{
 			return new UriBuilder(Uri.UriSchemeFile, "") {Path = folder.Path.Full}.Uri;
 		}
 
-		public Uri ExposeArtifact(string name, string content, Encoding encoding, ArtifactType type)
+		public Uri ExposeArtifact(string name, string content, Encoding encoding, string type)
 		{
 			return new Uri("about:blank");
 		}
 
-		public void ExposeArtifacts(FileSet files, ArtifactType type)
+		public void ExposeArtifacts(FileSet files, string type)
 		{
 			// do nothing
 		}

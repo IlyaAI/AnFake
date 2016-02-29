@@ -1,10 +1,10 @@
 namespace AnFake.Core
 {
-	public enum ArtifactType
+	public static class ArtifactType
 	{
-		Deliverables,
-		TestResults,
-		Logs,		
-		Other
+		public const string Deliverables = "Deliverables";
+		public const string TestResults = "TestResults";
+		public const string Logs = "Logs";
+		public const string Other = "Other";
 	}
 }

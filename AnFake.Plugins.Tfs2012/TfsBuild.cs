@@ -185,9 +185,9 @@ namespace AnFake.Plugins.Tfs2012
 			/// <summary>
 			///		Returns subfolder inside drop location for specified artifact type. Throws if drop location not specified.
 			/// </summary>
-			public FileSystemPath GetDropLocationOf(ArtifactType type)
+			public FileSystemPath GetDropLocationOf(string type)
 			{
-				return DropLocation/type.ToString();
+				return DropLocation/type;
 			}
 
 			/// <summary>

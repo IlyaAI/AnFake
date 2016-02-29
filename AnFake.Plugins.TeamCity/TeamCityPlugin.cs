@@ -14,8 +14,6 @@ namespace AnFake.Plugins.TeamCity
 {
 	internal sealed class TeamCityPlugin : Core.Integration.IBuildServer, IDisposable
 	{
-		private const string ArtifactsFolder = ".artifacts";
-
 		private readonly Stack<string> _blockNames = new Stack<string>();
 		private readonly ServiceMessageFormatter _formatter;
 		private readonly string _tcUri;
@@ -93,46 +91,56 @@ namespace AnFake.Plugins.TeamCity
 			get { return true; }
 		}
 
-		public Uri ExposeArtifact(FileItem file, ArtifactType type)
+		public Uri ExposeArtifact(FileItem file, string type)
 		{
 			if (IsLocal)
 				return BuildServer.Local.ExposeArtifact(file, type);
 
+			var srcPath = file.Path.ToRelative(_tcCheckoutFolder);
 			var dstPath = MakeArtifactPath(type, file.Name);
-			Files.Copy(file, ArtifactsFolder.AsPath()/dstPath, true);
+			WritePublishArtifacts(srcPath.Spec, dstPath.Spec);
 
 			return MakeArtifactUri(dstPath);
 		}
 
-		public Uri ExposeArtifact(FolderItem folder, ArtifactType type)
+		public Uri ExposeArtifact(FolderItem folder, string type)
 		{
 			if (IsLocal)
 				return BuildServer.Local.ExposeArtifact(folder, type);
 
+			var srcPath = folder.Path.ToRelative(_tcCheckoutFolder);
 			var dstPath = MakeArtifactPath(type, folder.Name);
-			Robocopy.Copy(folder.Path, ArtifactsFolder.AsPath()/dstPath, p => p.Recursion = Robocopy.RecursionMode.All);
+			WritePublishArtifacts(srcPath.Spec, dstPath.Spec);
 
 			return MakeArtifactUri(dstPath);
 		}
 
-		public Uri ExposeArtifact(string name, string content, Encoding encoding, ArtifactType type)
+		public Uri ExposeArtifact(string name, string content, Encoding encoding, string type)
 		{
 			if (IsLocal)
 				return BuildServer.Local.ExposeArtifact(name, content, encoding, type);
 
-			var dstPath = MakeArtifactPath(type, name);
-			var dstFile = (ArtifactsFolder.AsPath()/dstPath).AsFile();
-			Text.WriteTo(dstFile, content, encoding);
+			Folders.Create(".tmp");
+
+			var file = (".tmp".AsPath() / name.MakeUnique()).AsFile();
+			Text.WriteTo(file, content, encoding);
+
+			var srcPath = file.Path.ToRelative(_tcCheckoutFolder);
+			var dstPath = MakeArtifactPath(type, name);			
+			WritePublishArtifacts(srcPath.Spec, dstPath.Spec);
 
 			return MakeArtifactUri(dstPath);
 		}
 
-		public void ExposeArtifacts(FileSet files, ArtifactType type)
+		public void ExposeArtifacts(FileSet files, string type)
 		{
 			if (IsLocal)
 				return;
 
-			Files.Copy(files, ArtifactsFolder.AsPath()/type.ToString(), true);
+			foreach (var file in files)
+			{
+				ExposeArtifact(file, type);
+			}
 		}
 
 		// Event Handlers
@@ -364,6 +372,16 @@ namespace AnFake.Plugins.TeamCity
 			Console.WriteLine(_formatter.FormatMessage("importData", new {type, path}));
 		}
 
+		private void WritePublishArtifacts(string from, string to)
+		{
+			Console.WriteLine(
+				_formatter.FormatMessage(
+					"publishArtifacts", 
+					String.Format("{0}=>{1}", from, to)
+				)
+			);
+		}
+
 		public void WriteTestSuiteStarted(string name)
 		{
 			Console.WriteLine(_formatter.FormatMessage("testSuiteStarted", new { name }));
@@ -417,9 +435,9 @@ namespace AnFake.Plugins.TeamCity
 					: _formatter.FormatMessage("buildStatus", new {text}));
 		}
 
-		private FileSystemPath MakeArtifactPath(ArtifactType type, string name)
+		private static FileSystemPath MakeArtifactPath(string type, string name)
 		{
-			return type.ToString().AsPath()/name;
+			return type.AsPath()/name;
 		}
 
 		private Uri MakeArtifactUri(FileSystemPath path)

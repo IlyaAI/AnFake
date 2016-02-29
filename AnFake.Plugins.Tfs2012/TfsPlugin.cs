@@ -335,7 +335,7 @@ namespace AnFake.Plugins.Tfs2012
 			}
 		}
 
-		public Uri ExposeArtifact(FileItem file, ArtifactType type)
+		public Uri ExposeArtifact(FileItem file, string type)
 		{
 			if (_build == null)
 				return BuildServer.Local.ExposeArtifact(file, type);
@@ -344,13 +344,13 @@ namespace AnFake.Plugins.Tfs2012
 
 			Trace.InfoFormat("TfsPlugin: Exposing file '{0}'...", file);
 			
-			var dstPath = _build.DropLocation.AsPath()/type.ToString()/file.Name;
+			var dstPath = _build.DropLocation.AsPath()/type/file.Name;
 			Files.Copy(file, dstPath);
 			
 			return new Uri(dstPath.Full);
 		}
 
-		public Uri ExposeArtifact(FolderItem folder, ArtifactType type)
+		public Uri ExposeArtifact(FolderItem folder, string type)
 		{
 			if (_build == null)
 				return BuildServer.Local.ExposeArtifact(folder, type);
@@ -359,13 +359,13 @@ namespace AnFake.Plugins.Tfs2012
 
 			Trace.InfoFormat("TfsPlugin: Exposing folder '{0}'...", folder);
 
-			var dstPath = _build.DropLocation.AsPath()/type.ToString()/folder.Name;
+			var dstPath = _build.DropLocation.AsPath()/type/folder.Name;
 			Robocopy.Copy(folder.Path, dstPath, p => p.Recursion = Robocopy.RecursionMode.All);
 
 			return new Uri(dstPath.Full + Path.DirectorySeparatorChar);
 		}
 
-		public Uri ExposeArtifact(string name, string content, Encoding encoding, ArtifactType type)
+		public Uri ExposeArtifact(string name, string content, Encoding encoding, string type)
 		{
 			if (_build == null)
 				return BuildServer.Local.ExposeArtifact(name, content, encoding, type);
@@ -374,13 +374,13 @@ namespace AnFake.Plugins.Tfs2012
 
 			Trace.InfoFormat("TfsPlugin: Exposing text content '{0}'...", name);
 
-			var dstFile = (_build.DropLocation.AsPath()/type.ToString()/name).AsFile();
+			var dstFile = (_build.DropLocation.AsPath()/type/name).AsFile();
 			Text.WriteTo(dstFile, content, encoding);
 
 			return new Uri(dstFile.Path.Full);
 		}
 
-		public void ExposeArtifacts(FileSet files, ArtifactType type)
+		public void ExposeArtifacts(FileSet files, string type)
 		{
 			if (_build == null)
 			{
@@ -392,7 +392,7 @@ namespace AnFake.Plugins.Tfs2012
 
 			Trace.InfoFormat("TfsPlugin: Exposing files {{{0}}}...", files.ToFormattedString());
 
-			var dstPath = _build.DropLocation.AsPath()/type.ToString();
+			var dstPath = _build.DropLocation.AsPath()/type;
 			Files.Copy(files, dstPath);
 		}
 
@@ -618,7 +618,7 @@ namespace AnFake.Plugins.Tfs2012
 			if (!String.IsNullOrEmpty(_build.DropLocation))
 			{
 				// Visual Studio expects predefined name 'build.log' so we need to copy with new name.
-				var buildLog = _build.DropLocation.AsPath() / ArtifactType.Logs.ToString() / "build.log";
+				var buildLog = _build.DropLocation.AsPath() / ArtifactType.Logs / "build.log";
 				Files.Copy(MyBuild.Current.LogFile.Path, buildLog, true);
 				
 				summary.AppendLink("build.log", buildLog.ToUri()).Push();				
