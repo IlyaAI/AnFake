@@ -26,7 +26,8 @@ namespace AnFake.Scripting
 		{
 			"mscorlib",
 			"System",
-			"System.Core"
+			"System.Core",
+			"System.Xml"
 		};		
 
 		public sealed class CompiledScript
