@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using AnFake.Api;
 
 namespace AnFake.Core.Integration.Tests
 {
@@ -9,6 +10,7 @@ namespace AnFake.Core.Integration.Tests
 	public sealed class TestSet
 	{
 		private readonly List<TestResult> _tests = new List<TestResult>();
+		private readonly List<Hyperlink> _links = new List<Hyperlink>();
 
 		public TestSet(string name, string runnerType, FileItem traceFile, FolderItem attachmentsFolder)
 		{
@@ -58,6 +60,15 @@ namespace AnFake.Core.Integration.Tests
 		public List<TestResult> Tests
 		{
 			get { return _tests; }
+		}
+
+		/// <summary>
+		///		List of links to artifacts related to this test-set.
+		///		E.g. build server might expose .trx file as build artifact and attach link to it.
+		/// </summary>		
+		public List<Hyperlink> Links
+		{
+			get { return _links; }
 		}
 	}
 }

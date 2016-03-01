@@ -30,6 +30,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Antlr4.StringTemplate, Version=4.0.6.9004, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Antlr4.StringTemplate.4.0.6.9004\lib\net35\Antlr4.StringTemplate.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Serialization" />
@@ -42,7 +46,6 @@
   <ItemGroup>
     <Compile Include="BuildSummary.cs" />
     <Compile Include="HtmlSummary.cs" />
-    <Compile Include="TargetSummary.cs" />
     <Compile Include="HtmlSummaryPlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -59,28 +62,11 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Html\Icons\level-error-16.png" />
-    <Content Include="Html\Icons\level-summary-16.png" />
-    <Content Include="Html\Icons\level-warning-16.png" />
-    <Content Include="Html\Icons\state-failed-24.png" />
-    <Content Include="Html\Icons\state-partially-succeeded-24.png" />
-    <Content Include="Html\Icons\state-unknown-24.png" />
-    <Content Include="Html\Icons\status-failed-32.png" />
-    <Content Include="Html\Icons\state-succeeded-16.png" />
-    <Content Include="Html\Icons\state-succeeded-24.png" />
-    <Content Include="Html\Icons\status-partially-succeeded-32.png" />
-    <Content Include="Html\Icons\status-succeeded-32.png" />
-    <Content Include="Html\Icons\status-unknown-32.png" />
-    <Content Include="Html\Index.html" />
-    <Content Include="Html\jquery-2.1.1.min.js" />
-    <Content Include="Html\LiteVm.js" />
-    <Content Include="Html\Theme.css" />
-    <Content Include="Html\Views.js" />
+    <None Include="AnFake.Plugins.HtmlSummary.stg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Content Include="Html\build.summary.js" />
-  </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -13,17 +13,19 @@ using JetBrains.TeamCity.ServiceMessages.Write;
 namespace AnFake.Plugins.TeamCity
 {
 	internal sealed class TeamCityPlugin : Core.Integration.IBuildServer, IDisposable
-	{
+	{		
 		private readonly Stack<string> _blockNames = new Stack<string>();
 		private readonly ServiceMessageFormatter _formatter;
 		private readonly string _tcUri;
 		private readonly string _tcBuildId;
 		private readonly string _tcBuildTypeId;
-		private readonly FolderItem _tcCheckoutFolder;
+		private readonly FileSystemPath _tcCheckoutFolder;		
 		private readonly int _tcBuildCounter;
 		private readonly string _tcBuildVcsNumber;
 		private int _errorsCount;
-		private int _warningsCount;		
+		private int _warningsCount;
+		private bool _skipErrors;
+		private bool _failIfAnyWarning;
 
 		public TeamCityPlugin()
 		{
@@ -32,7 +34,7 @@ namespace AnFake.Plugins.TeamCity
 			_tcUri = MyBuild.GetProp("TeamCity.Uri", null);
 			_tcBuildId = MyBuild.GetProp("TeamCity.BuildId", null);
 			_tcBuildTypeId = MyBuild.GetProp("TeamCity.BuildTypeId", null);
-			_tcCheckoutFolder = MyBuild.GetProp("TeamCity.CheckoutFolder", "").AsFolder();
+			_tcCheckoutFolder = MyBuild.GetProp("TeamCity.CheckoutFolder", "").AsPath();			
 
 			if (_tcBuildId != null && _tcBuildTypeId == null || _tcBuildId == null && _tcBuildTypeId != null)
 				throw new InvalidConfigurationException("TeamCity plugin requires both 'TeamCity.BuildId' and 'TeamCity.BuildTypeId' to be specified in build properties.");
@@ -63,8 +65,7 @@ namespace AnFake.Plugins.TeamCity
 				Target.PhaseFinished += OnTargetPhaseFinished;
 
 				MyBuild.Started += OnBuildStarted;
-				MyBuild.Finished += OnBuildFinished;
-				MyBuild.Current.DoNotExposeTestResults = true;
+				MyBuild.Finished += OnBuildFinished;				
 			}
 		}
 
@@ -142,55 +143,56 @@ namespace AnFake.Plugins.TeamCity
 			get { return true; }
 		}
 
-		public Uri ExposeArtifact(FileItem file, string type)
+		public Uri ExposeArtifact(FileItem file, string targetFolder)
 		{
 			if (IsLocal)
-				return BuildServer.Local.ExposeArtifact(file, type);
+				return BuildServer.Local.ExposeArtifact(file, targetFolder);
 
 			var srcPath = file.Path.ToRelative(_tcCheckoutFolder);
-			var dstPath = MakeArtifactPath(type, file.Name);
-			WritePublishArtifacts(srcPath.Spec, dstPath.Spec);
+			var dstPath = targetFolder.AsPath();
+			WritePublishArtifacts(srcPath.ToUnix(), dstPath.ToUnix());
 
-			return MakeArtifactUri(dstPath);
+			return MakeArtifactUri(dstPath / file.Name);
 		}
 
-		public Uri ExposeArtifact(FolderItem folder, string type)
+		public Uri ExposeArtifact(FolderItem folder, string targetFolder)
 		{
 			if (IsLocal)
-				return BuildServer.Local.ExposeArtifact(folder, type);
+				return BuildServer.Local.ExposeArtifact(folder, targetFolder);
 
 			var srcPath = folder.Path.ToRelative(_tcCheckoutFolder);
-			var dstPath = MakeArtifactPath(type, folder.Name);
-			WritePublishArtifacts(srcPath.Spec, dstPath.Spec);
+			var dstPath = targetFolder.AsPath();
+			WritePublishArtifacts(srcPath.ToUnix(), dstPath.ToUnix());
 
-			return MakeArtifactUri(dstPath);
+			return MakeArtifactUri("".AsPath()); // TeamCity doesn't support links to artifacts folder
 		}
 
-		public Uri ExposeArtifact(string name, string content, Encoding encoding, string type)
+		public Uri ExposeArtifact(string name, string content, Encoding encoding, string targetFolder)
 		{
 			if (IsLocal)
-				return BuildServer.Local.ExposeArtifact(name, content, encoding, type);
+				return BuildServer.Local.ExposeArtifact(name, content, encoding, targetFolder);
 
-			Folders.Create(".tmp");
-
-			var file = (".tmp".AsPath() / name.MakeUnique()).AsFile();
+			Folders.Create(MyBuild.Current.LocalTemp);
+			var file = (MyBuild.Current.LocalTemp / name).AsFile();
 			Text.WriteTo(file, content, encoding);
 
 			var srcPath = file.Path.ToRelative(_tcCheckoutFolder);
-			var dstPath = MakeArtifactPath(type, name);			
-			WritePublishArtifacts(srcPath.Spec, dstPath.Spec);
+			var dstPath = targetFolder.AsPath();
+			WritePublishArtifacts(srcPath.ToUnix(), dstPath.ToUnix());
 
-			return MakeArtifactUri(dstPath);
+			return MakeArtifactUri(dstPath / file.Name);
 		}
 
-		public void ExposeArtifacts(FileSet files, string type)
+		public void ExposeArtifacts(FileSet files, string targetFolder)
 		{
 			if (IsLocal)
 				return;
 
+			var dstPath = targetFolder.AsPath();
 			foreach (var file in files)
 			{
-				ExposeArtifact(file, type);
+				var srcPath = file.Path.ToRelative(_tcCheckoutFolder);				
+				WritePublishArtifacts(srcPath.ToUnix(), (dstPath / file.RelPath.Parent).ToUnix());
 			}
 		}
 
@@ -211,8 +213,7 @@ namespace AnFake.Plugins.TeamCity
 			WriteBuildStatus(
 				String.Format(
 					"{0} error(s) {1} warning(s) {2} | {{build.status.text}}", 
-					_errorsCount, _warningsCount, details.Status.ToHumanReadable().ToUpperInvariant()),
-				details.Status.IsGood());
+					_errorsCount, _warningsCount, details.Status.ToHumanReadable().ToUpperInvariant()));
 		}
 
 		private void OnTestSetProcessed(object sender, TestSet testSet)
@@ -260,11 +261,18 @@ namespace AnFake.Plugins.TeamCity
 
 		private void OnTargetPhaseStarted(object sender, string phase)
 		{
-			WriteBlockOpened(String.Format("{0}.{1}", ((Target) sender).Name, phase));			
+			var target = (Target) sender;
+			_skipErrors = target.IsSkipErrors;
+			_failIfAnyWarning = target.IsFailIfAnyWarning;
+
+			WriteBlockOpened(String.Format("{0}.{1}", target.Name, phase));
 		}
 
 		private void OnTargetPhaseFinished(object sender, string phase)
 		{
+			_skipErrors = false;
+			_failIfAnyWarning = false;
+
 			WriteBlockClosed(String.Format("{0}.{1}", ((Target) sender).Name, phase));
 		}
 
@@ -288,19 +296,21 @@ namespace AnFake.Plugins.TeamCity
 					target.Name, target.Messages.ErrorsCount, target.Messages.WarningsCount, target.Messages.SummariesCount,
 					target.State.ToHumanReadable().ToUpperInvariant());
 
-				if (target.Messages.ErrorsCount > 0)
+				switch (target.State)
 				{
-					WriteError(msg, null);
-					WriteBuildProblem(msg);
-				}
-				else if (target.Messages.WarningsCount > 0)
-				{
-					WriteWarning(msg);
-				}
-				else
-				{
-					WriteNormal(msg);
-				}				
+					case TargetState.Failed:
+						WriteError(msg, null);					
+						WriteBuildProblem(msg);
+						break;
+
+					case TargetState.PartiallySucceeded:
+						WriteWarning(msg);
+						break;
+
+					default:
+						WriteNormal(msg);
+						break;
+				}								
 			}			
 
 			WriteBlockClosed(topTarget.Name);
@@ -315,11 +325,18 @@ namespace AnFake.Plugins.TeamCity
 			{
 				case TraceMessageLevel.Warning:
 					WriteWarning(message.ToString("nmlf"));
+					if (_failIfAnyWarning)
+					{
+						WriteBuildProblem(message.ToString("ap"));
+					}
 					break;
 
 				case TraceMessageLevel.Error:
 					WriteError(message.ToString("nmlf"), message.Details);
-					WriteBuildProblem(message.ToString("apd"));
+					if (!_skipErrors)
+					{
+						WriteBuildProblem(message.ToString("apd"));
+					}					
 					break;
 
 				default:
@@ -478,17 +495,9 @@ namespace AnFake.Plugins.TeamCity
 			Console.WriteLine(_formatter.FormatMessage("buildProblem", new {description}));
 		}
 
-		private void WriteBuildStatus(string text, bool succeeded)
+		private void WriteBuildStatus(string text)
 		{
-			Console.WriteLine(
-				succeeded
-					? _formatter.FormatMessage("buildStatus", new {text, status = "SUCCESS"})
-					: _formatter.FormatMessage("buildStatus", new {text}));
-		}
-
-		private static FileSystemPath MakeArtifactPath(string type, string name)
-		{
-			return type.AsPath()/name;
+			Console.WriteLine(_formatter.FormatMessage("buildStatus", new {text}));
 		}
 
 		private Uri MakeArtifactUri(FileSystemPath path)

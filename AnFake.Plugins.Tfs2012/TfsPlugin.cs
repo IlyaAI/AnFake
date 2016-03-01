@@ -19,8 +19,9 @@ namespace AnFake.Plugins.Tfs2012
 {
 	internal sealed class TfsPlugin : /*Core.Integration.*/IVersionControl, Core.Integration.IBuildServer, IDisposable
 	{
+		private const string TestResults = "TestResults";
 		private static readonly TimeSpan FlushInterval = TimeSpan.FromSeconds(2);
-
+		
 		private const string CustomInformationNode = "AnFake";
 		private const string SummaryKey = "AnFakeSummary";
 		private const string SummaryHeader = "AnFake Summary";
@@ -96,6 +97,7 @@ namespace AnFake.Plugins.Tfs2012
 					Trace.Idle += OnTraceIdle;
 
 					TestResultAware.Failed += OnTestFailed;
+					TestSetAware.Processed += OnTestSetProcessed;
 					Target.TopFinished += OnTopTargetFinished;
 
 					MyBuild.Started += OnBuildStarted;
@@ -118,8 +120,9 @@ namespace AnFake.Plugins.Tfs2012
 		{
 			Trace.MessageReceived -= OnTraceMessage;
 			Trace.Idle -= OnTraceIdle;
-
+			
 			TestResultAware.Failed -= OnTestFailed;
+			TestSetAware.Processed -= OnTestSetProcessed;
 			Target.TopFinished -= OnTopTargetFinished;
 
 			MyBuild.Started -= OnBuildStarted;
@@ -342,56 +345,56 @@ namespace AnFake.Plugins.Tfs2012
 			}
 		}
 
-		public Uri ExposeArtifact(FileItem file, string type)
+		public Uri ExposeArtifact(FileItem file, string targetFolder)
 		{
 			if (_build == null)
-				return BuildServer.Local.ExposeArtifact(file, type);
+				return BuildServer.Local.ExposeArtifact(file, targetFolder);
 
 			EnsureCanExpose();
 
 			Trace.InfoFormat("TfsPlugin: Exposing file '{0}'...", file);
-			
-			var dstPath = _build.DropLocation.AsPath()/type/file.Name;
+
+			var dstPath = _build.DropLocation.AsPath() / targetFolder / file.Name;
 			Files.Copy(file, dstPath);
 			
 			return new Uri(dstPath.Full);
 		}
 
-		public Uri ExposeArtifact(FolderItem folder, string type)
+		public Uri ExposeArtifact(FolderItem folder, string targetFolder)
 		{
 			if (_build == null)
-				return BuildServer.Local.ExposeArtifact(folder, type);
+				return BuildServer.Local.ExposeArtifact(folder, targetFolder);
 
 			EnsureCanExpose();
 
 			Trace.InfoFormat("TfsPlugin: Exposing folder '{0}'...", folder);
 
-			var dstPath = _build.DropLocation.AsPath()/type/folder.Name;
+			var dstPath = _build.DropLocation.AsPath() / targetFolder;
 			Robocopy.Copy(folder.Path, dstPath, p => p.Recursion = Robocopy.RecursionMode.All);
 
 			return new Uri(dstPath.Full + Path.DirectorySeparatorChar);
 		}
 
-		public Uri ExposeArtifact(string name, string content, Encoding encoding, string type)
+		public Uri ExposeArtifact(string name, string content, Encoding encoding, string targetFolder)
 		{
 			if (_build == null)
-				return BuildServer.Local.ExposeArtifact(name, content, encoding, type);
+				return BuildServer.Local.ExposeArtifact(name, content, encoding, targetFolder);
 
 			EnsureCanExpose();
 
 			Trace.InfoFormat("TfsPlugin: Exposing text content '{0}'...", name);
 
-			var dstFile = (_build.DropLocation.AsPath()/type/name).AsFile();
+			var dstFile = (_build.DropLocation.AsPath() / targetFolder / name).AsFile();
 			Text.WriteTo(dstFile, content, encoding);
 
 			return new Uri(dstFile.Path.Full);
 		}
 
-		public void ExposeArtifacts(FileSet files, string type)
+		public void ExposeArtifacts(FileSet files, string targetFolder)
 		{
 			if (_build == null)
 			{
-				BuildServer.Local.ExposeArtifacts(files, type);
+				BuildServer.Local.ExposeArtifacts(files, targetFolder);
 				return;
 			}
 
@@ -399,7 +402,7 @@ namespace AnFake.Plugins.Tfs2012
 
 			Trace.InfoFormat("TfsPlugin: Exposing files {{{0}}}...", files.ToFormattedString());
 
-			var dstPath = _build.DropLocation.AsPath()/type;
+			var dstPath = _build.DropLocation.AsPath() / targetFolder;
 			Files.Copy(files, dstPath);
 		}
 
@@ -515,7 +518,7 @@ namespace AnFake.Plugins.Tfs2012
 			Text.WriteTo(rdpFile, String.Format("full address:s:{0}", Environment.MachineName));
 
 			var rdpUri = CanExposeArtifacts
-				? ExposeArtifact(rdpFile, ArtifactType.Other)
+				? ExposeArtifact(rdpFile, "Other")
 				: rdpFile.Path.ToUnc().ToUri();
 
 			FlushMessages();
@@ -563,7 +566,7 @@ namespace AnFake.Plugins.Tfs2012
 					"Output".MakeUnique(".txt"),
 					output.ToString(),
 					Encoding.UTF8,
-					ArtifactType.TestResults);
+					TestResults);
 
 				test.Links.Add(new Hyperlink(uri, "Output"));
 			}
@@ -571,6 +574,20 @@ namespace AnFake.Plugins.Tfs2012
 			{
 				Log.WarnFormat("TfsPlugin.OnTestFailed: {0}", AnFakeException.ToString(e));
 			}
+		}
+
+		private void OnTestSetProcessed(object sender, TestSet testSet)
+		{
+			if (!CanExposeArtifacts)
+				return;
+
+			var trxUri = ExposeArtifact(testSet.TraceFile, TestResults);				
+			if (testSet.AttachmentsFolder != null && testSet.AttachmentsFolder.Exists())
+			{
+				ExposeArtifact(testSet.AttachmentsFolder, TestResults + '/' + testSet.AttachmentsFolder.Name);
+			}
+
+			testSet.Links.Add(new Hyperlink(trxUri, "Trace"));
 		}
 
 		private void OnTopTargetFinished(object sender, Target.RunDetails details)
@@ -625,7 +642,7 @@ namespace AnFake.Plugins.Tfs2012
 			if (!String.IsNullOrEmpty(_build.DropLocation))
 			{
 				// Visual Studio expects predefined name 'build.log' so we need to copy with new name.
-				var buildLog = _build.DropLocation.AsPath() / ArtifactType.Logs / "build.log";
+				var buildLog = _build.DropLocation.AsPath() / "Logs/build.log";
 				Files.Copy(MyBuild.Current.LogFile.Path, buildLog, true);
 				
 				summary.AppendLink("build.log", buildLog.ToUri()).Push();				

@@ -175,8 +175,9 @@ namespace AnFake.Core
 
 				if (!processed)
 				{
+					Trace.Info(" **** LAST OUTPUT **** ");
 					Trace.Info(result.LastOutput);
-					Trace.Info("");
+					Trace.Info(" **** *********** **** ");
 
 					stderr.ForEach(Trace.Error);
 

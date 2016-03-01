@@ -278,7 +278,7 @@ let xamlVersion = "2"
 
 "Compile" <== ["EmbedAssemblyInfo"]
 
-"Build" <== ["NuGetRestore"; "Compile"; "Custom.ZipHtmlSummary"; "Test.Unit"]
+"Build" <== ["NuGetRestore"; "Compile"; "Test.Unit"]
 
 "Package" <== ["Package.Pack"; "Package.Installer"; "Package.Push"]
 

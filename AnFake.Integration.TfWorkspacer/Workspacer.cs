@@ -164,6 +164,11 @@ namespace AnFake.Integration.TfWorkspacer
 					{
 						p.VersionSpec = versionSpec;
 						p.WorkspaceComment = wsComment;
+						//
+						// W/A. TeamCity resolves artifacts before first build runner starts, 
+						// so checkout directory might be non-empty when we start downloading sources.
+						//
+						p.AllowCheckoutToNonEmptyFolder = true;
 					});
 			}
 		}

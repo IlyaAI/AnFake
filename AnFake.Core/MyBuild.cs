@@ -52,9 +52,12 @@ namespace AnFake.Core
 			/// <summary>
 			///		Current AnFake version.
 			/// </summary>
-			public readonly Version AnFakeVersion;
+			public readonly Version AnFakeVersion;			
 
-			public bool DoNotExposeTestResults;
+			/// <summary>
+			///		Local build temp folder. Default '.tmp'.
+			/// </summary>
+			public FileSystemPath LocalTemp;
 
 			internal Params(FileSystemPath path, FileItem logFile, FileItem scriptFile,
 				Verbosity verbosity, string[] targets, IDictionary<string, string> properties)
@@ -70,6 +73,8 @@ namespace AnFake.Core
 					.GetCustomAttribute<AssemblyFileVersionAttribute>()
 					.Version
 					.AsVersion();
+
+				LocalTemp = ".tmp".AsPath();
 			}
 		}
 
@@ -137,7 +142,6 @@ namespace AnFake.Core
 			Current = new Params(path, logFile, scriptFile, verbosity, targets, properties);
 
 			_isInitialized = true;
-
 			if (_initialized != null)
 			{
 				_initialized.Invoke(null, Current);
@@ -148,6 +152,8 @@ namespace AnFake.Core
 		{
 			if (!_isInitialized)
 				return;
+
+			SafeOp.Try(Folders.Delete, Current.LocalTemp);
 
 			Target.Finalise();
 			Plugin.Finalise();

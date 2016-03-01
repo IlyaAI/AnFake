@@ -207,6 +207,22 @@ namespace AnFake.Core
 		}
 
 		/// <summary>
+		///		Whether skip (ignore) errors during this target execution or not.
+		/// </summary>
+		public bool IsSkipErrors
+		{
+			get { return _skipErrors; }
+		}
+
+		/// <summary>
+		///		Whether fail on any warning or not.
+		/// </summary>
+		public bool IsFailIfAnyWarning
+		{
+			get { return _failIfAnyWarning; }
+		}
+
+		/// <summary>
 		///     Trace messages accumulated during target run.
 		/// </summary>
 		public TraceMessageCollector Messages

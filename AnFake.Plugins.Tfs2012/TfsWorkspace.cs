@@ -36,6 +36,11 @@ namespace AnFake.Plugins.Tfs2012
 			///		Workspace comment.
 			/// </summary>
 			public string WorkspaceComment;
+
+			/// <summary>
+			///		Allows to perform checkout to non-empty folder. By default this is prohibeted.
+			/// </summary>
+			public bool AllowCheckoutToNonEmptyFolder;
 			
 			internal Params()
 			{
@@ -235,9 +240,7 @@ namespace AnFake.Plugins.Tfs2012
 
 			if (localPath == null)
 				throw new ArgumentException("TfsWorkspace.Checkout(serverPath, localPath, workspaceName[, setParams]): localPath must not be null");
-			if (!localPath.AsFolder().IsEmpty())
-				throw new InvalidConfigurationException(String.Format("TfsWorkspace.Checkout intended for initial downloading only but target directory '{0}' is not empty.", localPath));
-
+			
 			if (String.IsNullOrEmpty(workspaceName))
 				throw new ArgumentException("TfsWorkspace.Checkout(serverPath, localPath, workspaceName[, setParams]): workspaceName must not be null or empty");
 
@@ -250,6 +253,9 @@ namespace AnFake.Plugins.Tfs2012
 
 			var parameters = Defaults.Clone();
 			setParams(parameters);
+
+			if (!parameters.AllowCheckoutToNonEmptyFolder && !localPath.AsFolder().IsEmpty())
+				throw new InvalidConfigurationException(String.Format("TfsWorkspace.Checkout intended for initial downloading only but target directory '{0}' is not empty.", localPath));
 
 			var versionSpec = ParseVersionSpec(parameters);
 

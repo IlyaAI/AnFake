@@ -1,18 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Runtime.Serialization.Json;
-using System.Text;
+using System.Linq;
 using AnFake.Api;
 using AnFake.Core;
 using AnFake.Core.Integration;
+using Antlr4.StringTemplate;
 
 namespace AnFake.Plugins.HtmlSummary
 {
-	internal sealed class HtmlSummaryPlugin
+	internal sealed class HtmlSummaryPlugin : PluginBase
 	{
-		private static readonly string PluginName = typeof(HtmlSummaryPlugin).Namespace;
-		private const string SummaryJs = "build.summary.js";
+		private static readonly string PluginName = typeof(HtmlSummaryPlugin).Namespace;		
 		private const string IndexHtml = "Index.html";
 		
 		private BuildSummary _summary;
@@ -20,15 +17,44 @@ namespace AnFake.Plugins.HtmlSummary
 		
 		public HtmlSummaryPlugin()
 		{
-			Target.TopFinished += OnTargetFinished;
+			Target.TopFinished += OnTopTargetFinished;
 
-			MyBuild.Started += OnBuildStarted;			
+			MyBuild.Started += OnBuildStarted;
 			MyBuild.Finished += OnBuildFinished;
 		}
-		
-		private void OnTargetFinished(object sender, Target.RunDetails details)
+
+		public override void Dispose()
 		{
-			Summarize((Target)sender, details.ExecutedTargets);			
+			Target.TopFinished -= OnTopTargetFinished;
+
+			MyBuild.Started -= OnBuildStarted;
+			MyBuild.Finished -= OnBuildFinished;
+
+			base.Dispose();
+		}
+
+		private void OnTopTargetFinished(object sender, Target.RunDetails details)
+		{
+			var topTarget = (Target)sender;
+			var topTargetSummary = new BuildSummary.RequestedTarget
+			{
+				Name = topTarget.Name,
+				State = topTarget.State.ToHumanReadable().ToUpperInvariant()
+			};
+
+			topTargetSummary.ExecutedTargets
+				.AddRange(
+					details.ExecutedTargets.Select(
+						t => new BuildSummary.ExecutedTarget
+						{
+							Name = t.Name,
+							State = t.State.ToHumanReadable().ToUpperInvariant(),
+							RunTime = t.RunTime.ToString("hh:mm:ss"),
+							Messages = t.Messages
+						})
+				);
+
+			_summary.RequestedTargets.Add(topTargetSummary);			
 		}
 
 		private void OnBuildStarted(object sender, MyBuild.RunDetails details)
@@ -38,89 +64,44 @@ namespace AnFake.Plugins.HtmlSummary
 
 			_summary = new BuildSummary
 			{
-				ComputerName = Environment.MachineName,
-				StartTime = details.StartTime,
-				FinishTime = details.StartTime,
-				Status = details.Status
-			};
-
-			var vcs = Plugin.Find<IVersionControl>();
-			if (vcs == null)
-				return;
-
-			var changesetId = vcs.CurrentChangesetId;
-			_summary.ChangesetId = changesetId;
-			_summary.ChangesetAuthor = vcs.GetChangeset(changesetId).Author;
+				AgentName = Environment.MachineName,
+				Changeset = BuildServer.CurrentChangesetHash,
+				WorkingFolder = MyBuild.Current.Path.ToUnc().Spec
+			};			
 		}
 
 		private void OnBuildFinished(object sender, MyBuild.RunDetails details)
 		{
-			_summary.FinishTime = details.FinishTime;
-			_summary.Status = details.Status;
+			_summary.Status = details.Status.ToHumanReadable().ToUpperInvariant();
+			_summary.RunTime = (details.FinishTime - details.StartTime).ToString("hh:mm:ss");
+
+			_summary.LogFile = "build.log";
+			Files.Copy(MyBuild.Current.LogFile.Path, _tempPath / _summary.LogFile, true);
 			
-			Expose();
+			RenderHtml();
 
-			Folders.Delete(_tempPath);
-		}
+			//Folders.Delete(_tempPath);
+		}				
 
-		private void Summarize(Target top, IEnumerable<Target> executedTargets)
+		private void RenderHtml()
 		{
-			var targetSummary = SummaryOf(top);
+			Trace.Info("-------- HTML Summary Plugin --------");
+			Trace.Info("Generating report...");
 
-			foreach (var target in executedTargets)
-			{
-				targetSummary.Children.Add(SummaryOf(target));
-			}
+			var tmplGroup = new TemplateGroupFile("[AnFake]/AnFake.Plugins.HtmlSummary.stg".AsPath().Full, '`', '`');
 
-			_summary.Targets.Add(targetSummary);
-		}		
+			var tmpl = tmplGroup.GetInstanceOf("main");
+			tmpl.Add("summary", _summary);
 
-		private void Expose()
-		{
-			Log.Text("-------- HTML Summary Plugin --------");
-			Log.Text("Generating report...");
+			Text.WriteTo((_tempPath / IndexHtml).AsFile(), tmpl.Render());
 
-			using (var stream = new FileStream((_tempPath / SummaryJs).Full, FileMode.Create, FileAccess.Write))
-			{
-				var decl = Encoding.UTF8.GetBytes("var gSummary = ");
-				stream.Write(decl, 0, decl.Length);
-
-				new DataContractJsonSerializer(typeof(BuildSummary))
-					.WriteObject(stream, _summary);
-			}
-
-			Zip.Unpack(
-				"[AnFakePlugins]".AsPath() / PluginName + ".zip", 
-				_tempPath,
-				p => p.OverwriteMode = Zip.OverwriteMode.Overwrite);
-
-			var logUri = BuildServer.ExposeArtifact(_tempPath.AsFolder(), ArtifactType.Logs);
+			/*var logUri = BuildServer.ExposeArtifact(_tempPath.AsFolder(), ArtifactType.Logs);
 
 			// TODO: append IndexHtml
 
 			Log.Text("");
 			Log.Text("Surprise! HtmlSummary plugin has generated a nice build report for you. Look here...");
-			Log.TextFormat("[HTML Summary|{0}]", logUri);
+			Log.TextFormat("[HTML Summary|{0}]", logUri);*/
 		}
-
-		private static TargetSummary SummaryOf(Target target)
-		{
-			var summary = new TargetSummary
-			{
-				Name = target.Name,				
-				State = target.State,
-				RunTimeMs = (long) target.RunTime.TotalMilliseconds,
-				ErrorsCount = target.Messages.ErrorsCount,
-				WarningsCount = target.Messages.WarningsCount,
-				MessagesCount = target.Messages.SummariesCount,
-			};
-
-			foreach (var message in target.Messages)
-			{
-				summary.Messages.Add(message);
-			}
-
-			return summary;
-		}		
-	}
+    }
 }

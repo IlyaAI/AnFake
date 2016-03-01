@@ -1,0 +1,25 @@
+main(summary) ::= <<
+<!DOCTYPE html>
+<html lang="en-US" xmlns="http://www.w3.org/1999/xhtml">
+<head>    
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta charset="utf-8">
+
+    <title>AnFake Build Summary</title>    
+</head>
+
+<body>
+	<div>
+		<h1>Overview</h1>
+		<p>Status: `summary.Status`</p>
+		<p>Changeset: `summary.Changeset`</p>
+		<p>Build Agent: `summary.AgentName`</p>
+		<p>Run Time: `summary.RunTime`</p>
+		<p>Working Folder: `summary.WorkingFolder`</p>
+		<p>Full Log: <a href=`summary.LogFile`>build.log</a></p>
+	</div>
+</body>
+
+</html>
+>>
