@@ -69,6 +69,7 @@
     <Content Include="Data\AssemblyInfo.target.cpp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Compile Include="OsTest.cs" />
     <Compile Include="FolderItemTest.cs" />
     <Compile Include="FileItemTest.cs" />
     <Compile Include="NuGetTest.cs" />
