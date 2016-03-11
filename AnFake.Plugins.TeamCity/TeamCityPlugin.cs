@@ -325,7 +325,7 @@ namespace AnFake.Plugins.TeamCity
 			{
 				case TraceMessageLevel.Warning:
 					WriteWarning(message.ToString("nmlf"));
-					if (_failIfAnyWarning)
+					if (_failIfAnyWarning && !_skipErrors)
 					{
 						WriteBuildProblem(message.ToString("ap"));
 					}
