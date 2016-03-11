@@ -40,6 +40,7 @@ let nugetFiles =
     + "*.tmpl.csx"
     + "AnFake.*.xml"
     + "AnFake.Plugins.*.xml"
+    + "AnFake.Plugins.HtmlSummary.stg"
     + "FSharp.Core.optdata"
     + "FSharp.Core.sigdata"
     + "Extras/*"
@@ -101,16 +102,6 @@ let xamlVersion = "2"
         Files.Copy(fx, productOut / String.Format("{0}.v{1}.xaml", fx.NameWithoutExt, xamlVersion), true)
 
     MsBuild.BuildRelease(tests, testsOut)
-)
-
-"Custom.ZipHtmlSummary" => (fun _ ->
-    let htmlSummary = 
-        ~~"AnFake.Plugins.HtmlSummary/Html" % "**/*"
-        - "build.summary.js"
-
-    let zip = productOut / "AnFake.Plugins.HtmlSummary.zip"
-
-    Zip.Pack(htmlSummary, zip)    
 )
 
 "Test.Unit" => (fun _ -> 

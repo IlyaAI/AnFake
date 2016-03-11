@@ -19,6 +19,10 @@ p {
     padding: 0;
 }
 
+a, a:visited {
+	color: rgb(0, 0, 238)
+}
+
 .key {
     display: inline-block;
     width: 128px;
@@ -61,6 +65,10 @@ p {
 
 .target-name {
     font-weight: bold;
+}
+
+.message {
+	white-space: pre-line;
 }
 
 .location {
@@ -182,7 +190,7 @@ summary(msg) ::= <<
 >>
 
 messagePreview(msg) ::= <<	
-	<p>`msg.Message`</p>
+	<p class="message">`msg.Message`</p>
 	`if(msg.Links)`
 		<p>`msg.Links: link()`</p>
 	`endif`	
@@ -224,7 +232,7 @@ warningDetails(msg) ::= <<
 >>
 
 messageDetails(msg) ::= <<
-	<p>`msg.Message`</p>
+	<p class="message">`msg.Message`</p>
 	`if(msg.Links)`
 		<p>`msg.Links: link()`</p>
 	`endif`

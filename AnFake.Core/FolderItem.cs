@@ -6,7 +6,8 @@ namespace AnFake.Core
 {
 	public sealed class FolderItem : IComparable<FolderItem>
 	{
-		private readonly FileSystemPath _path;		
+		private readonly FileSystemPath _path;
+		private DirectoryInfo _info;
 
 		internal FolderItem(FileSystemPath path)
 		{			
@@ -26,6 +27,16 @@ namespace AnFake.Core
 		public FileSystemPath Parent
 		{
 			get { return _path.Parent; }
+		}
+
+		internal DirectoryInfo Info
+		{
+			get { return _info ?? (_info = new DirectoryInfo(_path.Full)); }
+		}
+
+		public DateTime Created
+		{
+			get { return Info.CreationTime; }
 		}
 
 		public bool Exists()

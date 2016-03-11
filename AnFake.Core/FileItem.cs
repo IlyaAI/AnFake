@@ -67,6 +67,16 @@ namespace AnFake.Core
 			get { return _path.Ext; }
 		}
 
+		public DateTime Created
+		{
+			get { return Info.CreationTime; }
+		}
+
+		public DateTime Modified
+		{
+			get { return Info.LastWriteTime; }
+		}
+
 		public bool Exists()
 		{
 			return File.Exists(_path.Full);
@@ -78,7 +88,7 @@ namespace AnFake.Core
 		}
 
 		public void SetReadOnly(bool readOnly)
-		{
+		{			
 			if (readOnly)
 			{
 				Info.Attributes |= FileAttributes.ReadOnly;
