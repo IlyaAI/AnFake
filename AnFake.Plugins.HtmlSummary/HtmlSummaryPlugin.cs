@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Net;
 using AnFake.Api;
 using AnFake.Core;
 using AnFake.Core.Integration;
@@ -9,11 +10,20 @@ namespace AnFake.Plugins.HtmlSummary
 {
 	internal sealed class HtmlSummaryPlugin : PluginBase
 	{
-		private static readonly string PluginName = typeof(HtmlSummaryPlugin).Namespace;		
-		private const string IndexHtml = "Index.html";
+		private class ObjectModelAdaptor : Antlr4.StringTemplate.Misc.ObjectModelAdaptor
+		{
+			public override object GetProperty(Interpreter interpreter, TemplateFrame frame, object o, object property, string propertyName)
+			{
+				var ret = base.GetProperty(interpreter, frame, o, property, propertyName);
+
+				var s = ret as String;
+				return s != null ? WebUtility.HtmlEncode(s) : ret;
+			}
+		}
 		
-		private BuildSummary _summary;
-		private FileSystemPath _tempPath;
+		private const string IndexHtml = "AnFake.summary.html";
+		
+		private BuildSummary _build;
 		
 		public HtmlSummaryPlugin()
 		{
@@ -49,59 +59,56 @@ namespace AnFake.Plugins.HtmlSummary
 						{
 							Name = t.Name,
 							State = t.State.ToHumanReadable().ToUpperInvariant(),
-							RunTime = t.RunTime.ToString("hh:mm:ss"),
+							RunTime = t.RunTime.ToString("hh\\:mm\\:ss"),
 							Messages = t.Messages
 						})
 				);
 
-			_summary.RequestedTargets.Add(topTargetSummary);			
+			_build.RequestedTargets.Add(topTargetSummary);			
 		}
 
 		private void OnBuildStarted(object sender, MyBuild.RunDetails details)
 		{
-			_tempPath = "[Temp]".AsPath()/PluginName.MakeUnique();
-			Folders.Clean(_tempPath);
-
-			_summary = new BuildSummary
+			_build = new BuildSummary
 			{
 				AgentName = Environment.MachineName,
 				Changeset = BuildServer.CurrentChangesetHash,
-				WorkingFolder = MyBuild.Current.Path.ToUnc().Spec
+				WorkingFolderUri = MyBuild.Current.Path.ToUnc().ToUri()
 			};			
 		}
 
 		private void OnBuildFinished(object sender, MyBuild.RunDetails details)
 		{
-			_summary.Status = details.Status.ToHumanReadable().ToUpperInvariant();
-			_summary.RunTime = (details.FinishTime - details.StartTime).ToString("hh:mm:ss");
+			_build.Status = details.Status.ToHumanReadable().ToUpperInvariant();
+			_build.RunTime = (details.FinishTime - details.StartTime).ToString("hh\\:mm\\:ss");
+			_build.LogFileUri = MyBuild.Current.LogFile.Path.ToUnc().ToUri();
 
-			_summary.LogFile = "build.log";
-			Files.Copy(MyBuild.Current.LogFile.Path, _tempPath / _summary.LogFile, true);
-			
-			RenderHtml();
+			var htmlFile = RenderHtml();
 
-			//Folders.Delete(_tempPath);
-		}				
+			var summaryUri =
+				BuildServer.CanExposeArtifacts
+					? BuildServer.ExposeArtifact(htmlFile, ".anfake")
+					: htmlFile.Path.ToUnc().ToUri();
 
-		private void RenderHtml()
+			Trace
+				.Begin()
+				.Summary().WithText("AnFake HTML build summary has generated. See link below.")
+				.WithLink(summaryUri, IndexHtml)
+				.End();
+		}
+
+		private FileItem RenderHtml()
 		{
-			Trace.Info("-------- HTML Summary Plugin --------");
-			Trace.Info("Generating report...");
-
 			var tmplGroup = new TemplateGroupFile("[AnFake]/AnFake.Plugins.HtmlSummary.stg".AsPath().Full, '`', '`');
+			tmplGroup.RegisterModelAdaptor(typeof(Object), new ObjectModelAdaptor());
 
 			var tmpl = tmplGroup.GetInstanceOf("main");
-			tmpl.Add("summary", _summary);
+			tmpl.Add("build", _build);
 
-			Text.WriteTo((_tempPath / IndexHtml).AsFile(), tmpl.Render());
+			var htmlFile = IndexHtml.AsFile();
+			Text.WriteTo(htmlFile, tmpl.Render());
 
-			/*var logUri = BuildServer.ExposeArtifact(_tempPath.AsFolder(), ArtifactType.Logs);
-
-			// TODO: append IndexHtml
-
-			Log.Text("");
-			Log.Text("Surprise! HtmlSummary plugin has generated a nice build report for you. Look here...");
-			Log.TextFormat("[HTML Summary|{0}]", logUri);*/
+			return htmlFile;
 		}
     }
 }

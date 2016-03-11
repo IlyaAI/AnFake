@@ -165,14 +165,29 @@ namespace AnFake.Api
 		[DataMember(EmitDefaultValue = false)]
 		public int Line { get; set; }
 
+		public bool HasLine
+		{
+			get { return Line > 0; }
+		}
+
 		[DataMember(EmitDefaultValue = false)]
 		public int Column { get; set; }
+
+		public bool HasColumn
+		{
+			get { return Line > 0; }
+		}
 
 		[DataMember(EmitDefaultValue = false)]
 		public string Target { get; set; }
 
 		[DataMember(EmitDefaultValue = false)]
 		public int NodeId { get; set; }
+
+		public bool HasNodeId
+		{
+			get { return NodeId > 0; }
+		}
 
 		[DataMember(EmitDefaultValue = false)]
 		public int ProcessId { get; set; }
@@ -239,7 +254,7 @@ namespace AnFake.Api
 						if (sb.Length > 0) 
 							sb.AppendLine();
 
-						if (NodeId != 0 && prevField == 'n')
+						if (HasNodeId && prevField == 'n')
 							sb.Append(NodeId).Append("> ");
 
 						if (!String.IsNullOrEmpty(Code))			
@@ -271,10 +286,10 @@ namespace AnFake.Api
 									sb.AppendLine();
 
 								sb.Append(' ', ident).Append(File);
-								if (Line > 0)
+								if (HasLine)
 									sb.AppendFormat(" Ln: {0}", Line);
 
-								if (Column > 0)
+								if (HasColumn)
 									sb.AppendFormat(" Col: {0}", Column);
 							}
 
@@ -309,10 +324,10 @@ namespace AnFake.Api
 							else							
 								sb.Append(File);
 							
-							if (Line > 0)
+							if (HasLine)
 							{
 								sb.Append('(').Append(Line);
-								if (Column > 0)
+								if (HasColumn)
 									sb.Append(", ").Append(Column).Append("): ");
 							}							
 						}

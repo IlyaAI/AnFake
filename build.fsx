@@ -1,12 +1,16 @@
 ﻿#r ".AnFake/AnFake.Api.v1.dll"
 #r ".AnFake/AnFake.Core.dll"
 #r ".AnFake/AnFake.Fsx.dll"
+#r ".AnFake/AnFake.Plugins.HtmlSummary.dll"
 
 open System
 open System.Linq
 open AnFake.Api
 open AnFake.Core
 open AnFake.Fsx.Dsl
+open AnFake.Plugins.HtmlSummary
+
+HtmlSummary.PlugIn()
 
 let out = ~~".out"
 let productOut = out / "product"

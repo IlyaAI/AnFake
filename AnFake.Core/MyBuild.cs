@@ -153,8 +153,6 @@ namespace AnFake.Core
 			if (!_isInitialized)
 				return;
 
-			SafeOp.Try(Folders.Delete, Current.LocalTemp);
-
 			Target.Finalise();
 			Plugin.Finalise();
 
@@ -163,7 +161,7 @@ namespace AnFake.Core
 			Finished = null;
 			
 			_initialized = null;
-			_isInitialized = false;
+			_isInitialized = false;			
 		}
 
 		/// <summary>
@@ -250,6 +248,13 @@ namespace AnFake.Core
 			{
 				Finished.Invoke(null, new RunDetails(startTime, finishTime, executedTargets.ToArray(), status));
 			}
+
+			Api.Trace.Info("Cleaning after build...");
+			if (Current.LocalTemp.AsFolder().Exists())
+			{
+				SafeOp.Try(Folders.Delete, Current.LocalTemp);
+			}
+			Api.Trace.Info("Done.");
 
 			return status;
 		}

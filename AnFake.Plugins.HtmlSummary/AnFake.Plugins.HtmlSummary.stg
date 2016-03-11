@@ -1,4 +1,4 @@
-main(summary) ::= <<
+main(build) ::= <<
 <!DOCTYPE html>
 <html lang="en-US" xmlns="http://www.w3.org/1999/xhtml">
 <head>    
@@ -6,20 +6,232 @@ main(summary) ::= <<
     <meta content="IE=edge" http-equiv="X-UA-Compatible">
     <meta charset="utf-8">
 
+	<style type="text/css">
+
+body {
+    width: 1024px;
+	margin: 16px auto;
+	padding: 0;
+}
+
+h1 {
+	margin-top: 32px;
+}
+
+p {
+    margin: 0 0 4px 0;
+    padding: 0;
+}
+
+.key {
+    display: inline-block;
+    width: 128px;
+}
+
+.value {
+    display: inline-block;
+}
+
+.state-success,
+.state-partial-success,
+.state-failure {
+    color: white;
+    padding: 0 4px;
+}
+
+.state-success {
+    background-color: green;	
+}
+
+.state-partial-success {
+    background-color: darkgoldenrod;
+}
+
+.state-failure {
+    background-color: brown;
+}
+
+.error {
+	color: brown;
+}
+
+.warning {
+	color: darkgoldenrod;
+}
+
+.summary {
+    color: darkcyan;
+}
+
+.target-name {
+    font-weight: bold;
+}
+
+.location {
+    color: #404040;
+}
+
+.details {
+    color: #606060;
+	white-space: pre-line;
+}
+
+.separator {
+    width: 100%;
+    border-top: solid darkgray 1px;
+    margin-bottom: 4px;
+}
+
+#errors-n-warnings {
+	margin-top: 64px;
+}
+
+	</style>
+
     <title>AnFake Build Summary</title>    
 </head>
 
 <body>
 	<div>
 		<h1>Overview</h1>
-		<p>Status: `summary.Status`</p>
-		<p>Changeset: `summary.Changeset`</p>
-		<p>Build Agent: `summary.AgentName`</p>
-		<p>Run Time: `summary.RunTime`</p>
-		<p>Working Folder: `summary.WorkingFolder`</p>
-		<p>Full Log: <a href=`summary.LogFile`>build.log</a></p>
+		<div><p class="key">Status:</p><p class="value">`build.Status: state()`</p></div>
+		<div><p class="key">Changeset:</p><p class="value">`build.Changeset`</p></div>
+		<div><p class="key">Build Agent:</p><p class="value">`build.AgentName`</p></div>
+		<div><p class="key">Run Time:</p><p class="value">`build.RunTime`</p></div>
+		<div><p class="key">Working Folder:</p><p class="value"><a href=`build.WorkingFolderUri`>`build.WorkingFolderUri`</a></p></div>
+		<div><p class="key">Full Log:</p><p class="value"><a href=`build.LogFileUri`>`build.LogFileUri`</a></p></div>		
 	</div>
+
+	<div>
+		<h1>Summary</h1>
+		`build.RequestedTargets: requestedTargetSummary()`
+	</div>
+	
+	`if(build.HasErrorsOrWarnings)`
+		<div id="errors-n-warnings">
+			<h1>Errors and Warnings</h1>
+			`build.RequestedTargets: requestedTargetDetails()`
+		</div>
+	`endif`
 </body>
 
 </html>
+>>
+
+stateClass ::= [
+    "SUCCEEDED":			"state-success",
+	"PARTIALLY SUCCEEDED":	"state-partial-success",
+    "FAILED":				"state-failure",
+    default:				""
+]
+
+state(st) ::= <<
+	<span class="`stateClass.(st)`">`st`</span>
+>>
+
+requestedTargetSummary(requestedTarget) ::= <<
+	<div>
+		`requestedTarget.ExecutedTargets: executedTargetSummary()`
+
+		<div class="separator"></div>
+
+		<p><span class="target-name">`requestedTarget.Name`</span>&nbsp;`requestedTarget.State: state()`</p>
+	</div>
+>>
+
+executedTargetSummary(executedTarget) ::= <<
+	<div>
+		<p><span class="target-name">`executedTarget.Name`</span>: `executedTarget.ErrorsCount` error(s) `executedTarget.WarningsCount` warnings(s) `executedTarget.SummariesCount` messages(s) `executedTarget.RunTime` `executedTarget.State: state()`</p>
+		<ul>
+			`executedTarget.ErrorsPreview: errorPreview()`
+
+			`if(executedTarget.HasMoreErrors)`
+				<li><p><a href="#errors-n-warnings">more errors</a></p></li>
+			`endif`
+
+			`executedTarget.WarningsPreview: warningPreview()`
+
+			`if(executedTarget.HasMoreWarnings)`
+				<li><p><a href="#errors-n-warnings">more warnings</a></p></li>
+			`endif`
+
+			`executedTarget.Summaries: summary()`
+		</ul>
+	</div>
+>>
+
+errorPreview(msg) ::= <<
+	<li class="error">
+		`msg: messagePreview()`
+	</li>
+>>
+
+warningPreview(msg) ::= <<
+	<li class="warning">
+		`msg: messagePreview()`
+	</li>
+>>
+
+summary(msg) ::= <<
+	<li class="summary">
+		`msg: messagePreview()`
+	</li>
+>>
+
+messagePreview(msg) ::= <<	
+	<p>`msg.Message`</p>
+	`if(msg.Links)`
+		<p>`msg.Links: link()`</p>
+	`endif`	
+>>
+
+link(lnk) ::= <<	
+	<a href="`lnk.Href`">`lnk.Label`</a>
+>>
+
+requestedTargetDetails(requestedTarget) ::= <<
+	<div>
+		`requestedTarget.ExecutedTargets: executedTargetDetails()`
+	</div>
+>>
+
+executedTargetDetails(executedTarget) ::= <<
+	`if(executedTarget.HasErrorsOrWarnings)`
+		<div>
+			<p><span class="target-name">`executedTarget.Name`</span>: `executedTarget.ErrorsCount` error(s) `executedTarget.WarningsCount` warnings(s) `executedTarget.RunTime` `executedTarget.State: state()`</p>
+			<ul>
+				`executedTarget.ErrorsAll: errorDetails()`
+
+				`executedTarget.WarningsAll: warningDetails()`			
+			</ul>
+		</div>
+	`endif`
+>>
+
+errorDetails(msg) ::= <<
+	<li class="error">
+		`msg: messageDetails()`
+	</li>
+>>
+
+warningDetails(msg) ::= <<
+	<li class="warning">
+		`msg: messageDetails()`
+	</li>
+>>
+
+messageDetails(msg) ::= <<
+	<p>`msg.Message`</p>
+	`if(msg.Links)`
+		<p>`msg.Links: link()`</p>
+	`endif`
+	`if(msg.File)`
+		<p class="location">`msg.File` `if(msg.HasLine)`Ln: `msg.Line``endif` `if(msg.HasColumn)`Col: `msg.Column``endif`</p>
+	`endif`
+	`if(msg.Project)`
+		<p class="location">`msg.Project`</p>
+	`endif`
+	`if(msg.Details)`
+		<p class="details">`msg.Details`</p>
+	`endif`
 >>
