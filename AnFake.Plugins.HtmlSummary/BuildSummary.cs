@@ -7,7 +7,7 @@ namespace AnFake.Plugins.HtmlSummary
 {	
 	public sealed class BuildSummary
 	{
-		public const int PreviewCount = 2;
+		public const int PreviewCount = 3;
 
 		public sealed class RequestedTarget
 		{
