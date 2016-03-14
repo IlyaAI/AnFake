@@ -63,6 +63,11 @@ a, a:visited {
     color: darkcyan;
 }
 
+a.more, a.more:visited {
+	font-size: 85%;
+	color: darkgray;
+}
+
 .target-name {
     font-weight: bold;
 }
@@ -157,13 +162,13 @@ executedTargetSummary(executedTarget) ::= <<
 			`executedTarget.ErrorsPreview: errorPreview()`
 
 			`if(executedTarget.HasMoreErrors)`
-				<li><p><a href="#errors-n-warnings">more errors</a></p></li>
+				<li class="error"><p><a class="more" href="#errors-n-warnings">(more errors)</a></p></li>
 			`endif`
 
 			`executedTarget.WarningsPreview: warningPreview()`
 
 			`if(executedTarget.HasMoreWarnings)`
-				<li><p><a href="#errors-n-warnings">more warnings</a></p></li>
+				<li class="warning"><p><a class="more" href="#errors-n-warnings">(more warnings)</a></p></li>
 			`endif`
 
 			`executedTarget.Summaries: summary()`
