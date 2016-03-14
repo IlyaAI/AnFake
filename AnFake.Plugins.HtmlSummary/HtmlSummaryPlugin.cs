@@ -81,7 +81,11 @@ namespace AnFake.Plugins.HtmlSummary
 		{
 			_build.Status = details.Status.ToHumanReadable().ToUpperInvariant();
 			_build.RunTime = (details.FinishTime - details.StartTime).ToString("hh\\:mm\\:ss");
-			_build.LogFileUri = MyBuild.Current.LogFile.Path.ToUnc().ToUri();
+			
+			_build.LogFileUri =
+				BuildServer.CanExposeArtifacts
+					? BuildServer.ExposeArtifact(MyBuild.Current.LogFile, ".anfake")
+					: MyBuild.Current.LogFile.Path.ToUnc().ToUri();
 
 			var htmlFile = RenderHtml();
 
