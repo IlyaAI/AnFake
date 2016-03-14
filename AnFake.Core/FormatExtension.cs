@@ -1,10 +1,21 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace AnFake.Core
 {
 	public static class FormatExtension
 	{
+		public static IEnumerable<FileItem> AsFormattable(this IEnumerable<FileItem> files)
+		{
+			return files is FileSet || files is ICollection<FileItem> ? files : files.ToList();
+		}
+
+		public static IEnumerable<FolderItem> AsFormattable(this IEnumerable<FolderItem> folders)
+		{
+			return folders is FolderSet || folders is ICollection<FolderItem> ? folders : folders.ToList();
+		}
+
 		public static string ToFormattedString(this object obj)
 		{
 			return ToFormattedString((dynamic) obj);
@@ -72,6 +83,6 @@ namespace AnFake.Core
 		private static string ToFormattedString(IEnumerable<FolderItem> folders)
 		{
 			return "...";
-		}
+		}		
 	}
 }

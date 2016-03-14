@@ -29,22 +29,22 @@ namespace AnFake.Core
 				throw new ArgumentException("Folders.Create(folderPath): folderPath must not be null");
 
 			Create(folderPath.AsPath());
-		}
+		}		
 
 		public static void Delete(IEnumerable<FolderItem> folders)
 		{
 			if (folders == null)
 				throw new ArgumentException("Folders.Delete(folders): folders must not be null");
 
+			folders = folders.AsFormattable();
+
 			Trace.InfoFormat("Deleting folders {{{0}}}...", folders.ToFormattedString());
 
-			var folderPathes = folders
-				.Select(x => x.Path)
-				.ToArray();
+			var resolvedFolders = folders.ToArray();
 
-			FileSystem.DeleteFolders(folderPathes);
+			FileSystem.DeleteFolders(resolvedFolders.Select(x => x.Path));
 
-			Trace.InfoFormat("{0} folder(s) deleted.", folderPathes.Length);
+			Trace.InfoFormat("{0} folder(s) deleted.", resolvedFolders.Length);
 		}
 
 		public static void Delete(FolderItem folder)
@@ -78,20 +78,22 @@ namespace AnFake.Core
 			if (folders == null)
 				throw new ArgumentException("Folders.Clean(folders): folders must not be null");
 
+			folders = folders.AsFormattable();
+
 			Trace.InfoFormat("Cleaning folders {{{0}}}...", folders.ToFormattedString());
 
-			var folderPathes = folders.ToArray();
+			var resolvedFolders = folders.ToArray();
 
 			Trace.DebugFormat("Folders.Clean: deleting folders");
-			FileSystem.DeleteFolders(folderPathes.Select(x => x.Path));
+			FileSystem.DeleteFolders(resolvedFolders.Select(x => x.Path));
 
-			foreach (var folder in folderPathes)
+			foreach (var folder in resolvedFolders)
 			{
 				Trace.DebugFormat("Folders.Clean: re-creating folder\n  TargetPath: {0}", folder);
 				Directory.CreateDirectory(folder.Path.Full);
 			}
 
-			Trace.InfoFormat("{0} folders cleaned.", folderPathes.Length);
+			Trace.InfoFormat("{0} folders cleaned.", resolvedFolders.Length);
 		}
 
 		public static void Clean(FolderItem folder)

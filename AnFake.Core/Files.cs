@@ -24,6 +24,8 @@ namespace AnFake.Core
 			if (targetPath == null)
 				throw new ArgumentException("Files.Copy(files, targetPath[, overwrite]): targetPath must not be null");
 
+			files = files.AsFormattable();
+
 			Trace.InfoFormat("Copying files {{{0}}} to '{1}'...", files.ToFormattedString(), targetPath);
 
 			var filePathes = files
@@ -85,6 +87,8 @@ namespace AnFake.Core
 			if (targetPath == null)
 				throw new ArgumentException("Files.Move(files, targetPath[, overwrite]): targetPath must not be null");
 
+			files = files.AsFormattable();
+
 			Trace.InfoFormat("Moving files {{{0}}} to '{1}'...", files.ToFormattedString(), targetPath);
 
 			var filePathes = files
@@ -143,6 +147,8 @@ namespace AnFake.Core
 		{
 			if (files == null)
 				throw new ArgumentException("Files.Delete(files): files must not be null");
+
+			files = files.AsFormattable();
 
 			Trace.InfoFormat("Deleting files {{{0}}}...", files.ToFormattedString());
 
