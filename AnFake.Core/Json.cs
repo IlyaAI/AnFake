@@ -64,8 +64,26 @@ namespace AnFake.Core
 			}
 		}
 
+		///  <summary>
+		/// 	Writes object into JSON string.
+		///  </summary>
+		/// <param name="obj">object to be written (not null)</param>		
+		public static string Write(object obj)
+		{
+			if (obj == null)
+				throw new ArgumentException("Json.Write(obj): obj must not be null");
+			
+			using (var stream = new MemoryStream())
+			{
+				Serialize(obj, stream);
+
+				return Encoding.UTF8.GetString(stream.ToArray());
+			}
+		}
+
 		private static T Deserialize<T>(Stream stream)
-		{			
+			where T : class, new()
+		{
 			using (var streamReader = new StreamReader(stream))
 			using (var jsonReader = new JsonTextReader(streamReader))
 			{
@@ -76,7 +94,7 @@ namespace AnFake.Core
 		}
 
 		private static void Serialize(object obj, Stream stream)
-		{
+		{			
 			using (var streamWriter = new StreamWriter(stream))
 			using (var jsonWriter = new JsonTextWriter(streamWriter))
 			{

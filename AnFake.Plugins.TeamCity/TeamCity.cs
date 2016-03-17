@@ -41,8 +41,9 @@ namespace AnFake.Plugins.TeamCity
 		/// </summary>
 		public static void PlugIn()
 		{			
-			Plugin.Register<TeamCityPlugin>()				
+			Plugin.Register<TeamCityPlugin>()
 				.As<Core.Integration.IBuildServer>()
+				.As<Core.Integration.Builds.IBuildServer2>()
 				.AsSelf();
 		}
 

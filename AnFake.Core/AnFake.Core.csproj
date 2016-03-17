@@ -64,6 +64,8 @@
     <Compile Include="Exceptions\ScriptSourceInfo.cs" />
     <Compile Include="Exceptions\StackTraceMode.cs" />
     <Compile Include="FormatExtension.cs" />
+    <Compile Include="Integration\Builds\IBuild.cs" />
+    <Compile Include="Integration\Builds\IBuildServer2.cs" />
     <Compile Include="Integration\IBuildServer.cs" />
     <Compile Include="BuildServer.cs" />
     <Compile Include="Integration\PluginBase.cs" />

@@ -7,15 +7,17 @@ using System.Threading;
 using AnFake.Api;
 using AnFake.Core;
 using AnFake.Core.Exceptions;
+using AnFake.Core.Integration.Builds;
 using AnFake.Core.Integration.Tests;
 using JetBrains.TeamCity.ServiceMessages.Write;
 
 namespace AnFake.Plugins.TeamCity
 {
-	internal sealed class TeamCityPlugin : Core.Integration.IBuildServer, IDisposable
+	internal sealed class TeamCityPlugin : IBuildServer2, IDisposable
 	{		
 		private readonly Stack<string> _blockNames = new Stack<string>();
 		private readonly ServiceMessageFormatter _formatter;
+		private readonly Rest.TeamCityClient _apiClient;
 		private readonly string _tcUri;
 		private readonly string _tcBuildId;
 		private readonly string _tcBuildTypeId;
@@ -65,7 +67,12 @@ namespace AnFake.Plugins.TeamCity
 				Target.PhaseFinished += OnTargetPhaseFinished;
 
 				MyBuild.Started += OnBuildStarted;
-				MyBuild.Finished += OnBuildFinished;				
+				MyBuild.Finished += OnBuildFinished;
+
+				if (MyBuild.HasProp("TeamCity.User"))
+				{
+					_apiClient = new Rest.TeamCityClient(new Uri(_tcUri), MyBuild.GetProp("TeamCity.User"), MyBuild.GetProp("TeamCity.Password"));
+				}
 			}
 		}
 
@@ -83,6 +90,11 @@ namespace AnFake.Plugins.TeamCity
 			TestSetAware.Processed -= OnTestSetProcessed;
 
 			Trace.MessageReceived -= OnTraceMessage;
+
+			if (_apiClient != null)
+			{
+				_apiClient.Dispose();
+			}
 
 			if (Disposed != null)
 			{
@@ -194,6 +206,38 @@ namespace AnFake.Plugins.TeamCity
 				var srcPath = file.Path.ToRelative(_tcCheckoutFolder);				
 				WritePublishArtifacts(srcPath.ToUnix(), (dstPath / file.RelPath.Parent).ToUnix());
 			}
+		}
+
+		private void EnsureApiClient()
+		{
+			if (_apiClient == null)
+				throw new InvalidConfigurationException("Extended build server interface isn't available. Hint: specify TeamCity.Uri, TeamCity.User and TeamCity.Password in build properties.");
+		}
+
+		public IBuild GetLastGoodBuild(string configurationName)
+		{
+			Trace.InfoFormat("Querying last good build of '{0}'...", configurationName);
+
+			EnsureApiClient();
+			
+			var build = _apiClient.GetLastGoodBuild(configurationName);
+
+			Trace.InfoFormat("...found #{0}", build.Number);
+
+			return new TeamCityBuild(_apiClient, build);
+		}
+
+		public IBuild GetLastTaggedBuild(string configurationName, string[] tags)
+		{			
+			Trace.InfoFormat("Querying last build of '{0}' tagged as '{1}'...", configurationName, String.Join(",", tags));
+
+			EnsureApiClient();
+
+			var build = _apiClient.GetLastTaggedBuild(configurationName, tags.Select(t => new Rest.Tag(t)).ToArray());
+
+			Trace.InfoFormat("...found #{0}", build.Number);
+
+			return new TeamCityBuild(_apiClient, build);
 		}
 
 		// Event Handlers

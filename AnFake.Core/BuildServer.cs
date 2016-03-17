@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Text;
 using AnFake.Core.Integration;
+using AnFake.Core.Integration.Builds;
 
 namespace AnFake.Core
 {
@@ -12,7 +13,10 @@ namespace AnFake.Core
 		private static readonly Lazy<IBuildServer> Instance 
 			= new Lazy<IBuildServer>(Plugin.Get<IBuildServer>);
 
-		private static IBuildServer _local;
+		private static readonly Lazy<IBuildServer2> Instance2
+			= new Lazy<IBuildServer2>(Plugin.Get<IBuildServer2>);
+
+		private static IBuildServer _local;		
 
 		/// <summary>
 		///		Instance of local build server.
@@ -180,6 +184,37 @@ namespace AnFake.Core
 				throw new ArgumentException("BuildServer.ExposeArtifacts(files[, targetFolder]): targetFolder must not be null");
 
 			Instance.Value.ExposeArtifacts(files, targetFolder);
-		}		
+		}
+
+		/// <summary>
+		///		Gets last successful build with specified configuration name.
+		///		Throws exception if no such build.
+		/// </summary>
+		/// <param name="configurationName">configuration name (not null)</param>
+		/// <returns>IBuild instance (not null)</returns>
+		public static IBuild GetLastGoodBuild(string configurationName)
+		{
+			if (String.IsNullOrEmpty(configurationName))
+				throw new ArgumentException("BuildServer.GetLastGoodBuild(configurationName): configurationName must not be null or empty");
+
+			return Instance2.Value.GetLastGoodBuild(configurationName);
+		}
+
+		/// <summary>
+		///		Gets last build with specified configuration name and marked with all given tags.
+		///		Throws exception if no such build.
+		/// </summary>
+		/// <param name="configurationName">configuration name (not null)</param>
+		/// <param name="tags">set of tags (not null)</param>
+		/// <returns>IBuild instance (not null)</returns>
+		public static IBuild GetLastTaggedBuild(string configurationName, params string[] tags)
+		{
+			if (String.IsNullOrEmpty(configurationName))
+				throw new ArgumentException("BuildServer.GetLastTaggedBuild(configurationName, tags): configurationName must not be null or empty");
+			if (tags == null || tags.Length == 0)
+				throw new ArgumentException("BuildServer.GetLastTaggedBuild(configurationName, tags): tags must not be null or empty");
+
+			return Instance2.Value.GetLastTaggedBuild(configurationName, tags);
+		}
 	}
 }

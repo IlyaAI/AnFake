@@ -167,6 +167,12 @@ namespace AnFake.Core
 
 					var srcPath = entry.Name.AsPath();
 					var dstPath = targetPath / srcPath;
+
+					if (entry.IsDirectory)
+					{
+						Directory.CreateDirectory(dstPath.Full);
+						continue;
+					}
 					
 					Directory.CreateDirectory(dstPath.Parent.Full);
 
