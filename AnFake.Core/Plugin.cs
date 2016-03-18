@@ -2,6 +2,7 @@
 using AnFake.Api;
 using AnFake.Core.Exceptions;
 using AnFake.Core.Integration;
+using AnFake.Core.Integration.Builds;
 using AnFake.Core.Integration.Tests;
 using Autofac;
 using Autofac.Builder;
@@ -195,7 +196,8 @@ namespace AnFake.Core
 			RegisterDefault<MsTrxPostProcessor>()
 				.As<IMsTrxPostProcessor>();
 			RegisterDefault<LocalBuildServer>()
-				.As<IBuildServer>();
+				.As<IBuildServer>()
+				.As<IBuildServer2>();
 
 			try
 			{

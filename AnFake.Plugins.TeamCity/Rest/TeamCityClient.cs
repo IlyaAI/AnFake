@@ -78,38 +78,34 @@ namespace AnFake.Plugins.TeamCity.Rest
 				throw new NotSupportedException("Connection to TeamCity established but API version isn't recognized.");
         }
 
-		public Build GetLastGoodBuild(string configurationName)
+		public Build FindLastGoodBuild(string configurationName)
 		{
 			var locatorBuilder = new LocatorBuilder();
 			locatorBuilder
 				.Append("buildType", configurationName)
 				.Append("status", "SUCCESS")
+				.Append("state", "finished")
 				.Append("count", "1");
 
 			var builds = RestGet<BuildsList>("builds/" + locatorBuilder.ToQuery());
 
-			if (builds.Items.Count == 0)
-				throw new InvalidConfigurationException(String.Format("There is no good build of '{0}'.", configurationName));
-
-			return builds.Items[0];
+			return builds.Items.Count == 0 ? null : builds.Items[0];
 		}
 
-		public Build GetLastTaggedBuild(string configurationName, Tag[] tags)
+		public Build FindLastTaggedBuild(string configurationName, Tag[] tags)
 		{
 			var joinedTagNames = String.Join(",", tags.Select(x => x.Name));
 
 			var locatorBuilder = new LocatorBuilder();
 			locatorBuilder
-				.Append("buildType", configurationName)				
+				.Append("buildType", configurationName)
+				.Append("state", "finished")
 				.Append("tags", joinedTagNames)
 				.Append("count", "1");
 
 			var builds = RestGet<BuildsList>("builds/" + locatorBuilder.ToQuery());
 
-			if (builds.Items.Count == 0)
-				throw new InvalidConfigurationException(String.Format("There is no build of '{0}' tagged as '{1}'.", configurationName, String.Join(",", joinedTagNames)));
-
-			return builds.Items[0];
+			return builds.Items.Count == 0 ? null : builds.Items[0];
 		}
 
 		public Build GetBuildDetails(Uri buildHref)

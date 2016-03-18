@@ -72,7 +72,7 @@ namespace AnFake.Plugins.HtmlSummary
 			_build = new BuildSummary
 			{
 				AgentName = Environment.MachineName,
-				Changeset = BuildServer.CurrentChangesetHash,
+				Changeset = BuildServer.CurrentBuild.ChangesetHash,
 				WorkingFolderUri = MyBuild.Current.Path.ToUnc().ToUri()
 			};			
 		}

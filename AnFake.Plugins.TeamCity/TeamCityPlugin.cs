@@ -24,6 +24,7 @@ namespace AnFake.Plugins.TeamCity
 		private readonly FileSystemPath _tcCheckoutFolder;		
 		private readonly int _tcBuildCounter;
 		private readonly string _tcBuildVcsNumber;
+		private string _tcBuildNumber;
 		private int _errorsCount;
 		private int _warningsCount;
 		private bool _skipErrors;
@@ -53,6 +54,10 @@ namespace AnFake.Plugins.TeamCity
 			_tcBuildVcsNumber = MyBuild.GetProp("TeamCity.BuildVcsNumber", null);
 			if (_tcBuildVcsNumber == null && _tcBuildId != null)
 				throw new InvalidConfigurationException("TeamCity plugin requires 'TeamCity.BuildVcsNumber' to be specified in build properties.");
+
+			_tcBuildNumber = MyBuild.GetProp("TeamCity.BuildNumber", null);
+			if (_tcBuildNumber == null && _tcBuildId != null)
+				throw new InvalidConfigurationException("TeamCity plugin requires 'TeamCity.BuildNumber' to be specified in build properties.");
 
 			if (_tcUri != null)
 			{				
@@ -150,6 +155,22 @@ namespace AnFake.Plugins.TeamCity
 			get { return _tcBuildCounter; }
 		}
 
+		public string CurrentBuildNumber
+		{
+			get { return _tcBuildNumber; }
+		}
+
+		public string CurrentConfigurationName
+		{
+			get
+			{
+				if (String.IsNullOrEmpty(_tcBuildTypeId))
+					throw new InvalidConfigurationException("Current configuration name isn't provided.");
+
+				return _tcBuildTypeId;
+			}			
+		}
+
 		public bool CanExposeArtifacts
 		{
 			get { return true; }
@@ -208,36 +229,54 @@ namespace AnFake.Plugins.TeamCity
 			}
 		}
 
+		public void SetCurrentBuildNumber(string value)
+		{
+			_tcBuildNumber = value;
+			WriteBuildNumber(value);
+		}
+
 		private void EnsureApiClient()
 		{
 			if (_apiClient == null)
 				throw new InvalidConfigurationException("Extended build server interface isn't available. Hint: specify TeamCity.Uri, TeamCity.User and TeamCity.Password in build properties.");
 		}
 
-		public IBuild GetLastGoodBuild(string configurationName)
+		public IBuild FindLastGoodBuild(string configurationName)
 		{
 			Trace.InfoFormat("Querying last good build of '{0}'...", configurationName);
 
 			EnsureApiClient();
 			
-			var build = _apiClient.GetLastGoodBuild(configurationName);
-
-			Trace.InfoFormat("...found #{0}", build.Number);
-
-			return new TeamCityBuild(_apiClient, build);
+			var build = _apiClient.FindLastGoodBuild(configurationName);
+			if (build != null)
+			{
+				Trace.InfoFormat("...found #{0}", build.Number);
+				return new TeamCityBuild(_apiClient, build);
+			}
+			else
+			{
+				Trace.Info("...not found.");
+				return null;
+			}			
 		}
 
-		public IBuild GetLastTaggedBuild(string configurationName, string[] tags)
+		public IBuild FindLastTaggedBuild(string configurationName, string[] tags)
 		{			
 			Trace.InfoFormat("Querying last build of '{0}' tagged as '{1}'...", configurationName, String.Join(",", tags));
 
 			EnsureApiClient();
 
-			var build = _apiClient.GetLastTaggedBuild(configurationName, tags.Select(t => new Rest.Tag(t)).ToArray());
-
-			Trace.InfoFormat("...found #{0}", build.Number);
-
-			return new TeamCityBuild(_apiClient, build);
+			var build = _apiClient.FindLastTaggedBuild(configurationName, tags.Select(t => new Rest.Tag(t)).ToArray());
+			if (build != null)
+			{
+				Trace.InfoFormat("...found #{0}", build.Number);
+				return new TeamCityBuild(_apiClient, build);
+			}
+			else
+			{
+				Trace.Info("...not found.");
+				return null;
+			}
 		}
 
 		// Event Handlers
@@ -542,6 +581,11 @@ namespace AnFake.Plugins.TeamCity
 		private void WriteBuildStatus(string text)
 		{
 			Console.WriteLine(_formatter.FormatMessage("buildStatus", new {text}));
+		}
+
+		private void WriteBuildNumber(string value)
+		{
+			Console.WriteLine(_formatter.FormatMessage("buildNumber", value));
 		}
 
 		private Uri MakeArtifactUri(FileSystemPath path)

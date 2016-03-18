@@ -322,17 +322,7 @@ namespace AnFake.Plugins.Tfs2012
 		public bool IsLocal
 		{
 			get { return _build == null; }
-		}
-
-		public string CurrentChangesetHash
-		{
-			get { return CurrentChangesetId.ToString(); }
-		}
-
-		public int CurrentBuildCounter
-		{
-			get { throw new NotSupportedException("TFS doesn't provide integer build number."); }
-		}
+		}		
 
 		public bool CanExposeArtifacts
 		{

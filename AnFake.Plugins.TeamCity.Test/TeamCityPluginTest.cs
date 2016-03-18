@@ -40,7 +40,7 @@ namespace AnFake.Plugins.TeamCity.Test
 			// arrange			
 
 			// act
-			var build = Plugin.Get<IBuildServer2>().GetLastGoodBuild(TcTestBuildConfiguration);
+			var build = Plugin.Get<IBuildServer2>().FindLastGoodBuild(TcTestBuildConfiguration);
 
 			// assert
 			Assert.IsNotNull(build);
@@ -57,13 +57,13 @@ namespace AnFake.Plugins.TeamCity.Test
 		public void TeamCityPlugin_should_return_last_tagged_build()
 		{
 			// arrange
-			var build = Plugin.Get<IBuildServer2>().GetLastGoodBuild(TcTestBuildConfiguration);
+			var build = Plugin.Get<IBuildServer2>().FindLastGoodBuild(TcTestBuildConfiguration);
 			build.AddTag("TEST");
 
 			try
 			{
 				// act
-				build = Plugin.Get<IBuildServer2>().GetLastTaggedBuild(TcTestBuildConfiguration, new[] { "TEST" });
+				build = Plugin.Get<IBuildServer2>().FindLastTaggedBuild(TcTestBuildConfiguration, new[] { "TEST" });
 
 				// assert
 				Assert.IsNotNull(build);
@@ -80,7 +80,7 @@ namespace AnFake.Plugins.TeamCity.Test
 		public void TeamCityPlugin_should_download_artifacts()
 		{
 			// arrange
-			var build = Plugin.Get<IBuildServer2>().GetLastGoodBuild(TcTestBuildConfiguration);			
+			var build = Plugin.Get<IBuildServer2>().FindLastGoodBuild(TcTestBuildConfiguration);			
 			
 			var dstPath = ".artifacts".AsPath();
 			Folders.Clean(dstPath);

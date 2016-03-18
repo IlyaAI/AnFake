@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Text;
+using AnFake.Core.Exceptions;
+using AnFake.Core.Integration.Builds;
 
 namespace AnFake.Core.Integration
 {
-	internal sealed class LocalBuildServer : IBuildServer
+	internal sealed class LocalBuildServer : IBuildServer2
 	{
 		public bool IsLocal
 		{
@@ -23,6 +25,16 @@ namespace AnFake.Core.Integration
 		public int CurrentBuildCounter
 		{
 			get { return 0; }
+		}
+
+		public string CurrentBuildNumber
+		{
+			get { return "local"; }
+		}
+
+		public string CurrentConfigurationName
+		{
+			get { throw new InvalidConfigurationException("LocalBuildServer.CurrentConfigurationName: not supported"); }
 		}
 
 		public bool CanExposeArtifacts
@@ -48,6 +60,21 @@ namespace AnFake.Core.Integration
 		public void ExposeArtifacts(FileSet files, string targetFolder)
 		{
 			// do nothing
+		}
+
+		public void SetCurrentBuildNumber(string value)
+		{
+			// do nothing			
+		}
+
+		public IBuild FindLastGoodBuild(string configurationName)
+		{
+			throw new InvalidConfigurationException("LocalBuildServer.FindLastGoodBuild: not supported");
+		}
+
+		public IBuild FindLastTaggedBuild(string configurationName, string[] tags)
+		{
+			throw new InvalidConfigurationException("LocalBuildServer.FindLastTaggedBuild: not supported");
 		}
 	}
 }

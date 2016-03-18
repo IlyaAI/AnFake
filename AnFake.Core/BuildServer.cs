@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using AnFake.Core.Exceptions;
 using AnFake.Core.Integration;
 using AnFake.Core.Integration.Builds;
 
@@ -17,6 +18,64 @@ namespace AnFake.Core
 			= new Lazy<IBuildServer2>(Plugin.Get<IBuildServer2>);
 
 		private static IBuildServer _local;		
+
+		/// <summary>
+		///		Current build's properties.
+		/// </summary>
+		public static class CurrentBuild
+		{
+			/// <summary>
+			///		Changeset id. Throws exception if VCS doesn't provide integer identifier.
+			/// </summary>
+			public static int ChangesetId
+			{
+				get { return Instance2.Value.CurrentChangesetId; }
+			}
+
+			/// <summary>
+			///		Changeset hash.
+			/// </summary>
+			public static string ChangesetHash
+			{
+				get { return Instance2.Value.CurrentChangesetHash; }
+			}
+
+			/// <summary>
+			///		Build counter. Throws exception if build server doesn't provide integer build counter.
+			/// </summary>
+			public static int Counter
+			{
+				get { return Instance2.Value.CurrentBuildCounter; }
+			}
+
+			/// <summary>
+			///		Build number.
+			/// </summary>
+			public static string Number
+			{
+				get { return Instance2.Value.CurrentBuildNumber; }
+			}
+
+			/// <summary>
+			///		Sets build's number.
+			/// </summary>
+			/// <param name="value">build number to be set (not null or empty)</param>
+			public static void SetNumber(string value)
+			{
+				if (String.IsNullOrEmpty(value))
+					throw new ArgumentException("BuildServer.CurrentBuild.SetBuildNumber(value): value must not be null or empty");
+
+				Instance2.Value.SetCurrentBuildNumber(value);
+			}
+
+			/// <summary>
+			///		Build configuration name.
+			/// </summary>
+			public static string ConfigurationName
+			{
+				get { return Instance2.Value.CurrentConfigurationName; }
+			}
+		}
 
 		/// <summary>
 		///		Instance of local build server.
@@ -39,31 +98,7 @@ namespace AnFake.Core
 		public static bool IsLocal
 		{
 			get { return Instance.Value.IsLocal; }
-		}
-
-		/// <summary>
-		///		Current build changeset id. Throws exception if VCS doesn't provide integer identifier.
-		/// </summary>
-		public static int CurrentChangesetId
-		{
-			get { return Instance.Value.CurrentChangesetId; }
-		}
-
-		/// <summary>
-		///		Current build changeset hash.
-		/// </summary>
-		public static string CurrentChangesetHash
-		{
-			get { return Instance.Value.CurrentChangesetHash; }
-		}
-
-		/// <summary>
-		///		Current build number. Throws exception if build server doesn't provide integer build number.
-		/// </summary>
-		public static int CurrentBuildCounter
-		{
-			get { return Instance.Value.CurrentBuildCounter; }
-		}
+		}		
 
 		/// <summary>
 		///		Can this build expose artifacts?
@@ -187,6 +222,20 @@ namespace AnFake.Core
 		}
 
 		/// <summary>
+		///		Finds last successful build with specified configuration name.
+		///		Returns null if no such build.
+		/// </summary>
+		/// <param name="configurationName">configuration name (not null)</param>
+		/// <returns>IBuild instance</returns>
+		public static IBuild FindLastGoodBuild(string configurationName)
+		{
+			if (String.IsNullOrEmpty(configurationName))
+				throw new ArgumentException("BuildServer.FindLastGoodBuild(configurationName): configurationName must not be null or empty");
+
+			return Instance2.Value.FindLastGoodBuild(configurationName);
+		}
+
+		/// <summary>
 		///		Gets last successful build with specified configuration name.
 		///		Throws exception if no such build.
 		/// </summary>
@@ -197,7 +246,28 @@ namespace AnFake.Core
 			if (String.IsNullOrEmpty(configurationName))
 				throw new ArgumentException("BuildServer.GetLastGoodBuild(configurationName): configurationName must not be null or empty");
 
-			return Instance2.Value.GetLastGoodBuild(configurationName);
+			var ret = Instance2.Value.FindLastGoodBuild(configurationName);
+			if (ret == null)
+				throw new InvalidConfigurationException(String.Format("There is no good build of '{0}'.", configurationName));
+
+			return ret;
+		}
+
+		/// <summary>
+		///		Finds last build with specified configuration name and marked with all given tags.
+		///		Return null if no such build.
+		/// </summary>
+		/// <param name="configurationName">configuration name (not null)</param>
+		/// <param name="tags">set of tags (not null)</param>
+		/// <returns>IBuild instance</returns>
+		public static IBuild FindLastTaggedBuild(string configurationName, params string[] tags)
+		{
+			if (String.IsNullOrEmpty(configurationName))
+				throw new ArgumentException("BuildServer.FindLastTaggedBuild(configurationName, tags): configurationName must not be null or empty");
+			if (tags == null || tags.Length == 0)
+				throw new ArgumentException("BuildServer.FindLastTaggedBuild(configurationName, tags): tags must not be null or empty");
+
+			return Instance2.Value.FindLastTaggedBuild(configurationName, tags);
 		}
 
 		/// <summary>
@@ -214,7 +284,11 @@ namespace AnFake.Core
 			if (tags == null || tags.Length == 0)
 				throw new ArgumentException("BuildServer.GetLastTaggedBuild(configurationName, tags): tags must not be null or empty");
 
-			return Instance2.Value.GetLastTaggedBuild(configurationName, tags);
+			var ret = Instance2.Value.FindLastTaggedBuild(configurationName, tags);
+			if (ret == null)
+				throw new InvalidConfigurationException(String.Format("There is no build of '{0}' tagged as '{1}'.", configurationName, String.Join(",", tags)));
+
+			return ret;
 		}
 	}
 }

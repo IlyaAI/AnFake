@@ -14,21 +14,6 @@ namespace AnFake.Core.Integration
 		bool IsLocal { get; }
 
 		/// <summary>
-		///		Current build changeset id. Throws exception if VCS doesn't provide integer identifier.
-		/// </summary>
-		int CurrentChangesetId { get; }
-
-		/// <summary>
-		///		Current build changeset hash.
-		/// </summary>
-		string CurrentChangesetHash { get; }
-
-		/// <summary>
-		///		Current build counter. Throws exception if build server doesn't provide integer build counter.
-		/// </summary>
-		int CurrentBuildCounter { get; }
-
-		/// <summary>
 		///		Can this build expose artifacts?
 		/// </summary>
 		bool CanExposeArtifacts { get; }		
