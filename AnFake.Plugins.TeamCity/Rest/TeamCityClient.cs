@@ -7,62 +7,42 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using AnFake.Core;
-using AnFake.Core.Exceptions;
 
 namespace AnFake.Plugins.TeamCity.Rest
 {
 	internal sealed class TeamCityClient : IDisposable
 	{
-		private sealed class LocatorBuilder
-		{
-			private readonly StringBuilder _locator = new StringBuilder();
-
-			public LocatorBuilder Append(string name, string value)
-			{
-				if (_locator.Length > 0)
-				{
-					_locator.Append(',');
-				}
-
-				_locator.Append(name).Append(':');
-
-				if (value.IndexOfAny(new[] {':', ','}) >= 0)
-				{
-					_locator.Append('(').Append(value).Append(')');
-				}
-				else
-				{
-					_locator.Append(value);
-				}
-				
-				return this;
-			}
-
-			public string ToQuery()
-			{
-				return "?locator=" + WebUtility.UrlEncode(_locator.ToString());
-			}
-
-			/*public string ToPath()
-			{
-				return WebUtility.UrlEncode(_locator.ToString());
-			}*/
-		}
-		
 		private readonly HttpClient _httpClient;
 
-		public TeamCityClient(Uri uri, string user, string password)
+		private TeamCityClient(Uri uri, string authType, ICredentials credentials)
 		{
-			var handler = new HttpClientHandler
-			{
-				Credentials = new NetworkCredential(user, password),
-				PreAuthenticate = true
-			};
-
-			_httpClient = new HttpClient(handler) {BaseAddress = new Uri(uri, "httpAuth/app/rest/")};
+			var handler = new HttpClientHandler { Credentials = credentials, PreAuthenticate = true };
+			
+			_httpClient = new HttpClient(handler) { BaseAddress = new Uri(uri, "app/rest/") };
 			_httpClient.DefaultRequestHeaders.Accept.Clear();
-			_httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-			_httpClient.DefaultRequestHeaders.ExpectContinue = false;			
+			_httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json", 1.0));
+			_httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("text/plain", 0.5));
+			_httpClient.DefaultRequestHeaders.ExpectContinue = false;
+
+			try
+			{
+				Authenticate(authType);
+			}
+			catch (Exception)
+			{
+				_httpClient.Dispose();
+				throw;
+			}
+		}
+
+		public static TeamCityClient BasicAuth(Uri uri, string user, string password)
+		{
+			return new TeamCityClient(uri, "httpAuth", new NetworkCredential(user, password));
+		}
+
+		public static TeamCityClient NtlmAuth(Uri uri)
+		{
+			return new TeamCityClient(uri, "ntlmAuth", CredentialCache.DefaultNetworkCredentials);
 		}
 
 		public void Dispose()
@@ -70,10 +50,15 @@ namespace AnFake.Plugins.TeamCity.Rest
 			_httpClient.Dispose();
 		}
 
-		public void CheckConnection()
-        {            
+		private void Authenticate(string authType)
+		{
+			using (var task = _httpClient.GetAsync('/' + authType + '/'))
+			{
+				task.Wait();
+				task.Result.EnsureSuccessStatusCode();
+			}
+		
             var info = RestGet<ServerVersion>("server");
-
             if (String.IsNullOrWhiteSpace(info.Version))
 				throw new NotSupportedException("Connection to TeamCity established but API version isn't recognized.");
         }
@@ -87,9 +72,11 @@ namespace AnFake.Plugins.TeamCity.Rest
 				.Append("state", "finished")
 				.Append("count", "1");
 
-			var builds = RestGet<BuildsList>("builds/" + locatorBuilder.ToQuery());
+			var builds = RestTryGet<BuildsList>("builds/" + locatorBuilder.ToQuery());
 
-			return builds.Items.Count == 0 ? null : builds.Items[0];
+			return builds != null && builds.Items.Count > 0
+				? builds.Items[0]
+				: null;
 		}
 
 		public Build FindLastTaggedBuild(string configurationName, Tag[] tags)
@@ -103,9 +90,11 @@ namespace AnFake.Plugins.TeamCity.Rest
 				.Append("tags", joinedTagNames)
 				.Append("count", "1");
 
-			var builds = RestGet<BuildsList>("builds/" + locatorBuilder.ToQuery());
+			var builds = RestTryGet<BuildsList>("builds/" + locatorBuilder.ToQuery());
 
-			return builds.Items.Count == 0 ? null : builds.Items[0];
+			return builds != null && builds.Items.Count > 0 
+				? builds.Items[0]
+				: null;
 		}
 
 		public Build GetBuildDetails(Uri buildHref)
@@ -126,6 +115,11 @@ namespace AnFake.Plugins.TeamCity.Rest
 		public void SetBuildTags(Uri buildHref, List<Tag> tags)
 		{			
 			RestPut(buildHref + "/tags/", new TagsList(tags));
+		}
+
+		public void AddBuildTag(Uri buildHref, Tag tag)
+		{
+			RestPost(buildHref + "/tags/", new TagsList(tag));
 		}
 
 		public void GetArchivedArtifacts(Uri buildHref, string path, string pattern, string zipPath)
@@ -168,8 +162,29 @@ namespace AnFake.Plugins.TeamCity.Rest
 			{
 				task.Wait();
 
-				return Json.ReadAs<T>(task.Result);
-			}			
+				return Json.ReadAs<T>(task.Result);				
+			}
+		}
+
+		private T RestTryGet<T>(string subUri)
+			where T : class, new()
+		{
+			using (var task = _httpClient.GetAsync(subUri))
+			{
+				task.Wait();
+
+				if (task.Result.StatusCode == HttpStatusCode.NotFound)
+					return null;
+
+				task.Result.EnsureSuccessStatusCode();
+
+				using (var subTask = task.Result.Content.ReadAsStringAsync())
+				{
+					subTask.Wait();
+
+					return Json.ReadAs<T>(subTask.Result);
+				}
+			}
 		}
 		
 		private void RestPut<T>(string subUri, T entity)
@@ -181,6 +196,17 @@ namespace AnFake.Plugins.TeamCity.Rest
 				task.Wait();
 				task.Result.EnsureSuccessStatusCode();
 			}			
+		}
+
+		private void RestPost<T>(string subUri, T entity)
+		{
+			var content = new StringContent(Json.Write(entity), Encoding.UTF8, "application/json");
+
+			using (var task = _httpClient.PostAsync(subUri, content))
+			{
+				task.Wait();
+				task.Result.EnsureSuccessStatusCode();
+			}
 		}
 	}
 }

@@ -75,6 +75,60 @@ namespace AnFake.Core
 			{
 				get { return Instance2.Value.CurrentConfigurationName; }
 			}
+
+			/// <summary>
+			///		Adds tag to current build.
+			/// </summary>
+			/// <param name="tag">tag to be added (not null or empty)</param>
+			public static void AddTag(string tag)
+			{
+				if (String.IsNullOrEmpty(tag))
+					throw new ArgumentException("BuildServer.CurrentBuild.AddTag(tag): tag must not be null or empty");
+
+				Instance2.Value.TagCurrentBuild(tag);
+			}
+
+			/// <summary>
+			///		Finds last successful build with current's build configuration name.
+			///		Returns null if no such build.
+			/// </summary>			
+			/// <returns>IBuild instance</returns>
+			public static IBuild FindLastGood()
+			{
+				return FindLastGoodBuild(ConfigurationName);
+			}
+
+			/// <summary>
+			///		Gets last successful build with current's build configuration name.
+			///		Throws exception if no such build.
+			/// </summary>			
+			/// <returns>IBuild instance (not null)</returns>
+			public static IBuild GetLastGood()
+			{
+				return GetLastGoodBuild(ConfigurationName);
+			}
+
+			/// <summary>
+			///		Finds last build with current's build configuration name and marked with all given tags.
+			///		Return null if no such build.
+			/// </summary>			
+			/// <param name="tags">set of tags (not null)</param>
+			/// <returns>IBuild instance</returns>
+			public static IBuild FindLastTagged(params string[] tags)
+			{
+				return FindLastTaggedBuild(ConfigurationName, tags);
+			}
+
+			/// <summary>
+			///		Gets last build with current's build configuration name and marked with all given tags.
+			///		Throws exception if no such build.
+			/// </summary>			
+			/// <param name="tags">set of tags (not null)</param>
+			/// <returns>IBuild instance (not null)</returns>
+			public static IBuild GetLastTagged(params string[] tags)
+			{
+				return GetLastTaggedBuild(ConfigurationName, tags);				
+			}
 		}
 
 		/// <summary>

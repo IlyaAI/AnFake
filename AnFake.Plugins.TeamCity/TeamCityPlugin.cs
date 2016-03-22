@@ -17,7 +17,7 @@ namespace AnFake.Plugins.TeamCity
 	{		
 		private readonly Stack<string> _blockNames = new Stack<string>();
 		private readonly ServiceMessageFormatter _formatter;
-		private readonly Rest.TeamCityClient _apiClient;
+		private readonly Lazy<Rest.TeamCityClient> _apiClient;
 		private readonly string _tcUri;
 		private readonly string _tcBuildId;
 		private readonly string _tcBuildTypeId;
@@ -74,10 +74,15 @@ namespace AnFake.Plugins.TeamCity
 				MyBuild.Started += OnBuildStarted;
 				MyBuild.Finished += OnBuildFinished;
 
-				if (MyBuild.HasProp("TeamCity.User"))
-				{
-					_apiClient = new Rest.TeamCityClient(new Uri(_tcUri), MyBuild.GetProp("TeamCity.User"), MyBuild.GetProp("TeamCity.Password"));
-				}
+				
+				_apiClient = new Lazy<Rest.TeamCityClient>(
+					() =>
+					{
+						var tcUri = new Uri(_tcUri);
+						return MyBuild.HasProp("TeamCity.User")
+							? Rest.TeamCityClient.BasicAuth(tcUri, MyBuild.GetProp("TeamCity.User"), MyBuild.GetProp("TeamCity.Password"))
+							: Rest.TeamCityClient.NtlmAuth(tcUri);
+					});				
 			}
 		}
 
@@ -96,9 +101,9 @@ namespace AnFake.Plugins.TeamCity
 
 			Trace.MessageReceived -= OnTraceMessage;
 
-			if (_apiClient != null)
+			if (_apiClient != null && _apiClient.IsValueCreated)
 			{
-				_apiClient.Dispose();
+				SafeOp.Try(() => _apiClient.Value.Dispose());
 			}
 
 			if (Disposed != null)
@@ -238,7 +243,17 @@ namespace AnFake.Plugins.TeamCity
 		private void EnsureApiClient()
 		{
 			if (_apiClient == null)
-				throw new InvalidConfigurationException("Extended build server interface isn't available. Hint: specify TeamCity.Uri, TeamCity.User and TeamCity.Password in build properties.");
+				throw new InvalidConfigurationException("Extended build server interface isn't available. Hint: specify TeamCity.Uri, TeamCity.User and TeamCity.Password in build properties.");			
+		}
+
+		public void TagCurrentBuild(string tag)
+		{
+			Trace.Info("Tagging current build...");
+
+			EnsureApiClient();
+
+			var buildHref = "builds/" + new Rest.LocatorBuilder().Append("id", _tcBuildId).ToPath();
+			_apiClient.Value.AddBuildTag(new Uri(buildHref, UriKind.Relative), new Rest.Tag(tag));
 		}
 
 		public IBuild FindLastGoodBuild(string configurationName)
@@ -246,12 +261,12 @@ namespace AnFake.Plugins.TeamCity
 			Trace.InfoFormat("Querying last good build of '{0}'...", configurationName);
 
 			EnsureApiClient();
-			
-			var build = _apiClient.FindLastGoodBuild(configurationName);
+
+			var build = _apiClient.Value.FindLastGoodBuild(configurationName);
 			if (build != null)
 			{
 				Trace.InfoFormat("...found #{0}", build.Number);
-				return new TeamCityBuild(_apiClient, build);
+				return new TeamCityBuild(_apiClient.Value, build);
 			}
 			else
 			{
@@ -266,11 +281,11 @@ namespace AnFake.Plugins.TeamCity
 
 			EnsureApiClient();
 
-			var build = _apiClient.FindLastTaggedBuild(configurationName, tags.Select(t => new Rest.Tag(t)).ToArray());
+			var build = _apiClient.Value.FindLastTaggedBuild(configurationName, tags.Select(t => new Rest.Tag(t)).ToArray());
 			if (build != null)
 			{
 				Trace.InfoFormat("...found #{0}", build.Number);
-				return new TeamCityBuild(_apiClient, build);
+				return new TeamCityBuild(_apiClient.Value, build);
 			}
 			else
 			{

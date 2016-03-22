@@ -37,6 +37,12 @@
 		string CurrentConfigurationName { get; }
 
 		/// <summary>
+		///		Adds tag to current build.
+		/// </summary>
+		/// <param name="tag">tag to be added (not null or empty)</param>
+		void TagCurrentBuild(string tag);
+
+		/// <summary>
 		///		Finds last successful build with specified configuration name.
 		///		Returns null if no such build.
 		/// </summary>

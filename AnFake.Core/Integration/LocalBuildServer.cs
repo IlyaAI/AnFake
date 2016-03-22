@@ -64,7 +64,12 @@ namespace AnFake.Core.Integration
 
 		public void SetCurrentBuildNumber(string value)
 		{
-			// do nothing			
+			// do nothing
+		}
+
+		public void TagCurrentBuild(string tag)
+		{
+			// do nothing
 		}
 
 		public IBuild FindLastGoodBuild(string configurationName)

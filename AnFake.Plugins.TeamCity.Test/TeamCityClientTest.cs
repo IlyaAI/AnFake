@@ -15,32 +15,51 @@ namespace AnFake.Plugins.TeamCity.Test
 
 		[TestCategory("Integration")]
 		[TestMethod]
-		public void CheckConnection_should_be_success_with_valid_credentials()
+		public void BasicAuth_should_be_success_with_valid_credentials()
 		{
 			// arrange
-			var client = new TeamCityClient(TcUri, TcUser, TcPassword);
 
 			// act
-			client.CheckConnection();			
+			using (var client = TeamCityClient.BasicAuth(TcUri, TcUser, TcPassword))
+			{
+				// assert
+				Assert.IsNotNull(client);
+			}
 		}
 
 		[TestCategory("Integration")]
 		[TestMethod]
-		public void CheckConnection_should_throw_with_invalid_credentials()
+		public void BasicAuth_should_throw_with_invalid_credentials()
 		{
 			// arrange
-			var client = new TeamCityClient(TcUri, "someUser", "no-pass");
 
-			// act & assert
 			try
 			{
-				client.CheckConnection();
-				Assert.Fail("Exception is expected.");
+				// act
+				using (TeamCityClient.BasicAuth(TcUri, "someUser", "no-pass"))
+				{
+					// assert					
+					Assert.Fail("Exception is expected.");
+				}
 			}
 			catch (Exception)
 			{
-				// it's ok
+				// it's ok				
+			}			
+		}
+
+		[TestCategory("Integration")]
+		[TestMethod]
+		public void NtlmAuth_should_be_success_with_valid_credentials()
+		{
+			// arrange
+
+			// act
+			using (var client = TeamCityClient.NtlmAuth(TcUri))
+			{
+				// assert
+				Assert.IsNotNull(client);
 			}
-		}		
+		}
 	}
 }

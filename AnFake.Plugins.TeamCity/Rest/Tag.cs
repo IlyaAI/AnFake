@@ -36,6 +36,11 @@ namespace AnFake.Plugins.TeamCity.Rest
 			_items = items;
 		}
 
+		public TagsList(Tag item)
+		{
+			_items = new List<Tag> { item };
+		}
+
 		[DataMember(Name = "count")]
 		public int Count
 		{
