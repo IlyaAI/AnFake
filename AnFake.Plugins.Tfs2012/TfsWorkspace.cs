@@ -562,6 +562,48 @@ namespace AnFake.Plugins.Tfs2012
 			Trace.InfoFormat("{0} item(s) reverted.", reverted);
 		}
 
+		///  <summary>
+		/// 		Checks-in specified changed files.
+		///  </summary>
+		///  <param name="files">files to be checked-in (not null)</param>
+		///  <param name="description">changeset description (not null or empty)</param>
+		public static void Checkin(IEnumerable<FileItem> files, string description)
+		{
+			if (files == null)
+				throw new ArgumentException("TfsWorkspace.Checkin(files, description): files must not be null");
+
+			if (String.IsNullOrEmpty(description))
+				throw new ArgumentException("TfsWorkspace.Checkin(files, description): description must not be null or empty");
+
+			var filesArray = files.ToArray();
+			if (filesArray.Length == 0)
+				return;
+
+			var ws = Impl.GetWorkspace(filesArray[0].Path);
+
+			Trace.Info("TfsWorkspace.Checkin:");
+
+			var pendingSets = ws.QueryPendingSets(
+				filesArray.Select(f => f.Path.Full).ToArray(),
+				RecursionType.None,
+				ws.Name,
+				ws.OwnerName,
+				false);
+
+			var changes = pendingSets
+				.SelectMany(x => x.PendingChanges)
+				.ToArray();
+			
+			foreach (var change in changes)
+			{
+				Trace.InfoFormat("  [{0,-6}] {1}", change.ChangeTypeName, change.FileName);
+			}
+
+			ws.CheckIn(changes, description);
+
+			Trace.InfoFormat("{0} file(s) checked-in.", changes.Length);
+		}
+
 		// ReSharper disable once UnusedParameter.Local
 		private static void EnsureWorkspaceFile(Params parameters)
 		{

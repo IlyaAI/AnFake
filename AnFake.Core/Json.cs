@@ -2,6 +2,7 @@
 using System.IO;
 using System.Text;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace AnFake.Core
 {
@@ -86,10 +87,8 @@ namespace AnFake.Core
 		{
 			using (var streamReader = new StreamReader(stream))
 			using (var jsonReader = new JsonTextReader(streamReader))
-			{
-				var serializer = new JsonSerializer();
-
-				return serializer.Deserialize<T>(jsonReader);
+			{				
+				return CreateSerializer().Deserialize<T>(jsonReader);
 			}			
 		}
 
@@ -98,8 +97,18 @@ namespace AnFake.Core
 			using (var streamWriter = new StreamWriter(stream))
 			using (var jsonWriter = new JsonTextWriter(streamWriter))
 			{
-				new JsonSerializer().Serialize(jsonWriter, obj);
+				CreateSerializer().Serialize(jsonWriter, obj);
 			}
+		}
+
+		private static JsonSerializer CreateSerializer()
+		{			
+			var serializer = new JsonSerializer
+			{
+				Converters = {new VersionConverter()}
+			};
+			
+			return serializer;
 		}
 	}
 }

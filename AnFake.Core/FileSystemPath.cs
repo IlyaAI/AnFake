@@ -418,6 +418,11 @@ namespace AnFake.Core
 			return new FileSystemPath(Path.Combine(basePath._value, subPath._value), true);
 		}
 
+		public static FileSystemPath operator /(FileSystemPath basePath, Version subPath)
+		{
+			return new FileSystemPath(Path.Combine(basePath._value, subPath.ToString()), true);
+		}
+
 		public static FileSet operator %(FileSystemPath basePath, FileSystemPath wildcardedPath)
 		{
 			return new FileSet().From(basePath).Include(wildcardedPath);
