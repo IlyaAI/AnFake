@@ -18,9 +18,30 @@ namespace AnFake.Plugins.Tfs2012
 		[Flags]
 		public enum Role
 		{
+			/// <summary>
+			///		In Self role you can use TFS with explicit API (TfsWorkspace, TfsBuild, etc) but unified API such as <c>BuildServer</c> or <c>VersionControl</c> will be unavailable.
+			/// </summary>
+			Self					= 0x00,
+
+			/// <summary>
+			///		In VersionControl role you can use TFS with explicit API (TfsWorkspace, TfsBuild, etc) and with unified API <c>VersionControl</c> but <c>BuildServer</c> will be unavailable.
+			/// </summary>
 			VersionControl			= 0x01,
+
+			/// <summary>
+			///		In ContinuousIntegration role you can use TFS with explicit API (TfsWorkspace, TfsBuild, etc) and with unified API <c>BuildServer</c> but <c>VersionControl</c> will be unavailable.
+			/// </summary>
 			ContinuousIntegration	= 0x02,
-			Tracking				= 0x04
+
+			/// <summary>
+			///		Reserved for future use.
+			/// </summary>
+			Tracking				= 0x04,
+
+			/// <summary>
+			///		In All role you can use TFS with both explicit API (TfsWorkspace, TfsBuild, etc) and unified API-s <c>BuildServer</c> and <c>VersionControl</c>.
+			/// </summary>
+			All						= 0xFF
 		}
 
 		// Assembly resolution stuff
@@ -59,28 +80,25 @@ namespace AnFake.Plugins.Tfs2012
 		{
 			AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
 		}
-		// /////////////////////////
+		// /////////////////////////		
 
-		private static bool _registered;
+		/// <summary>
+		///     Connects to Team Foundation Server.
+		/// </summary>
+		/// <remarks>
+		///		Normally you needn't call this method, connection will be established automatically on first request.
+		/// </remarks>
+		public static void Connect()
+		{
+			Plugin.Get<TfsPlugin>();			
+		}
 
 		/// <summary>
 		///     Activates <c>Tfs</c> plugin.
 		/// </summary>
 		public static void PlugIn()
 		{
-			if (_registered)
-			{
-				Plugin.Get<TfsPlugin>(); // force instantiation
-			}
-			else
-			{
-				Plugin.Register<TfsPlugin>()
-					.As<Core.Integration.IVersionControl>()
-					.As<Core.Integration.IBuildServer>()
-					.AsSelf();
-
-				_registered = true;
-			}
+			PlugIn(Role.All);
 		}
 
 		/// <summary>
@@ -89,46 +107,48 @@ namespace AnFake.Plugins.Tfs2012
 		/// <seealso cref="Tfs.Role"/>
 		public static void PlugIn(Role roles)
 		{
-			if (_registered)
-			{
-				Plugin.Get<TfsPlugin>(); // force instantiation
-			}
-			else
-			{
-				var registrator = Plugin.Register<TfsPlugin>().AsSelf();
+			SetUpRoles(Plugin.Register<TfsPlugin>().AsSelf(), roles);
 
-				if ((roles & Role.VersionControl) != 0)
-				{
-					registrator.As<Core.Integration.IVersionControl>();
-				}
-					
-				if ((roles & Role.ContinuousIntegration) != 0)
-				{
-					registrator.As<Core.Integration.IBuildServer>();
-				}
-
-				_registered = true;
-			}
+						
 		}
 
 		/// <summary>
-		///     Marks <c>Tfs</c> plugin to be activated later.
+		///     Marks <c>Tfs</c> plugin to be activated on-demand.
 		/// </summary>
 		/// <remarks>
 		///     This method is intended for special cases only (see Extras/tf.fsx for example). Normally you should call
 		///     <c>Tfs.PlugIn</c>.
 		/// </remarks>
-		public static void PlugInDeferred()
+		public static void PlugInOnDemand()
 		{
-			if (_registered)
-				return;
+			PlugInOnDemand(Role.All);
 
-			Plugin.RegisterDeferred<TfsPlugin>()
-				.As<Core.Integration.IVersionControl>()
-				.As<Core.Integration.IBuildServer>()
-				.AsSelf();
+		}
 
-			_registered = true;
+		/// <summary>
+		///     Marks <c>Tfs</c> plugin to be activated on-demand with specified roles only.
+		/// </summary>
+		/// <remarks>
+		///     This method is intended for special cases only (see Extras/tf.fsx for example). Normally you should call
+		///     <c>Tfs.PlugIn</c>.
+		/// </remarks>
+		public static void PlugInOnDemand(Role roles)
+		{
+			SetUpRoles(Plugin.RegisterOnDemand<TfsPlugin>().AsSelf(), roles);
+			
+		}
+
+		private static void SetUpRoles(Plugin.Registrator<TfsPlugin> registrator, Role roles)
+		{
+			if ((roles & Role.VersionControl) != 0)
+			{
+				registrator.As<Core.Integration.IVersionControl>();
+			}
+
+			if ((roles & Role.ContinuousIntegration) != 0)
+			{
+				registrator.As<Core.Integration.IBuildServer>();
+			}
 		}
 
 		/// <summary>

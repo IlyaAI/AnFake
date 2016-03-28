@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using AnFake.Api;
 using AnFake.Core.Exceptions;
 using AnFake.Core.Integration;
@@ -16,6 +17,8 @@ namespace AnFake.Core
 	/// </summary>
 	public static class Plugin
 	{
+		// ReSharper disable once InconsistentNaming
+		private static readonly Dictionary<Type, Object> _registrators = new Dictionary<Type, object>();
 		private static ContainerBuilder _builder = new ContainerBuilder();
 		private static IContainer _container;
 
@@ -50,6 +53,13 @@ namespace AnFake.Core
 
 				return this;
 			}
+
+			internal Registrator<T> AutoActivate()
+			{
+				_registrator.AutoActivate();
+
+				return this;
+			}
 		}
 
 		/// <summary>
@@ -65,39 +75,55 @@ namespace AnFake.Core
 		{
 			EnsureBuilder();
 
+			Object registrator;
+			if (_registrators.TryGetValue(typeof (TPlugin), out registrator))			
+				return ((Registrator<TPlugin>) registrator).AutoActivate();
+
 			var pluginType = typeof (TPlugin);
 			Trace.InfoFormat("Plugged-in: {0}, {1}", pluginType.FullName, pluginType.Assembly.FullName);
 
-			return new Registrator<TPlugin>(
+			var typedRegistrator = new Registrator<TPlugin>(
 				_builder.RegisterType<TPlugin>()
 					.SingleInstance()
 					.AutoActivate()
 				);
+
+			_registrators.Add(typeof(TPlugin), typedRegistrator);
+
+			return typedRegistrator;
 		}
 
 		/// <summary>
-		///     Registers plugin with deferred activation.
+		///     Registers plugin with on-demand activation.
 		/// </summary>
 		/// <remarks>
-		///     <para>Plugin with defrred activation will be instantiated on first call.</para>
+		///     <para>Plugin with on-demand activation will be instantiated on first call.</para>
 		///     <para>
-		///         Deferred activation should be used carefully because plugin might miss some events due to later
+		///         On-demand activation should be used carefully because plugin might miss some events due to later
 		///         instantiation.
 		///     </para>
 		/// </remarks>
 		/// <typeparam name="TPlugin">class representing plugin</typeparam>
-		public static Registrator<TPlugin> RegisterDeferred<TPlugin>()
+		public static Registrator<TPlugin> RegisterOnDemand<TPlugin>()
 			where TPlugin : class
 		{
 			EnsureBuilder();
 
-			var pluginType = typeof (TPlugin);
-			Trace.InfoFormat("Plugged-in (deferred): {0}, {1}", pluginType.FullName, pluginType.Assembly.FullName);
+			Object registrator;
+			if (_registrators.TryGetValue(typeof(TPlugin), out registrator))
+				return (Registrator<TPlugin>)registrator;
 
-			return new Registrator<TPlugin>(
+			var pluginType = typeof (TPlugin);
+			Trace.InfoFormat("Plugged-in (on-demand): {0}, {1}", pluginType.FullName, pluginType.Assembly.FullName);
+
+			var typedRegistrator = new Registrator<TPlugin>(
 				_builder.RegisterType<TPlugin>()
 					.SingleInstance()
 				);
+
+			_registrators.Add(typeof(TPlugin), typedRegistrator);
+
+			return typedRegistrator;
 		}
 
 		/// <summary>
@@ -173,7 +199,8 @@ namespace AnFake.Core
 				_container = null;
 			}
 
-			_builder = new ContainerBuilder();
+			_registrators.Clear();
+			_builder = new ContainerBuilder();			
 		}		
 
 		/// <summary>
@@ -203,6 +230,8 @@ namespace AnFake.Core
 			{
 				_container = _builder.Build();
 				_builder = null;
+
+				_registrators.Clear();
 			}
 			catch (DependencyResolutionException e)
 			{

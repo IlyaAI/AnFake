@@ -48,6 +48,17 @@ namespace AnFake.Plugins.TeamCity
 		}
 
 		/// <summary>
+		///     Activates <c>TeamCity</c> plugin on-demand.
+		/// </summary>
+		public static void PlugInOnDemand()
+		{
+			Plugin.RegisterOnDemand<TeamCityPlugin>()
+				.As<Core.Integration.IBuildServer>()
+				.As<Core.Integration.Builds.IBuildServer2>()
+				.AsSelf();
+		}
+
+		/// <summary>
 		///		Writes TeamCity service message to open new block in build log.
 		/// </summary>
 		/// <param name="name"></param>

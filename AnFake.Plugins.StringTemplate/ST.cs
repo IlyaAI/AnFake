@@ -59,6 +59,12 @@ namespace AnFake.Plugins.StringTemplate
 				.AsSelf();
 		}
 
+		public static void PlugInOnDemand()
+		{
+			Plugin.RegisterOnDemand<STPlugin>()
+				.AsSelf();
+		}
+
 		public static string Render(string template, object context)
 		{
 			return Render(template, context, p => { });

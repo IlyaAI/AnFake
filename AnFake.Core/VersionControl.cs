@@ -20,6 +20,14 @@ namespace AnFake.Core
 		}
 
 		/// <summary>
+		///		Current changeset info.
+		/// </summary>
+		public static IChangeset CurrentChangeset
+		{
+			get { return Instance.Value.GetChangeset(CurrentChangesetId); }
+		}
+
+		/// <summary>
 		///		Gets full (4-component) version.
 		/// </summary>
 		/// <remarks>

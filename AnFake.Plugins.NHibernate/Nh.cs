@@ -4,7 +4,6 @@ using AnFake.Core.Exceptions;
 using NHibernate;
 using NHibernate.Cfg;
 using NHibernate.Cfg.Loquacious;
-using NHibernate.Mapping.ByCode;
 
 namespace AnFake.Plugins.NHibernate
 {
@@ -174,6 +173,14 @@ namespace AnFake.Plugins.NHibernate
 		///		Activates NHibernate plugin.
 		/// </summary>
 		public static void PlugIn()
+		{
+			Plugin.Register<NhPlugin>().AsSelf();
+		}
+
+		/// <summary>
+		///		Activates NHibernate plugin on-demand.
+		/// </summary>
+		public static void PlugInOnDemand()
 		{
 			Plugin.Register<NhPlugin>().AsSelf();
 		}

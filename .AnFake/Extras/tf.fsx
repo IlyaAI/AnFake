@@ -57,9 +57,9 @@ let printCheckinUsage () =
     Log.Info "                      If omitted AnFake tries to evaluate it by convention."
     Log.Info ""
 
-Tfs.PlugInDeferred()
+Tfs.PlugInOnDemand(Tfs.Role.Self)
 
-let plugInTfs () =
+let connectTfs () =
     if not <| MyBuild.HasProp("Tfs.Uri") then
         MyBuild.SetProp(
             "Tfs.Uri",
@@ -72,7 +72,7 @@ let plugInTfs () =
                 )
         )
         MyBuild.SaveProp("Tfs.Uri")
-    Tfs.PlugIn()
+    Tfs.Connect()
 
 let restoreAnFake (localPath:FileSystemPath) =
     let packagesConfig = (localPath / ".nuget/packages.config").AsFile()
@@ -97,7 +97,7 @@ let restoreAnFake (localPath:FileSystemPath) =
 "Build" <== ["Help"]
 
 "Checkout" => (fun _ ->
-    plugInTfs()
+    connectTfs()
 
     let mutable needConfirmation = false
 
@@ -161,7 +161,7 @@ let restoreAnFake (localPath:FileSystemPath) =
 "Checkout" ==> "co"
 
 "GetLatest" => (fun _ ->
-    plugInTfs()
+    connectTfs()
 
     let localPath = 
         if MyBuild.HasProp("__1") then
@@ -174,7 +174,7 @@ let restoreAnFake (localPath:FileSystemPath) =
 )
 
 "GetSpecific" => (fun _ ->
-    plugInTfs()
+    connectTfs()
 
     let versionSpec = MyBuild.GetProp("__1", "T")
     let localPath = 
@@ -188,7 +188,7 @@ let restoreAnFake (localPath:FileSystemPath) =
 )
 
 "Checkin" => (fun _ ->
-    plugInTfs()
+    connectTfs()
     
     let mutable needConfirmation = false
 
@@ -246,7 +246,7 @@ let restoreAnFake (localPath:FileSystemPath) =
 "Checkin" ==> "ci"
 
 "ReCache" => (fun _ ->
-    plugInTfs()
+    connectTfs()
 
     Trace.Info("Hint: if delete operation failed ensure all instances of Visual Studio are closed.")
     Folders.Delete("[LocalApplicationData]/Microsoft/Team Foundation/4.0/Cache")    
