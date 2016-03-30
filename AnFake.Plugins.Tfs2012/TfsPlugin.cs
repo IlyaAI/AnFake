@@ -340,9 +340,7 @@ namespace AnFake.Plugins.Tfs2012
 			if (_build == null)
 				return BuildServer.Local.ExposeArtifact(file, targetFolder);
 
-			EnsureCanExpose();
-
-			Trace.InfoFormat("TfsPlugin: Exposing file '{0}'...", file);
+			EnsureCanExpose();			
 
 			var dstPath = _build.DropLocation.AsPath() / targetFolder / file.Name;
 			Files.Copy(file, dstPath);
@@ -355,9 +353,7 @@ namespace AnFake.Plugins.Tfs2012
 			if (_build == null)
 				return BuildServer.Local.ExposeArtifact(folder, targetFolder);
 
-			EnsureCanExpose();
-
-			Trace.InfoFormat("TfsPlugin: Exposing folder '{0}'...", folder);
+			EnsureCanExpose();			
 
 			var dstPath = _build.DropLocation.AsPath() / targetFolder;
 			Robocopy.Copy(folder.Path, dstPath, p => p.Recursion = Robocopy.RecursionMode.All);
@@ -370,9 +366,7 @@ namespace AnFake.Plugins.Tfs2012
 			if (_build == null)
 				return BuildServer.Local.ExposeArtifact(name, content, encoding, targetFolder);
 
-			EnsureCanExpose();
-
-			Trace.InfoFormat("TfsPlugin: Exposing text content '{0}'...", name);
+			EnsureCanExpose();			
 
 			var dstFile = (_build.DropLocation.AsPath() / targetFolder / name).AsFile();
 			Text.WriteTo(dstFile, content, encoding);
@@ -380,7 +374,7 @@ namespace AnFake.Plugins.Tfs2012
 			return new Uri(dstFile.Path.Full);
 		}
 
-		public void ExposeArtifacts(FileSet files, string targetFolder)
+		public void ExposeArtifacts(IEnumerable<FileItem> files, string targetFolder)
 		{
 			if (_build == null)
 			{
@@ -388,9 +382,7 @@ namespace AnFake.Plugins.Tfs2012
 				return;
 			}
 
-			EnsureCanExpose();
-
-			Trace.InfoFormat("TfsPlugin: Exposing files {{{0}}}...", files.ToFormattedString());
+			EnsureCanExpose();			
 
 			var dstPath = _build.DropLocation.AsPath() / targetFolder;
 			Files.Copy(files, dstPath);

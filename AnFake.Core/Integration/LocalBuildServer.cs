@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using AnFake.Core.Exceptions;
 using AnFake.Core.Integration.Builds;
@@ -57,7 +58,7 @@ namespace AnFake.Core.Integration
 			return new Uri("about:blank");
 		}
 
-		public void ExposeArtifacts(FileSet files, string targetFolder)
+		public void ExposeArtifacts(IEnumerable<FileItem> files, string targetFolder)
 		{
 			// do nothing
 		}

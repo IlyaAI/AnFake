@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
+using AnFake.Api;
 using AnFake.Core.Exceptions;
 using AnFake.Core.Integration;
 using AnFake.Core.Integration.Builds;
@@ -65,6 +67,8 @@ namespace AnFake.Core
 				if (String.IsNullOrEmpty(value))
 					throw new ArgumentException("BuildServer.CurrentBuild.SetBuildNumber(value): value must not be null or empty");
 
+				Trace.InfoFormat("Setting current build number '{0}'...", value);
+
 				Instance2.Value.SetCurrentBuildNumber(value);
 			}
 
@@ -84,6 +88,8 @@ namespace AnFake.Core
 			{
 				if (String.IsNullOrEmpty(tag))
 					throw new ArgumentException("BuildServer.CurrentBuild.AddTag(tag): tag must not be null or empty");
+
+				Trace.InfoFormat("Tagging current build as '{0}'...", tag);
 
 				Instance2.Value.TagCurrentBuild(tag);
 			}
@@ -195,6 +201,8 @@ namespace AnFake.Core
 			if (targetFolder == null)
 				throw new ArgumentException("BuildServer.ExposeArtifact(file[, targetFolder]): targetFolder must not be null");
 
+			Trace.InfoFormat("Exposing artifact file '{0}' as '{1}'...", file, targetFolder);
+
 			return Instance.Value.ExposeArtifact(file, targetFolder);
 		}
 
@@ -218,6 +226,8 @@ namespace AnFake.Core
 				throw new ArgumentException("BuildServer.ExposeArtifact(folder[, targetFolder]): folder must not be null");
 			if (targetFolder == null)
 				throw new ArgumentException("BuildServer.ExposeArtifact(folder[, targetFolder]): targetFolder must not be null");
+
+			Trace.InfoFormat("Exposing artifact folder '{0}' as '{1}'...", folder, targetFolder);
 
 			return Instance.Value.ExposeArtifact(folder, targetFolder);
 		}
@@ -249,6 +259,8 @@ namespace AnFake.Core
 			if (targetFolder == null)
 				throw new ArgumentException("BuildServer.ExposeArtifact(name, content, encoding[, targetFolder]): targetFolder must not be null");
 
+			Trace.InfoFormat("Exposing artifact '{0}' as '{1}'...", name, targetFolder);
+
 			return Instance.Value.ExposeArtifact(name, content, encoding, targetFolder);
 		}
 
@@ -265,12 +277,16 @@ namespace AnFake.Core
 		/// <param name="targetFolder">target folder</param>
 		/// <returns>URI of exposed artifact (not null)</returns>
 		/// <seealso cref="ExposeArtifact(AnFake.Core.FileItem,String)"/>
-		public static void ExposeArtifacts(FileSet files, string targetFolder = "")
+		public static void ExposeArtifacts(IEnumerable<FileItem> files, string targetFolder = "")
 		{
 			if (files == null)
 				throw new ArgumentException("BuildServer.ExposeArtifacts(files[, targetFolder]): files must not be null");
 			if (targetFolder == null)
 				throw new ArgumentException("BuildServer.ExposeArtifacts(files[, targetFolder]): targetFolder must not be null");
+
+			files = files.AsFormattable();
+
+			Trace.InfoFormat("Exposing artifact files {{{0}}} as '{1}'...", files.ToFormattedString(), targetFolder);
 
 			Instance.Value.ExposeArtifacts(files, targetFolder);
 		}
@@ -286,7 +302,20 @@ namespace AnFake.Core
 			if (String.IsNullOrEmpty(configurationName))
 				throw new ArgumentException("BuildServer.FindLastGoodBuild(configurationName): configurationName must not be null or empty");
 
-			return Instance2.Value.FindLastGoodBuild(configurationName);
+			Trace.InfoFormat("Looking for last good build of '{0}'...", configurationName);
+
+			var build = Instance2.Value.FindLastGoodBuild(configurationName);
+
+			if (build != null)
+			{
+				Trace.InfoFormat("...found #{0}", build);
+			}
+			else
+			{
+				Trace.Info("...not found");
+			}
+
+			return build;			
 		}
 
 		/// <summary>
@@ -300,11 +329,15 @@ namespace AnFake.Core
 			if (String.IsNullOrEmpty(configurationName))
 				throw new ArgumentException("BuildServer.GetLastGoodBuild(configurationName): configurationName must not be null or empty");
 
-			var ret = Instance2.Value.FindLastGoodBuild(configurationName);
-			if (ret == null)
+			Trace.InfoFormat("Getting last good build of '{0}'...", configurationName);
+
+			var build = Instance2.Value.FindLastGoodBuild(configurationName);
+			if (build == null)
 				throw new InvalidConfigurationException(String.Format("There is no good build of '{0}'.", configurationName));
 
-			return ret;
+			Trace.InfoFormat("...#{0}", build);
+
+			return build;
 		}
 
 		/// <summary>
@@ -321,7 +354,20 @@ namespace AnFake.Core
 			if (tags == null || tags.Length == 0)
 				throw new ArgumentException("BuildServer.FindLastTaggedBuild(configurationName, tags): tags must not be null or empty");
 
-			return Instance2.Value.FindLastTaggedBuild(configurationName, tags);
+			Trace.InfoFormat("Looking for last build of '{0}' tagged as '{1}'...", configurationName, String.Join(",", tags));
+
+			var build = Instance2.Value.FindLastTaggedBuild(configurationName, tags);
+
+			if (build != null)
+			{
+				Trace.InfoFormat("...found #{0}", build);
+			}
+			else
+			{
+				Trace.Info("...not found");
+			}
+
+			return build;
 		}
 
 		/// <summary>
@@ -338,11 +384,15 @@ namespace AnFake.Core
 			if (tags == null || tags.Length == 0)
 				throw new ArgumentException("BuildServer.GetLastTaggedBuild(configurationName, tags): tags must not be null or empty");
 
-			var ret = Instance2.Value.FindLastTaggedBuild(configurationName, tags);
-			if (ret == null)
+			Trace.InfoFormat("Getting for last build of '{0}' tagged as '{1}'...", configurationName, String.Join(",", tags));
+
+			var build = Instance2.Value.FindLastTaggedBuild(configurationName, tags);
+			if (build == null)
 				throw new InvalidConfigurationException(String.Format("There is no build of '{0}' tagged as '{1}'.", configurationName, String.Join(",", tags)));
 
-			return ret;
+			Trace.InfoFormat("...#{0}", build);
+
+			return build;
 		}
 	}
 }

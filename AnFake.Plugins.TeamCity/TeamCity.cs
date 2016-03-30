@@ -65,6 +65,7 @@ namespace AnFake.Plugins.TeamCity
 		public static void LogOpenBlock(string name)
 		{
 			Impl.WriteBlockOpened(name);
+			Impl.WriteProgressMessage("");
 		}
 
 		/// <summary>

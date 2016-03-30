@@ -14,7 +14,9 @@ using JetBrains.TeamCity.ServiceMessages.Write;
 namespace AnFake.Plugins.TeamCity
 {
 	internal sealed class TeamCityPlugin : IBuildServer2, IDisposable
-	{		
+	{
+		private static readonly TimeSpan ProgressReportInterval = TimeSpan.FromSeconds(5);
+		
 		private readonly Stack<string> _blockNames = new Stack<string>();
 		private readonly ServiceMessageFormatter _formatter;
 		private readonly Lazy<Rest.TeamCityClient> _apiClient;
@@ -29,6 +31,7 @@ namespace AnFake.Plugins.TeamCity
 		private int _warningsCount;
 		private bool _skipErrors;
 		private bool _failIfAnyWarning;
+		private DateTime _lastProgressReported = DateTime.MinValue;
 
 		public TeamCityPlugin()
 		{
@@ -221,7 +224,7 @@ namespace AnFake.Plugins.TeamCity
 			return MakeArtifactUri(dstPath / file.Name);
 		}
 
-		public void ExposeArtifacts(FileSet files, string targetFolder)
+		public void ExposeArtifacts(IEnumerable<FileItem> files, string targetFolder)
 		{
 			if (IsLocal)
 				return;
@@ -248,8 +251,6 @@ namespace AnFake.Plugins.TeamCity
 
 		public void TagCurrentBuild(string tag)
 		{
-			Trace.Info("Tagging current build...");
-
 			EnsureApiClient();
 
 			var buildHref = "builds/" + new Rest.LocatorBuilder().Append("id", _tcBuildId).ToPath();
@@ -258,40 +259,22 @@ namespace AnFake.Plugins.TeamCity
 
 		public IBuild FindLastGoodBuild(string configurationName)
 		{
-			Trace.InfoFormat("Querying last good build of '{0}'...", configurationName);
-
 			EnsureApiClient();
 
 			var build = _apiClient.Value.FindLastGoodBuild(configurationName);
-			if (build != null)
-			{
-				Trace.InfoFormat("...found #{0}", build.Number);
-				return new TeamCityBuild(_apiClient.Value, build);
-			}
-			else
-			{
-				Trace.Info("...not found.");
-				return null;
-			}			
+			return build != null 
+				? new TeamCityBuild(_apiClient.Value, build) 
+				: null;			
 		}
 
 		public IBuild FindLastTaggedBuild(string configurationName, string[] tags)
 		{			
-			Trace.InfoFormat("Querying last build of '{0}' tagged as '{1}'...", configurationName, String.Join(",", tags));
-
 			EnsureApiClient();
 
 			var build = _apiClient.Value.FindLastTaggedBuild(configurationName, tags.Select(t => new Rest.Tag(t)).ToArray());
-			if (build != null)
-			{
-				Trace.InfoFormat("...found #{0}", build.Number);
-				return new TeamCityBuild(_apiClient.Value, build);
-			}
-			else
-			{
-				Trace.Info("...not found.");
-				return null;
-			}
+			return build != null 
+				? new TeamCityBuild(_apiClient.Value, build) 
+				: null;
 		}
 
 		// Event Handlers
@@ -364,6 +347,7 @@ namespace AnFake.Plugins.TeamCity
 			_failIfAnyWarning = target.IsFailIfAnyWarning;
 
 			WriteBlockOpened(String.Format("{0}.{1}", target.Name, phase));
+			WriteProgressMessage("");
 		}
 
 		private void OnTargetPhaseFinished(object sender, string phase)
@@ -378,6 +362,7 @@ namespace AnFake.Plugins.TeamCity
 		{
 			var topTarget = (Target) sender;
 			WriteBlockOpened(topTarget.Name);
+			WriteProgressMessage("");
 		}
 
 		private void OnTopTargetFinished(object sender, Target.RunDetails details)
@@ -415,7 +400,7 @@ namespace AnFake.Plugins.TeamCity
 			}			
 
 			WriteBlockClosed(topTarget.Name);
-		}
+		}		
 
 		private void OnTraceMessage(object sender, TraceMessage message)
 		{
@@ -440,8 +425,16 @@ namespace AnFake.Plugins.TeamCity
 					}					
 					break;
 
-				default:
+				default:					
 					WriteNormal(message.ToString("nmlfd"));
+
+					var now = DateTime.UtcNow;
+					if (now - _lastProgressReported >= ProgressReportInterval)
+					{
+						WriteProgressMessage(message.ToString("m"));
+						_lastProgressReported = now;
+					}
+
 					break;
 			}
 		}
@@ -520,13 +513,22 @@ namespace AnFake.Plugins.TeamCity
 				}));
 		}
 
+		public void WriteProgressMessage(string message)
+		{
+			var fullMsg = String.Join(" > ", _blockNames.Reverse());
+			if (!String.IsNullOrWhiteSpace(message))
+			{
+				fullMsg += " > " + message;
+			}
+
+			Console.WriteLine(_formatter.FormatMessage("progressMessage", fullMsg));
+		}
+
 		public void WriteBlockOpened(string name)
 		{
 			Console.WriteLine(_formatter.FormatMessage("blockOpened", new {name}));
 
-			_blockNames.Push(name);
-
-			Console.WriteLine(_formatter.FormatMessage("progressMessage", String.Join(" > ", _blockNames.Reverse())));
+			_blockNames.Push(name);			
 		}
 
 		public void WriteBlockClosed(string name)

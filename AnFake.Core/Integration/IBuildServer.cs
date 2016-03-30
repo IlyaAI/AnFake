@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace AnFake.Core.Integration
@@ -82,6 +83,6 @@ namespace AnFake.Core.Integration
 		/// <param name="targetFolder">target folder</param>
 		/// <returns>URI of exposed artifact (not null)</returns>
 		/// <seealso cref="ExposeArtifact(AnFake.Core.FileItem,String)"/>
-		void ExposeArtifacts(FileSet files, string targetFolder);
+		void ExposeArtifacts(IEnumerable<FileItem> files, string targetFolder);
 	}	
 }
