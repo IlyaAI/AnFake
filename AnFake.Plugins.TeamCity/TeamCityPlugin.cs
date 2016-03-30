@@ -397,8 +397,11 @@ namespace AnFake.Plugins.TeamCity
 				switch (target.State)
 				{
 					case TargetState.Failed:
-						WriteError(msg, null);					
-						WriteBuildProblem(msg);
+						WriteError(msg, null);
+						if (!target.IsSkipErrors)
+						{
+							WriteBuildProblem(msg);
+						}
 						break;
 
 					case TargetState.PartiallySucceeded:
