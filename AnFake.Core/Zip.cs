@@ -89,6 +89,8 @@ namespace AnFake.Core
 			if (setParams == null)
 				throw new ArgumentException("Zip.Pack(files, zipFilePath, setParams): setParams must not be null");
 
+			files = files.AsFormattable();
+
 			var filesToZip = files.ToArray();
 			if (filesToZip.Length == 0)
 				throw new ArgumentException("Zip.Pack(files, zipFilePath[, setParams]): files must contain at least one file");
@@ -97,6 +99,8 @@ namespace AnFake.Core
 			setParams(parameters);
 
 			Trace.InfoFormat("Zip.Pack: {{{0}}}", files.ToFormattedString());
+			
+			zipFilePath.AsFile().EnsurePath();
 			
 			using (var zip = new ZipOutputStream(new FileStream(zipFilePath.Full, FileMode.Create, FileAccess.Write)))
 			{

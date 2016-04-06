@@ -55,6 +55,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ArgsExtension.cs" />
+    <Compile Include="BinaryObfuscator.cs" />
     <Compile Include="Deployment\DeleteFileStep.cs" />
     <Compile Include="Deployment\DeploymentBatch.cs" />
     <Compile Include="Deployment\Deployer.cs" />
