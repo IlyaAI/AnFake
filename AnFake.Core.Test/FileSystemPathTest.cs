@@ -24,7 +24,7 @@ namespace AnFake.Core.Test
 		public void FileSystemPath_should_convert_to_unc()
 		{
 			// act & assert
-			Assert.AreEqual(@"\\" + Environment.MachineName + @"\c$\root\path", "c:/root/path".AsPath().ToUnc().Spec);			
+			Assert.AreEqual(@"\\" + Environment.MachineName + @"\c$\root\path", "c:/root/path".AsPath().ToUnc().Spec);
 		}
 
 		[TestCategory("Unit")]
@@ -50,6 +50,7 @@ namespace AnFake.Core.Test
 				// it's expected
 			}
 		}
+
 		[TestCategory("Unit")]
 		[TestMethod]
 		public void FileSystemPath_should_throw_if_dot_step_used_2()
@@ -113,6 +114,7 @@ namespace AnFake.Core.Test
 				// it's expected
 			}
 		}
+
 		[TestCategory("Unit")]
 		[TestMethod]
 		public void FileSystemPath_should_throw_if_dot_dot_step_used_2()
@@ -164,9 +166,9 @@ namespace AnFake.Core.Test
 		[TestCategory("Unit")]
 		[TestMethod]
 		public void FileSystemPath_should_expand_wellknown_folders()
-		{			
+		{
 			// arrange
-			
+
 			// act
 			var path = "[ProgramFilesX86]/Microsoft".AsPath();
 
@@ -179,10 +181,10 @@ namespace AnFake.Core.Test
 		public void FileSystemPath_should_expand_wellknown_folders_before_combining()
 		{
 			// arrange
-			var basePath = "C:/System".AsPath();			
+			var basePath = "C:/System".AsPath();
 
 			// act
-			var path = basePath / "[ProgramFilesX86]";
+			var path = basePath/"[ProgramFilesX86]";
 
 			// assert
 			Assert.AreEqual(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), path.Full);
@@ -252,7 +254,7 @@ namespace AnFake.Core.Test
 			{
 				// ReSharper disable once UnusedVariable
 				var parent = path.Parent;
-				
+
 				Assert.Fail("InvalidConfigurationException is expected.");
 			}
 			catch (InvalidConfigurationException)
@@ -336,10 +338,10 @@ namespace AnFake.Core.Test
 		public void FileSystemPath_should_combine_with_upstep_relative_path()
 		{
 			// act & assert
-			Assert.AreEqual("\\base\\sub-path", ("/base/path".AsPath() / "../sub-path").Spec);
-			Assert.AreEqual("\\base\\sub-path", ("/base/step1/step2".AsPath() / "../../sub-path").Spec);
-			Assert.AreEqual("\\sub-path", ("/base/path".AsPath() / "../../sub-path").Spec);
-			Assert.AreEqual("sub-path", ("base/path".AsPath() / "../../sub-path").Spec);
+			Assert.AreEqual("\\base\\sub-path", ("/base/path".AsPath()/"../sub-path").Spec);
+			Assert.AreEqual("\\base\\sub-path", ("/base/step1/step2".AsPath()/"../../sub-path").Spec);
+			Assert.AreEqual("\\sub-path", ("/base/path".AsPath()/"../../sub-path").Spec);
+			Assert.AreEqual("sub-path", ("base/path".AsPath()/"../../sub-path").Spec);
 		}
 
 		[TestCategory("Unit")]
@@ -353,7 +355,7 @@ namespace AnFake.Core.Test
 			try
 			{
 				// ReSharper disable once UnusedVariable
-				var result = basePath / "/../subPath";
+				var result = basePath/"/../subPath";
 
 				Assert.Fail("InvalidConfigurationException is expected.");
 			}
@@ -374,7 +376,7 @@ namespace AnFake.Core.Test
 			try
 			{
 				// ReSharper disable once UnusedVariable
-				var result = basePath / "step/../subPath";
+				var result = basePath/"step/../subPath";
 
 				Assert.Fail("InvalidConfigurationException is expected.");
 			}
@@ -393,9 +395,35 @@ namespace AnFake.Core.Test
 
 			// act 
 			var result = path/"";
-			
+
 			// assert
 			Assert.AreEqual("\\some\\path", result.Spec);
+		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void FileSystemPath_should_find_in_path()
+		{
+			// arrange
+
+			// act
+			var path = "[PATH]/explorer.exe".AsPath();
+
+			// assert
+			Assert.AreEqual(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"), path.Full);
+		}
+
+		[TestCategory("Unit")]
+		[TestMethod]
+		public void FileSystemPath_should_find_in_path_and_return_as_is_if_not_found()
+		{
+			// arrange
+
+			// act
+			var path = "[PATH]/explorer123.exe".AsPath();
+
+			// assert
+			Assert.AreEqual("explorer123.exe", path.Spec);
 		}
 	}
 }

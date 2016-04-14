@@ -1,5 +1,7 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using AnFake.Core.Exceptions;
@@ -22,20 +24,39 @@ namespace AnFake.Core
 	///         Both separators / and \ are supported. But / is preferred because it doesn't require slash doubling or string
 	///         prefix @.
 	///     </para>
+	///     <para>
+	///         You can use the following syntax for well-known folder substituation: [ProgramFilesX86], [Temp], etc.
+	///         In square brackets is is possible to use any value from <c>Environment.SpecialFolder</c> and some additional
+	///         values:
+	///         <list type="bullet">
+	///             <item>
+	///                 <term>AnFake</term> <description>AnFake home directory</description>
+	///             </item>
+	///             <item>
+	///                 <term>AnFakeExtras</term> <description>AnFake extras directory (usually [AnFake]/Extras)</description>
+	///             </item>
+	///             <item>
+	///                 <term>Temp</term> <description>system temporary directory</description>
+	///             </item>
+	///             <item>
+	///                 <term>PATH</term> <description>first path from PATH environment variable where file denoted by rest part of FileSystemPath exists</description>
+	///             </item>	
+	///         </list>
+	///     </para>
 	/// </remarks>
 	/// <example>
-	/// C:\Projects\MySolution\build.csx
-	/// <code>
-	/// var solution = "MySolution.sln".AsPath();            // refers to C:\Projects\MySolution\MySolution.sln	
-	/// var projA = "ProjectA/ProjectA.csproj".AsPath();     // refers to C:\Projects\MySolution\ProjectA\ProjectA.csproj
-	/// var projB = "ProjectB".AsPath() / "ProjectB.csproj"; // refers to C:\Projects\MySolution\ProjectB\ProjectB.csproj
-	/// </code>
-	/// C:\Projects\MySolution\build.fsx
-	/// <code>
-	/// let solution = ~~"MySolution.sln"            // refers to C:\Projects\MySolution\MySolution.sln	
-	/// let projA = ~~"ProjectA/ProjectA.csproj"     // refers to C:\Projects\MySolution\ProjectA\ProjectA.csproj
-	/// let projB = ~~"ProjectB" / "ProjectB.csproj" // refers to C:\Projects\MySolution\ProjectB\ProjectB.csproj
-	/// </code>
+	///     C:\Projects\MySolution\build.csx
+	///     <code>
+	///  var solution = "MySolution.sln".AsPath();            // refers to C:\Projects\MySolution\MySolution.sln	
+	///  var projA = "ProjectA/ProjectA.csproj".AsPath();     // refers to C:\Projects\MySolution\ProjectA\ProjectA.csproj
+	///  var projB = "ProjectB".AsPath() / "ProjectB.csproj"; // refers to C:\Projects\MySolution\ProjectB\ProjectB.csproj
+	///  </code>
+	///     C:\Projects\MySolution\build.fsx
+	///     <code>
+	///  let solution = ~~"MySolution.sln"            // refers to C:\Projects\MySolution\MySolution.sln	
+	///  let projA = ~~"ProjectA/ProjectA.csproj"     // refers to C:\Projects\MySolution\ProjectA\ProjectA.csproj
+	///  let projB = ~~"ProjectB" / "ProjectB.csproj" // refers to C:\Projects\MySolution\ProjectB\ProjectB.csproj
+	///  </code>
 	/// </example>
 	public sealed class FileSystemPath : IComparable<FileSystemPath>
 	{
@@ -45,7 +66,7 @@ namespace AnFake.Core
 		private static FileSystemPath _basePath = Directory.GetCurrentDirectory().AsPath();
 
 		/// <summary>
-		///		Base path for relative one. Refers to folder where build script is located.
+		///     Base path for relative one. Refers to folder where build script is located.
 		/// </summary>
 		public static FileSystemPath Base
 		{
@@ -73,7 +94,7 @@ namespace AnFake.Core
 		}
 
 		/// <summary>
-		///		Is path wildcarded (i.e. contains * or ? symbols)?
+		///     Is path wildcarded (i.e. contains * or ? symbols)?
 		/// </summary>
 		public bool IsWildcarded
 		{
@@ -81,7 +102,7 @@ namespace AnFake.Core
 		}
 
 		/// <summary>
-		///		Is path rooted (i.e. started from / or \ symbols or drive letter)?
+		///     Is path rooted (i.e. started from / or \ symbols or drive letter)?
 		/// </summary>
 		public bool IsRooted
 		{
@@ -89,29 +110,26 @@ namespace AnFake.Core
 		}
 
 		/// <summary>
-		///		Is this UNC path (i.e. started from // or \\ symbols)?
+		///     Is this UNC path (i.e. started from // or \\ symbols)?
 		/// </summary>
 		public bool IsUnc
 		{
-			get
-			{
-				return _value.Length > 1 && _value[0] == Path.DirectorySeparatorChar && _value[1] == Path.DirectorySeparatorChar;
-			}
+			get { return _value.Length > 1 && _value[0] == Path.DirectorySeparatorChar && _value[1] == Path.DirectorySeparatorChar; }
 		}
 
 		/// <summary>
-		///		String representation of path as was specified.
+		///     String representation of path as was specified.
 		/// </summary>
 		/// <example>
-		/// C:\Projects\MySolution\build.fsx
-		///	<code>
-		/// let relative = ~~"build.fsx"
-		/// let spec = relative.Spec     // @"build.fsx"
-		/// </code>
-		/// <code>
-		/// let absolute = ~~"C:/Projects/MySolution/build.fsx"
-		/// let spec = absolute.Spec     // @"C:\Projects\MySolution\build.fsx"
-		/// </code>
+		///     C:\Projects\MySolution\build.fsx
+		///     <code>
+		///  let relative = ~~"build.fsx"
+		///  let spec = relative.Spec     // @"build.fsx"
+		///  </code>
+		///     <code>
+		///  let absolute = ~~"C:/Projects/MySolution/build.fsx"
+		///  let spec = absolute.Spec     // @"C:\Projects\MySolution\build.fsx"
+		///  </code>
 		/// </example>
 		public string Spec
 		{
@@ -119,25 +137,25 @@ namespace AnFake.Core
 		}
 
 		/// <summary>
-		///		String representation of full path.
+		///     String representation of full path.
 		/// </summary>
 		/// <remarks>
-		///		If path was created as relative then it automatically evaluated to full against <c>FileSystemPath.Base</c>.
+		///     If path was created as relative then it automatically evaluated to full against <c>FileSystemPath.Base</c>.
 		/// </remarks>
 		/// <example>
-		/// C:\Projects\MySolution\build.fsx
-		///	<code>
-		/// let relative = ~~"build.fsx"
-		/// let full = relative.Full     // @"C:\Projects\MySolution\build.fsx"
-		/// </code>
-		/// <code>
-		/// let absolute = ~~"C:/Projects/MySolution/build.fsx"
-		/// let full = absolute.Full     // @"C:\Projects\MySolution\build.fsx"
-		/// </code>
-		/// <code>
-		/// let absolute = ~~"C:/Projects/MyAnotherSolution/build.fsx"
-		/// let full = absolute.Full     // @"C:\Projects\MyAnotherSolution\build.fsx"
-		/// </code>
+		///     C:\Projects\MySolution\build.fsx
+		///     <code>
+		///  let relative = ~~"build.fsx"
+		///  let full = relative.Full     // @"C:\Projects\MySolution\build.fsx"
+		///  </code>
+		///     <code>
+		///  let absolute = ~~"C:/Projects/MySolution/build.fsx"
+		///  let full = absolute.Full     // @"C:\Projects\MySolution\build.fsx"
+		///  </code>
+		///     <code>
+		///  let absolute = ~~"C:/Projects/MyAnotherSolution/build.fsx"
+		///  let full = absolute.Full     // @"C:\Projects\MyAnotherSolution\build.fsx"
+		///  </code>
 		/// </example>
 		public string Full
 		{
@@ -150,89 +168,89 @@ namespace AnFake.Core
 		}
 
 		/// <summary>
-		///		Last name in the path steps including extension if any.
+		///     Last name in the path steps including extension if any.
 		/// </summary>
 		/// <example>
-		/// C:\Projects\MySolution\build.fsx
-		///	<code>
-		/// let path = ~~"build.fsx"
-		/// let lastName = path.LastName  // "build.fsx"
-		/// </code>
-		/// <code>
-		/// let path = ~~"C:/Projects/MySolution/build.fsx"
-		/// let lastName = path.LastName  // "build.fsx"
-		/// </code>
-		/// <code>
-		/// let path = ~~""
-		/// let lastName = path.LastName  // "MySolution"
-		/// </code>
+		///     C:\Projects\MySolution\build.fsx
+		///     <code>
+		///  let path = ~~"build.fsx"
+		///  let lastName = path.LastName  // "build.fsx"
+		///  </code>
+		///     <code>
+		///  let path = ~~"C:/Projects/MySolution/build.fsx"
+		///  let lastName = path.LastName  // "build.fsx"
+		///  </code>
+		///     <code>
+		///  let path = ~~""
+		///  let lastName = path.LastName  // "MySolution"
+		///  </code>
 		/// </example>
-		/// <seealso cref="Path.GetFileName"/>
+		/// <seealso cref="Path.GetFileName" />
 		public string LastName
 		{
 			get { return Path.GetFileName(_value); }
 		}
 
 		/// <summary>
-		///		Last name in the path steps without extension.
+		///     Last name in the path steps without extension.
 		/// </summary>
 		/// <example>
-		/// C:\Projects\MySolution\build.fsx
-		///	<code>
-		/// let path = ~~"build.fsx"
-		/// let lastNameWoExt = path.LastNameWithoutExt  // "build"
-		/// </code>
-		/// <code>
-		/// let path = ~~""
-		/// let lastNameWoExt = path.LastNameWithoutExt  // "MySolution"
-		/// </code>
+		///     C:\Projects\MySolution\build.fsx
+		///     <code>
+		///  let path = ~~"build.fsx"
+		///  let lastNameWoExt = path.LastNameWithoutExt  // "build"
+		///  </code>
+		///     <code>
+		///  let path = ~~""
+		///  let lastNameWoExt = path.LastNameWithoutExt  // "MySolution"
+		///  </code>
 		/// </example>
-		/// <seealso cref="Path.GetFileNameWithoutExtension"/>
+		/// <seealso cref="Path.GetFileNameWithoutExtension" />
 		public string LastNameWithoutExt
 		{
 			get { return Path.GetFileNameWithoutExtension(_value); }
 		}
 
 		/// <summary>
-		///		Extension with preceeded dot. <c>String.Empty</c> if none.
+		///     Extension with preceeded dot. <c>String.Empty</c> if none.
 		/// </summary>
 		/// <example>
-		/// C:\Projects\MySolution\build.fsx
-		///	<code>
-		/// let path = ~~"build.fsx"
-		/// let ext = path.Ext  // ".fsx"
-		/// </code>
-		/// <code>
-		/// let path = ~~""
-		/// let ext = path.Ext  // ""
-		/// </code>
+		///     C:\Projects\MySolution\build.fsx
+		///     <code>
+		///  let path = ~~"build.fsx"
+		///  let ext = path.Ext  // ".fsx"
+		///  </code>
+		///     <code>
+		///  let path = ~~""
+		///  let ext = path.Ext  // ""
+		///  </code>
 		/// </example>
-		/// <seealso cref="Path.GetExtension"/>
+		/// <seealso cref="Path.GetExtension" />
 		public string Ext
 		{
 			get { return Path.GetExtension(_value); }
 		}
 
 		/// <summary>
-		///		Does path have parent?
+		///     Does path have parent?
 		/// </summary>
 		/// <example>
-		/// C:\Projects\MySolution\build.fsx
-		/// <code>
-		/// let path = ~~"MyProject/MyProject.csproj"
-		/// let hasParent = path.HasParent  // true
-		/// </code>
-		/// <code>
-		/// let path = ~~"solution.sln"
-		/// let hasParent = path.HasParent  // false
-		/// </code>
-		/// <code>
-		/// let path = ~~"C:/MySolution/build.fsx"
-		/// let hasPparent1 = path.HasParent               // true
-		/// let hasParent2 = path.Parent.HasParent         // true
-		/// let hasParent3 = path.Parent.Parent.HasParent  // false
-		/// </code>
-		/// </example>		
+		///     C:\Projects\MySolution\build.fsx
+		///     <code>
+		///  let path = ~~"MyProject/MyProject.csproj"
+		///  let hasParent = path.HasParent  // true
+		///  </code>
+		///     <code>
+		///  let path = ~~"solution.sln"
+		///  let hasParent = path.HasParent  // false
+		///  </code>
+		///     <code>
+		///  let path = ~~"C:/MySolution/build.fsx"
+		///  let hasPparent1 = path.HasParent               // true
+		///  let hasParent2 = path.Parent.HasParent         // true
+		///  let hasParent3 = path.Parent.Parent.HasParent  // false
+		///  </code>
+		/// </example>
 		public bool HasParent
 		{
 			get
@@ -243,25 +261,25 @@ namespace AnFake.Core
 		}
 
 		/// <summary>
-		///		Parent folder. If path is root or just file name then exception is thrown.
+		///     Parent folder. If path is root or just file name then exception is thrown.
 		/// </summary>
 		/// <example>
-		/// C:\Projects\MySolution\build.fsx
-		/// <code>
-		/// let path = ~~"MyProject/MyProject.csproj"
-		/// let parent = path.Parent  // "MyProject"
-		/// </code>
-		/// <code>
-		/// let path = ~~"solution.sln"
-		/// let parent1 = path.Parent     // ""
-		/// let parent2 = parent1.Parent  // throws InvalidConfigurationException
-		/// </code>
-		/// <code>
-		/// let path = ~~"C:/MySolution/build.fsx"
-		/// let parent1 = path.Parent     // @"C:\MySolution"
-		/// let parent2 = parent1.Parent  // @"C:\"
-		/// let parent3 = parent2.Parent  // throws InvalidConfigurationException
-		/// </code>
+		///     C:\Projects\MySolution\build.fsx
+		///     <code>
+		///  let path = ~~"MyProject/MyProject.csproj"
+		///  let parent = path.Parent  // "MyProject"
+		///  </code>
+		///     <code>
+		///  let path = ~~"solution.sln"
+		///  let parent1 = path.Parent     // ""
+		///  let parent2 = parent1.Parent  // throws InvalidConfigurationException
+		///  </code>
+		///     <code>
+		///  let path = ~~"C:/MySolution/build.fsx"
+		///  let parent1 = path.Parent     // @"C:\MySolution"
+		///  let parent2 = parent1.Parent  // @"C:\"
+		///  let parent3 = parent2.Parent  // throws InvalidConfigurationException
+		///  </code>
 		/// </example>
 		/// <exception cref="InvalidConfigurationException">if path is root or just file name</exception>
 		public FileSystemPath Parent
@@ -277,8 +295,8 @@ namespace AnFake.Core
 		}
 
 		/// <summary>
-		///		Converts this path to relative against given base.
-		///		Throws an exception if this path isn't a sub-path of base one.
+		///     Converts this path to relative against given base.
+		///     Throws an exception if this path isn't a sub-path of base one.
 		/// </summary>
 		/// <param name="basePath"></param>
 		/// <returns>relative path</returns>
@@ -297,13 +315,13 @@ namespace AnFake.Core
 		}
 
 		/// <summary>
-		///		Converts this path to UNC path.
-		/// </summary>		
+		///     Converts this path to UNC path.
+		/// </summary>
 		/// <returns>UNC path</returns>
 		public FileSystemPath ToUnc()
 		{
 			var full = Path.GetFullPath(Full);
-			
+
 			if (full.Length < 2)
 				throw new InvalidOperationException(String.Format("Path too short to be converted to UNC: '{0}'", full));
 
@@ -323,8 +341,8 @@ namespace AnFake.Core
 		}
 
 		/// <summary>
-		///		Converts this path to Unix-style path.
-		/// </summary>		
+		///     Converts this path to Unix-style path.
+		/// </summary>
 		/// <returns>Unix-style path</returns>
 		public string ToUnix()
 		{
@@ -335,10 +353,10 @@ namespace AnFake.Core
 		}
 
 		/// <summary>
-		///		Converts UNC path to URI.
+		///     Converts UNC path to URI.
 		/// </summary>
 		/// <remarks>
-		///		Method throws an exception if this path is not UNC path.
+		///     Method throws an exception if this path is not UNC path.
 		/// </remarks>
 		/// <returns>file:// URI</returns>
 		public Uri ToUri()
@@ -350,7 +368,7 @@ namespace AnFake.Core
 		}
 
 		/// <summary>
-		///		Splits path onto steps.
+		///     Splits path onto steps.
 		/// </summary>
 		/// <returns>array of path steps</returns>
 		public string[] Split()
@@ -398,7 +416,7 @@ namespace AnFake.Core
 		public static FileSystemPath operator /(FileSystemPath basePath, string subPath)
 		{
 			var subSteps = subPath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-			
+
 			var i = 0;
 			var realBase = basePath;
 			while (i < subSteps.Length && subSteps[i] == "..")
@@ -410,7 +428,7 @@ namespace AnFake.Core
 				i++;
 			}
 
-			return realBase / subSteps.AsPath(i, subSteps.Length - i);
+			return realBase/subSteps.AsPath(i, subSteps.Length - i);
 		}
 
 		public static FileSystemPath operator /(FileSystemPath basePath, FileSystemPath subPath)
@@ -449,13 +467,13 @@ namespace AnFake.Core
 			var valid = true;
 			var begin = 0;
 			for (var index = 0; index <= path.Length; index++)
-			{				
-				if (index == path.Length 
-					|| path[index] == Path.DirectorySeparatorChar 
+			{
+				if (index == path.Length
+					|| path[index] == Path.DirectorySeparatorChar
 					|| path[index] == Path.AltDirectorySeparatorChar)
 				{
 					var len = index - begin;
-					
+
 					if (len == 1 && path[begin] == '.')
 					{
 						valid = false;
@@ -473,8 +491,8 @@ namespace AnFake.Core
 					if (index < path.Length)
 					{
 						nzPath.Append(Path.DirectorySeparatorChar);
-					}					
-					
+					}
+
 					begin = index + 1;
 				}
 			}
@@ -515,13 +533,30 @@ namespace AnFake.Core
 						// ReSharper disable once AssignNullToNotNullAttribute
 						Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
 						Path.Combine("Extras", subPath));
-			}			
+				case "PATH":
+					return ResolvePATH(subPath);
+			}
 
 			Environment.SpecialFolder specialFolder;
 			if (!Enum.TryParse(macro, false, out specialFolder))
 				return path;
 
 			return Path.Combine(Environment.GetFolderPath(specialFolder), subPath);
+		}
+
+		[SuppressMessage("ReSharper", "InconsistentNaming")]
+		private static string ResolvePATH(string subPath)
+		{
+			var path = Environment.GetEnvironmentVariable("PATH");
+			if (path == null)
+				return subPath;
+
+			var resolvedPath = path
+				.Split(';')
+				.Select(x => Path.Combine(x, subPath))
+				.FirstOrDefault(File.Exists);
+
+			return resolvedPath ?? subPath;
 		}
 	}
 }
