@@ -303,17 +303,23 @@ namespace AnFake.Core
 			}
 			finally
 			{
-				Api.Trace.MessageReceived -= external.OnMessage;
+				Api.Trace.MessageReceived -= external.OnMessage;				
 			}
 
 			Api.Trace.InfoFormat("Process finished. ExitCode = {0} Errors = {1} Warnings = {2} Time = {3}",
 				process.ExitCode, external.ErrorsCount, external.WarningsCount, process.ExitTime - process.StartTime);
 
+			string lastOutput;
+			lock (mutex)
+			{
+				lastOutput = outputBuffer.ToString();
+			}
+
 			return new ProcessExecutionResult(
 				process.ExitCode, 
 				external.ErrorsCount, 
 				external.WarningsCount,
-				outputBuffer.ToString());
+				lastOutput);
 		}
 
 		private static bool Wait(this System.Diagnostics.Process process, TimeSpan timeout)
