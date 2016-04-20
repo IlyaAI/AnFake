@@ -30,7 +30,7 @@ namespace AnFake.Core.Test
 			// arrange
 			var srcFile = "Data/Obfuscation.txt".AsFile();
 			var dstFile = "Data/Obfuscated.txt".AsFile();
-			Files.Copy(srcFile, dstFile.Path);
+			Files.Copy(srcFile, dstFile.Path, true);
 			BinaryObfuscator.Obfuscate(dstFile);
 
 			// act

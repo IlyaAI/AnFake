@@ -12,7 +12,7 @@ open AnFake.Fsx.Dsl
 open AnFake.Plugins.Tfs2012
 open AnFake.Integration.Vs2012;
 
-Tfs.PlugInDeferred()
+Tfs.PlugInOnDemand()
 
 let vsSupportedVersions =
     [
@@ -173,7 +173,7 @@ let configureVsTools (anfHome:FileSystemPath) (projHome:FileSystemPath) =
 )
 
 "BuildTemplate" => (fun _ ->
-    Tfs.PlugIn()
+    Tfs.Connect()
     MyBuild.SaveProp("Tfs.Uri")
 
     let teamProj = getTeamProject()

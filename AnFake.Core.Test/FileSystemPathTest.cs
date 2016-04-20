@@ -404,13 +404,22 @@ namespace AnFake.Core.Test
 		[TestMethod]
 		public void FileSystemPath_should_find_in_path()
 		{
-			// arrange
+			var env = Environment.GetEnvironmentVariable("PATH");
+			try
+			{
+				// arrange
+				Environment.SetEnvironmentVariable("PATH", "C:\\Some Tools; C:\\Windows");
 
-			// act
-			var path = "[PATH]/explorer.exe".AsPath();
+				// act
+				var path = "[PATH]/explorer.exe".AsPath();
 
-			// assert
-			Assert.AreEqual(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"), path.Full);
+				// assert
+				Assert.AreEqual(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"), path.Full);
+			}
+			finally
+			{
+				Environment.SetEnvironmentVariable("PATH", env);
+			}
 		}
 
 		[TestCategory("Unit")]

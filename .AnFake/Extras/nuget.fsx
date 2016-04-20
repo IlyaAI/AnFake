@@ -10,7 +10,7 @@ open AnFake.Core
 open AnFake.Fsx.Dsl
 open AnFake.Plugins.Tfs2012
 
-Tfs.PlugInDeferred()
+Tfs.PlugInOnDemand()
 
 let getSolutionRoot() =
     (~~"[AnFake]")  // <sln-root>/packages/AnFake.x.y.z/bin
