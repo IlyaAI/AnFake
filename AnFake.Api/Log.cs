@@ -25,6 +25,11 @@ namespace AnFake.Api
 			return prevLogger;
 		}
 
+		public static LogMessageLevel Threshold
+		{
+			get { return Logger.Threshold; }
+		}
+
 		public static void DisableConsoleEcho()
 		{
 			Logger.DisableConsoleEcho();
