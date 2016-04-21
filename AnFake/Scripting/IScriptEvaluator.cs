@@ -4,6 +4,8 @@ namespace AnFake.Scripting
 {
 	internal interface IScriptEvaluator
 	{
-		void Evaluate(FileItem script);
+		FileSystemPath GetBasePath(FileItem script);
+
+		void Evaluate(FileItem script, bool debug);
 	}
 }

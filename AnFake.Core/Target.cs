@@ -172,6 +172,14 @@ namespace AnFake.Core
 		}
 
 		/// <summary>
+		///		Count of currently defined targets.
+		/// </summary>
+		public static int Count
+		{
+			get { return Targets.Count; }
+		}
+
+		/// <summary>
 		///     Target name.
 		/// </summary>
 		public string Name

@@ -341,7 +341,12 @@ namespace AnFake.Scripting
 
 	internal class FSharpFscEvaluator : IScriptEvaluator
 	{
-		public void Evaluate(FileItem script)
+		public FileSystemPath GetBasePath(FileItem script)
+		{
+			return script.Folder;
+		}
+
+		public void Evaluate(FileItem script, bool debug)
 		{
 			EmbeddedFsxCompiler.Cleanup();
 

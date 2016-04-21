@@ -87,6 +87,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="RunOptions.cs" />
+    <Compile Include="Scripting\CSharpProjEvaluator.cs" />
     <Compile Include="Scripting\CSharpEvaluator.cs" />
     <Compile Include="Scripting\CSharpScriptHost.cs" />
     <Compile Include="Scripting\EvaluationException.cs" />

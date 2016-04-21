@@ -11,7 +11,12 @@ namespace AnFake.Scripting
 {
 	internal class FSharpFsiEvaluator : IScriptEvaluator
 	{
-		public void Evaluate(FileItem script)
+		public FileSystemPath GetBasePath(FileItem script)
+		{
+			return script.Folder;
+		}
+
+		public void Evaluate(FileItem script, bool debug)
 		{
 			var cfg = Shell.FsiEvaluationSession.GetDefaultConfiguration();			
 

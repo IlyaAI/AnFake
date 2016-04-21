@@ -100,7 +100,12 @@ namespace AnFake.Scripting
 			}
 		}
 
-		public void Evaluate(FileItem script)
+		public FileSystemPath GetBasePath(FileItem script)
+		{
+			return script.Folder;
+		}
+
+		public void Evaluate(FileItem script, bool debug)
 		{
 			AnFakeException.ScriptSource = new ScriptSourceInfo(script.Name);
 

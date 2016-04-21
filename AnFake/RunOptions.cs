@@ -10,6 +10,7 @@ namespace AnFake
 		public Verbosity Verbosity = Verbosity.Normal;
 		public string Script = "build.fsx";
 		public string BuildPath;
-		public string LogPath;		
+		public string LogPath;
+		public bool IsDebug;
 	}
 }

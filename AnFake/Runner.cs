@@ -19,7 +19,8 @@ namespace AnFake
 			new Dictionary<string, IScriptEvaluator>(StringComparer.OrdinalIgnoreCase)
 			{
 				{".fsx", new FSharpFscEvaluator()},
-				{".csx", new CSharpEvaluator()}
+				{".csx", new CSharpEvaluator()},
+				{".csproj", new CSharpProjEvaluator()}
 			};		
 
 		[STAThread]
@@ -185,6 +186,7 @@ namespace AnFake
 					case "-dbg":
 					case "/dbg":
 						SupportedScripts[".fsx"] = new FSharpFsiEvaluator();
+						options.IsDebug = true;
 						Debugger.Launch();
 						continue;
 					case "-stack":
@@ -264,10 +266,18 @@ namespace AnFake
 				var scriptFile = new FileItem(buildPath / options.Script, buildPath);
 				var logFile = new FileItem(options.LogPath.AsPath(), buildPath);
 
-				FileSystemPath.Base = scriptFile.Folder;
+				IScriptEvaluator evaluator;
+				if (!SupportedScripts.TryGetValue(scriptFile.Ext, out evaluator))
+				{
+					Api.Trace.ErrorFormat("Unsupported scripting language: '{0}'", scriptFile.Ext);
+					return -1;
+				}
+
+				FileSystemPath.Base = evaluator.GetBasePath(scriptFile);
 
 				Api.Trace.Info("Configuring build...");
 				Api.Trace.InfoFormat("BuildPath    : {0}", options.BuildPath);
+				Api.Trace.InfoFormat("BasePath     : {0}", FileSystemPath.Base);
 				Api.Trace.InfoFormat("LogFile      : {0}", logFile);
 				Api.Trace.InfoFormat("ScriptFile   : {0}", scriptFile);
 				Api.Trace.InfoFormat("Verbosity    : {0}", options.Verbosity);
@@ -279,14 +289,7 @@ namespace AnFake
 					Api.Trace.ErrorFormat("Build script doesn't exist: {0}", scriptFile.Path.Full);
 					return -1;
 				}
-
-				IScriptEvaluator evaluator;
-				if (!SupportedScripts.TryGetValue(scriptFile.Ext, out evaluator))
-				{
-					Api.Trace.ErrorFormat("Unsupported scripting language: {0}", scriptFile.Ext);
-					return -1;
-				}
-
+				
 				MyBuild.Initialize(
 						buildPath,
 						logFile,
@@ -298,7 +301,7 @@ namespace AnFake
 				Api.Trace.InfoFormat("AnFakeVersion: {0}", MyBuild.Current.AnFakeVersion);
 
 				Api.Trace.Info("Loading script...");				
-				evaluator.Evaluate(scriptFile);
+				evaluator.Evaluate(scriptFile, options.IsDebug);
 
 				Api.Trace.Info("Configuring plugins...");
 				Plugin.Configure();

@@ -41,9 +41,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BuildScriptSkeleton.cs" />
-    <Compile Include="Dsl.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="FailIfAnyWarningAttribute.cs" />
+    <Compile Include="SkipErrorsAttribute.cs" />
+    <Compile Include="TargetOnFailureAttribute.cs" />
+    <Compile Include="TargetFinallyAttribute.cs" />
+    <Compile Include="TargetAttribute.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
