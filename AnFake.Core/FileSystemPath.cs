@@ -553,7 +553,7 @@ namespace AnFake.Core
 
 			var resolvedPath = path
 				.Split(';')
-				.Select(x => Path.Combine(x, subPath))
+				.Select(x => Path.Combine(x.Trim(), subPath))
 				.FirstOrDefault(File.Exists);
 
 			return resolvedPath ?? subPath;

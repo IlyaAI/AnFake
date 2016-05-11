@@ -64,6 +64,14 @@
     <Compile Include="Deployment\UpdateFilesStep.cs" />
     <Compile Include="Exceptions\ScriptSourceInfo.cs" />
     <Compile Include="Exceptions\StackTraceMode.cs" />
+    <Compile Include="Impl\Archive.cs" />
+    <Compile Include="Impl\IArchiveEntry.cs" />
+    <Compile Include="Impl\IArchiveReader.cs" />
+    <Compile Include="Impl\TarArchiveReader.cs" />
+    <Compile Include="Impl\GZipArchiveReader.cs" />
+    <Compile Include="Impl\ZipArchiveReader.cs" />
+    <Compile Include="TarGz.cs" />
+    <Compile Include="ZippedFileItem.cs" />
     <Compile Include="FormatExtension.cs" />
     <Compile Include="Integration\Builds\IBuild.cs" />
     <Compile Include="Integration\Builds\IBuildServer2.cs" />

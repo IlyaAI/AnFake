@@ -79,6 +79,7 @@
     <Compile Include="JsonTest.cs" />
     <Compile Include="PluginTest.cs" />
     <Compile Include="BinaryObfuscatorTest.cs" />
+    <Compile Include="TarGzTest.cs" />
     <Compile Include="ZipTest.cs" />
     <Compile Include="SnapshotTest.cs" />
     <Compile Include="AssemblyInfoTest.cs" />
@@ -99,6 +100,15 @@
     <Compile Include="ProcessTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="FileSetTest.cs" />
+    <Content Include="Data\archive.tar">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\archive.tar.gz">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\archive.zip">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <None Include="Data\Obfuscation.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

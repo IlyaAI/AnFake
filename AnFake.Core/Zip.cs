@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using AnFake.Api;
+using AnFake.Core.Impl;
 using ICSharpCode.SharpZipLib.Zip;
 
 namespace AnFake.Core
@@ -132,7 +133,7 @@ namespace AnFake.Core
 		}
 
 		/// <summary>
-		///		Unpacks specified zip archive.
+		///		Unpacks specified zip (gzip, tar) archive.
 		/// </summary>
 		/// <param name="zipFilePath">zip archive path to be unpacked</param>
 		/// <param name="targetPath">target path to unpack to</param>		
@@ -142,7 +143,7 @@ namespace AnFake.Core
 		}
 
 		/// <summary>
-		///		Unpacks specified zip archive.
+		///		Unpacks specified zip (gzip, tar) archive.
 		/// </summary>
 		/// <param name="zipFilePath">zip archive path to be unpacked</param>
 		/// <param name="targetPath">target path to unpack to</param>
@@ -150,11 +151,11 @@ namespace AnFake.Core
 		public static void Unpack(FileSystemPath zipFilePath, FileSystemPath targetPath, Action<Params> setParams)
 		{
 			if (zipFilePath == null)
-				throw new ArgumentException("Zip.Pack(zipFilePath, targetPath[, setParams]): zipFilePath must not be null");
+				throw new ArgumentException("Zip.Unpack(zipFilePath, targetPath[, setParams]): zipFilePath must not be null");
 			if (targetPath == null)
-				throw new ArgumentException("Zip.Pack(zipFilePath, targetPath[, setParams]): targetPath must not be null");
+				throw new ArgumentException("Zip.Unpack(zipFilePath, targetPath[, setParams]): targetPath must not be null");
 			if (setParams == null)
-				throw new ArgumentException("Zip.Pack(zipFilePath, targetPath, setParams): setParams must not be null");
+				throw new ArgumentException("Zip.Unpack(zipFilePath, targetPath, setParams): setParams must not be null");
 
 			var parameters = Defaults.Clone();
 			setParams(parameters);
@@ -162,10 +163,10 @@ namespace AnFake.Core
 			Trace.InfoFormat("Zip.Unack {0} => {1}...", zipFilePath, targetPath);
 
 			var unzippedFiles = 0;
-			using (var zip = new ZipInputStream(new FileStream(zipFilePath.Full, FileMode.Open, FileAccess.Read)))
+			using (var archive = Archive.Open(zipFilePath.AsFile()))
 			{
-				ZipEntry entry;
-				while ((entry = zip.GetNextEntry()) != null)
+				IArchiveEntry entry;
+				while ((entry = archive.NextEntry()) != null)
 				{
 					Trace.DebugFormat("  {0}", entry.Name);
 
@@ -189,7 +190,7 @@ namespace AnFake.Core
 
 					using (var dst = new FileStream(dstPath.Full, mode, FileAccess.Write))
 					{
-						zip.CopyTo(dst);
+						entry.AsStream().CopyTo(dst);
 						unzippedFiles++;
 					}					
 				}
@@ -197,5 +198,30 @@ namespace AnFake.Core
 
 			Trace.InfoFormat("{0} file(s) unzipped.", unzippedFiles);			
 		}
+
+		/// <summary>
+		///		Lists files inside zip (gzip, tar) archive.
+		/// </summary>
+		/// <param name="zipFilePath">zip archive path to be unpacked</param>	
+		public static List<ZippedFileItem> List(FileSystemPath zipFilePath)
+		{
+			if (zipFilePath == null)
+				throw new ArgumentException("Zip.List(zipFilePath): zipFilePath must not be null");
+			
+			var files = new List<ZippedFileItem>();
+			using (var archive = Archive.Open(zipFilePath.AsFile()))
+			{
+				IArchiveEntry entry;
+				while ((entry = archive.NextEntry()) != null)
+				{
+					if (!entry.IsDirectory)
+					{
+						files.Add(new ZippedFileItem(entry.Name));
+					}
+				}
+			}
+
+			return files;			
+		}		
 	}
 }
